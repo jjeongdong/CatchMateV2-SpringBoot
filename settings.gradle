@@ -1,0 +1,13 @@
+rootProject.name = 'catchmate-springboot'
+
+include 'catchmate-common'
+include 'catchmate-infrastructure'
+include 'catchmate-domain'
+include 'catchmate-api'
+
+include 'catchmate-common'
+include 'catchmate-storage'
+include 'catchmate-domain'
+include 'catchmate-api'
+include 'catchmate-application'
+include 'catchmate-infrastructure'

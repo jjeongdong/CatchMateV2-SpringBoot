@@ -1,0 +1,11 @@
+dependencies {
+    implementation project(':catchmate-application')
+    implementation project(':catchmate-domain')
+    implementation project(':catchmate-common')
+    implementation project(':catchmate-infrastructure')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+//    implementation 'org.springframework.boot:spring-boot-starter-security'
+}

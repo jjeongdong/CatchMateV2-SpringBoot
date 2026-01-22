@@ -1,0 +1,7 @@
+dependencies {
+    implementation project(':catchmate-common')
+    implementation project(':catchmate-domain')
+
+    implementation("org.springframework:spring-context")
+    implementation("org.springframework:spring-tx")
+}

@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/catchmate
+    username: root
+    password: test1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: catchmate924498
+
+jwt:
+  secretKey: "test-secret-key-must-be-long-enough-for-security-algorithms"
+  access:
+    expiration: 3600000
+    header: AccessToken
+  refresh:
+    expiration: 2592000000
+    header: RefreshToken
