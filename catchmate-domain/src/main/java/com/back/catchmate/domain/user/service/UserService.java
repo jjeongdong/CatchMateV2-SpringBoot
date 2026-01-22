@@ -16,6 +16,11 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
 
+    public User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+    }
+
     public Optional<User> getUserByProviderId(String providerIdWithProvider) {
         return userRepository.findByProviderId(providerIdWithProvider);
     }

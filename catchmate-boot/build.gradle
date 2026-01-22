@@ -1,0 +1,14 @@
+plugins {
+    id 'org.springframework.boot'
+}
+
+dependencies {
+    implementation project(':catchmate-api')
+    implementation project(':catchmate-infrastructure')
+    implementation project(':catchmate-common')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+}
+
+bootJar { enabled = true }
+jar { enabled = false }
