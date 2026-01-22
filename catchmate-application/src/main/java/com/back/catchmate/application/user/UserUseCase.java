@@ -4,6 +4,7 @@ import com.back.catchmate.application.user.dto.UploadFile;
 import com.back.catchmate.application.user.dto.command.UserProfileUpdateCommand;
 import com.back.catchmate.application.user.dto.command.UserRegisterCommand;
 import com.back.catchmate.application.user.dto.response.UserAlarmUpdateResponse;
+import com.back.catchmate.application.user.dto.response.UserNicknameCheckResponse;
 import com.back.catchmate.application.user.dto.response.UserRegisterResponse;
 import com.back.catchmate.application.user.dto.response.UserResponse;
 import com.back.catchmate.application.user.dto.response.UserUpdateResponse;
@@ -59,6 +60,11 @@ public class UserUseCase {
         boolean isMe = currentUserId.equals(targetUserId);
 
         return UserResponse.of(targetUser, isMe);
+    }
+
+    public UserNicknameCheckResponse checkNickname(String nickName) {
+        boolean isAvailable = !userService.checkNickname(nickName);
+        return UserNicknameCheckResponse.of(nickName, isAvailable);
     }
 
     @Transactional

@@ -33,6 +33,11 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public boolean existsByNickName(String nickName) {
+        return jpaUserRepository.existsByNickName(nickName);
+    }
+
+    @Override
     public Optional<User> findByEmail(String email) {
         return jpaUserRepository.findByEmail(email)
                 .map(UserEntity::toModel);

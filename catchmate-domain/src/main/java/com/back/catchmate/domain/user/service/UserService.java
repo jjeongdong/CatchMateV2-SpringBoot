@@ -37,4 +37,8 @@ public class UserService {
     public void updateUser(User user) {
         userRepository.save(user);
     }
+
+    public boolean checkNickname(String nickName) {
+        return userRepository.existsByNickName(nickName);
+    }
 }

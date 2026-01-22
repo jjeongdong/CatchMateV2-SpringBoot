@@ -14,7 +14,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint; // 아래 4번에서 구현
 
@@ -32,14 +31,14 @@ public class SecurityConfig {
                 exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
 
             .authorizeHttpRequests(auth -> auth
-                // 공개 URL 설정 (로그인, 회원가입 등)
                 .requestMatchers(
-                        "/api/auth/login", 
-                        "/users/additional-info",
+                        "/api/auth/login",
+                        "/api/auth/refresh",
+                        "/api/users/check-nickname",
+                        "/api/users/additional-info",
                         "/swagger-ui/**", 
                         "/v3/api-docs/**"
                 ).permitAll()
-                // 그 외 모든 요청은 인증 필요
                 .anyRequest().authenticated()
             )
 

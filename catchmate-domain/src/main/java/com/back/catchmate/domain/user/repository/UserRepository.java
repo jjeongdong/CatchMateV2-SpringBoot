@@ -9,4 +9,5 @@ public interface UserRepository {
     Optional<User> findByEmail(String providerIdWithProvider);
     Optional<User> findByProviderId(String providerId);
     Optional<User> findById(Long id);
+    boolean existsByNickName(String nickName);
 }

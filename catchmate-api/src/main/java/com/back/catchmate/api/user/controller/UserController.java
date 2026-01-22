@@ -5,6 +5,7 @@ import com.back.catchmate.api.user.dto.request.UserRegisterRequest;
 import com.back.catchmate.application.user.UserUseCase;
 import com.back.catchmate.application.user.dto.UploadFile;
 import com.back.catchmate.application.user.dto.response.UserAlarmUpdateResponse;
+import com.back.catchmate.application.user.dto.response.UserNicknameCheckResponse;
 import com.back.catchmate.application.user.dto.response.UserRegisterResponse;
 import com.back.catchmate.application.user.dto.response.UserResponse;
 import com.back.catchmate.application.user.dto.response.UserUpdateResponse;
@@ -29,7 +30,7 @@ import java.io.IOException;
 
 @Tag(name = "[사용자] 유저 관련 API")
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
     private final UserUseCase userUseCase;
@@ -51,6 +52,12 @@ public class UserController {
     public UserResponse getOtherUserProfile(@AuthUser Long userId,
                                             @PathVariable Long profileUserId) {
         return userUseCase.getOtherUserProfile(userId, profileUserId);
+    }
+
+    @GetMapping("/check-nickname")
+    @Operation(summary = "닉네임 중복 확인 API", description = "닉네임의 중복 여부를 확인하는 API 입니다.")
+    public UserNicknameCheckResponse checkNickname(@RequestParam("nickName") String nickName) {
+        return userUseCase.checkNickname(nickName);
     }
 
     @PatchMapping(value = "/profile", consumes = "multipart/form-data")
