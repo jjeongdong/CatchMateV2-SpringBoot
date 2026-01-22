@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity; // ResponseEntity import 추가
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,46 +38,46 @@ public class UserController {
 
     @PostMapping("/additional-info")
     @Operation(summary = "추가 정보 입력 API", description = "최초 로그인시, 추가 정보를 입력하는 API 입니다.")
-    public UserRegisterResponse register(@Valid @RequestBody UserRegisterRequest request) {
-        return userUseCase.register(request.toCommand());
+    public ResponseEntity<UserRegisterResponse> register(@Valid @RequestBody UserRegisterRequest request) {
+        return ResponseEntity.ok(userUseCase.register(request.toCommand()));
     }
 
     @GetMapping("/profile")
     @Operation(summary = "나의 정보 조회 API", description = "마이페이지에서 나의 모든 정보를 조회하는 API 입니다.")
-    public UserResponse getMyProfile(@AuthUser Long userId) {
-        return userUseCase.getMyProfile(userId);
+    public ResponseEntity<UserResponse> getMyProfile(@AuthUser Long userId) {
+        return ResponseEntity.ok(userUseCase.getMyProfile(userId));
     }
 
     @GetMapping("/profile/{profileUserId}")
     @Operation(summary = "유저 정보 조회 API", description = "다른 유저의 정보를 조회하는 API 입니다.")
-    public UserResponse getOtherUserProfile(@AuthUser Long userId,
-                                            @PathVariable Long profileUserId) {
-        return userUseCase.getOtherUserProfile(userId, profileUserId);
+    public ResponseEntity<UserResponse> getOtherUserProfile(@AuthUser Long userId,
+                                                            @PathVariable Long profileUserId) {
+        return ResponseEntity.ok(userUseCase.getOtherUserProfile(userId, profileUserId));
     }
 
     @GetMapping("/check-nickname")
     @Operation(summary = "닉네임 중복 확인 API", description = "닉네임의 중복 여부를 확인하는 API 입니다.")
-    public UserNicknameCheckResponse checkNickname(@RequestParam("nickName") String nickName) {
-        return userUseCase.checkNickname(nickName);
+    public ResponseEntity<UserNicknameCheckResponse> checkNickname(@RequestParam("nickName") String nickName) {
+        return ResponseEntity.ok(userUseCase.checkNickname(nickName));
     }
 
     @PatchMapping(value = "/profile", consumes = "multipart/form-data")
     @Operation(summary = "나의 정보 수정 API", description = "마이페이지에서 나의 정보를 수정하는 API 입니다. (수정된 최신 유저 정보 반환)")
-    public UserUpdateResponse updateProfile(@AuthUser Long userId,
-                                            @RequestPart(value = "request", required = false) @Valid UserProfileUpdateRequest request,
-                                            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
+    public ResponseEntity<UserUpdateResponse> updateProfile(@AuthUser Long userId,
+                                                            @RequestPart(value = "request", required = false) @Valid UserProfileUpdateRequest request,
+                                                            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
         UploadFile uploadFile = UploadFile.builder()
                 .originalFilename(profileImage.getOriginalFilename())
                 .inputStream(profileImage.getInputStream())
                 .build();
-        return userUseCase.updateProfile(userId, request.toCommand(), uploadFile);
+        return ResponseEntity.ok(userUseCase.updateProfile(userId, request.toCommand(), uploadFile));
     }
 
     @PatchMapping("/alarm")
     @Operation(summary = "알림 설정 API", description = "유저의 알람 수신 여부를 변경하는 API 입니다.")
-    public UserAlarmUpdateResponse updateAlarm(@AuthUser Long userId,
-                                               @RequestParam("alarmType") AlarmType alarmType,
-                                               @RequestParam("isEnabled") boolean isEnabled) {
-        return userUseCase.updateAlarm(userId, alarmType, isEnabled);
+    public ResponseEntity<UserAlarmUpdateResponse> updateAlarm(@AuthUser Long userId,
+                                                               @RequestParam("alarmType") AlarmType alarmType,
+                                                               @RequestParam("isEnabled") boolean isEnabled) {
+        return ResponseEntity.ok(userUseCase.updateAlarm(userId, alarmType, isEnabled));
     }
 }

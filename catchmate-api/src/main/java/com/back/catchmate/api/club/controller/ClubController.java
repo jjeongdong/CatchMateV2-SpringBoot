@@ -5,6 +5,7 @@ import com.back.catchmate.application.club.dto.response.ClubResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +21,7 @@ public class ClubController {
 
     @GetMapping("/list")
     @Operation(summary = "구단 정보 리스트 조회 API", description = "구단 정보를 리스트로 조회하는 API 입니다.")
-    public List<ClubResponse> getClubResponseList() {
-        return clubUseCase.getClubResponseList();
+    public ResponseEntity<List<ClubResponse>> getClubResponseList() {
+        return ResponseEntity.ok(clubUseCase.getClubResponseList());
     }
 }
