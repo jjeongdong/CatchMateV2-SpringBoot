@@ -1,6 +1,6 @@
 package com.back.catchmate.application.club;
 
-import com.back.catchmate.application.club.dto.ClubResponse;
+import com.back.catchmate.application.club.dto.response.ClubResponse;
 import com.back.catchmate.domain.club.model.Club;
 import com.back.catchmate.domain.club.service.ClubService;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.back.catchmate.application.auth.dto;
+package com.back.catchmate.application.auth.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;

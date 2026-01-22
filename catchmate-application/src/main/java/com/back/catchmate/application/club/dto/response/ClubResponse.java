@@ -1,4 +1,4 @@
-package com.back.catchmate.application.club.dto;
+package com.back.catchmate.application.club.dto.response;
 
 import com.back.catchmate.domain.club.model.Club;
 import lombok.Builder;

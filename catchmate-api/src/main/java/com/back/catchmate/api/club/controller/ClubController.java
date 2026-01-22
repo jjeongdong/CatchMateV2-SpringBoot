@@ -1,7 +1,7 @@
 package com.back.catchmate.api.club.controller;
 
 import com.back.catchmate.application.club.ClubUseCase;
-import com.back.catchmate.application.club.dto.ClubResponse;
+import com.back.catchmate.application.club.dto.response.ClubResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

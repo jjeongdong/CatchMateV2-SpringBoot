@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Repository
@@ -16,6 +17,12 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     @Override
     public void save(String refreshToken, Long userId, Long ttl) {
         redisTemplate.opsForValue().set(refreshToken, String.valueOf(userId), ttl, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public Optional<String> findById(String refreshToken) {
+        String value = redisTemplate.opsForValue().get(refreshToken);
+        return Optional.ofNullable(value);
     }
 
     @Override

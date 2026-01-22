@@ -2,17 +2,17 @@ package com.back.catchmate.api.auth.controller;
 
 import com.back.catchmate.api.auth.dto.AuthLoginRequest;
 import com.back.catchmate.application.auth.AuthUseCase;
-import com.back.catchmate.application.auth.dto.AuthLoginResponse;
+import com.back.catchmate.application.auth.dto.response.AuthLoginResponse;
+import com.back.catchmate.application.auth.dto.response.AuthReissueResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "[사용자] 로그인 관련 API")
@@ -28,5 +28,9 @@ public class AuthController {
         return ResponseEntity.ok(authUseCase.login(request.toCommand()));
     }
 
-
+    @PostMapping("/reissue")
+    @Operation(summary = "엑세스 토큰 재발급 API", description = "엑세스 토큰을 재발급하는 API 입니다.")
+    public ResponseEntity<AuthReissueResponse> reissue(@RequestHeader("RefreshToken") String refreshToken) {
+        return ResponseEntity.ok(authUseCase.reissue(refreshToken));
+    }
 }

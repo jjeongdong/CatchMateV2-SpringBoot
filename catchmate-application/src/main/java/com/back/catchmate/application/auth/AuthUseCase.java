@@ -1,11 +1,14 @@
 package com.back.catchmate.application.auth;
 
-import com.back.catchmate.application.auth.dto.AuthLoginCommand;
-import com.back.catchmate.application.auth.dto.AuthLoginResponse;
+import com.back.catchmate.application.auth.dto.command.AuthLoginCommand;
+import com.back.catchmate.application.auth.dto.response.AuthLoginResponse;
+import com.back.catchmate.application.auth.dto.response.AuthReissueResponse;
 import com.back.catchmate.domain.auth.AuthToken;
 import com.back.catchmate.domain.auth.service.AuthService;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.service.UserService;
+import error.ErrorCode;
+import error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +24,7 @@ public class AuthUseCase {
     @Transactional
     public AuthLoginResponse login(AuthLoginCommand command) {
         // 1. 유저 조회
-        Optional<User> userOptional = userService.getUserByProviderId(command.getProviderIdWithProvider());
+        Optional<User> userOptional = userService.findByProviderId(command.getProviderIdWithProvider());
 
         // 2. 유저가 존재하지 않으면 회원가입 필요
         if (userOptional.isEmpty()) {
@@ -33,5 +36,13 @@ public class AuthUseCase {
         AuthToken token = authService.login(user, command.getFcmToken());
 
         return AuthLoginResponse.of(token.getAccessToken(), token.getRefreshToken(), false);
+    }
+
+    public AuthReissueResponse reissue(String refreshToken) {
+        Long userId = authService.extractUserIdFromRefreshToken(refreshToken);
+        authService.validateRefreshTokenExistence(refreshToken);
+
+        String newAccessToken = authService.issueAccessToken(userId);
+        return AuthReissueResponse.of(newAccessToken);
     }
 }
