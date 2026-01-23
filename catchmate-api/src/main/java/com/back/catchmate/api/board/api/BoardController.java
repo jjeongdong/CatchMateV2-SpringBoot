@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -108,4 +109,11 @@ public class BoardController {
         return boardUseCase.updateLiftUpDate(userId, boardId);
     }
 
+    @DeleteMapping("/{boardId}")
+    @Operation(summary = "게시글 삭제 API", description = "게시글을 삭제합니다.")
+    public ResponseEntity<Void> deleteBoard(@AuthUser Long userId,
+                                            @PathVariable Long boardId) {
+        boardUseCase.deleteBoard(userId, boardId);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -227,4 +227,21 @@ public class BoardUseCase {
 
         return String.format("%d일 %02d시간 %02d분", days, hours, minutes);
     }
+
+    @Transactional
+    public void deleteBoard(Long userId, Long boardId) {
+        // 게시글 조회
+        Board board = boardService.getBoard(boardId);
+
+        // 권한 체크
+        if (!board.getUser().getId().equals(userId)) {
+            throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
+        }
+
+        // 도메인 로직 실행
+        board.delete();
+
+        // 변경 사항 저장
+        boardService.updateBoard(board);
+    }
 }

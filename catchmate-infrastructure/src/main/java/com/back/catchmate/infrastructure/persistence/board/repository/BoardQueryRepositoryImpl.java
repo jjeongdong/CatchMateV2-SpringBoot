@@ -35,8 +35,8 @@ public class BoardQueryRepositoryImpl implements BoardQueryRepository {
         // 1. 동적 쿼리 빌더 생성
         BooleanBuilder builder = new BooleanBuilder();
 
-        // 삭제되지 않은 게시글만 조회 (Entity에 deletedAt 필드가 추가되었다고 가정)
-        // builder.and(boardEntity.deletedAt.isNull());
+        // 삭제되지 않은 게시글만 조회
+//         builder.and(boardEntity.deletedAt.isNull());
 
         // 저장된 게시글만 조회
         builder.and(boardEntity.completed.isTrue());

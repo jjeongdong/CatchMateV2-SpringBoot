@@ -27,6 +27,7 @@ public class Board {
     private boolean completed;
     private LocalDateTime createdAt;
     private LocalDateTime liftUpDate;
+    private LocalDateTime deletedAt;
 
     public static Board createBoard(String title, String content, int maxPerson, User user,
                                     Club cheerClub, Game game, String preferredGender,
@@ -70,5 +71,13 @@ public class Board {
 
     public void updateLiftUpDate(LocalDateTime liftUpDate) {
         this.liftUpDate = liftUpDate;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public boolean isDeleted() {
+        return this.deletedAt != null;
     }
 }

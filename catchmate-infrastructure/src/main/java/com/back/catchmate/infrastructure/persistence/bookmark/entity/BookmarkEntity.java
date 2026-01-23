@@ -4,19 +4,30 @@ import com.back.catchmate.domain.bookmark.model.Bookmark;
 import com.back.catchmate.infrastructure.global.BaseTimeEntity;
 import com.back.catchmate.infrastructure.persistence.board.entity.BoardEntity;
 import com.back.catchmate.infrastructure.persistence.user.entity.UserEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@Builder
 @Table(name = "bookmarks",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"user_id", "board_id"})
         })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class BookmarkEntity extends BaseTimeEntity {
 
     @Id
@@ -30,13 +41,6 @@ public class BookmarkEntity extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
     private BoardEntity board;
-
-    @Builder
-    public BookmarkEntity(Long id, UserEntity user, BoardEntity board) {
-        this.id = id;
-        this.user = user;
-        this.board = board;
-    }
 
     public Bookmark toModel() {
         return Bookmark.builder()

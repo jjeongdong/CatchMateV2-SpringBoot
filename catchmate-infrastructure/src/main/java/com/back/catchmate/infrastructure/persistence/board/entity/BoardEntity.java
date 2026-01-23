@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 
@@ -26,6 +27,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @Table(name = "boards")
+@SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class BoardEntity extends BaseTimeEntity {
@@ -70,6 +72,8 @@ public class BoardEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private LocalDateTime liftUpDate;
 
+    private LocalDateTime deletedAt;
+
     public static BoardEntity from(Board board) {
         return BoardEntity.builder()
                 .id(board.getId())
@@ -84,6 +88,7 @@ public class BoardEntity extends BaseTimeEntity {
                 .preferredAgeRange(board.getPreferredAgeRange())
                 .completed(board.isCompleted())
                 .liftUpDate(board.getLiftUpDate())
+                .deletedAt(board.getDeletedAt())
                 .build();
     }
 
@@ -102,6 +107,7 @@ public class BoardEntity extends BaseTimeEntity {
                 .completed(this.completed)
                 .createdAt(this.getCreatedAt())
                 .liftUpDate(this.liftUpDate)
+
                 .build();
     }
 }
