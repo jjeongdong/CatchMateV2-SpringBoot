@@ -2,6 +2,7 @@ package com.back.catchmate.application.board;
 
 import com.back.catchmate.application.board.dto.command.BoardCreateOrUpdateCommand;
 import com.back.catchmate.application.board.dto.response.BoardDetailResponse;
+import com.back.catchmate.application.board.dto.response.BoardLiftUpResponse;
 import com.back.catchmate.application.board.dto.response.BoardResponse;
 import com.back.catchmate.application.board.dto.response.BoardTempResponse;
 import com.back.catchmate.application.common.PagedResponse;
@@ -22,7 +23,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -197,5 +200,32 @@ public class BoardUseCase {
         return tempBoard.map(BoardTempResponse::from).orElse(null);
     }
 
+    @Transactional
+    public BoardLiftUpResponse updateLiftUpDate(Long userId, Long boardId) {
+        Board board = boardService.getBoard(boardId);
 
+        if (!board.getUser().getId().equals(userId)) {
+            throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime nextLiftUpAllowed = board.getLiftUpDate().plusDays(3);
+
+        if (nextLiftUpAllowed.isBefore(now)) {
+            board.updateLiftUpDate(now);
+            boardService.updateBoard(board);
+            return BoardLiftUpResponse.of(true, null);
+        }
+
+        long remainingMinutes = Duration.between(now, nextLiftUpAllowed).toMinutes();
+        return BoardLiftUpResponse.of(false, formatRemainingTime(remainingMinutes));
+    }
+
+    private String formatRemainingTime(long remainingMinutes) {
+        long days = remainingMinutes / 1440;
+        long hours = (remainingMinutes % 1440) / 60;
+        long minutes = remainingMinutes % 60;
+
+        return String.format("%d일 %02d시간 %02d분", days, hours, minutes);
+    }
 }

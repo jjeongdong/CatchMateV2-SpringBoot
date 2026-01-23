@@ -3,6 +3,7 @@ package com.back.catchmate.api.board.api;
 import com.back.catchmate.api.board.dto.request.BoardCreateOrUpdateRequest;
 import com.back.catchmate.application.board.BoardUseCase;
 import com.back.catchmate.application.board.dto.response.BoardDetailResponse;
+import com.back.catchmate.application.board.dto.response.BoardLiftUpResponse;
 import com.back.catchmate.application.board.dto.response.BoardResponse;
 import com.back.catchmate.application.board.dto.response.BoardTempResponse;
 import com.back.catchmate.application.common.PagedResponse;
@@ -99,4 +100,12 @@ public class BoardController {
                                                      @Valid @RequestBody BoardCreateOrUpdateRequest request) {
         return ResponseEntity.ok(boardUseCase.writeBoard(userId, request.toCommand(boardId)));
     }
+
+    @PatchMapping("/{boardId}/lift-up")
+    @Operation(summary = "게시글 끌어올리기 API", description = "게시글을 끌어올리는 API 입니다.")
+    public BoardLiftUpResponse updateLiftUpDate(@AuthUser Long userId,
+                                                @PathVariable Long boardId) {
+        return boardUseCase.updateLiftUpDate(userId, boardId);
+    }
+
 }

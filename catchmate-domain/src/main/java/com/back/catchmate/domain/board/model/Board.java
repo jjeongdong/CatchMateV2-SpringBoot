@@ -66,4 +66,8 @@ public class Board {
             throw new BaseException(ErrorCode.BOARD_CANNOT_UPDATE_AFTER_ENROLL);
         }
     }
+
+    public void updateLiftUpDate(LocalDateTime liftUpDate) {
+        this.liftUpDate = liftUpDate;
+    }
 }
