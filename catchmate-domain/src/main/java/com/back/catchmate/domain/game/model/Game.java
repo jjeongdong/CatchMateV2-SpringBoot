@@ -24,8 +24,8 @@ public class Game {
     }
 
     public void update(Club homeClub, Club awayClub, LocalDateTime gameStartDate, String location) {
-        this.homeClub = homeClub;         // 홈 구단 변경
-        this.awayClub = awayClub;         // 원정 구단 변경
+        this.homeClub = homeClub;
+        this.awayClub = awayClub;
         this.gameStartDate = gameStartDate;
         this.location = location;
     }

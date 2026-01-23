@@ -46,7 +46,7 @@ public class AuthService {
     public AuthToken login(User user, String fcmToken) {
         user.updateFcmToken(fcmToken);
 
-        // 2. 토큰 발급
+        // 토큰 발급
         String accessToken = tokenProvider.createAccessToken(user.getId());
         String refreshToken = tokenProvider.createRefreshToken(user.getId());
 

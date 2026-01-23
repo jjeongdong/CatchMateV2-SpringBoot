@@ -1,14 +1,15 @@
 package com.back.catchmate.application.auth.dto.response;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Getter
 @Builder
-@RequiredArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AuthReissueResponse {
-    private final String accessToken;
+    private String accessToken;
 
     public static AuthReissueResponse of(String accessToken) {
         return AuthReissueResponse.builder()

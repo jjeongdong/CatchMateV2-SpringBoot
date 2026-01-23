@@ -1,6 +1,7 @@
 package com.back.catchmate.application.user.dto.command;
 
 import com.back.catchmate.domain.user.model.Provider;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,16 +10,16 @@ import java.time.LocalDate;
 
 @Getter
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserRegisterCommand {
-    private final Provider provider;
-    private final String providerIdWithProvider;
-    private final String email;
-    private final String profileImageUrl;
-    private final String fcmToken;
-    private final Character gender;
-    private final String nickName;
-    private final LocalDate birthDate;
-    private final Long favoriteClubId;
-    private final String watchStyle;
+    private Provider provider;
+    private String providerIdWithProvider;
+    private String email;
+    private String profileImageUrl;
+    private String fcmToken;
+    private Character gender;
+    private String nickName;
+    private LocalDate birthDate;
+    private Long favoriteClubId;
+    private String watchStyle;
 }

@@ -6,17 +6,16 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 @Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserRegisterRequest {
 
     @Email(message = "email 형식이 올바르지 않습니다.")
@@ -48,7 +47,6 @@ public class UserRegisterRequest {
     @NotNull(message = "favoriteClubId는 필수 값입니다.")
     private Long favoriteClubId;
 
-    // 선택 값
     private String watchStyle;
 
     private static final String SEPARATOR = "@";

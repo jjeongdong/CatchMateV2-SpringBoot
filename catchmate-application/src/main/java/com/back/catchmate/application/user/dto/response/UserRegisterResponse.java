@@ -1,5 +1,7 @@
 package com.back.catchmate.application.user.dto.response;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -7,11 +9,12 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserRegisterResponse {
-    private final Long userId;
-    private final String accessToken;
-    private final String refreshToken;
-    private final LocalDateTime createdAt;
+    private Long userId;
+    private String accessToken;
+    private String refreshToken;
+    private LocalDateTime createdAt;
 
     public static UserRegisterResponse of(Long userId, String accessToken, String refreshToken, LocalDateTime createdAt) {
         return UserRegisterResponse.builder()

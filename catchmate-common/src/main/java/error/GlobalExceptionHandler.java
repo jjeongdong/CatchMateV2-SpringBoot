@@ -1,4 +1,4 @@
-package error; // 패키지 위치는 메인 모듈 스캔 범위 내에 있어야 함
+package error;
 
 import error.exception.BaseException;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,7 @@ import java.util.Objects;
 
 @Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler { // extends 제거
+public class GlobalExceptionHandler {
 
     // 1. 커스텀 비즈니스 에러
     @ExceptionHandler(BaseException.class)

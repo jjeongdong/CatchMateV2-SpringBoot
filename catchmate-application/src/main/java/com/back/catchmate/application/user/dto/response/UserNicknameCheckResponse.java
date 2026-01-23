@@ -1,15 +1,16 @@
 package com.back.catchmate.application.user.dto.response;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Getter
 @Builder
-@RequiredArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserNicknameCheckResponse {
-    private final String nickName;
-    private final boolean isAvailable;
+    private String nickName;
+    private boolean isAvailable;
 
     public static UserNicknameCheckResponse of(String nickName, boolean isAvailable) {
         return UserNicknameCheckResponse.builder()

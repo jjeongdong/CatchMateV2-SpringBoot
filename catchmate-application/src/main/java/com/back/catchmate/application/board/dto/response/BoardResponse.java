@@ -3,14 +3,16 @@ package com.back.catchmate.application.board.dto.response;
 import com.back.catchmate.application.club.dto.response.ClubResponse;
 import com.back.catchmate.application.user.dto.response.UserResponse; // 혹은 작성자 전용 WriterResponse
 import com.back.catchmate.domain.board.model.Board;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class BoardResponse {
     private Long boardId;
     private String title;

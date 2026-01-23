@@ -11,7 +11,6 @@ public class GameService {
     private final GameRepository gameRepository;
 
     public Game createGame(Game game) {
-//        game.validate(); // 생성 전 검증
         return gameRepository.save(game);
     }
 }

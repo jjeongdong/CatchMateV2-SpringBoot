@@ -1,8 +1,6 @@
 package com.back.catchmate.domain.user.model;
 
 import com.back.catchmate.domain.club.model.Club;
-import error.ErrorCode;
-import error.exception.BaseException;
 import lombok.Builder;
 import lombok.Getter;
 

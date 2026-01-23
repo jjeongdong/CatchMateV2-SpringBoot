@@ -6,7 +6,6 @@ import java.util.Optional;
 
 public interface UserRepository {
     User save(User user);
-    Optional<User> findByEmail(String providerIdWithProvider);
     Optional<User> findByProviderId(String providerId);
     Optional<User> findById(Long id);
     boolean existsByNickName(String nickName);

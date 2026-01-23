@@ -2,6 +2,8 @@ package com.back.catchmate.application.board.dto.response;
 
 import com.back.catchmate.application.club.dto.response.ClubResponse;
 import com.back.catchmate.domain.game.model.Game;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,6 +11,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class GameResponse {
     private Long gameId;
     private LocalDateTime gameStartDate;
