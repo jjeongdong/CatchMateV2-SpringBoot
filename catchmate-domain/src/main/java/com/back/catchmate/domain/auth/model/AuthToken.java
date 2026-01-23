@@ -1,4 +1,4 @@
-package com.back.catchmate.domain.auth;
+package com.back.catchmate.domain.auth.model;
 
 import lombok.Builder;
 import lombok.Getter;

@@ -8,7 +8,7 @@ import com.back.catchmate.application.user.dto.response.UserNicknameCheckRespons
 import com.back.catchmate.application.user.dto.response.UserRegisterResponse;
 import com.back.catchmate.application.user.dto.response.UserResponse;
 import com.back.catchmate.application.user.dto.response.UserUpdateResponse;
-import com.back.catchmate.domain.auth.AuthToken;
+import com.back.catchmate.domain.auth.model.AuthToken;
 import com.back.catchmate.domain.auth.service.AuthService;
 import com.back.catchmate.domain.club.model.Club;
 import com.back.catchmate.domain.club.service.ClubService;
