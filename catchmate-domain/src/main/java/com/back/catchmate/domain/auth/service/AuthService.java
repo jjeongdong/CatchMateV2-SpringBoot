@@ -27,7 +27,7 @@ public class AuthService {
                 userId,
                 tokenProvider.getRefreshTokenExpiration()
         );
-        return AuthToken.of(accessToken, refreshToken);
+        return AuthToken.createToken(accessToken, refreshToken);
     }
 
     public String issueAccessToken(Long userId) {
@@ -51,7 +51,7 @@ public class AuthService {
         String refreshToken = tokenProvider.createRefreshToken(user.getId());
 
         refreshTokenRepository.save(refreshToken, user.getId(), tokenProvider.getRefreshTokenExpiration());
-        return AuthToken.of(accessToken, refreshToken);
+        return AuthToken.createToken(accessToken, refreshToken);
     }
 
     public void logout(String refreshToken) {
