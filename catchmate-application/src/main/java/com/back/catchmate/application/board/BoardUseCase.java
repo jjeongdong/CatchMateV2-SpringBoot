@@ -3,6 +3,7 @@ package com.back.catchmate.application.board;
 import com.back.catchmate.application.board.dto.command.BoardCreateCommand;
 import com.back.catchmate.application.board.dto.response.BoardDetailResponse;
 import com.back.catchmate.application.board.dto.response.BoardResponse;
+import com.back.catchmate.application.board.dto.response.BoardTempResponse;
 import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.domain.board.dto.BoardSearchCondition;
 import com.back.catchmate.domain.board.model.Board;
@@ -189,5 +190,10 @@ public class BoardUseCase {
                 .toList();
 
         return new PagedResponse<>(boardPage, responses);
+    }
+
+    public BoardTempResponse getTempBoard(Long userId) {
+        Optional<Board> tempBoard = boardService.getTempBoard(userId);
+        return tempBoard.map(BoardTempResponse::from).orElse(null);
     }
 }

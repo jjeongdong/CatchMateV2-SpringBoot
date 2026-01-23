@@ -38,6 +38,10 @@ public class BoardService {
         return boardRepository.findAllByUserId(userId, pageable);
     }
 
+    public Optional<Board> getTempBoard(Long userId) {
+        return boardRepository.findFirstByUserIdAndIsCompletedFalse(userId);
+    }
+
     public void updateBoard(Board board) {
         boardRepository.save(board);
     }

@@ -4,6 +4,7 @@ import com.back.catchmate.api.board.dto.request.BoardCreateRequest;
 import com.back.catchmate.application.board.BoardUseCase;
 import com.back.catchmate.application.board.dto.response.BoardDetailResponse;
 import com.back.catchmate.application.board.dto.response.BoardResponse;
+import com.back.catchmate.application.board.dto.response.BoardTempResponse;
 import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.global.annotation.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -75,6 +76,17 @@ public class BoardController {
             @RequestParam(defaultValue = "10") int size) {
 
         PagedResponse<BoardResponse> response = boardUseCase.getBoardsByUserId(userId, loginUserId, page, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/temp")
+    @Operation(summary = "임시저장된 게시글 단일 조회 API", description = "사용자의 임시저장된 게시글을 조회합니다. 존재하지 않으면 null을 반환합니다.")
+    public ResponseEntity<BoardTempResponse> getTempBoard(@AuthUser Long userId) {
+        BoardTempResponse response = boardUseCase.getTempBoard(userId);
+        if (response == null) {
+            return ResponseEntity.noContent().build();
+        }
+
         return ResponseEntity.ok(response);
     }
 }
