@@ -1,7 +1,6 @@
 package com.back.catchmate.infrastructure.persistence.user.entity;
 
 import com.back.catchmate.domain.user.model.Authority;
-import com.back.catchmate.domain.user.model.Provider;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.infrastructure.global.BaseTimeEntity;
 import com.back.catchmate.infrastructure.persistence.club.entity.ClubEntity;
@@ -21,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import user.enums.Provider;
 
 import java.time.LocalDate;
 

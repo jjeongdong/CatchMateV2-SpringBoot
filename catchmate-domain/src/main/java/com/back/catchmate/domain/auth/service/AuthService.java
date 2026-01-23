@@ -14,6 +14,10 @@ public class AuthService {
     private final TokenProvider tokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
 
+    public Long extractUserIdFromToken(String token) {
+        return tokenProvider.parseUserId(token);
+    }
+
     public Long extractUserIdFromRefreshToken(String refreshToken) {
         return tokenProvider.parseUserId(refreshToken);
     }

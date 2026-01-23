@@ -1,10 +1,10 @@
 package com.back.catchmate.application.user.dto.command;
 
-import com.back.catchmate.domain.user.model.Provider;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import user.enums.Provider;
 
 import java.time.LocalDate;
 

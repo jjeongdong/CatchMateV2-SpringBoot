@@ -14,10 +14,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AuthUseCase {
     private final UserService userService;
     private final AuthService authService;
+
+    public Long extractUserId(String token) {
+        return authService.extractUserIdFromToken(token);
+    }
 
     @Transactional
     public AuthLoginResponse login(AuthLoginCommand command) {

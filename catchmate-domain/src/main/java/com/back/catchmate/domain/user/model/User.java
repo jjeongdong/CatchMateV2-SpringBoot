@@ -3,6 +3,8 @@ package com.back.catchmate.domain.user.model;
 import com.back.catchmate.domain.club.model.Club;
 import lombok.Builder;
 import lombok.Getter;
+import user.enums.AlarmType;
+import user.enums.Provider;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

@@ -1,6 +1,5 @@
 dependencies {
     implementation project(':catchmate-application')
-    implementation project(':catchmate-domain')
     implementation project(':catchmate-common')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'

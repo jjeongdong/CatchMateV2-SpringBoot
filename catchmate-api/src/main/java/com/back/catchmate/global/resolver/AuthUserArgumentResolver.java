@@ -1,12 +1,12 @@
 package com.back.catchmate.global.resolver;
 
-import com.back.catchmate.domain.auth.service.TokenProvider;
 import com.back.catchmate.global.annotation.AuthUser;
 import error.ErrorCode;
 import error.exception.BaseException;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -18,7 +18,6 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 @RequiredArgsConstructor
 public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
 
-    private final TokenProvider tokenProvider;
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
     @Override
@@ -31,24 +30,19 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
                                   NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-        
-        HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
-        String token = resolveToken(request);
 
-        if (token == null) {
-            // 토큰이 없는데 @AuthUser를 쓴 경우 에러 처리 (필요에 따라 null 반환 허용 가능)
+        // SecurityContext에서 인증 정보 조회
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // 인증 정보가 없거나, 익명 사용자(로그인 안함)인 경우 처리
+        if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal())) {
             throw new BaseException(ErrorCode.INVALID_ACCESS_TOKEN);
         }
 
-        // 토큰 파싱하여 userId 반환 (TokenProvider 구현에 따라 예외가 발생할 수 있음)
-        return tokenProvider.parseUserId(token);
-    }
-
-    private String resolveToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+        try {
+            return Long.parseLong(authentication.getPrincipal().toString());
+        } catch (NumberFormatException e) {
+            throw new BaseException(ErrorCode.INVALID_ACCESS_TOKEN);
         }
-        return null;
     }
 }

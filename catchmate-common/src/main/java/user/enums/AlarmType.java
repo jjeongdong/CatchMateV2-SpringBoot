@@ -1,4 +1,4 @@
-package com.back.catchmate.domain.user.model;
+package user.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

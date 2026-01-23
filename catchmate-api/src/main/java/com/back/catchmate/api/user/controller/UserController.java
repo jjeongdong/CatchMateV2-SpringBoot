@@ -9,7 +9,6 @@ import com.back.catchmate.application.user.dto.response.UserNicknameCheckRespons
 import com.back.catchmate.application.user.dto.response.UserRegisterResponse;
 import com.back.catchmate.application.user.dto.response.UserResponse;
 import com.back.catchmate.application.user.dto.response.UserUpdateResponse;
-import com.back.catchmate.domain.user.model.AlarmType;
 import com.back.catchmate.global.annotation.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import user.enums.AlarmType;
 
 import java.io.IOException;
 

@@ -12,12 +12,12 @@ import com.back.catchmate.domain.auth.model.AuthToken;
 import com.back.catchmate.domain.auth.service.AuthService;
 import com.back.catchmate.domain.club.model.Club;
 import com.back.catchmate.domain.club.service.ClubService;
-import com.back.catchmate.domain.user.model.AlarmType;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import user.enums.AlarmType;
 
 @Service
 @Transactional(readOnly = true)
