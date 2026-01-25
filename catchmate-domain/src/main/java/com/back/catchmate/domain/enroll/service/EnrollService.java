@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +45,10 @@ public class EnrollService {
     public Enroll getEnrollById(Long enrollId) {
         return enrollRepository.findById(enrollId)
                 .orElseThrow(() -> new BaseException(ErrorCode.ENROLL_NOT_FOUND));
+    }
+
+    public Optional<Enroll> getEnrollByUserAndBoard(User user, Board board) {
+        return enrollRepository.findByUserAndBoard(user, board);
     }
 
     public DomainPage<Enroll> getEnrollsByUserId(Long userId, DomainPageable pageable) {

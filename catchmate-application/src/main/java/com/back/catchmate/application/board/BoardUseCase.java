@@ -9,10 +9,13 @@ import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.domain.board.dto.BoardSearchCondition;
 import com.back.catchmate.domain.board.model.Board;
 import com.back.catchmate.domain.board.service.BoardService;
+import com.back.catchmate.domain.bookmark.service.BookmarkService;
 import com.back.catchmate.domain.club.model.Club;
 import com.back.catchmate.domain.club.service.ClubService;
 import com.back.catchmate.domain.common.DomainPage;
 import com.back.catchmate.domain.common.DomainPageable;
+import com.back.catchmate.domain.enroll.model.Enroll;
+import com.back.catchmate.domain.enroll.service.EnrollService;
 import com.back.catchmate.domain.game.model.Game;
 import com.back.catchmate.domain.game.service.GameService;
 import com.back.catchmate.domain.user.model.User;
@@ -38,6 +41,8 @@ public class BoardUseCase {
     private final UserService userService;
     private final ClubService clubService;
     private final GameService gameService;
+    private final BookmarkService bookmarkService;
+    private final EnrollService enrollService;
 
     @Transactional
     public BoardResponse writeBoard(Long userId, BoardCreateOrUpdateCommand command) {
@@ -123,15 +128,15 @@ public class BoardUseCase {
     }
 
     public BoardDetailResponse getBoard(Long userId, Long boardId) {
+        User user = userService.getUserById(userId);
         // 게시글 도메인 조회 (없으면 예외 발생)
         Board board = boardService.getBoard(boardId);
 
         // 찜 여부 확인
-        // TODO: BookmarkService 연동 필요
-        boolean isBookMarked = false;
+        boolean isBookMarked = bookmarkService.isBookmarked(userId, boardId);
 
         // 버튼 상태 계산 (작성자 여부, 신청 여부 등 확인)
-        String buttonStatus = getButtonStatus(userId, board);
+        String buttonStatus = getButtonStatus(user, board);
 
         // 채팅방 ID 조회
         // TODO: ChatService 연동 필요
@@ -140,13 +145,26 @@ public class BoardUseCase {
         return BoardDetailResponse.of(board, isBookMarked, buttonStatus, chatRoomId);
     }
 
-    private String getButtonStatus(Long userId, Board board) {
+    private String getButtonStatus(User user, Board board) {
         // 작성자 본인인 경우
-        if (board.getUser().getId().equals(userId)) {
+        if (board.getUser().getId().equals(user.getId())) {
             return "VIEW_CHAT";
         }
-        // TODO: 로직 추가 필요
-        return "APPLY";
+
+        Optional<Enroll> enrollOptional = enrollService.getEnrollByUserAndBoard(user, board);
+
+        // 신청 내역이 없는 경우 -> 신청 가능
+        if (enrollOptional.isEmpty()) {
+            return "APPLY";
+        }
+
+        Enroll enroll = enrollOptional.get();
+        return switch (enroll.getAcceptStatus()) {
+            case ACCEPTED -> "VIEW_CHAT"; // 수락됨 -> 채팅방 보기
+            case PENDING -> "CANCEL";    // 대기중 -> 신청 취소
+            case REJECTED -> "REJECTED";  // 거절됨 -> 거절됨 (또는 재신청 불가 표시)
+            default -> "APPLY";
+        };
     }
 
     public PagedResponse<BoardResponse> getBoardList(Long userId, LocalDate gameDate, Integer maxPerson,
