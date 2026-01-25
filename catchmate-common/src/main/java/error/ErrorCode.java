@@ -67,9 +67,9 @@ public enum ErrorCode {
     KICK_CHATROOM_UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "채팅방에서 내보낼 권한이 없습니다."),
 
     // 유저 차단
-    USER_BLOCK_FAILED(HttpStatus.BAD_REQUEST, "해당 유저를 이미 차단했습니다."),
+    BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 차단 내역입니다."),
+    ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "해당 유저를 이미 차단했습니다."),
     SELF_BLOCK_FAILED(HttpStatus.BAD_REQUEST, "자기 자신을 차단할 수 없습니다."),
-    USER_UNBLOCK_FAILED(HttpStatus.BAD_REQUEST, "해당 유저를 차단한 이력이 없습니다."),
     BLOCKED_USER_BOARD(HttpStatus.BAD_REQUEST, "내가 차단한 유저의 게시글입니다."),
     BLOCKED_USER_BOARD_LIST(HttpStatus.BAD_REQUEST, "내가 차단한 유저의 게시글 리스트입니다."),
 
