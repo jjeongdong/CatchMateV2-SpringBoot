@@ -14,4 +14,18 @@ public class BoardSearchCondition {
     private final Integer maxPerson;
     private final List<Long> preferredTeamIdList;
     private final List<Long> blockedUserIds;
+
+    public static BoardSearchCondition of(Long userId,
+                                          LocalDate gameDate,
+                                          Integer maxPerson,
+                                          List<Long> preferredTeamIdList,
+                                          List<Long> blockedUserIds) {
+        return BoardSearchCondition.builder()
+                .userId(userId)
+                .gameDate(gameDate)
+                .maxPerson(maxPerson)
+                .preferredTeamIdList(preferredTeamIdList)
+                .blockedUserIds(blockedUserIds)
+                .build();
+    }
 }

@@ -19,6 +19,7 @@ import com.back.catchmate.domain.enroll.service.EnrollService;
 import com.back.catchmate.domain.game.model.Game;
 import com.back.catchmate.domain.game.service.GameService;
 import com.back.catchmate.domain.user.model.User;
+import com.back.catchmate.domain.user.service.BlockService;
 import com.back.catchmate.domain.user.service.UserService;
 import error.ErrorCode;
 import error.exception.BaseException;
@@ -41,8 +42,9 @@ public class BoardUseCase {
     private final UserService userService;
     private final ClubService clubService;
     private final GameService gameService;
-    private final BookmarkService bookmarkService;
+    private final BlockService blockService;
     private final EnrollService enrollService;
+    private final BookmarkService bookmarkService;
 
     @Transactional
     public BoardResponse writeBoard(Long userId, BoardCreateOrUpdateCommand command) {
@@ -167,33 +169,44 @@ public class BoardUseCase {
         };
     }
 
-    public PagedResponse<BoardResponse> getBoardList(Long userId, LocalDate gameDate, Integer maxPerson,
-                                                     List<Long> preferredTeamIdList, int page, int size) {
+    public PagedResponse<BoardResponse> getBoardList(Long userId, LocalDate gameDate, Integer maxPerson, List<Long> preferredTeamIdList, int page, int size) {
 
-        // TODO 차단된 유저 목록 조회 (현재는 빈 리스트로 처리)
-        List<Long> blockedUserIds = Collections.emptyList();
+        // 차단된 유저 ID 목록 조회
+        User user = userService.getUserById(userId);
+        List<Long> blockedUserIds = blockService.getBlockedUserIds(user);
 
         // 검색 조건 생성
-        BoardSearchCondition condition = BoardSearchCondition.builder()
-                .userId(userId)
-                .gameDate(gameDate)
-                .maxPerson(maxPerson)
-                .preferredTeamIdList(preferredTeamIdList)
-                .blockedUserIds(blockedUserIds)
-                .build();
+        BoardSearchCondition condition = BoardSearchCondition.of(
+                userId,
+                gameDate,
+                maxPerson,
+                preferredTeamIdList != null ? preferredTeamIdList : Collections.emptyList(),
+                blockedUserIds
+        );
 
         // 도메인 페이징 객체 생성
         DomainPageable domainPageable = DomainPageable.of(page, size);
         DomainPage<Board> boardPage = boardService.getBoardList(condition, domainPageable);
 
         List<BoardResponse> boardResponses = boardPage.getContent().stream()
-                .map(board -> BoardResponse.of(board, false))
+                .map(board -> {
+                    boolean isBookMarked = bookmarkService.isBookmarked(userId, board.getId());
+                    return BoardResponse.of(board, isBookMarked);
+                })
                 .toList();
 
         return new PagedResponse<>(boardPage, boardResponses);
     }
 
     public PagedResponse<BoardResponse> getBoardsByUserId(Long targetUserId, Long loginUserId, int page, int size) {
+        User targetUser = userService.getUserById(targetUserId);
+        User loginUser = userService.getUserById(loginUserId);
+
+        // 차단 여부 확인
+        if (blockService.isUserBlocked(targetUser, loginUser)) {
+            throw new BaseException(ErrorCode.BLOCKED_USER_BOARD);
+        }
+
         // 도메인 페이징 객체 생성
         DomainPageable domainPageable = DomainPageable.of(page, size);
 

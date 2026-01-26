@@ -66,4 +66,9 @@ public class BlockRepositoryImpl implements BlockRepository {
                 entityPage.getTotalElements()
         );
     }
+
+    @Override
+    public List<Long> findAllBlockedUserIdsByBlocker(User user) {
+        return jpaBlockRepository.findAllBlockedUserIdsByBlocker(UserEntity.from(user));
+    }
 }

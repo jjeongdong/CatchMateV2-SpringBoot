@@ -10,6 +10,8 @@ import error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class BlockService {
@@ -36,5 +38,13 @@ public class BlockService {
 
     public DomainPage<Block> getBlockedUsers(Long blockerId, DomainPageable pageable) {
         return blockRepository.findAllByBlocker(blockerId, pageable);
+    }
+
+    public List<Long> getBlockedUserIds(User user) {
+        return blockRepository.findAllBlockedUserIdsByBlocker(user);
+    }
+
+    public boolean isUserBlocked(User targetUser, User loginUser) {
+        return blockRepository.existsByBlockerAndBlocked(loginUser, targetUser);
     }
 }
