@@ -37,4 +37,5 @@ out/
 .vscode/
 /catchmate-boot/src/main/resources/application-local.yml
 /catchmate-boot/src/main/resources/application-dev.yml
+/catchmate-boot/src/main/resources/firebase-adminsdk.json
 /docker-compose.yml
