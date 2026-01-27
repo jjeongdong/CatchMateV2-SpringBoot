@@ -1,4 +1,4 @@
-package com.back.catchmate.application.notice.dto.response;
+package com.back.catchmate.application.admin.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;

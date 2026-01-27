@@ -1,4 +1,4 @@
-package com.back.catchmate.application.notice.dto.command;
+package com.back.catchmate.application.admin.dto.command;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
