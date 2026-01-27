@@ -1,5 +1,7 @@
 package com.back.catchmate.domain.user.service;
 
+import com.back.catchmate.domain.common.DomainPage;
+import com.back.catchmate.domain.common.DomainPageable;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.repository.UserRepository;
 import error.ErrorCode;
@@ -59,5 +61,9 @@ public class UserService {
 
     public Map<String, Long> getUserCountByWatchStyle() {
         return userRepository.countUsersByWatchStyle();
+    }
+
+    public DomainPage<User> getUsersByClub(String clubName, DomainPageable pageable) {
+        return userRepository.findAllByClubName(clubName, pageable);
     }
 }

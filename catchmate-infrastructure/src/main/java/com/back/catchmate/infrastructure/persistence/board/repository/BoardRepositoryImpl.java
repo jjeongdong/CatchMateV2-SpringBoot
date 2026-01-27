@@ -16,6 +16,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+import static com.back.catchmate.infrastructure.persistence.board.entity.QBoardEntity.boardEntity;
+
 @Repository
 @RequiredArgsConstructor
 public class BoardRepositoryImpl implements BoardRepository {

@@ -45,7 +45,7 @@ public class UserUseCase {
         );
         User savedUser = userService.registerUser(user);
 
-        AuthToken token = authService.issueToken(savedUser.getId());
+        AuthToken token = authService.issueToken(savedUser);
 
         return UserRegisterResponse.of(savedUser.getId(), token.getAccessToken(), token.getRefreshToken(), savedUser.getCreatedAt());
     }

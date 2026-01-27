@@ -3,6 +3,7 @@ package com.back.catchmate.domain.auth.service;
 import com.back.catchmate.domain.auth.model.AuthToken;
 import com.back.catchmate.domain.auth.port.TokenProvider;
 import com.back.catchmate.domain.auth.repository.RefreshTokenRepository;
+import com.back.catchmate.domain.inquiry.service.InquiryService;
 import com.back.catchmate.domain.user.model.User;
 import error.ErrorCode;
 import error.exception.BaseException;
@@ -27,24 +28,24 @@ public class AuthService {
         return tokenProvider.getRole(token);
     }
 
-    public AuthToken issueToken(Long userId) {
-        String accessToken = issueAccessToken(userId);
-        String refreshToken = issueRefreshToken(userId);
+    public AuthToken issueToken(User user) {
+        String accessToken = issueAccessToken(user);
+        String refreshToken = issueRefreshToken(user);
 
         refreshTokenRepository.save(
                 refreshToken,
-                userId,
+                user.getId(),
                 tokenProvider.getRefreshTokenExpiration()
         );
         return AuthToken.createToken(accessToken, refreshToken);
     }
 
-    public String issueAccessToken(Long userId) {
-        return tokenProvider.createAccessToken(userId);
+    public String issueAccessToken(User user) {
+        return tokenProvider.createAccessToken(user.getId(), user.getAuthority());
     }
 
-    private String issueRefreshToken(Long userId) {
-        return tokenProvider.createRefreshToken(userId);
+    private String issueRefreshToken(User user) {
+        return tokenProvider.createRefreshToken(user.getId(), user.getAuthority());
     }
 
     public void validateRefreshTokenExistence(String refreshToken) {
@@ -56,8 +57,8 @@ public class AuthService {
         user.updateFcmToken(fcmToken);
 
         // 토큰 발급
-        String accessToken = tokenProvider.createAccessToken(user.getId());
-        String refreshToken = tokenProvider.createRefreshToken(user.getId());
+        String accessToken = tokenProvider.createAccessToken(user.getId(), user.getAuthority());
+        String refreshToken = tokenProvider.createRefreshToken(user.getId(), user.getAuthority());
 
         refreshTokenRepository.save(refreshToken, user.getId(), tokenProvider.getRefreshTokenExpiration());
         return AuthToken.createToken(accessToken, refreshToken);

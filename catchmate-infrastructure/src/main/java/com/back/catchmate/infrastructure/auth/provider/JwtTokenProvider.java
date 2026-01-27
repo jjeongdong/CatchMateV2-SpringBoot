@@ -37,13 +37,13 @@ public class JwtTokenProvider implements TokenProvider {
     private static final String ROLE_CLAIM = "role";
 
     @Override
-    public String createAccessToken(Long userId) {
-        return createToken(userId, ACCESS_TOKEN_SUBJECT, accessTokenExpirationPeriod, Authority.ROLE_USER);
+    public String createAccessToken(Long userId, Authority role) {
+        return createToken(userId, ACCESS_TOKEN_SUBJECT, accessTokenExpirationPeriod, role);
     }
 
     @Override
-    public String createRefreshToken(Long userId) {
-        return createToken(userId, REFRESH_TOKEN_SUBJECT, refreshTokenExpirationPeriod, Authority.ROLE_USER);
+    public String createRefreshToken(Long userId, Authority role) {
+        return createToken(userId, REFRESH_TOKEN_SUBJECT, refreshTokenExpirationPeriod, role);
     }
 
     @Override

@@ -49,7 +49,9 @@ public class AuthUseCase {
         Long userId = authService.extractUserIdFromRefreshToken(refreshToken);
         authService.validateRefreshTokenExistence(refreshToken);
 
-        String newAccessToken = authService.issueAccessToken(userId);
+        User user = userService.getUserById(userId);
+
+        String newAccessToken = authService.issueAccessToken(user);
         return AuthReissueResponse.of(newAccessToken);
     }
 
