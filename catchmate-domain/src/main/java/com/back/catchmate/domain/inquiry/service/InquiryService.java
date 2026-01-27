@@ -1,5 +1,7 @@
 package com.back.catchmate.domain.inquiry.service;
 
+import com.back.catchmate.domain.common.DomainPage;
+import com.back.catchmate.domain.common.DomainPageable;
 import com.back.catchmate.domain.inquiry.model.Inquiry;
 import com.back.catchmate.domain.inquiry.repository.InquiryRepository;
 import error.ErrorCode;
@@ -21,6 +23,10 @@ public class InquiryService {
     public Inquiry getInquiry(Long inquiryId) {
         return inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new BaseException(ErrorCode.INQUIRY_NOT_FOUND));
+    }
+
+    public DomainPage<Inquiry> getAllInquiries(DomainPageable pageable) {
+        return inquiryRepository.findAll(pageable);
     }
 
     public long getTotalInquiryCount() {

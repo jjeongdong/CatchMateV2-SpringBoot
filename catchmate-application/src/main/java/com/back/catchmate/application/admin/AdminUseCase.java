@@ -4,6 +4,10 @@ import com.back.catchmate.application.admin.dto.response.AdminBoardDetailWithEnr
 import com.back.catchmate.application.admin.dto.response.AdminBoardResponse;
 import com.back.catchmate.application.admin.dto.response.AdminDashboardResponse;
 import com.back.catchmate.application.admin.dto.response.AdminEnrollmentResponse;
+import com.back.catchmate.application.admin.dto.response.AdminInquiryDetailResponse;
+import com.back.catchmate.application.admin.dto.response.AdminInquiryResponse;
+import com.back.catchmate.application.admin.dto.response.AdminReportDetailResponse;
+import com.back.catchmate.application.admin.dto.response.AdminReportResponse;
 import com.back.catchmate.application.admin.dto.response.AdminUserDetailResponse;
 import com.back.catchmate.application.admin.dto.response.AdminUserResponse;
 import com.back.catchmate.application.common.PagedResponse;
@@ -13,7 +17,9 @@ import com.back.catchmate.domain.common.DomainPage;
 import com.back.catchmate.domain.common.DomainPageable;
 import com.back.catchmate.domain.enroll.model.Enroll;
 import com.back.catchmate.domain.enroll.service.EnrollService;
+import com.back.catchmate.domain.inquiry.model.Inquiry;
 import com.back.catchmate.domain.inquiry.service.InquiryService;
+import com.back.catchmate.domain.report.model.Report;
 import com.back.catchmate.domain.report.service.ReportService;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.service.UserService;
@@ -102,5 +108,38 @@ public class AdminUseCase {
                 .toList();
 
         return AdminBoardDetailWithEnrollResponse.of(board, enrollmentInfos);
+    }
+
+    public PagedResponse<AdminReportResponse> getAllReports(int page, int size) {
+        DomainPageable domainPageable = new DomainPageable(page, size);
+        DomainPage<Report> reportPage = reportService.getAllReports(domainPageable);
+
+        List<AdminReportResponse> responses = reportPage.getContent().stream()
+                .map(AdminReportResponse::from)
+                .toList();
+
+        return new PagedResponse<>(reportPage, responses);
+    }
+
+    public PagedResponse<AdminInquiryResponse> getAllInquiries(int page, int size) {
+        DomainPageable domainPageable = new DomainPageable(page, size);
+        DomainPage<Inquiry> inquiryPage = inquiryService.getAllInquiries(domainPageable);
+
+        List<AdminInquiryResponse> responses = inquiryPage.getContent().stream()
+                .map(AdminInquiryResponse::from)
+                .toList();
+
+        return new PagedResponse<>(inquiryPage, responses);
+    }
+
+    public AdminReportDetailResponse getReportDetail(Long reportId) {
+        Report report = reportService.getReport(reportId);
+        return AdminReportDetailResponse.from(report);
+    }
+
+    // 4. 문의 상세 조회
+    public AdminInquiryDetailResponse getInquiryDetail(Long inquiryId) {
+        Inquiry inquiry = inquiryService.getInquiry(inquiryId);
+        return AdminInquiryDetailResponse.from(inquiry);
     }
 }

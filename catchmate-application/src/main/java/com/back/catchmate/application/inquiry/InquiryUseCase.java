@@ -31,8 +31,8 @@ public class InquiryUseCase {
                 command.getContent()
         );
 
-        inquiryService.createInquiry(inquiry);
-        return InquiryCreateResponse.of(inquiry.getId());
+        Inquiry savedInquiry = inquiryService.createInquiry(inquiry);
+        return InquiryCreateResponse.of(savedInquiry.getId());
     }
 
     public InquiryDetailResponse getInquiryDetail(Long userId, Long inquiryId) {

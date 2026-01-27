@@ -11,7 +11,7 @@ public class DomainPageable {
     public DomainPageable(int page, int size) {
         this.page = page;
         this.size = size;
-        this.offset = page * size; // 0-based index 기준
+        this.offset = page * size;
     }
 
     public static DomainPageable of(int page, int size) {

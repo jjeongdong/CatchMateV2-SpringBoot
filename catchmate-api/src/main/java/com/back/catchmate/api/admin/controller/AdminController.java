@@ -4,6 +4,10 @@ import com.back.catchmate.application.admin.AdminUseCase;
 import com.back.catchmate.application.admin.dto.response.AdminBoardDetailWithEnrollResponse;
 import com.back.catchmate.application.admin.dto.response.AdminBoardResponse;
 import com.back.catchmate.application.admin.dto.response.AdminDashboardResponse;
+import com.back.catchmate.application.admin.dto.response.AdminInquiryDetailResponse;
+import com.back.catchmate.application.admin.dto.response.AdminInquiryResponse;
+import com.back.catchmate.application.admin.dto.response.AdminReportDetailResponse;
+import com.back.catchmate.application.admin.dto.response.AdminReportResponse;
 import com.back.catchmate.application.admin.dto.response.AdminUserDetailResponse;
 import com.back.catchmate.application.admin.dto.response.AdminUserResponse;
 import com.back.catchmate.application.common.PagedResponse;
@@ -63,6 +67,7 @@ public class AdminController {
         return ResponseEntity.ok(adminUseCase.getUserBoards(userId, page, size));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/boards")
     @Operation(summary = "관리자 게시글 전체 조회", description = "전체 게시글을 페이징하여 조회합니다.")
     public ResponseEntity<PagedResponse<AdminBoardResponse>> getAllBoards(
@@ -72,11 +77,46 @@ public class AdminController {
         return ResponseEntity.ok(adminUseCase.getAllBoards(page, size));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/boards/{boardId}")
     @Operation(summary = "관리자 게시글 상세 조회", description = "게시글 상세 정보와 해당 게시글에 대한 신청자 목록을 조회합니다.")
     public ResponseEntity<AdminBoardDetailWithEnrollResponse> getBoardDetail(
             @PathVariable Long boardId
     ) {
         return ResponseEntity.ok(adminUseCase.getBoardDetailWithEnrollments(boardId));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/reports")
+    @Operation(summary = "관리자 신고 목록 조회", description = "전체 신고 내역을 페이징하여 조회합니다.")
+    public ResponseEntity<PagedResponse<AdminReportResponse>> getAllReports(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(adminUseCase.getAllReports(page, size));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/reports/{reportId}")
+    @Operation(summary = "관리자 신고 상세 조회", description = "특정 신고 내역의 상세 정보를 조회합니다.")
+    public ResponseEntity<AdminReportDetailResponse> getReportDetail(@PathVariable Long reportId) {
+        return ResponseEntity.ok(adminUseCase.getReportDetail(reportId));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/inquiries")
+    @Operation(summary = "관리자 문의 목록 조회", description = "전체 1:1 문의 내역을 페이징하여 조회합니다.")
+    public ResponseEntity<PagedResponse<AdminInquiryResponse>> getAllInquiries(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(adminUseCase.getAllInquiries(page, size));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/inquiries/{inquiryId}")
+    @Operation(summary = "관리자 문의 상세 조회", description = "특정 문의 내역의 상세 정보를 조회합니다.")
+    public ResponseEntity<AdminInquiryDetailResponse> getInquiryDetail(@PathVariable Long inquiryId) {
+        return ResponseEntity.ok(adminUseCase.getInquiryDetail(inquiryId));
     }
 }
