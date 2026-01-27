@@ -240,7 +240,6 @@ public class EnrollUseCase {
     }
 
     private void sendEnrollNotification(User recipient, Board board, String title, String body, String type) {
-        // 사용자 알림 설정 확인 (전체 알림 ON & 직관 알림 ON) 및 토큰 존재 확인
         if (recipient.getFcmToken() != null && recipient.getEnrollAlarm() == 'Y') {
 
             Map<String, String> data = Map.of(
