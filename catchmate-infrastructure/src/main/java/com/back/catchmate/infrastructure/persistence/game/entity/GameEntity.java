@@ -32,18 +32,18 @@ public class GameEntity extends BaseTimeEntity {
     @Column(name = "game_id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column
     private LocalDateTime gameStartDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "home_club_id", nullable = false)
+    @JoinColumn(name = "home_club_id")
     private ClubEntity homeClub;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "away_club_id", nullable = false)
+    @JoinColumn(name = "away_club_id")
     private ClubEntity awayClub;
 
-    @Column(nullable = false)
+    @Column
     private String location;
 
     public static GameEntity from(Game game) {
@@ -65,8 +65,8 @@ public class GameEntity extends BaseTimeEntity {
                 .id(this.id)
                 .gameStartDate(this.gameStartDate)
                 .location(this.location)
-                .homeClub(this.homeClub.toModel()) // Entity -> Domain 변환
-                .awayClub(this.awayClub.toModel())
+                .homeClub(this.homeClub != null ? this.homeClub.toModel() : null)
+                .awayClub(this.awayClub != null ? this.awayClub.toModel() : null)
                 .build();
     }
 }
