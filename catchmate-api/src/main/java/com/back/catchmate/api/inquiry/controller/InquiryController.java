@@ -4,7 +4,9 @@ import com.back.catchmate.api.inquiry.dto.request.InquiryCreateRequest;
 import com.back.catchmate.application.inquiry.InquiryUseCase;
 import com.back.catchmate.application.inquiry.dto.response.InquiryCreateResponse;
 import com.back.catchmate.application.inquiry.dto.response.InquiryDetailResponse;
+import com.back.catchmate.domain.common.permission.PermissionId;
 import com.back.catchmate.global.annotation.AuthUser;
+import com.back.catchmate.global.aop.permission.CheckInquiryPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -26,10 +28,11 @@ public class InquiryController {
         return ResponseEntity.ok(inquiryUseCase.registerInquiry(userId, request.toCommand()));
     }
 
+    @CheckInquiryPermission
     @GetMapping("/{inquiryId}")
     @Operation(summary = "문의 상세 조회", description = "문의 내용과 답변을 상세 조회합니다.")
     public ResponseEntity<InquiryDetailResponse> getInquiryDetail(@AuthUser Long userId,
-                                                                  @PathVariable Long inquiryId) {
+                                                                  @PermissionId @PathVariable Long inquiryId) {
         return ResponseEntity.ok(inquiryUseCase.getInquiryDetail(userId, inquiryId));
     }
 }

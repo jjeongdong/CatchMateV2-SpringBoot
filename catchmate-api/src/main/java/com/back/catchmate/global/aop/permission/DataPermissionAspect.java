@@ -25,7 +25,6 @@ import java.lang.reflect.Method;
 @Component
 @RequiredArgsConstructor
 public class DataPermissionAspect {
-
     private final ApplicationContext applicationContext;
 
     // 커스텀 어노테이션들을 모두 감지
@@ -33,8 +32,7 @@ public class DataPermissionAspect {
             "@annotation(com.back.catchmate.global.aop.permission.CheckEnrollApplicantPermission) || " +
             "@annotation(com.back.catchmate.global.aop.permission.CheckEnrollHostPermission) || " +
             "@annotation(com.back.catchmate.global.aop.permission.CheckNotificationPermission) || " +
-            "@annotation(com.back.catchmate.global.aop.permission.CheckInquiryPermission) || " +
-            "@annotation(com.back.catchmate.global.aop.permission.CheckReportPermission)")
+            "@annotation(com.back.catchmate.global.aop.permission.CheckInquiryPermission)")
 
     public void checkPermission(JoinPoint joinPoint) {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();

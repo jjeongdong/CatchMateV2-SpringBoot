@@ -37,12 +37,6 @@ public class InquiryUseCase {
 
     public InquiryDetailResponse getInquiryDetail(Long userId, Long inquiryId) {
         Inquiry inquiry = inquiryService.getInquiry(inquiryId);
-
-        // 본인 글인지 확인
-        if (!inquiry.getUser().getId().equals(userId)) {
-            throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
-        }
-
         return InquiryDetailResponse.from(inquiry);
     }
 }
