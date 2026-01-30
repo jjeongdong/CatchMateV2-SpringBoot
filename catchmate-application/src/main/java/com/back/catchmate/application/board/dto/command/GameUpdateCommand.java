@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @AllArgsConstructor
-public class GameCreateCommand {
+public class GameUpdateCommand {
     private Long homeClubId;
     private Long awayClubId;
     private LocalDateTime gameStartDate;

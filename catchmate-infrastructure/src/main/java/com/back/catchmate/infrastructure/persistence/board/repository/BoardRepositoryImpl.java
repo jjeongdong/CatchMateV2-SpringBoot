@@ -35,13 +35,13 @@ public class BoardRepositoryImpl implements BoardRepository {
     }
 
     @Override
-    public Optional<Board> findByIdAndIsCompletedTrue(Long id) {
+    public Optional<Board> findCompletedById(Long id) {
         return jpaBoardRepository.findByIdAndCompletedTrue(id)
                 .map(BoardEntity::toModel);
     }
 
     @Override
-    public Optional<Board> findFirstByUserIdAndIsCompletedFalse(Long userId) {
+    public Optional<Board> findTempBoardByUserId(Long userId) {
         return jpaBoardRepository.findFirstByUserIdAndCompletedFalse(userId)
                 .map(BoardEntity::toModel);
     }
@@ -106,13 +106,13 @@ public class BoardRepositoryImpl implements BoardRepository {
     }
 
     @Override
-    public void delete(Board board) {
-        BoardEntity entity = BoardEntity.from(board);
-        jpaBoardRepository.delete(entity);
+    public long count() {
+        return jpaBoardRepository.count();
     }
 
     @Override
-    public long count() {
-        return jpaBoardRepository.count();
+    public void delete(Board board) {
+        BoardEntity entity = BoardEntity.from(board);
+        jpaBoardRepository.delete(entity);
     }
 }

@@ -95,7 +95,7 @@ public class AdminUseCase {
 
     public PagedResponse<AdminBoardResponse> getUserBoards(Long userId, int page, int size) {
         DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Board> boardPage = boardService.getBoardsByUserId(userId, domainPageable);
+        DomainPage<Board> boardPage = boardService.getBoardListByUserId(userId, domainPageable);
 
         List<AdminBoardResponse> responses = boardPage.getContent().stream()
                 .map(AdminBoardResponse::from)

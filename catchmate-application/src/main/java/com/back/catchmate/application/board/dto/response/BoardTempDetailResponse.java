@@ -3,12 +3,14 @@ package com.back.catchmate.application.board.dto.response;
 import com.back.catchmate.application.club.dto.response.ClubResponse;
 import com.back.catchmate.application.user.dto.response.UserResponse;
 import com.back.catchmate.domain.board.model.Board;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
-public class BoardTempResponse {
+@AllArgsConstructor
+public class BoardTempDetailResponse {
     private Long boardId;
     private String title;
     private String content;
@@ -20,12 +22,12 @@ public class BoardTempResponse {
     private GameResponse game;
     private UserResponse user;
 
-    public static BoardTempResponse from(Board board) {
+    public static BoardTempDetailResponse from(Board board) {
         if (board == null) {
             return null;
         }
 
-        return BoardTempResponse.builder()
+        return BoardTempDetailResponse.builder()
                 .boardId(board.getId())
                 .title(board.getTitle())
                 .content(board.getContent())

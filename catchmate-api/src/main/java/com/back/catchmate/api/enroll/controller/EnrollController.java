@@ -55,7 +55,7 @@ public class EnrollController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(enrollUseCase.getReceiveEnrollListByBordId(userId, boardId, page, size));
+        return ResponseEntity.ok(enrollUseCase.getReceiveEnrollListByBoardId(userId, boardId, page, size));
     }
 
     @GetMapping("/api/enrolls/receive/all")

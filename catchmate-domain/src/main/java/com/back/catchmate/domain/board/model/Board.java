@@ -30,9 +30,14 @@ public class Board implements ResourceOwnership {
     private LocalDateTime liftUpDate;
     private LocalDateTime deletedAt;
 
+    // 게시글 생성 메서드
     public static Board createBoard(String title, String content, int maxPerson, User user,
                                     Club cheerClub, Game game, String preferredGender,
-                                    List<String> preferredAgeRange, boolean completed) {
+                                    List<String> preferredAgeRangeList, boolean completed) {
+
+        String preferredAgeRange = preferredAgeRangeList != null
+                ? String.join(",", preferredAgeRangeList)
+                : "";
 
         Board board = Board.builder()
                 .title(title)
@@ -43,21 +48,25 @@ public class Board implements ResourceOwnership {
                 .cheerClub(cheerClub)
                 .game(game)
                 .preferredGender(preferredGender)
-                .preferredAgeRange(String.join(",", preferredAgeRange))
+                .preferredAgeRange(preferredAgeRange)
                 .completed(completed)
                 .createdAt(LocalDateTime.now())
                 .liftUpDate(LocalDateTime.now())
                 .build();
 
         board.validateForPublish();
-
         return board;
     }
 
+    // 게시글 수정 메서드
     public void updateBoard(String title, String content, int maxPerson,
                             Club cheerClub, Game game, String preferredGender,
-                            List<String> preferredAgeRange, boolean completed) {
+                            List<String> preferredAgeRangeList, boolean completed) {
+
         validateUpdatable();
+        String preferredAgeRange = preferredAgeRangeList != null
+                ? String.join(",", preferredAgeRangeList)
+                : "";
 
         this.title = title;
         this.content = content;
@@ -65,13 +74,24 @@ public class Board implements ResourceOwnership {
         this.cheerClub = cheerClub;
         this.game = game;
         this.preferredGender = preferredGender;
-        this.preferredAgeRange = String.join(",", preferredAgeRange);
+        this.preferredAgeRange = preferredAgeRange;
         this.completed = completed;
 
         validateForPublish();
     }
 
-    public void validateForPublish() {
+    // 게시글 끌어올리기 메서드
+    public void updateLiftUpDate(LocalDateTime liftUpDate) {
+        this.liftUpDate = liftUpDate;
+    }
+
+    // 삭제 메서드
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    // 발행 검증 로직
+    private void validateForPublish() {
         if (!this.completed) {
             return;
         }
@@ -93,20 +113,14 @@ public class Board implements ResourceOwnership {
         }
     }
 
+    // 수정 가능 여부 검증 로직
     private void validateUpdatable() {
         if (this.currentPerson >= 2) {
             throw new BaseException(ErrorCode.BOARD_CANNOT_UPDATE_AFTER_ENROLL);
         }
     }
 
-    public void updateLiftUpDate(LocalDateTime liftUpDate) {
-        this.liftUpDate = liftUpDate;
-    }
-
-    public void delete() {
-        this.deletedAt = LocalDateTime.now();
-    }
-
+    // 현재 인원수 증가 메서드
     public void increaseCurrentPerson() {
         if (this.currentPerson >= this.maxPerson) {
             throw new BaseException(ErrorCode.FULL_PERSON);

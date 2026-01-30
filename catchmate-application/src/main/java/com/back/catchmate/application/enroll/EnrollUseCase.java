@@ -23,7 +23,6 @@ import com.back.catchmate.domain.enroll.model.AcceptStatus;
 import com.back.catchmate.domain.enroll.model.Enroll;
 import com.back.catchmate.domain.enroll.service.EnrollService;
 import com.back.catchmate.domain.notification.model.Notification;
-import com.back.catchmate.domain.notification.port.NotificationSender;
 import com.back.catchmate.domain.notification.service.NotificationService;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.service.UserService;
@@ -37,7 +36,6 @@ import user.enums.AlarmType;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -108,7 +106,7 @@ public class EnrollUseCase {
         return new PagedResponse<>(enrollPage, responses);
     }
 
-    public PagedResponse<EnrollApplicantResponse> getReceiveEnrollListByBordId(Long userId, Long boardId, int page, int size) {
+    public PagedResponse<EnrollApplicantResponse> getReceiveEnrollListByBoardId(Long userId, Long boardId, int page, int size) {
         // 도메인 페이징 객체 생성
         DomainPageable domainPageable = DomainPageable.of(page, size);
         Board board = boardService.getBoard(boardId);

@@ -10,13 +10,11 @@ import java.util.Optional;
 public interface BoardRepository {
     Board save(Board board);
     Optional<Board> findById(Long id);
-    Optional<Board> findByIdAndIsCompletedTrue(Long id);
-    Optional<Board> findFirstByUserIdAndIsCompletedFalse(Long userId);
+    Optional<Board> findCompletedById(Long id);
+    Optional<Board> findTempBoardByUserId(Long userId);
     DomainPage<Board> findAll(DomainPageable pageable);
     DomainPage<Board> findAllByCondition(BoardSearchCondition condition, DomainPageable pageable);
     DomainPage<Board> findAllByUserId(Long userId, DomainPageable pageable);
-    void delete(Board board);
-
-    // 대시보드
     long count();
+    void delete(Board board);
 }

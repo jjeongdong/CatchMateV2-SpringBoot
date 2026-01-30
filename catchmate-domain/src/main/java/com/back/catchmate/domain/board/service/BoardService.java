@@ -21,18 +21,18 @@ public class BoardService {
         return boardRepository.save(board);
     }
 
-    public Optional<Board> findUncompletedBoard(Long userId) {
-        return boardRepository.findFirstByUserIdAndIsCompletedFalse(userId);
-    }
-
-    public Board getCompletedBoard(Long boardId) {
-        return boardRepository.findByIdAndIsCompletedTrue(boardId)
-                .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
-    }
-
     public Board getBoard(Long boardId) {
         return boardRepository.findById(boardId)
                 .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
+    }
+
+    public Board getCompletedBoard(Long boardId) {
+        return boardRepository.findCompletedById(boardId)
+                .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
+    }
+
+    public Optional<Board> findTempBoard(Long userId) {
+        return boardRepository.findTempBoardByUserId(userId);
     }
 
     public DomainPage<Board> getBoardList(DomainPageable pageable) {
@@ -43,12 +43,12 @@ public class BoardService {
         return boardRepository.findAllByCondition(condition, pageable);
     }
 
-    public DomainPage<Board> getBoardsByUserId(Long userId, DomainPageable pageable) {
+    public DomainPage<Board> getBoardListByUserId(Long userId, DomainPageable pageable) {
         return boardRepository.findAllByUserId(userId, pageable);
     }
 
-    public Optional<Board> getTempBoard(Long userId) {
-        return boardRepository.findFirstByUserIdAndIsCompletedFalse(userId);
+    public long getTotalBoardCount() {
+        return boardRepository.count();
     }
 
     public void updateBoard(Board board) {
@@ -57,9 +57,5 @@ public class BoardService {
 
     public void deleteBoard(Board board) {
         boardRepository.delete(board);
-    }
-
-    public long getTotalBoardCount() {
-        return boardRepository.count();
     }
 }
