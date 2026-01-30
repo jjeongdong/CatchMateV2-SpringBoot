@@ -16,7 +16,23 @@ import java.util.Optional;
 public class BookmarkService {
     private final BookmarkRepository bookmarkRepository;
 
-    public void toggleBookmark(User user, Board board) {
+    // =================================================================================
+    // Read
+    // =================================================================================
+
+    public boolean isBookmarked(Long userId, Long boardId) {
+        return bookmarkRepository.existsByUserIdAndBoardId(userId, boardId);
+    }
+
+    public DomainPage<Bookmark> getBookmarkList(Long userId, DomainPageable pageable) {
+        return bookmarkRepository.findAllByUserId(userId, pageable);
+    }
+
+    // =================================================================================
+    // Update (토글)
+    // =================================================================================
+
+    public void updateBookmark(User user, Board board) {
         Optional<Bookmark> existingBookmark = bookmarkRepository.findByUserIdAndBoardId(user.getId(), board.getId());
 
         if (existingBookmark.isPresent()) {
@@ -25,13 +41,5 @@ public class BookmarkService {
             Bookmark newBookmark = Bookmark.createBookmark(user, board);
             bookmarkRepository.save(newBookmark);
         }
-    }
-
-    public boolean isBookmarked(Long userId, Long boardId) {
-        return bookmarkRepository.existsByUserIdAndBoardId(userId, boardId);
-    }
-
-    public DomainPage<Bookmark> getMyBookmarks(Long userId, DomainPageable pageable) {
-        return bookmarkRepository.findAllByUserId(userId, pageable);
     }
 }

@@ -22,20 +22,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class BookMarkController {
     private final BookmarkUseCase bookmarkUseCase;
 
-    @PostMapping("/{boardId}")
-    @Operation(summary = "게시글 찜하기/취소", description = "게시글을 찜하거나 찜을 취소합니다. (토글 방식)")
-    public ResponseEntity<Void> toggleBookmark(@AuthUser Long userId,
-                                               @PathVariable Long boardId) {
-        bookmarkUseCase.toggleBookmark(userId, boardId);
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping("/me")
     @Operation(summary = "내가 찜한 게시글 목록 조회", description = "내가 찜한 게시글 목록을 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<BoardResponse>> getMyBookmarks(@AuthUser Long userId,
-                                                                       @RequestParam(defaultValue = "0") int page,
-                                                                       @RequestParam(defaultValue = "10") int size) {
-        PagedResponse<BoardResponse> response = bookmarkUseCase.getMyBookmarks(userId, page, size);
+    public ResponseEntity<PagedResponse<BoardResponse>> getBookmarkList(@AuthUser Long userId,
+                                                                        @RequestParam(defaultValue = "0") int page,
+                                                                        @RequestParam(defaultValue = "10") int size) {
+        PagedResponse<BoardResponse> response = bookmarkUseCase.getBookmarkList(userId, page, size);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{boardId}")
+    @Operation(summary = "게시글 찜하기/취소", description = "게시글을 찜하거나 찜을 취소합니다. (토글 방식)")
+    public ResponseEntity<Void> updateBookmark(@AuthUser Long userId,
+                                               @PathVariable Long boardId) {
+        bookmarkUseCase.updateBookmark(userId, boardId);
+        return ResponseEntity.ok().build();
     }
 }
