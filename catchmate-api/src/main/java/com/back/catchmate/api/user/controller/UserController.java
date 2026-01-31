@@ -66,11 +66,17 @@ public class UserController {
     public ResponseEntity<UserUpdateResponse> updateUserProfile(@AuthUser Long userId,
                                                                 @RequestPart(value = "request", required = false) @Valid UserProfileUpdateRequest request,
                                                                 @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
-        UploadFile uploadFile = UploadFile.builder()
-                .originalFilename(profileImage.getOriginalFilename())
-                .inputStream(profileImage.getInputStream())
-                .build();
-        return ResponseEntity.ok(userUseCase.updateUserProfile(userId, request.toCommand(), uploadFile));
+        UploadFile uploadFile = null;
+        if (profileImage != null && !profileImage.isEmpty()) {
+            uploadFile = UploadFile.builder()
+                    .originalFilename(profileImage.getOriginalFilename())
+                    .contentType(profileImage.getContentType())
+                    .size(profileImage.getSize())
+                    .inputStream(profileImage.getInputStream())
+                    .build();
+        }
+
+        return ResponseEntity.ok(userUseCase.updateUserProfile(userId, UserProfileUpdateRequest.toCommand(request), uploadFile));
     }
 
     @PatchMapping("/alarm")

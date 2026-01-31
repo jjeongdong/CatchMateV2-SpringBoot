@@ -13,6 +13,7 @@ import com.back.catchmate.domain.auth.service.AuthService;
 import com.back.catchmate.domain.club.model.Club;
 import com.back.catchmate.domain.club.service.ClubService;
 import com.back.catchmate.domain.user.model.User;
+import com.back.catchmate.domain.user.port.ProfileImageUploader;
 import com.back.catchmate.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class UserUseCase {
     private final UserService userService;
     private final AuthService authService;
     private final ClubService clubService;
+    private final ProfileImageUploader profileImageUploader;
 
     @Transactional
     public UserRegisterResponse createUser(UserRegisterCommand command) {
@@ -74,10 +76,17 @@ public class UserUseCase {
             club = clubService.getClub(command.getFavoriteClubId());
         }
 
-        // TODO: S3 이미지 업로드 구현
-        // String imageUrl = s3UploadService.uploadFile(uploadFile);
+        String profileImageUrl = null;
+        if (uploadFile != null) {
+            profileImageUrl = profileImageUploader.upload(
+                    uploadFile.getOriginalFilename(),
+                    uploadFile.getContentType(),
+                    uploadFile.getInputStream(),
+                    uploadFile.getSize()
+            );
+        }
 
-        user.updateProfile(command.getNickName(), command.getWatchStyle(), club, "imageUrl");
+        user.updateProfile(command.getNickName(), command.getWatchStyle(), club, profileImageUrl);
         userService.updateUser(user);
 
         return UserUpdateResponse.from(user);

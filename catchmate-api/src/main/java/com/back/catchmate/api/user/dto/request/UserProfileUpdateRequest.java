@@ -2,7 +2,6 @@ package com.back.catchmate.api.user.dto.request;
 
 import com.back.catchmate.application.user.dto.command.UserProfileUpdateCommand;
 import jakarta.validation.constraints.Size;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,7 +17,14 @@ public class UserProfileUpdateRequest {
 
     private String watchStyle;
 
-    public UserProfileUpdateCommand toCommand() {
+    public static UserProfileUpdateCommand toCommand(UserProfileUpdateRequest request) {
+        if (request == null) {
+            return com.back.catchmate.application.user.dto.command.UserProfileUpdateCommand.builder().build();
+        }
+        return request.toCommand();
+    }
+
+    private UserProfileUpdateCommand toCommand() {
         return UserProfileUpdateCommand.builder()
                 .nickName(nickName)
                 .favoriteClubId(favoriteClubId)
