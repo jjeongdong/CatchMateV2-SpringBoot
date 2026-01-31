@@ -14,10 +14,6 @@ import java.util.List;
 public class ClubUseCase {
     private final ClubService clubService;
 
-    // =================================================================================
-    // Read
-    // =================================================================================
-
     @Transactional(readOnly = true)
     public List<ClubResponse> getClubList() {
         List<Club> clubs = clubService.getClubList();

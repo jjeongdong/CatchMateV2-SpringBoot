@@ -70,7 +70,6 @@ public class EnrollUseCase {
                 board.getUser(),
                 applicant,
                 "직관 신청 알림",
-                AlarmType.ENROLL,
                 board.getId()
         );
 
@@ -215,7 +214,6 @@ public class EnrollUseCase {
                 enroll.getUser(),
                 board.getUser(),
                 "직관 신청 수락 알림",
-                AlarmType.ENROLL,
                 board.getId()
         );
 
@@ -247,7 +245,6 @@ public class EnrollUseCase {
                 enroll.getUser(),
                 board.getUser(),
                 "직관 신청 거절 알림",
-                AlarmType.ENROLL,
                 board.getId()
         );
 
@@ -279,34 +276,18 @@ public class EnrollUseCase {
         return EnrollCancelResponse.of(enrollId);
     }
 
-    // =================================================================================
-    // Private Helpers
-    // =================================================================================
-
-    private void saveNotification(
-            User user,
-            User sender,
-            String title,
-            AlarmType type,
-            Long referenceId
-    ) {
+    private void saveNotification(User user, User sender, String title, Long referenceId) {
         Notification notification = Notification.createNotification(
                 user,
                 sender,
                 title,
-                type,
+                AlarmType.ENROLL,
                 referenceId
         );
         notificationService.createNotification(notification);
     }
 
-    private void publishEnrollEvent(
-            User recipient,
-            Board board,
-            String title,
-            String body,
-            String type
-    ) {
+    private void publishEnrollEvent(User recipient, Board board, String title, String body, String type) {
         eventPublisher.publishEvent(
                 new EnrollNotificationEvent(
                         recipient,

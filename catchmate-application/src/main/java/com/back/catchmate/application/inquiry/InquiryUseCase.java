@@ -18,10 +18,6 @@ public class InquiryUseCase {
     private final InquiryService inquiryService;
     private final UserService userService;
 
-    // =================================================================================
-    // Create
-    // =================================================================================
-
     @Transactional
     public InquiryCreateResponse createInquiry(Long userId, InquiryCreateCommand command) {
         User user = userService.getUser(userId);
@@ -36,10 +32,6 @@ public class InquiryUseCase {
         Inquiry savedInquiry = inquiryService.createInquiry(inquiry);
         return InquiryCreateResponse.of(savedInquiry.getId());
     }
-
-    // =================================================================================
-    // Read
-    // =================================================================================
 
     public InquiryDetailResponse getInquiry(Long userId, Long inquiryId) {
         Inquiry inquiry = inquiryService.getInquiry(inquiryId);

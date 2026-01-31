@@ -19,6 +19,7 @@ import com.back.catchmate.application.admin.dto.response.InquiryAnswerResponse;
 import com.back.catchmate.application.admin.dto.response.NoticeActionResponse;
 import com.back.catchmate.application.admin.dto.response.NoticeCreateResponse;
 import com.back.catchmate.application.admin.dto.response.ReportActionResponse;
+import com.back.catchmate.application.admin.event.AdminInquiryAnswerNotificationEvent;
 import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.application.notice.dto.response.NoticeDetailResponse;
 import com.back.catchmate.domain.board.model.Board;
@@ -32,20 +33,19 @@ import com.back.catchmate.domain.inquiry.service.InquiryService;
 import com.back.catchmate.domain.notice.model.Notice;
 import com.back.catchmate.domain.notice.service.NoticeService;
 import com.back.catchmate.domain.notification.model.Notification;
-import com.back.catchmate.domain.notification.port.NotificationSender;
 import com.back.catchmate.domain.notification.service.NotificationService;
 import com.back.catchmate.domain.report.model.Report;
 import com.back.catchmate.domain.report.service.ReportService;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import user.enums.AlarmType;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -58,8 +58,8 @@ public class AdminUseCase {
     private final InquiryService inquiryService;
     private final EnrollService enrollService;
     private final NoticeService noticeService;
-    private final NotificationSender notificationSender;
     private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public NoticeCreateResponse createNotice(Long userId, NoticeCreateCommand command) {
@@ -86,11 +86,10 @@ public class AdminUseCase {
                 updatedInquiry.getUser(),
                 null,
                 "문의 답변이 도착했어요",
-                AlarmType.INQUIRY_ANSWER,
                 updatedInquiry.getId()
         );
 
-        sendInquiryNotification(
+        publishInquiryAnswerEvent(
                 updatedInquiry.getUser(),
                 updatedInquiry,
                 "문의 답변이 도착했어요",
@@ -251,25 +250,26 @@ public class AdminUseCase {
         return NoticeActionResponse.of(noticeId, "공지사항이 삭제되었습니다.");
     }
 
-    private void saveNotification(User user, User sender, String title, AlarmType type, Long referenceId) {
+    private void saveNotification(User user, User sender, String title, Long referenceId) {
         Notification notification = Notification.createNotification(
                 user,
                 sender,
                 title,
-                type,
+                AlarmType.INQUIRY_ANSWER,
                 referenceId
         );
         notificationService.createNotification(notification);
     }
 
-    private void sendInquiryNotification(User recipient, Inquiry inquiry, String title, String body, String type) {
-        if (recipient.getFcmToken() != null && recipient.getEventAlarm() == 'Y') {
-            Map<String, String> data = Map.of(
-                    "type", type,
-                    "inquiryId", inquiry.getId().toString()
-            );
-
-            notificationSender.sendNotification(recipient.getFcmToken(), title, body, data);
-        }
+    private void publishInquiryAnswerEvent(User recipient, Inquiry inquiry, String title, String body, String type) {
+        eventPublisher.publishEvent(
+                new AdminInquiryAnswerNotificationEvent(
+                        recipient,
+                        inquiry,
+                        title,
+                        body,
+                        type
+                )
+        );
     }
 }

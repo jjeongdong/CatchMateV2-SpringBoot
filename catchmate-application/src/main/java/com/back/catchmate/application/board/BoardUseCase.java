@@ -210,10 +210,6 @@ public class BoardUseCase {
         boardService.updateBoard(board);
     }
 
-    // =================================================================================
-    // Private Helpers
-    // =================================================================================
-
     private Club getCheerClub(Long clubId) {
         if (clubId == null) return null;
         return clubService.getClub(clubId);
