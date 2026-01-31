@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.stream.Stream;
 
-@Getter
 @RequiredArgsConstructor
 public enum Provider {
     GOOGLE("google"),
@@ -13,6 +12,7 @@ public enum Provider {
     KAKAO("kakao"),
     APPLE("apple");
 
+    @Getter
     private final String provider;
 
     public static Provider of(String provider) {

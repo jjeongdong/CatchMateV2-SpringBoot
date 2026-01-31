@@ -10,9 +10,14 @@ import java.util.Optional;
 
 public interface BlockRepository {
     Block save(Block block);
-    void delete(Block block);
-    boolean existsByBlockerAndBlocked(User blocker, User blocked);
+
     Optional<Block> findByBlockerAndBlocked(User blocker, User blocked);
-    DomainPage<Block> findAllByBlocker(Long blockerId, DomainPageable pageable);
+
+    DomainPage<Block> findAllByBlockerId(Long blockerId, DomainPageable pageable);
+
     List<Long> findAllBlockedUserIdsByBlocker(User user);
+
+    boolean existsByBlockerAndBlocked(User blocker, User blocked);
+
+    void delete(Block block);
 }

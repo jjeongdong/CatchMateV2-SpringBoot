@@ -33,30 +33,45 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Optional<User> findByProviderId(String providerId) {
-        return jpaUserRepository.findByProviderId(providerId)
-                .map(UserEntity::toModel);
-    }
-
-    @Override
     public Optional<User> findById(Long id) {
         return jpaUserRepository.findById(id)
                 .map(UserEntity::toModel);
     }
 
     @Override
-    public boolean existsByNickName(String nickName) {
-        return jpaUserRepository.existsByNickName(nickName);
+    public Optional<User> findByProviderId(String providerId) {
+        return jpaUserRepository.findByProviderId(providerId)
+                .map(UserEntity::toModel);
     }
 
     @Override
-    public long count() {
-        return jpaUserRepository.count();
-    }
+    public DomainPage<User> findAllByClubName(String clubName, DomainPageable pageable) {
+        List<UserEntity> entities = jpaQueryFactory
+                .selectFrom(userEntity)
+                .join(userEntity.club, clubEntity).fetchJoin()
+                .where(clubNameEq(clubName))
+                .offset(pageable.getOffset())
+                .limit(pageable.getSize())
+                .orderBy(userEntity.createdAt.desc())
+                .fetch();
 
-    @Override
-    public long countByGender(Character gender) {
-        return jpaUserRepository.countByGender(gender);
+        Long totalCount = jpaQueryFactory
+                .select(userEntity.count())
+                .from(userEntity)
+                .join(userEntity.club, clubEntity)
+                .where(clubNameEq(clubName))
+                .fetchOne();
+
+        List<User> users = entities.stream()
+                .map(UserEntity::toModel)
+                .toList();
+
+        return new DomainPage<>(
+                users,
+                pageable.getPage(),
+                pageable.getSize(),
+                totalCount != null ? totalCount : 0L
+        );
     }
 
     @Override
@@ -98,33 +113,18 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public DomainPage<User> findAllByClubName(String clubName, DomainPageable pageable) {
-        List<UserEntity> entities = jpaQueryFactory
-                .selectFrom(userEntity)
-                .join(userEntity.club, clubEntity).fetchJoin()
-                .where(clubNameEq(clubName))
-                .offset(pageable.getOffset())
-                .limit(pageable.getSize())
-                .orderBy(userEntity.createdAt.desc())
-                .fetch();
+    public boolean existsByNickName(String nickName) {
+        return jpaUserRepository.existsByNickName(nickName);
+    }
 
-        Long totalCount = jpaQueryFactory
-                .select(userEntity.count())
-                .from(userEntity)
-                .join(userEntity.club, clubEntity)
-                .where(clubNameEq(clubName))
-                .fetchOne();
+    @Override
+    public long count() {
+        return jpaUserRepository.count();
+    }
 
-        List<User> users = entities.stream()
-                .map(UserEntity::toModel)
-                .toList();
-
-        return new DomainPage<>(
-                users,
-                pageable.getPage(),
-                pageable.getSize(),
-                totalCount != null ? totalCount : 0L
-        );
+    @Override
+    public long countByGender(Character gender) {
+        return jpaUserRepository.countByGender(gender);
     }
 
     // 동적 쿼리 조건: clubName이 있으면 필터링, 없으면 전체 조회

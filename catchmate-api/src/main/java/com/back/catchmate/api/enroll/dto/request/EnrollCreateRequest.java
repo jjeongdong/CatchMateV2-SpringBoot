@@ -1,11 +1,13 @@
 package com.back.catchmate.api.enroll.dto.request;
 
 import com.back.catchmate.application.enroll.dto.command.EnrollCreateCommand;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class EnrollCreateRequest {
     private String description;
 

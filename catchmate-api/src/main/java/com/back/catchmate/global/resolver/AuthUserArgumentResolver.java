@@ -17,9 +17,6 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 @Component
 @RequiredArgsConstructor
 public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
-
-    private static final String AUTHORIZATION_HEADER = "Authorization";
-
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         // 파라미터에 @AuthUser 어노테이션이 붙어있고, 타입이 Long인지 확인

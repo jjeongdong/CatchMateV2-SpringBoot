@@ -7,8 +7,6 @@ import com.back.catchmate.domain.inquiry.model.Inquiry;
 import com.back.catchmate.domain.inquiry.service.InquiryService;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.service.UserService;
-import error.ErrorCode;
-import error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +18,12 @@ public class InquiryUseCase {
     private final InquiryService inquiryService;
     private final UserService userService;
 
+    // =================================================================================
+    // Create
+    // =================================================================================
+
     @Transactional
-    public InquiryCreateResponse registerInquiry(Long userId, InquiryCreateCommand command) {
+    public InquiryCreateResponse createInquiry(Long userId, InquiryCreateCommand command) {
         User user = userService.getUser(userId);
 
         Inquiry inquiry = Inquiry.createInquiry(
@@ -35,7 +37,11 @@ public class InquiryUseCase {
         return InquiryCreateResponse.of(savedInquiry.getId());
     }
 
-    public InquiryDetailResponse getInquiryDetail(Long userId, Long inquiryId) {
+    // =================================================================================
+    // Read
+    // =================================================================================
+
+    public InquiryDetailResponse getInquiry(Long userId, Long inquiryId) {
         Inquiry inquiry = inquiryService.getInquiry(inquiryId);
         return InquiryDetailResponse.from(inquiry);
     }

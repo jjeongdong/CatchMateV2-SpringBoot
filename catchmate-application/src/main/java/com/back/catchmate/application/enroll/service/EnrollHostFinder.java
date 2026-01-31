@@ -14,7 +14,7 @@ public class EnrollHostFinder implements DomainFinder<ResourceOwnership> {
 
     @Override
     public ResourceOwnership searchById(Long enrollId) {
-        Enroll enroll = enrollService.getEnrollById(enrollId);
+        Enroll enroll = enrollService.getEnroll(enrollId);
         return enroll.getBoard();
     }
 }

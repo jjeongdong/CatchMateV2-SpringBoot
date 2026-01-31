@@ -49,21 +49,30 @@ public class BoardController {
 
     @GetMapping("/{boardId}")
     @Operation(summary = "게시글 단일 조회 API", description = "게시글 ID로 상세 정보를 조회합니다.")
-    public ResponseEntity<BoardDetailResponse> getBoardDetail(@AuthUser Long userId,
+    public ResponseEntity<BoardDetailResponse> getBoard(@AuthUser Long userId,
                                                         @PathVariable Long boardId) {
-        return ResponseEntity.ok(boardUseCase.getBoardDetail(userId, boardId));
+        return ResponseEntity.ok(boardUseCase.getBoard(userId, boardId));
+    }
+
+    @GetMapping("/temp")
+    @Operation(summary = "임시저장된 게시글 단일 조회 API", description = "사용자의 임시저장된 게시글을 조회합니다. 존재하지 않으면 null을 반환합니다.")
+    public ResponseEntity<BoardTempDetailResponse> getTempBoard(@AuthUser Long userId) {
+        BoardTempDetailResponse response = boardUseCase.getTempBoard(userId);
+        if (response == null) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
     @Operation(summary = "게시글 목록 조회", description = "조건에 맞는 게시글 목록을 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<BoardResponse>> getBoardList(
-            @Parameter(hidden = true) @AuthUser Long userId,
-            @Parameter(description = "경기 날짜 (YYYY-MM-DD)") @RequestParam(required = false) LocalDate gameDate,
-            @Parameter(description = "최대 인원 수") @RequestParam(required = false) Integer maxPerson,
-            @Parameter(description = "선호 구단 ID 목록 (예: 1,2,3)") @RequestParam(required = false) List<Long> preferredTeamIdList,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
+    public ResponseEntity<PagedResponse<BoardResponse>> getBoardList(@Parameter(hidden = true) @AuthUser Long userId,
+                                                                     @Parameter(description = "경기 날짜 (YYYY-MM-DD)") @RequestParam(required = false) LocalDate gameDate,
+                                                                     @Parameter(description = "최대 인원 수") @RequestParam(required = false) Integer maxPerson,
+                                                                     @Parameter(description = "선호 구단 ID 목록 (예: 1,2,3)") @RequestParam(required = false) List<Long> preferredTeamIdList,
+                                                                     @RequestParam(defaultValue = "0") int page,
+                                                                     @RequestParam(defaultValue = "10") int size) {
         PagedResponse<BoardResponse> response = boardUseCase.getBoardList(
                 userId,
                 gameDate,
@@ -78,24 +87,12 @@ public class BoardController {
 
     @Operation(summary = "유저별 게시글 조회", description = "특정 유저가 작성한 모든 게시글을 조회합니다.")
     @GetMapping("/users/{userId}")
-    public ResponseEntity<PagedResponse<BoardResponse>> getBoardListByUserId(
-            @Parameter(description = "조회 대상 유저 ID") @PathVariable Long userId,
-            @Parameter(hidden = true) @AuthUser Long loginUserId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<PagedResponse<BoardResponse>> getBoardListByUserId(@Parameter(description = "조회 대상 유저 ID") @PathVariable Long userId,
+                                                                             @Parameter(hidden = true) @AuthUser Long loginUserId,
+                                                                             @RequestParam(defaultValue = "0") int page,
+                                                                             @RequestParam(defaultValue = "10") int size) {
 
         PagedResponse<BoardResponse> response = boardUseCase.getBoardListByUserId(userId, loginUserId, page, size);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/temp")
-    @Operation(summary = "임시저장된 게시글 단일 조회 API", description = "사용자의 임시저장된 게시글을 조회합니다. 존재하지 않으면 null을 반환합니다.")
-    public ResponseEntity<BoardTempDetailResponse> getTempBoard(@AuthUser Long userId) {
-        BoardTempDetailResponse response = boardUseCase.getTempBoard(userId);
-        if (response == null) {
-            return ResponseEntity.noContent().build();
-        }
-
         return ResponseEntity.ok(response);
     }
 
@@ -103,7 +100,7 @@ public class BoardController {
     @PutMapping("/{boardId}")
     @Operation(summary = "게시글 수정 API", description = "게시글을 수정합니다.")
     public ResponseEntity<BoardUpdateResponse> updateBoard(@AuthUser Long userId,
-                                                           @PathVariable @PermissionId Long boardId,
+                                                           @PermissionId @PathVariable Long boardId,
                                                            @Valid @RequestBody BoardUpdateRequest request) {
         return ResponseEntity.ok(boardUseCase.updateBoard(userId, boardId, request.toCommand()));
     }
@@ -112,7 +109,7 @@ public class BoardController {
     @PatchMapping("/{boardId}/lift-up")
     @Operation(summary = "게시글 끌어올리기 API", description = "게시글을 끌어올립니다.")
     public ResponseEntity<BoardLiftUpResponse> updateLiftUpDate(@AuthUser Long userId,
-                                                @PathVariable @PermissionId Long boardId) {
+                                                                @PermissionId @PathVariable Long boardId) {
         return ResponseEntity.ok(boardUseCase.updateLiftUpDate(userId, boardId));
     }
 
@@ -120,7 +117,7 @@ public class BoardController {
     @DeleteMapping("/{boardId}")
     @Operation(summary = "게시글 삭제 API", description = "게시글을 삭제합니다.")
     public ResponseEntity<Void> deleteBoard(@AuthUser Long userId,
-                                            @PathVariable @PermissionId Long boardId) {
+                                            @PermissionId @PathVariable Long boardId) {
         boardUseCase.deleteBoard(userId, boardId);
         return ResponseEntity.ok().build();
     }

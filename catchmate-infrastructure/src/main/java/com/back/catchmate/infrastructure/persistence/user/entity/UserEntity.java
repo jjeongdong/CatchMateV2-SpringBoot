@@ -87,6 +87,28 @@ public class UserEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean isReported;
 
+    public static UserEntity from(User user) {
+        return UserEntity.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .provider(user.getProvider())
+                .providerId(user.getProviderId())
+                .gender(user.getGender())
+                .nickName(user.getNickName())
+                .birthDate(user.getBirthDate())
+                .watchStyle(user.getWatchStyle())
+                .profileImageUrl(user.getProfileImageUrl())
+                .allAlarm(user.getAllAlarm())
+                .chatAlarm(user.getChatAlarm())
+                .enrollAlarm(user.getEnrollAlarm())
+                .eventAlarm(user.getEventAlarm())
+                .fcmToken(user.getFcmToken())
+                .authority(user.getAuthority())
+                .isReported(user.isReported())
+                .club(ClubEntity.from(user.getClub()))
+                .build();
+    }
+
     public User toModel() {
         return User.builder()
                 .id(this.id)
@@ -108,28 +130,6 @@ public class UserEntity extends BaseTimeEntity {
                 .club(this.club.toModel())
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getModifiedAt())
-                .build();
-    }
-
-    public static UserEntity from(User user) {
-        return UserEntity.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .provider(user.getProvider())
-                .providerId(user.getProviderId())
-                .gender(user.getGender())
-                .nickName(user.getNickName())
-                .birthDate(user.getBirthDate())
-                .watchStyle(user.getWatchStyle())
-                .profileImageUrl(user.getProfileImageUrl())
-                .allAlarm(user.getAllAlarm())
-                .chatAlarm(user.getChatAlarm())
-                .enrollAlarm(user.getEnrollAlarm())
-                .eventAlarm(user.getEventAlarm())
-                .fcmToken(user.getFcmToken())
-                .authority(user.getAuthority())
-                .isReported(user.isReported())
-                .club(ClubEntity.from(user.getClub()))
                 .build();
     }
 }

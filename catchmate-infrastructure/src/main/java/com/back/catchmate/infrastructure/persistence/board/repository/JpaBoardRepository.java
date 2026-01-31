@@ -9,6 +9,8 @@ import java.util.Optional;
 
 public interface JpaBoardRepository extends JpaRepository<BoardEntity, Long> {
     Optional<BoardEntity> findByIdAndCompletedTrue(Long id);
+
     Optional<BoardEntity> findFirstByUserIdAndCompletedFalse(Long userId);
+
     Page<BoardEntity> findAllByUserId(Long userId, Pageable pageable);
 }

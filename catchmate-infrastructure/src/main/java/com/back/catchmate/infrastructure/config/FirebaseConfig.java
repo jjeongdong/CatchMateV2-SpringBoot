@@ -1,4 +1,4 @@
-package com.back.catchmate.global.config; // 패키지명은 본인 프로젝트에 맞게
+package com.back.catchmate.infrastructure.config;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;

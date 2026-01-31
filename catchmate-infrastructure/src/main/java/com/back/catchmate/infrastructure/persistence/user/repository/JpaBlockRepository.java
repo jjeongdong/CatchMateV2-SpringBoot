@@ -13,6 +13,7 @@ import java.util.Optional;
 
 public interface JpaBlockRepository extends JpaRepository<BlockEntity, Long> {
     boolean existsByBlockerAndBlocked(UserEntity blocker, UserEntity blocked);
+
     Optional<BlockEntity> findByBlockerAndBlocked(UserEntity blocker, UserEntity blocked);
 
     @Query("SELECT b FROM BlockEntity b JOIN FETCH b.blocked WHERE b.blocker.id = :blockerId")

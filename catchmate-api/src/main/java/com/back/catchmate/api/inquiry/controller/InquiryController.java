@@ -25,14 +25,14 @@ public class InquiryController {
     @Operation(summary = "문의 등록", description = "새로운 1:1 문의를 등록합니다.")
     public ResponseEntity<InquiryCreateResponse> createInquiry(@AuthUser Long userId,
                                                                @RequestBody @Valid InquiryCreateRequest request) {
-        return ResponseEntity.ok(inquiryUseCase.registerInquiry(userId, request.toCommand()));
+        return ResponseEntity.ok(inquiryUseCase.createInquiry(userId, request.toCommand()));
     }
 
     @CheckInquiryPermission
     @GetMapping("/{inquiryId}")
     @Operation(summary = "문의 상세 조회", description = "문의 내용과 답변을 상세 조회합니다.")
-    public ResponseEntity<InquiryDetailResponse> getInquiryDetail(@AuthUser Long userId,
-                                                                  @PermissionId @PathVariable Long inquiryId) {
-        return ResponseEntity.ok(inquiryUseCase.getInquiryDetail(userId, inquiryId));
+    public ResponseEntity<InquiryDetailResponse> getInquiry(@AuthUser Long userId,
+                                                            @PermissionId @PathVariable Long inquiryId) {
+        return ResponseEntity.ok(inquiryUseCase.getInquiry(userId, inquiryId));
     }
 }

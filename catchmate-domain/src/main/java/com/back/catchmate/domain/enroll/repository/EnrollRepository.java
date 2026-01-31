@@ -12,14 +12,24 @@ import java.util.Optional;
 
 public interface EnrollRepository {
     Enroll save(Enroll enroll);
+
     Optional<Enroll> findById(Long id);
+
     Optional<Enroll> findByIdWithLock(Long id);
+
+    Optional<Enroll> findByIdWithFetch(Long id);
+
     Optional<Enroll> findByUserAndBoard(User user, Board board);
+
     DomainPage<Enroll> findAllByUserId(Long userId, DomainPageable pageable);
-    DomainPage<Enroll> findByBoardIdAndStatus(Long boardId, AcceptStatus status, DomainPageable pageable);
+
+    DomainPage<Enroll> findAllByBoardIdAndStatus(Long boardId, AcceptStatus status, DomainPageable pageable);
+
     DomainPage<Long> findBoardIdsWithPendingEnrolls(Long userId, DomainPageable pageable);
-    List<Enroll> findAllByBoardIdIn(List<Long> boardIds);
-    Optional<Enroll> findByIdWithFetch(Long enrollId);
+
+    List<Enroll> findAllByBoardIds(List<Long> boardIds);
+
     long countByBoardWriterAndStatus(Long userId, AcceptStatus status);
+
     void delete(Enroll enroll);
 }

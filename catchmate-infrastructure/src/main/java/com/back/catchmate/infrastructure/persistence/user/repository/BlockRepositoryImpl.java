@@ -29,24 +29,13 @@ public class BlockRepositoryImpl implements BlockRepository {
     }
 
     @Override
-    public void delete(Block block) {
-        BlockEntity entity = BlockEntity.from(block);
-        jpaBlockRepository.delete(entity);
-    }
-
-    @Override
-    public boolean existsByBlockerAndBlocked(User blocker, User blocked) {
-        return jpaBlockRepository.existsByBlockerAndBlocked(UserEntity.from(blocker), UserEntity.from(blocked));
-    }
-
-    @Override
     public Optional<Block> findByBlockerAndBlocked(User blocker, User blocked) {
         return jpaBlockRepository.findByBlockerAndBlocked(UserEntity.from(blocker), UserEntity.from(blocked))
                 .map(BlockEntity::toModel);
     }
 
     @Override
-    public DomainPage<Block> findAllByBlocker(Long blockerId, DomainPageable domainPageable) {
+    public DomainPage<Block> findAllByBlockerId(Long blockerId, DomainPageable domainPageable) {
         Pageable pageable = PageRequest.of(
                 domainPageable.getPage(),
                 domainPageable.getSize(),
@@ -70,5 +59,16 @@ public class BlockRepositoryImpl implements BlockRepository {
     @Override
     public List<Long> findAllBlockedUserIdsByBlocker(User user) {
         return jpaBlockRepository.findAllBlockedUserIdsByBlocker(user.getId());
+    }
+
+    @Override
+    public boolean existsByBlockerAndBlocked(User blocker, User blocked) {
+        return jpaBlockRepository.existsByBlockerAndBlocked(UserEntity.from(blocker), UserEntity.from(blocked));
+    }
+
+    @Override
+    public void delete(Block block) {
+        BlockEntity entity = BlockEntity.from(block);
+        jpaBlockRepository.delete(entity);
     }
 }

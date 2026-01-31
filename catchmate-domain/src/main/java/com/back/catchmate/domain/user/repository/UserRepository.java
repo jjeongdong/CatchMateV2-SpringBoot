@@ -9,14 +9,20 @@ import java.util.Optional;
 
 public interface UserRepository {
     User save(User user);
+
     Optional<User> findByProviderId(String providerId);
+
     Optional<User> findById(Long id);
+
+    DomainPage<User> findAllByClubName(String clubName, DomainPageable pageable);
+
+    Map<String, Long> countUsersByClub();
+
+    Map<String, Long> countUsersByWatchStyle();
+
     boolean existsByNickName(String nickName);
 
-    // 대시보드
     long count();
+
     long countByGender(Character gender);
-    Map<String, Long> countUsersByClub();
-    Map<String, Long> countUsersByWatchStyle();
-    DomainPage<User> findAllByClubName(String clubName, DomainPageable pageable);
 }

@@ -28,7 +28,7 @@ public class EnrollDetailResponse {
                 .description(enroll.getDescription())
                 .requestDate(enroll.getRequestedAt())
                 .applicant(UserResponse.from(enroll.getUser()))
-                .boardResponse(BoardResponse.of(enroll.getBoard(), false))
+                .boardResponse(BoardResponse.from(enroll.getBoard(), false))
                 .build();
     }
 }

@@ -23,7 +23,7 @@ public class InquiryService {
                 .orElseThrow(() -> new BaseException(ErrorCode.INQUIRY_NOT_FOUND));
     }
 
-    public DomainPage<Inquiry> getAllInquiries(DomainPageable pageable) {
+    public DomainPage<Inquiry> getInquiryList(DomainPageable pageable) {
         return inquiryRepository.findAll(pageable);
     }
 
@@ -31,7 +31,7 @@ public class InquiryService {
         return inquiryRepository.count();
     }
 
-    public Inquiry update(Inquiry inquiry) {
+    public Inquiry updateInquiry(Inquiry inquiry) {
         return inquiryRepository.save(inquiry);
     }
 }

@@ -19,7 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import report.ReportReason;
+import report.enums.ReportReason;
 
 @Entity
 @Table(name = "reports")
@@ -48,6 +48,17 @@ public class ReportEntity extends BaseTimeEntity {
 
     private boolean completed;
 
+    public static ReportEntity from(Report report) {
+        return ReportEntity.builder()
+                .id(report.getId())
+                .reporter(UserEntity.from(report.getReporter()))
+                .reportedUser(UserEntity.from(report.getReportedUser()))
+                .reason(report.getReason())
+                .description(report.getDescription())
+                .completed(report.isCompleted())
+                .build();
+    }
+
     public Report toModel() {
         return Report.builder()
                 .id(this.id)
@@ -57,17 +68,6 @@ public class ReportEntity extends BaseTimeEntity {
                 .description(this.description)
                 .createdAt(this.getCreatedAt())
                 .completed(this.completed)
-                .build();
-    }
-
-    public static ReportEntity from(Report report) {
-        return ReportEntity.builder()
-                .id(report.getId())
-                .reporter(UserEntity.from(report.getReporter()))
-                .reportedUser(UserEntity.from(report.getReportedUser()))
-                .reason(report.getReason())
-                .description(report.getDescription())
-                .completed(report.isCompleted())
                 .build();
     }
 }

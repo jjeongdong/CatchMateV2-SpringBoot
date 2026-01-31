@@ -29,6 +29,12 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     }
 
     @Override
+    public Optional<Notification> findById(Long notificationId) {
+        return jpaNotificationRepository.findById(notificationId)
+                .map(NotificationEntity::toModel);
+    }
+
+    @Override
     public DomainPage<Notification> findAllByUserId(Long userId, DomainPageable domainPageable) {
         Pageable pageable = PageRequest.of(
                 domainPageable.getPage(),
@@ -48,12 +54,6 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                 entityPage.getSize(),
                 entityPage.getTotalElements()
         );
-    }
-
-    @Override
-    public Optional<Notification> findById(Long notificationId) {
-        return jpaNotificationRepository.findById(notificationId)
-                .map(NotificationEntity::toModel);
     }
 
     @Override

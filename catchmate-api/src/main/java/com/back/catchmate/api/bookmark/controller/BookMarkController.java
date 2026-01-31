@@ -2,6 +2,7 @@ package com.back.catchmate.api.bookmark.controller;
 
 import com.back.catchmate.application.board.dto.response.BoardResponse;
 import com.back.catchmate.application.bookmark.BookmarkUseCase;
+import com.back.catchmate.application.bookmark.dto.response.BookmarkUpdateResponse;
 import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.global.annotation.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,15 +28,13 @@ public class BookMarkController {
     public ResponseEntity<PagedResponse<BoardResponse>> getBookmarkList(@AuthUser Long userId,
                                                                         @RequestParam(defaultValue = "0") int page,
                                                                         @RequestParam(defaultValue = "10") int size) {
-        PagedResponse<BoardResponse> response = bookmarkUseCase.getBookmarkList(userId, page, size);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(bookmarkUseCase.getBookmarkList(userId, page, size));
     }
 
     @PostMapping("/{boardId}")
     @Operation(summary = "게시글 찜하기/취소", description = "게시글을 찜하거나 찜을 취소합니다. (토글 방식)")
-    public ResponseEntity<Void> updateBookmark(@AuthUser Long userId,
-                                               @PathVariable Long boardId) {
-        bookmarkUseCase.updateBookmark(userId, boardId);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<BookmarkUpdateResponse> updateBookmark(@AuthUser Long userId,
+                                                                 @PathVariable Long boardId) {
+        return ResponseEntity.ok(bookmarkUseCase.updateBookmark(userId, boardId));
     }
 }

@@ -26,22 +26,21 @@ public class BlockController {
 
     @PostMapping("/{targetUserId}")
     @Operation(summary = "유저 차단", description = "특정 유저를 차단합니다.")
-    public ResponseEntity<BlockActionResponse> blockUser(@AuthUser Long userId, @PathVariable Long targetUserId) {
-        return ResponseEntity.ok(userBlockUseCase.blockUser(userId, targetUserId));
-    }
-
-    @DeleteMapping("/{targetUserId}")
-    @Operation(summary = "유저 차단 해제", description = "차단한 유저를 해제합니다.")
-    public ResponseEntity<BlockActionResponse> unblockUser(@AuthUser Long userId, @PathVariable Long targetUserId) {
-        userBlockUseCase.unblockUser(userId, targetUserId);
-        return ResponseEntity.ok(userBlockUseCase.unblockUser(userId, targetUserId));
+    public ResponseEntity<BlockActionResponse> createBlock(@AuthUser Long userId, @PathVariable Long targetUserId) {
+        return ResponseEntity.ok(userBlockUseCase.createBlock(userId, targetUserId));
     }
 
     @GetMapping
     @Operation(summary = "차단 목록 조회", description = "내가 차단한 유저 목록을 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<BlockedUserResponse>> getBlockedList(@AuthUser Long userId,
-                                                                             @RequestParam(defaultValue = "0") int page,
-                                                                             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(userBlockUseCase.getBlockedList(userId, page, size));
+    public ResponseEntity<PagedResponse<BlockedUserResponse>> getBlockList(@AuthUser Long userId,
+                                                                           @RequestParam(defaultValue = "0") int page,
+                                                                           @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(userBlockUseCase.getBlockList(userId, page, size));
+    }
+
+    @DeleteMapping("/{targetUserId}")
+    @Operation(summary = "유저 차단 해제", description = "차단한 유저를 해제합니다.")
+    public ResponseEntity<BlockActionResponse> deleteBlock(@AuthUser Long userId, @PathVariable Long targetUserId) {
+        return ResponseEntity.ok(userBlockUseCase.deleteBlock(userId, targetUserId));
     }
 }

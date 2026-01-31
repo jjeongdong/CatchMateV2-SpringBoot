@@ -25,16 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class NotificationController {
     private final NotificationUseCase notificationUseCase;
 
-    @Operation(summary = "내 알림 목록 조회", description = "로그인한 사용자의 알림 목록을 페이징하여 조회합니다.")
-    @GetMapping
-    public PagedResponse<NotificationResponse> getMyNotifications(
-            @Parameter(hidden = true) @AuthUser Long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        return notificationUseCase.getNotifications(userId, page, size);
-    }
-
     @CheckNotificationPermission
     @Operation(summary = "알림 상세 조회", description = "알림을 상세 조회하고 읽음 상태로 변경합니다.")
     @GetMapping("/{notificationId}")
@@ -43,6 +33,16 @@ public class NotificationController {
             @PermissionId @PathVariable Long notificationId
     ) {
         return notificationUseCase.getNotification(userId, notificationId);
+    }
+
+    @Operation(summary = "내 알림 목록 조회", description = "로그인한 사용자의 알림 목록을 페이징하여 조회합니다.")
+    @GetMapping
+    public PagedResponse<NotificationResponse> getNotificationList(
+            @Parameter(hidden = true) @AuthUser Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return notificationUseCase.getNotificationList(userId, page, size);
     }
 
     @CheckNotificationPermission

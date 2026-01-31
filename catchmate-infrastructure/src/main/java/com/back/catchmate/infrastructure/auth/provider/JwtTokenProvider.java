@@ -31,7 +31,6 @@ public class JwtTokenProvider implements TokenProvider {
     private String ACCESS_TOKEN_SUBJECT;
     @Value("${jwt.refresh.header}")
     private String REFRESH_TOKEN_SUBJECT;
-
     private static final String ID_CLAIM = "id";
     private static final String BEARER = "Bearer ";
     private static final String ROLE_CLAIM = "role";
@@ -84,10 +83,6 @@ public class JwtTokenProvider implements TokenProvider {
     public Long getRefreshTokenExpirationTime() {
         return refreshTokenExpirationPeriod;
     }
-
-    // =================================================================================
-    // Private Helpers
-    // =================================================================================
 
     private String createToken(Long userId, String tokenSubject, Long expirationPeriod, Authority authority) {
         Date now = new Date();

@@ -8,9 +8,10 @@ import java.util.Optional;
 
 public interface ReportRepository {
     Report save(Report report);
-    DomainPage<Report> findAll(DomainPageable pageable);
-    Optional<Report> findById(Long reportId);
 
-    // 대시보드
+    Optional<Report> findById(Long id);
+
+    DomainPage<Report> findAll(DomainPageable pageable);
+
     long count();
 }

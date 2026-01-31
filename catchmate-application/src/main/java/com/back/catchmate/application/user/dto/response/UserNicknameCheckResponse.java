@@ -9,12 +9,12 @@ import lombok.Getter;
 @AllArgsConstructor
 public class UserNicknameCheckResponse {
     private String nickName;
-    private boolean isAvailable;
+    private boolean available;
 
-    public static UserNicknameCheckResponse of(String nickName, boolean isAvailable) {
+    public static UserNicknameCheckResponse of(String nickName, boolean available) {
         return UserNicknameCheckResponse.builder()
                 .nickName(nickName)
-                .isAvailable(isAvailable)
+                .available(available)
                 .build();
     }
 }

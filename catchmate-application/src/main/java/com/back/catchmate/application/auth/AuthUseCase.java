@@ -20,22 +20,6 @@ public class AuthUseCase {
     private final UserService userService;
     private final AuthService authService;
 
-    // =================================================================================
-    // Read (토큰 파싱)
-    // =================================================================================
-
-    public Long getUserId(String token) {
-        return authService.getUserIdFromToken(token);
-    }
-
-    public String getUserRole(String token) {
-        return authService.getUserRoleFromToken(token);
-    }
-
-    // =================================================================================
-    // Create (토큰 발급/로그인)
-    // =================================================================================
-
     @Transactional
     public AuthLoginResponse createToken(AuthLoginCommand command) {
         // 1. 유저 조회
@@ -53,9 +37,13 @@ public class AuthUseCase {
         return AuthLoginResponse.of(token.getAccessToken(), token.getRefreshToken(), false);
     }
 
-    // =================================================================================
-    // Update (토큰 재발급)
-    // =================================================================================
+    public Long getUserId(String token) {
+        return authService.getUserIdFromToken(token);
+    }
+
+    public String getUserRole(String token) {
+        return authService.getUserRoleFromToken(token);
+    }
 
     public AuthReissueResponse updateToken(String refreshToken) {
         Long userId = authService.getUserIdFromRefreshToken(refreshToken);
@@ -66,10 +54,6 @@ public class AuthUseCase {
         String newAccessToken = authService.createAccessToken(user);
         return AuthReissueResponse.of(newAccessToken);
     }
-
-    // =================================================================================
-    // Delete (토큰 삭제/로그아웃)
-    // =================================================================================
 
     @Transactional
     public void deleteToken(String refreshToken) {

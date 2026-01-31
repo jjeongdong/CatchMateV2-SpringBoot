@@ -19,7 +19,7 @@ public class AdminUserDetailResponse {
     private String clubName;
     private String watchStyle;
     private String role;
-    private boolean isReported;
+    private boolean reported;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -34,7 +34,7 @@ public class AdminUserDetailResponse {
                 .clubName(user.getClub().getName())
                 .watchStyle(user.getWatchStyle())
                 .role(user.getAuthority().name())
-                .isReported(user.isReported())
+                .reported(user.isReported())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();

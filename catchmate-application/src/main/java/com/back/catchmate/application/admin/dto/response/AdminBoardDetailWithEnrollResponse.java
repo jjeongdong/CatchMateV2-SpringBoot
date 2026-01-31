@@ -14,23 +14,22 @@ public class AdminBoardDetailWithEnrollResponse {
     private String title;
     private String content;
     private String writerNickname;
-    private String gameDate;
+    private LocalDateTime gameStartDate;
     private String location;
     private int maxPerson;
     private int currentPerson;
     private boolean completed;
     private LocalDateTime createdAt;
-    
-    // 신청자 목록 리스트
+
     private List<AdminEnrollmentResponse> enrollments;
 
-    public static AdminBoardDetailWithEnrollResponse of(Board board, List<AdminEnrollmentResponse> enrollments) {
+    public static AdminBoardDetailWithEnrollResponse from(Board board, List<AdminEnrollmentResponse> enrollments) {
         return AdminBoardDetailWithEnrollResponse.builder()
                 .boardId(board.getId())
                 .title(board.getTitle())
                 .content(board.getContent())
                 .writerNickname(board.getUser().getNickName())
-                .gameDate(board.getGame().getGameStartDate().toString())
+                .gameStartDate(board.getGame().getGameStartDate())
                 .location(board.getGame().getLocation())
                 .maxPerson(board.getMaxPerson())
                 .currentPerson(board.getCurrentPerson())

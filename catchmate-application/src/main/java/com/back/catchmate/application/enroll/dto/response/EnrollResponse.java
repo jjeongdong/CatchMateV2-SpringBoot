@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class EnrollResponse {
     private Long enrollId;
     private String description;
-    private boolean isNew;
+    private boolean newEnroll;
     private LocalDateTime requestDate;
     private ApplicantResponse applicant;
 
@@ -22,7 +22,7 @@ public class EnrollResponse {
                 .enrollId(enroll.getId())
                 .description(enroll.getDescription())
                 .requestDate(enroll.getRequestedAt())
-                .isNew(enroll.isNew())
+                .newEnroll(enroll.isNew())
                 .applicant(ApplicantResponse.from(enroll.getUser()))
                 .build();
     }

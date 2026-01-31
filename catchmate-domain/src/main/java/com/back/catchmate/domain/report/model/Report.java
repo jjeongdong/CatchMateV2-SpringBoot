@@ -4,7 +4,7 @@ import com.back.catchmate.domain.common.permission.ResourceOwnership;
 import com.back.catchmate.domain.user.model.User;
 import lombok.Builder;
 import lombok.Getter;
-import report.ReportReason;
+import report.enums.ReportReason;
 
 import java.time.LocalDateTime;
 

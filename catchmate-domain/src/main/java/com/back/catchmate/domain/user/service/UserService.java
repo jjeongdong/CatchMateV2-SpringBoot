@@ -17,10 +17,6 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
 
-    // =================================================================================
-    // Create
-    // =================================================================================
-
     public User createUser(User user) {
         Optional<User> existingUser = userRepository.findByProviderId(user.getProviderId());
         if (existingUser.isPresent()) {
@@ -30,10 +26,6 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    // =================================================================================
-    // Read
-    // =================================================================================
-
     public User getUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
@@ -41,6 +33,18 @@ public class UserService {
 
     public Optional<User> findByProviderId(String providerIdWithProvider) {
         return userRepository.findByProviderId(providerIdWithProvider);
+    }
+
+    public DomainPage<User> getUsersByClub(String clubName, DomainPageable pageable) {
+        return userRepository.findAllByClubName(clubName, pageable);
+    }
+
+    public Map<String, Long> getUserCountByClub() {
+        return userRepository.countUsersByClub();
+    }
+
+    public Map<String, Long> getUserCountByWatchStyle() {
+        return userRepository.countUsersByWatchStyle();
     }
 
     public boolean existsByNickName(String nickName) {
@@ -54,22 +58,6 @@ public class UserService {
     public long getUserCountByGender(Character gender) {
         return userRepository.countByGender(gender);
     }
-
-    public Map<String, Long> getUserCountByClub() {
-        return userRepository.countUsersByClub();
-    }
-
-    public Map<String, Long> getUserCountByWatchStyle() {
-        return userRepository.countUsersByWatchStyle();
-    }
-
-    public DomainPage<User> getUsersByClub(String clubName, DomainPageable pageable) {
-        return userRepository.findAllByClubName(clubName, pageable);
-    }
-
-    // =================================================================================
-    // Update
-    // =================================================================================
 
     public void updateUser(User user) {
         userRepository.save(user);

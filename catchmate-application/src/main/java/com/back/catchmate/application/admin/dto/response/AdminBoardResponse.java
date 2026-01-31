@@ -12,7 +12,7 @@ public class AdminBoardResponse {
     private Long boardId;
     private String title;
     private String content;
-    private boolean isCompleted;
+    private boolean completed;
     private int currentPerson;
     private int maxPerson;
     private LocalDateTime createdAt;
@@ -22,7 +22,7 @@ public class AdminBoardResponse {
                 .boardId(board.getId())
                 .title(board.getTitle())
                 .content(board.getContent())
-                .isCompleted(board.isCompleted())
+                .completed(board.isCompleted())
                 .currentPerson(board.getCurrentPerson())
                 .maxPerson(board.getMaxPerson())
                 .createdAt(board.getCreatedAt())

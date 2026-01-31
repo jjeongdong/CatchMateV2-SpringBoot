@@ -13,6 +13,6 @@ public class EnrollApplicantFinder implements DomainFinder<Enroll> {
 
     @Override
     public Enroll searchById(Long enrollId) {
-        return enrollService.getEnrollById(enrollId);
+        return enrollService.getEnroll(enrollId);
     }
 }

@@ -42,20 +42,20 @@ public class BookmarkEntity extends BaseTimeEntity {
     @JoinColumn(name = "board_id", nullable = false)
     private BoardEntity board;
 
+    public static BookmarkEntity from(Bookmark bookmark) {
+        return BookmarkEntity.builder()
+                .id(bookmark.getId())
+                .user(UserEntity.from(bookmark.getUser()))
+                .board(BoardEntity.from(bookmark.getBoard()))
+                .build();
+    }
+
     public Bookmark toModel() {
         return Bookmark.builder()
                 .id(id)
                 .user(user.toModel())
                 .board(board.toModel())
                 .createdAt(getCreatedAt())
-                .build();
-    }
-
-    public static BookmarkEntity from(Bookmark bookmark) {
-        return BookmarkEntity.builder()
-                .id(bookmark.getId())
-                .user(UserEntity.from(bookmark.getUser()))
-                .board(BoardEntity.from(bookmark.getBoard()))
                 .build();
     }
 }

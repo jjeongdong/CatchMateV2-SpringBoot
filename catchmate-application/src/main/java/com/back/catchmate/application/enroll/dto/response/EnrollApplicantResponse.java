@@ -14,7 +14,7 @@ public class EnrollApplicantResponse {
     private Long enrollId;
     private String description;
     private LocalDateTime requestDate;
-    private boolean isNew;
+    private boolean newEnroll;
     private ApplicantResponse applicantResponse;
 
     public static EnrollApplicantResponse from(Enroll enroll) {
@@ -22,7 +22,7 @@ public class EnrollApplicantResponse {
                 .enrollId(enroll.getId())
                 .description(enroll.getDescription())
                 .requestDate(enroll.getRequestedAt())
-                .isNew(true)
+                .newEnroll(true)
                 .applicantResponse(ApplicantResponse.from(enroll.getUser()))
                 .build();
     }

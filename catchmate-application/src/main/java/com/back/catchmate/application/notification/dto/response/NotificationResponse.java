@@ -18,7 +18,7 @@ public class NotificationResponse {
     private String title;
     private String body;
     private AlarmType alarmType;
-    private boolean isRead;
+    private boolean read;
     private LocalDateTime createdAt;
     private String senderProfileImageUrl;
     private String gameInfo;
@@ -28,7 +28,7 @@ public class NotificationResponse {
                 .id(notification.getId())
                 .title(notification.getTitle())
                 .alarmType(notification.getType())
-                .isRead(notification.isRead())
+                .read(notification.isRead())
                 .createdAt(notification.getCreatedAt())
                 .senderProfileImageUrl(notification.getSender() != null ?
                         notification.getSender().getProfileImageUrl() : null)

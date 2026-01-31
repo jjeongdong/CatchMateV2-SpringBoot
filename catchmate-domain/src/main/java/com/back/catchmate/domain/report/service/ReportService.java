@@ -18,12 +18,12 @@ public class ReportService {
         return reportRepository.save(report);
     }
 
-    public Report getReport(Long reportId) {
-        return reportRepository.findById(reportId)
+    public Report getReport(Long id) {
+        return reportRepository.findById(id)
                 .orElseThrow(() -> new BaseException(ErrorCode.REPORT_NOT_FOUND));
     }
 
-    public DomainPage<Report> getAllReports(DomainPageable pageable) {
+    public DomainPage<Report> getReportList(DomainPageable pageable) {
         return reportRepository.findAll(pageable);
     }
 
@@ -31,7 +31,7 @@ public class ReportService {
         return reportRepository.count();
     }
 
-    public void update(Report report) {
+    public void updateReport(Report report) {
         reportRepository.save(report);
     }
 }

@@ -15,8 +15,8 @@ import java.time.LocalDate;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class UserRegisterRequest {
-
     @Email(message = "email 형식이 올바르지 않습니다.")
     @NotBlank(message = "email은 필수 값입니다.")
     private String email;
@@ -43,7 +43,7 @@ public class UserRegisterRequest {
     @NotNull(message = "birthDate는 필수 값입니다.")
     private LocalDate birthDate;
 
-    @NotNull(message = "favoriteClubId는 필수 값입니다.")
+    @NotNull(message = "응원 구단은 필수 값입니다.")
     private Long favoriteClubId;
 
     private String watchStyle;

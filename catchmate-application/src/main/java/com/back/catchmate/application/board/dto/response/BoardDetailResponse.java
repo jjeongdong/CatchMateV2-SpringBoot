@@ -24,13 +24,14 @@ public class BoardDetailResponse {
     private boolean bookMarked;
 
     private String buttonStatus;
+    private Long myEnrollId;
     private Long chatRoomId;
 
-    private ClubResponse cheerClub; 
-    private GameResponse game;      
-    private UserResponse user;      
+    private ClubResponse cheerClub;
+    private GameResponse game;
+    private UserResponse user;
 
-    public static BoardDetailResponse of(Board board, boolean isBookMarked, String buttonStatus, Long chatRoomId) {
+    public static BoardDetailResponse from(Board board, boolean bookMarked, String buttonStatus, Long myEnrollId, Long chatRoomId) {
         return BoardDetailResponse.builder()
                 .boardId(board.getId())
                 .title(board.getTitle())
@@ -40,12 +41,13 @@ public class BoardDetailResponse {
                 .preferredGender(board.getPreferredGender())
                 .preferredAgeRange(board.getPreferredAgeRange())
                 .liftUpDate(board.getLiftUpDate())
-                .bookMarked(isBookMarked)
+                .bookMarked(bookMarked)
                 .buttonStatus(buttonStatus)
+                .myEnrollId(myEnrollId)
                 .chatRoomId(chatRoomId)
                 .cheerClub(ClubResponse.from(board.getCheerClub()))
                 .game(GameResponse.from(board.getGame()))
-                .user(UserResponse.from(board.getUser())) 
+                .user(UserResponse.from(board.getUser()))
                 .build();
     }
 }

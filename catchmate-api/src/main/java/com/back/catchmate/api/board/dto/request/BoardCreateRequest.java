@@ -1,7 +1,6 @@
 package com.back.catchmate.api.board.dto.request;
 
 import com.back.catchmate.application.board.dto.command.BoardCreateCommand;
-import com.back.catchmate.application.board.dto.command.BoardUpdateCommand;
 import com.back.catchmate.application.board.dto.command.GameCreateCommand;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -37,8 +36,11 @@ public class BoardCreateRequest {
     @AllArgsConstructor
     public static class GameCreateRequest {
         private Long homeClubId;
+
         private Long awayClubId;
+
         private LocalDateTime gameStartDate;
+
         private String location;
 
         public GameCreateCommand toCommand() {

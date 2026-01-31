@@ -72,7 +72,7 @@ public class EnrollRepositoryImpl implements EnrollRepository {
     }
 
     @Override
-    public DomainPage<Enroll> findByBoardIdAndStatus(Long boardId, AcceptStatus status, DomainPageable domainPageable) {
+    public DomainPage<Enroll> findAllByBoardIdAndStatus(Long boardId, AcceptStatus status, DomainPageable domainPageable) {
         Pageable pageable = PageRequest.of(
                 domainPageable.getPage(),
                 domainPageable.getSize(),
@@ -113,7 +113,7 @@ public class EnrollRepositoryImpl implements EnrollRepository {
     }
 
     @Override
-    public List<Enroll> findAllByBoardIdIn(List<Long> boardIds) {
+    public List<Enroll> findAllByBoardIds(List<Long> boardIds) {
         if (boardIds.isEmpty()) return Collections.emptyList();
 
         return jpaEnrollRepository.findAllByBoardIdInAndStatus(boardIds, AcceptStatus.PENDING)
@@ -123,8 +123,8 @@ public class EnrollRepositoryImpl implements EnrollRepository {
     }
 
     @Override
-    public Optional<Enroll> findByIdWithFetch(Long enrollId) {
-        return jpaEnrollRepository.findByIdWithFetch(enrollId)
+    public Optional<Enroll> findByIdWithFetch(Long id) {
+        return jpaEnrollRepository.findByIdWithFetch(id)
                 .map(EnrollEntity::toModel);
     }
 

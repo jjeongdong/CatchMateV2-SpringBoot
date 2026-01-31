@@ -20,17 +20,15 @@ import java.util.stream.Collectors;
 public class NoticeUseCase {
     private final NoticeService noticeService;
 
-    // 공지사항 상세 조회
-    public NoticeDetailResponse getNoticeDetail(Long noticeId) {
+    public NoticeDetailResponse getNotice(Long noticeId) {
         Notice notice = noticeService.getNotice(noticeId);
         return NoticeDetailResponse.from(notice);
     }
 
-    // 공지사항 목록 조회 (페이징)
     public PagedResponse<NoticeResponse> getNoticeList(int page, int size) {
         DomainPageable domainPageable = new DomainPageable(page, size);
 
-        DomainPage<Notice> noticePage = noticeService.getAllNotices(domainPageable);
+        DomainPage<Notice> noticePage = noticeService.getNoticeList(domainPageable);
 
         List<NoticeResponse> responses = noticePage.getContent().stream()
                 .map(NoticeResponse::from)

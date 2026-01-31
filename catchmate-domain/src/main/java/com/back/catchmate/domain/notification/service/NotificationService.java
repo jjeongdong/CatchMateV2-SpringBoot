@@ -18,13 +18,13 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
-    public DomainPage<Notification> getAllNotifications(Long userId, DomainPageable pageable) {
-        return notificationRepository.findAllByUserId(userId, pageable);
+    public Notification getNotification(Long id) {
+        return notificationRepository.findById(id)
+                .orElseThrow(() -> new BaseException(ErrorCode.NOTIFICATION_NOT_FOUND));
     }
 
-    public Notification getNotification(Long notificationId) {
-        return notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new BaseException(ErrorCode.NOTIFICATION_NOT_FOUND));
+    public DomainPage<Notification> getNotificationList(Long userId, DomainPageable pageable) {
+        return notificationRepository.findAllByUserId(userId, pageable);
     }
 
     public void updateNotification(Notification notification) {
@@ -34,10 +34,6 @@ public class NotificationService {
     public void deleteNotification(Long userId, Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new BaseException(ErrorCode.NOTIFICATION_NOT_FOUND));
-
-        if (!notification.getUser().getId().equals(userId)) {
-            throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
-        }
 
         notificationRepository.delete(notification);
     }

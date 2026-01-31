@@ -14,11 +14,18 @@ import java.util.List;
 import java.util.Optional;
 
 public interface JpaEnrollRepository extends JpaRepository<EnrollEntity, Long> {
-    Optional<EnrollEntity> findByUserIdAndBoardId(Long userId, Long boardId);
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT e FROM EnrollEntity e WHERE e.id = :id")
     Optional<EnrollEntity> findByIdWithPessimisticLock(@Param("id") Long id);
+
+    @Query("SELECT e FROM EnrollEntity e " +
+            "JOIN FETCH e.user u " +
+            "JOIN FETCH e.board b " +
+            "JOIN FETCH b.user bu " +
+            "WHERE e.id = :enrollId")
+    Optional<EnrollEntity> findByIdWithFetch(@Param("enrollId") Long enrollId);
+
+    Optional<EnrollEntity> findByUserIdAndBoardId(Long userId, Long boardId);
 
     @Query("SELECT e FROM EnrollEntity e " +
             "JOIN FETCH e.board b " +
@@ -60,13 +67,6 @@ public interface JpaEnrollRepository extends JpaRepository<EnrollEntity, Long> {
             @Param("boardIds") List<Long> boardIds,
             @Param("status") AcceptStatus status
     );
-
-    @Query("SELECT e FROM EnrollEntity e " +
-            "JOIN FETCH e.user u " +
-            "JOIN FETCH e.board b " +
-            "JOIN FETCH b.user bu " +
-            "WHERE e.id = :enrollId")
-    Optional<EnrollEntity> findByIdWithFetch(@Param("enrollId") Long enrollId);
 
     long countByBoardUserIdAndAcceptStatus(Long userId, AcceptStatus acceptStatus);
 }

@@ -51,6 +51,17 @@ public class InquiryEntity extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private InquiryStatus status;
 
+    public static InquiryEntity from(Inquiry inquiry) {
+        return InquiryEntity.builder()
+                .id(inquiry.getId())
+                .user(UserEntity.from(inquiry.getUser()))
+                .title(inquiry.getTitle())
+                .content(inquiry.getContent())
+                .answer(inquiry.getAnswer())
+                .status(inquiry.getStatus())
+                .build();
+    }
+
     public Inquiry toModel() {
         return Inquiry.builder()
                 .id(this.id)
@@ -60,17 +71,6 @@ public class InquiryEntity extends BaseTimeEntity {
                 .answer(this.answer)
                 .status(this.status)
                 .createdAt(this.getCreatedAt())
-                .build();
-    }
-
-    public static InquiryEntity from(Inquiry inquiry) {
-        return InquiryEntity.builder()
-                .id(inquiry.getId())
-                .user(UserEntity.from(inquiry.getUser()))
-                .title(inquiry.getTitle())
-                .content(inquiry.getContent())
-                .answer(inquiry.getAnswer())
-                .status(inquiry.getStatus())
                 .build();
     }
 }

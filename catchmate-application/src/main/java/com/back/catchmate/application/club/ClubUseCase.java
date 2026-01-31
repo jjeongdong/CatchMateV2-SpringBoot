@@ -14,8 +14,12 @@ import java.util.List;
 public class ClubUseCase {
     private final ClubService clubService;
 
+    // =================================================================================
+    // Read
+    // =================================================================================
+
     @Transactional(readOnly = true)
-    public List<ClubResponse> getClubResponseList() {
+    public List<ClubResponse> getClubList() {
         List<Club> clubs = clubService.getClubList();
         return clubs.stream()
                 .map(ClubResponse::from)

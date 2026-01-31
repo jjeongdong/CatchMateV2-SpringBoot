@@ -80,20 +80,22 @@ public class BoardUseCase {
         return BoardCreateResponse.of(savedBoard.getId());
     }
 
-    public BoardDetailResponse getBoardDetail(Long userId, Long boardId) {
+    public BoardDetailResponse getBoard(Long userId, Long boardId) {
         User user = userService.getUser(userId);
         Board board = boardService.getBoard(boardId);
-
         // 찜 여부 확인
         boolean isBookMarked = bookmarkService.isBookmarked(userId, boardId);
 
+        Optional<Enroll> myEnroll = enrollService.findEnrollByUserAndBoard(user, board);
+
         // 버튼 상태 계산
-        String buttonStatus = getButtonStatus(user, board);
+        String buttonStatus = getButtonStatus(user, board, myEnroll);
+        Long myEnrollId = myEnroll.map(Enroll::getId).orElse(null);
 
         // TODO: ChatService 연동 채팅방 ID 조회
         Long chatRoomId = null;
 
-        return BoardDetailResponse.of(board, isBookMarked, buttonStatus, chatRoomId);
+        return BoardDetailResponse.from(board, isBookMarked, buttonStatus, myEnrollId, chatRoomId);
     }
 
     public PagedResponse<BoardResponse> getBoardList(Long userId, LocalDate gameDate, Integer maxPerson, List<Long> preferredTeamIdList, int page, int size) {
@@ -117,7 +119,7 @@ public class BoardUseCase {
         List<BoardResponse> boardResponses = boardPage.getContent().stream()
                 .map(board -> {
                     boolean isBookMarked = bookmarkService.isBookmarked(userId, board.getId());
-                    return BoardResponse.of(board, isBookMarked);
+                    return BoardResponse.from(board, isBookMarked);
                 })
                 .toList();
 
@@ -143,7 +145,7 @@ public class BoardUseCase {
         List<BoardResponse> responses = boardPage.getContent().stream()
                 .map(board -> {
                     boolean isBookMarked = false;
-                    return BoardResponse.of(board, isBookMarked);
+                    return BoardResponse.from(board, isBookMarked);
                 })
                 .toList();
 
@@ -237,7 +239,6 @@ public class BoardUseCase {
         );
     }
 
-    // 공통 Game 조회/생성 로직 추출 (중복 제거)
     private Game fetchGame(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {
         Club homeClub = clubService.getClub(homeClubId);
         Club awayClub = clubService.getClub(awayClubId);
@@ -250,13 +251,11 @@ public class BoardUseCase {
         );
     }
 
-    private String getButtonStatus(User user, Board board) {
+    private String getButtonStatus(User user, Board board, Optional<Enroll> enrollOptional) {
         // 작성자 본인인 경우
         if (board.getUser().getId().equals(user.getId())) {
             return "VIEW_CHAT";
         }
-
-        Optional<Enroll> enrollOptional = enrollService.getEnrollByUserAndBoard(user, board);
 
         // 신청 내역이 없는 경우 -> 신청 가능
         if (enrollOptional.isEmpty()) {

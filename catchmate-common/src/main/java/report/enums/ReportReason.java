@@ -1,4 +1,4 @@
-package report;
+package report.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

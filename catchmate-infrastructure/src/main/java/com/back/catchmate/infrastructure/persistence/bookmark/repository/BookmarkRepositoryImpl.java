@@ -27,20 +27,9 @@ public class BookmarkRepositoryImpl implements BookmarkRepository {
     }
 
     @Override
-    public void delete(Bookmark bookmark) {
-        BookmarkEntity entity = BookmarkEntity.from(bookmark);
-        jpaBookmarkRepository.delete(entity);
-    }
-
-    @Override
     public Optional<Bookmark> findByUserIdAndBoardId(Long userId, Long boardId) {
         return jpaBookmarkRepository.findByUserIdAndBoardId(userId, boardId)
                 .map(BookmarkEntity::toModel);
-    }
-
-    @Override
-    public boolean existsByUserIdAndBoardId(Long userId, Long boardId) {
-        return jpaBookmarkRepository.existsByUserIdAndBoardId(userId, boardId);
     }
 
     @Override
@@ -63,5 +52,16 @@ public class BookmarkRepositoryImpl implements BookmarkRepository {
                 entityPage.getSize(),
                 entityPage.getTotalElements()
         );
+    }
+
+    @Override
+    public boolean existsByUserIdAndBoardId(Long userId, Long boardId) {
+        return jpaBookmarkRepository.existsByUserIdAndBoardId(userId, boardId);
+    }
+
+    @Override
+    public void delete(Bookmark bookmark) {
+        BookmarkEntity entity = BookmarkEntity.from(bookmark);
+        jpaBookmarkRepository.delete(entity);
     }
 }

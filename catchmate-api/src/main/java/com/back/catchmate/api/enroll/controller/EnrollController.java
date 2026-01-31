@@ -37,73 +37,65 @@ public class EnrollController {
         return ResponseEntity.ok(enrollUseCase.createEnroll(request.toCommand(userId, boardId)));
     }
 
+    @GetMapping("/api/enrolls/{enrollId}")
+    @Operation(summary = "직관 신청 단일 상세 조회", description = "특정 신청 내역(enrollId)의 상세 정보를 조회합니다. (신청자 본인 또는 게시글 작성자만 가능)")
+    public ResponseEntity<EnrollDetailResponse> getEnroll(@AuthUser Long userId,
+                                                          @PathVariable Long enrollId) {
+        return ResponseEntity.ok(enrollUseCase.getEnroll(userId, enrollId));
+    }
+
     @GetMapping("/api/enrolls/request")
     @Operation(summary = "내가 보낸 직관 신청 목록 조회", description = "내가 신청한 직관 신청 목록을 조회합니다.")
-    public ResponseEntity<PagedResponse<EnrollRequestResponse>> getRequestEnrollList(
-            @AuthUser Long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        return ResponseEntity.ok(enrollUseCase.getRequestEnrollList(userId, page, size));
+    public ResponseEntity<PagedResponse<EnrollRequestResponse>> getEnrollRequestList(@AuthUser Long userId,
+                                                                                     @RequestParam(defaultValue = "0") int page,
+                                                                                     @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(enrollUseCase.getEnrollRequestList(userId, page, size));
     }
 
     @GetMapping("/api/enrolls/receive")
     @Operation(summary = "내가 받은 직관 신청 목록 조회 (단일 게시글 상세)", description = "특정 게시글(boardId)에 들어온 신청자 목록을 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<EnrollApplicantResponse>> getReceiveEnrollListByBordId(
-            @AuthUser Long userId,
-            @RequestParam Long boardId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        return ResponseEntity.ok(enrollUseCase.getReceiveEnrollListByBoardId(userId, boardId, page, size));
+    public ResponseEntity<PagedResponse<EnrollApplicantResponse>> getEnrollReceiveListByBoardId(@AuthUser Long userId,
+                                                                                                @RequestParam Long boardId,
+                                                                                                @RequestParam(defaultValue = "0") int page,
+                                                                                                @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(enrollUseCase.getEnrollReceiveListByBoardId(userId, boardId, page, size));
     }
 
     @GetMapping("/api/enrolls/receive/all")
     @Operation(summary = "내가 받은 직관 신청 목록 조회 (전체 게시글)", description = "게시글 단위로 페이징하며, 각 게시글에는 신청자 목록이 포함됩니다.")
-    public ResponseEntity<PagedResponse<EnrollReceiveResponse>> getAllReceiveEnrollList(
-            @AuthUser Long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        return ResponseEntity.ok(enrollUseCase.getAllReceiveEnrollList(userId, page, size));
-    }
-
-    @GetMapping("/api/enrolls/{enrollId}")
-    @Operation(summary = "직관 신청 단일 상세 조회", description = "특정 신청 내역(enrollId)의 상세 정보를 조회합니다. (신청자 본인 또는 게시글 작성자만 가능)")
-    public ResponseEntity<EnrollDetailResponse> getEnrollDetail(
-            @AuthUser Long userId,
-            @PermissionId @PathVariable Long enrollId
-    ) {
-        return ResponseEntity.ok(enrollUseCase.getEnrollDetail(userId, enrollId));
+    public ResponseEntity<PagedResponse<EnrollReceiveResponse>> getEnrollReceiveList(@AuthUser Long userId,
+                                                                                     @RequestParam(defaultValue = "0") int page,
+                                                                                     @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(enrollUseCase.getEnrollReceiveList(userId, page, size));
     }
 
     @GetMapping("/api/enrolls/count")
     @Operation(summary = "내 게시글 신청 갯수 조회 API", description = "내가 작성한 게시글에 들어온 '대기 중'인 신청의 총 갯수를 반환합니다.")
-    public ResponseEntity<EnrollCountResponse> getMyEnrollCount(@AuthUser Long userId) {
-        return ResponseEntity.ok(enrollUseCase.getMyPendingEnrollCount(userId));
-    }
-
-    @CheckEnrollApplicantPermission
-    @DeleteMapping("/api/enrolls/{enrollId}")
-    @Operation(summary = "직관 신청 취소 API", description = "직관 신청을 취소하는 API 입니다.")
-    public ResponseEntity<EnrollCancelResponse> cancelEnroll(@PathVariable Long enrollId,
-                                                             @PermissionId @AuthUser Long userId) {
-        return ResponseEntity.ok(enrollUseCase.cancelEnroll(enrollId, userId));
+    public ResponseEntity<EnrollCountResponse> getEnrollPendingCount(@AuthUser Long userId) {
+        return ResponseEntity.ok(enrollUseCase.getEnrollPendingCount(userId));
     }
 
     @CheckEnrollHostPermission
     @PatchMapping("/api/enrolls/{enrollId}/accept")
     @Operation(summary = "직관 신청 수락 API", description = "들어온 직관 신청을 수락합니다. (게시글 작성자만 가능)")
-    public ResponseEntity<EnrollAcceptResponse> acceptEnroll(@AuthUser Long userId,
-                                                             @PermissionId @PathVariable Long enrollId) {
-        return ResponseEntity.ok(enrollUseCase.acceptEnroll(userId, enrollId));
+    public ResponseEntity<EnrollAcceptResponse> updateEnrollAccept(@AuthUser Long userId,
+                                                                   @PermissionId @PathVariable Long enrollId) {
+        return ResponseEntity.ok(enrollUseCase.updateEnrollAccept(userId, enrollId));
     }
 
     @CheckEnrollHostPermission
     @PatchMapping("/api/enrolls/{enrollId}/reject")
     @Operation(summary = "직관 신청 거절 API", description = "들어온 직관 신청을 거절합니다. (게시글 작성자만 가능)")
-    public ResponseEntity<EnrollRejectResponse> rejectEnroll(@AuthUser Long userId,
-                                                             @PermissionId @PathVariable Long enrollId) {
-        return ResponseEntity.ok(enrollUseCase.rejectEnroll(userId, enrollId));
+    public ResponseEntity<EnrollRejectResponse> updateEnrollReject(@AuthUser Long userId,
+                                                                   @PermissionId @PathVariable Long enrollId) {
+        return ResponseEntity.ok(enrollUseCase.updateEnrollReject(userId, enrollId));
+    }
+
+    @CheckEnrollApplicantPermission
+    @DeleteMapping("/api/enrolls/{enrollId}")
+    @Operation(summary = "직관 신청 취소 API", description = "직관 신청을 취소하는 API 입니다.")
+    public ResponseEntity<EnrollCancelResponse> deleteEnroll(@PathVariable Long enrollId,
+                                                             @PermissionId @AuthUser Long userId) {
+        return ResponseEntity.ok(enrollUseCase.deleteEnroll(enrollId, userId));
     }
 }

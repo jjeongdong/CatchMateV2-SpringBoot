@@ -18,22 +18,6 @@ import java.util.List;
 public class NotificationUseCase {
     private final NotificationService notificationService;
 
-    public PagedResponse<NotificationResponse> getNotifications(Long userId, int page, int size) {
-        // 1. 도메인 페이징 객체 생성
-        DomainPageable domainPageable = DomainPageable.of(page, size);
-
-        // 2. 리포지토리 조회 (DomainPage 반환)
-        DomainPage<Notification> notificationPage = notificationService.getAllNotifications(userId, domainPageable);
-
-        // 3. 도메인 -> 응답 DTO 변환
-        List<NotificationResponse> responses = notificationPage.getContent().stream()
-                .map(NotificationResponse::from)
-                .toList();
-
-        // 4. PagedResponse로 포장하여 반환
-        return new PagedResponse<>(notificationPage, responses);
-    }
-
     @Transactional
     public NotificationResponse getNotification(Long userId, Long notificationId) {
         // 1. 알림 조회
@@ -42,11 +26,27 @@ public class NotificationUseCase {
         // 2. 읽음 처리
         if (!notification.isRead()) {
             notification.markAsRead();
-            notificationService.updateNotification(notification); // 변경사항 저장
+            notificationService.updateNotification(notification);
         }
 
         // 3. 응답 반환
         return NotificationResponse.from(notification);
+    }
+
+    public PagedResponse<NotificationResponse> getNotificationList(Long userId, int page, int size) {
+        // 1. 도메인 페이징 객체 생성
+        DomainPageable domainPageable = DomainPageable.of(page, size);
+
+        // 2. 리포지토리 조회 (DomainPage 반환)
+        DomainPage<Notification> notificationPage = notificationService.getNotificationList(userId, domainPageable);
+
+        // 3. 도메인 -> 응답 DTO 변환
+        List<NotificationResponse> responses = notificationPage.getContent().stream()
+                .map(NotificationResponse::from)
+                .toList();
+
+        // 4. PagedResponse로 포장하여 반환
+        return new PagedResponse<>(notificationPage, responses);
     }
 
     @Transactional

@@ -21,7 +21,7 @@ public class ClubController {
 
     @GetMapping("/list")
     @Operation(summary = "구단 정보 리스트 조회 API", description = "구단 정보를 리스트로 조회하는 API 입니다.")
-    public ResponseEntity<List<ClubResponse>> getClubResponseList() {
-        return ResponseEntity.ok(clubUseCase.getClubResponseList());
+    public ResponseEntity<List<ClubResponse>> getClubList() {
+        return ResponseEntity.ok(clubUseCase.getClubList());
     }
 }

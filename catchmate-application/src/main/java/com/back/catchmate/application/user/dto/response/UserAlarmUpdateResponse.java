@@ -10,12 +10,12 @@ import user.enums.AlarmType;
 @AllArgsConstructor
 public class UserAlarmUpdateResponse {
     private AlarmType alarmType;
-    private boolean isEnabled;
+    private boolean enabled;
 
-    public static UserAlarmUpdateResponse of(AlarmType alarmType, boolean isEnabled) {
+    public static UserAlarmUpdateResponse of(AlarmType alarmType, boolean enabled) {
         return UserAlarmUpdateResponse.builder()
                 .alarmType(alarmType)
-                .isEnabled(isEnabled)
+                .enabled(enabled)
                 .build();
     }
 }

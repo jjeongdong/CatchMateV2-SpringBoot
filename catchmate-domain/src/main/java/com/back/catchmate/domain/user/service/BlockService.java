@@ -17,8 +17,7 @@ import java.util.List;
 public class BlockService {
     private final BlockRepository blockRepository;
 
-    // 차단 하기
-    public void blockUser(User blocker, User blocked) {
+    public void createBlock(User blocker, User blocked) {
         // 이미 차단했는지 확인
         if (blockRepository.existsByBlockerAndBlocked(blocker, blocked)) {
             throw new BaseException(ErrorCode.ALREADY_BLOCKED);
@@ -28,16 +27,8 @@ public class BlockService {
         blockRepository.save(block);
     }
 
-    // 차단 해제
-    public void unblockUser(User blocker, User blocked) {
-        Block block = blockRepository.findByBlockerAndBlocked(blocker, blocked)
-                .orElseThrow(() -> new BaseException(ErrorCode.BLOCK_NOT_FOUND));
-        
-        blockRepository.delete(block);
-    }
-
-    public DomainPage<Block> getBlockedUsers(Long blockerId, DomainPageable pageable) {
-        return blockRepository.findAllByBlocker(blockerId, pageable);
+    public DomainPage<Block> getBlockList(Long blockerId, DomainPageable pageable) {
+        return blockRepository.findAllByBlockerId(blockerId, pageable);
     }
 
     public List<Long> getBlockedUserIds(User user) {
@@ -46,5 +37,12 @@ public class BlockService {
 
     public boolean isUserBlocked(User targetUser, User loginUser) {
         return blockRepository.existsByBlockerAndBlocked(loginUser, targetUser);
+    }
+
+    public void deleteBlock(User blocker, User blocked) {
+        Block block = blockRepository.findByBlockerAndBlocked(blocker, blocked)
+                .orElseThrow(() -> new BaseException(ErrorCode.BLOCK_NOT_FOUND));
+
+        blockRepository.delete(block);
     }
 }

@@ -3,7 +3,6 @@ package com.back.catchmate.application.admin;
 import com.back.catchmate.application.admin.dto.command.InquiryAnswerCommand;
 import com.back.catchmate.application.admin.dto.command.NoticeCreateCommand;
 import com.back.catchmate.application.admin.dto.command.NoticeUpdateCommand;
-import com.back.catchmate.application.admin.dto.command.ReportActionCommand;
 import com.back.catchmate.application.admin.dto.response.AdminBoardDetailWithEnrollResponse;
 import com.back.catchmate.application.admin.dto.response.AdminBoardResponse;
 import com.back.catchmate.application.admin.dto.response.AdminDashboardResponse;
@@ -62,19 +61,64 @@ public class AdminUseCase {
     private final NotificationSender notificationSender;
     private final NotificationService notificationService;
 
+    @Transactional
+    public NoticeCreateResponse createNotice(Long userId, NoticeCreateCommand command) {
+        User writer = userService.getUser(userId);
+
+        Notice notice = Notice.createNotice(
+                writer,
+                command.getTitle(),
+                command.getContent()
+        );
+
+        Notice savedNotice = noticeService.createNotice(notice);
+        return NoticeCreateResponse.from(savedNotice);
+    }
+
+    @Transactional
+    public InquiryAnswerResponse createInquiryAnswer(InquiryAnswerCommand command) {
+        Inquiry inquiry = inquiryService.getInquiry(command.getInquiryId());
+
+        inquiry.registerAnswer(command.getContent());
+        Inquiry updatedInquiry = inquiryService.updateInquiry(inquiry);
+
+        saveNotification(
+                updatedInquiry.getUser(),
+                null,
+                "문의 답변이 도착했어요",
+                AlarmType.INQUIRY_ANSWER,
+                updatedInquiry.getId()
+        );
+
+        sendInquiryNotification(
+                updatedInquiry.getUser(),
+                updatedInquiry,
+                "문의 답변이 도착했어요",
+                "관리자님이 회원님의 문의에 답변을 남겼어요. 확인해보세요!",
+                "INQUIRY_ANSWER"
+        );
+
+        return InquiryAnswerResponse.of(updatedInquiry.getId(), updatedInquiry.getUser().getId());
+    }
+
     public AdminDashboardResponse getDashboardStats() {
-        return AdminDashboardResponse.builder()
-                .totalUserCount(userService.getTotalUserCount())
-                .genderRatio(new AdminDashboardResponse.GenderRatio(
+        return AdminDashboardResponse.of(
+                userService.getTotalUserCount(),
+                AdminDashboardResponse.GenderRatio.of(
                         userService.getUserCountByGender('M'),
                         userService.getUserCountByGender('F')
-                ))
-                .totalBoardCount(boardService.getTotalBoardCount())
-                .userCountByClub(userService.getUserCountByClub())
-                .userCountByWatchStyle(userService.getUserCountByWatchStyle())
-                .totalReportCount(reportService.getTotalReportCount())
-                .totalInquiryCount(inquiryService.getTotalInquiryCount())
-                .build();
+                ),
+                boardService.getTotalBoardCount(),
+                userService.getUserCountByClub(),
+                userService.getUserCountByWatchStyle(),
+                reportService.getTotalReportCount(),
+                inquiryService.getTotalInquiryCount()
+        );
+    }
+
+    public AdminUserDetailResponse getUser(Long userId) {
+        User user = userService.getUser(userId);
+        return AdminUserDetailResponse.from(user);
     }
 
     public PagedResponse<AdminUserResponse> getUserList(String clubName, int page, int size) {
@@ -88,12 +132,19 @@ public class AdminUseCase {
         return new PagedResponse<>(userPage, responses);
     }
 
-    public AdminUserDetailResponse getUserDetail(Long userId) {
-        User user = userService.getUser(userId);
-        return AdminUserDetailResponse.from(user);
+    public AdminBoardDetailWithEnrollResponse getBoardWithEnrollList(Long boardId) {
+        Board board = boardService.getCompletedBoard(boardId);
+
+        List<Enroll> enrolls = enrollService.getEnrollListByBoardIds(Collections.singletonList(boardId));
+
+        List<AdminEnrollmentResponse> enrollmentInfos = enrolls.stream()
+                .map(AdminEnrollmentResponse::from)
+                .toList();
+
+        return AdminBoardDetailWithEnrollResponse.from(board, enrollmentInfos);
     }
 
-    public PagedResponse<AdminBoardResponse> getUserBoards(Long userId, int page, int size) {
+    public PagedResponse<AdminBoardResponse> getBoardListByUserId(Long userId, int page, int size) {
         DomainPageable domainPageable = new DomainPageable(page, size);
         DomainPage<Board> boardPage = boardService.getBoardListByUserId(userId, domainPageable);
 
@@ -104,22 +155,7 @@ public class AdminUseCase {
         return new PagedResponse<>(boardPage, responses);
     }
 
-    public AdminBoardDetailWithEnrollResponse getBoardDetailWithEnrollments(Long boardId) {
-        // 게시글 정보 조회
-        Board board = boardService.getCompletedBoard(boardId);
-
-        // 해당 게시글의 신청 내역 조회
-        List<Enroll> enrolls = enrollService.getEnrollsByBoardIds(Collections.singletonList(boardId));
-
-        // DTO 변환
-        List<AdminEnrollmentResponse> enrollmentInfos = enrolls.stream()
-                .map(AdminEnrollmentResponse::from)
-                .toList();
-
-        return AdminBoardDetailWithEnrollResponse.of(board, enrollmentInfos);
-    }
-
-    public PagedResponse<AdminBoardResponse> getAllBoards(int page, int size) {
+    public PagedResponse<AdminBoardResponse> getBoardList(int page, int size) {
         DomainPageable domainPageable = new DomainPageable(page, size);
         DomainPage<Board> boardPage = boardService.getBoardList(domainPageable);
 
@@ -130,9 +166,14 @@ public class AdminUseCase {
         return new PagedResponse<>(boardPage, responses);
     }
 
-    public PagedResponse<AdminReportResponse> getAllReports(int page, int size) {
+    public AdminReportDetailResponse getReport(Long reportId) {
+        Report report = reportService.getReport(reportId);
+        return AdminReportDetailResponse.from(report);
+    }
+
+    public PagedResponse<AdminReportResponse> getReportList(int page, int size) {
         DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Report> reportPage = reportService.getAllReports(domainPageable);
+        DomainPage<Report> reportPage = reportService.getReportList(domainPageable);
 
         List<AdminReportResponse> responses = reportPage.getContent().stream()
                 .map(AdminReportResponse::from)
@@ -141,32 +182,14 @@ public class AdminUseCase {
         return new PagedResponse<>(reportPage, responses);
     }
 
-    public AdminReportDetailResponse getReportDetail(Long reportId) {
-        Report report = reportService.getReport(reportId);
-        return AdminReportDetailResponse.from(report);
+    public AdminInquiryDetailResponse getInquiry(Long inquiryId) {
+        Inquiry inquiry = inquiryService.getInquiry(inquiryId);
+        return AdminInquiryDetailResponse.from(inquiry);
     }
 
-    @Transactional
-    public ReportActionResponse processReport(ReportActionCommand command) {
-        // 1. 신고 내역 조회
-        Report report = reportService.getReport(command.getReportId());
-
-        // 2. 신고 당한 유저 조회 및 상태 변경
-        User reportedUser = report.getReportedUser();
-        reportedUser.markAsReported();
-        userService.updateUser(reportedUser);
-
-        // 3. 신고 내역 상태 업데이트
-        report.process();
-        reportService.update(report);
-
-        // TODO: 신고 처리 절차 추후 논의 후 추가 예정
-        return ReportActionResponse.of(report.getId(), reportedUser.getId());
-    }
-
-    public PagedResponse<AdminInquiryResponse> getAllInquiries(int page, int size) {
+    public PagedResponse<AdminInquiryResponse> getInquiryList(int page, int size) {
         DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Inquiry> inquiryPage = inquiryService.getAllInquiries(domainPageable);
+        DomainPage<Inquiry> inquiryPage = inquiryService.getInquiryList(domainPageable);
 
         List<AdminInquiryResponse> responses = inquiryPage.getContent().stream()
                 .map(AdminInquiryResponse::from)
@@ -175,38 +198,57 @@ public class AdminUseCase {
         return new PagedResponse<>(inquiryPage, responses);
     }
 
-    public AdminInquiryDetailResponse getInquiryDetail(Long inquiryId) {
-        Inquiry inquiry = inquiryService.getInquiry(inquiryId);
-        return AdminInquiryDetailResponse.from(inquiry);
+    public AdminNoticeDetailResponse getNotice(Long noticeId) {
+        Notice notice = noticeService.getNotice(noticeId);
+        return AdminNoticeDetailResponse.from(notice);
+    }
+
+    public PagedResponse<AdminNoticeResponse> getNoticeList(int page, int size) {
+        DomainPageable domainPageable = new DomainPageable(page, size);
+
+        DomainPage<Notice> noticePage = noticeService.getNoticeList(domainPageable);
+
+        List<AdminNoticeResponse> responses = noticePage.getContent().stream()
+                .map(AdminNoticeResponse::from)
+                .collect(Collectors.toList());
+
+        return new PagedResponse<>(noticePage, responses);
     }
 
     @Transactional
-    public InquiryAnswerResponse answerInquiry(InquiryAnswerCommand command) {
-        // 1. 문의 조회
-        Inquiry inquiry = inquiryService.getInquiry(command.getInquiryId());
+    public ReportActionResponse updateReportProcess(Long reportId) {
+        Report report = reportService.getReport(reportId);
 
-        // 2. 답변 등록
-        inquiry.registerAnswer(command.getContent());
-        inquiryService.update(inquiry);
+        User reportedUser = report.getReportedUser();
+        reportedUser.markAsReported();
+        userService.updateUser(reportedUser);
 
-        // 3. 알림 저장 및 푸시 알림 전송
-        saveNotification(
-                inquiry.getUser(),
-                null,
-                "문의 답변이 도착했어요",
-                AlarmType.INQUIRY_ANSWER,
-                inquiry.getId()
+        // TODO: 신고 처리 사유에 따른 추가 조치 (경고, 정지 등) 구현 필요
+        report.process();
+        reportService.updateReport(report);
+
+        return ReportActionResponse.of(report.getId(), reportedUser.getId());
+    }
+
+    @Transactional
+    public NoticeDetailResponse updateNotice(Long noticeId, NoticeUpdateCommand command) {
+        Notice notice = noticeService.getNotice(noticeId);
+
+        notice.updateNotice(
+                command.getTitle(),
+                command.getContent()
         );
 
-        sendInquiryNotification(
-                inquiry.getUser(),
-                inquiry,
-                "문의 답변이 도착했어요",
-                "관리자님이 회원님의 문의에 답변을 남겼어요. 확인해보세요!",
-                "INQUIRY_ANSWER"
-        );
+        Notice updatedNotice = noticeService.updateNotice(notice);
+        return NoticeDetailResponse.from(updatedNotice);
+    }
 
-        return InquiryAnswerResponse.of(inquiry.getId(), inquiry.getUser().getId());
+    @Transactional
+    public NoticeActionResponse deleteNotice(Long noticeId) {
+        Notice notice = noticeService.getNotice(noticeId);
+        noticeService.deleteNotice(notice);
+
+        return NoticeActionResponse.of(noticeId, "공지사항이 삭제되었습니다.");
     }
 
     private void saveNotification(User user, User sender, String title, AlarmType type, Long referenceId) {
@@ -230,58 +272,4 @@ public class AdminUseCase {
             notificationSender.sendNotification(recipient.getFcmToken(), title, body, data);
         }
     }
-
-    @Transactional
-    public NoticeCreateResponse createNotice(Long userId, NoticeCreateCommand command) {
-        // 작성자(관리자) 정보 조회
-        User writer = userService.getUser(userId);
-
-        Notice notice = Notice.createNotice(
-                writer,
-                command.getTitle(),
-                command.getContent()
-        );
-
-        Notice savedNotice = noticeService.createNotice(notice);
-        return NoticeCreateResponse.from(savedNotice.getId());
-    }
-
-    public PagedResponse<AdminNoticeResponse> getNoticeList(int page, int size) {
-        DomainPageable domainPageable = new DomainPageable(page, size);
-
-        DomainPage<Notice> noticePage = noticeService.getAllNotices(domainPageable);
-
-        List<AdminNoticeResponse> responses = noticePage.getContent().stream()
-                .map(AdminNoticeResponse::from)
-                .collect(Collectors.toList());
-
-        return new PagedResponse<>(noticePage, responses);
-    }
-
-    public AdminNoticeDetailResponse getNoticeDetail(Long noticeId) {
-        Notice notice = noticeService.getNotice(noticeId);
-        return AdminNoticeDetailResponse.from(notice);
-    }
-
-    @Transactional
-    public NoticeDetailResponse updateNotice(Long noticeId, NoticeUpdateCommand command) {
-        Notice notice = noticeService.getNotice(noticeId);
-
-        notice.updateNotice(
-                command.getTitle(),
-                command.getContent()
-        );
-
-        Notice updatedNotice = noticeService.updateNotice(notice);
-        return NoticeDetailResponse.from(updatedNotice);
-    }
-
-    @Transactional
-    public NoticeActionResponse deleteNotice(Long noticeId) {
-        Notice notice = noticeService.getNotice(noticeId);
-        noticeService.deleteNotice(notice);
-
-        return NoticeActionResponse.of(noticeId, "공지사항이 삭제되었습니다.");
-    }
 }
-

@@ -28,6 +28,12 @@ public class ReportRepositoryImpl implements ReportRepository {
     }
 
     @Override
+    public Optional<Report> findById(Long id) {
+        return jpaReportRepository.findById(id)
+                .map(ReportEntity::toModel);
+    }
+
+    @Override
     public DomainPage<Report> findAll(DomainPageable pageable) {
         QUserEntity reporter = new QUserEntity("reporter");
         QUserEntity reportedUser = new QUserEntity("reportedUser");
@@ -56,12 +62,6 @@ public class ReportRepositoryImpl implements ReportRepository {
                 pageable.getSize(),
                 totalCount != null ? totalCount : 0L
         );
-    }
-
-    @Override
-    public Optional<Report> findById(Long reportId) {
-        return jpaReportRepository.findById(reportId)
-                .map(ReportEntity::toModel);
     }
 
     @Override

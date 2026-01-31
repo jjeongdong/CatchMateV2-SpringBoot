@@ -63,7 +63,7 @@ public class EnrollUseCase {
         }
 
         // 직관 신청 생성 및 저장
-        Enroll savedEnroll = enrollService.requestEnrollment(applicant, board, command.getDescription());
+        Enroll savedEnroll = enrollService.createEnroll(applicant, board, command.getDescription());
 
         // 게시글 작성자에게 신청 알림 발송 및 저장
         saveNotification(
@@ -86,11 +86,32 @@ public class EnrollUseCase {
         return EnrollCreateResponse.of(savedEnroll.getId());
     }
 
-    public PagedResponse<EnrollRequestResponse> getRequestEnrollList(Long userId, int page, int size) {
+    @Transactional
+    public EnrollDetailResponse getEnroll(Long userId, Long enrollId) {
+        Enroll enroll = enrollService.getEnrollWithFetch(enrollId);
+
+        Long applicantId = enroll.getUser().getId();
+        Long writerId = enroll.getBoard().getUser().getId();
+
+        // 요청한 유저(userId)가 신청자도 아니고, 작성자도 아니면 에러
+        if (!userId.equals(applicantId) && !userId.equals(writerId)) {
+            throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
+        }
+
+        if (enroll.isNew() && userId.equals(writerId)) {
+            enroll.markAsRead();
+            enrollService.updateEnroll(enroll);
+        }
+
+        // DTO 변환
+        return EnrollDetailResponse.from(enroll);
+    }
+
+    public PagedResponse<EnrollRequestResponse> getEnrollRequestList(Long userId, int page, int size) {
         // 도메인 페이징 객체 생성
         DomainPageable domainPageable = DomainPageable.of(page, size);
         // 직관 신청 리스트 조회
-        DomainPage<Enroll> enrollPage = enrollService.getEnrollsByUserId(userId, domainPageable);
+        DomainPage<Enroll> enrollPage = enrollService.getEnrollListByUserId(userId, domainPageable);
 
         // DTO 변환
         List<EnrollRequestResponse> responses = enrollPage.getContent().stream()
@@ -99,14 +120,14 @@ public class EnrollUseCase {
                             userId,
                             enroll.getBoard().getId()
                     );
-                    return EnrollRequestResponse.of(enroll, isBookMarked);
+                    return EnrollRequestResponse.from(enroll, isBookMarked);
                 })
                 .toList();
 
         return new PagedResponse<>(enrollPage, responses);
     }
 
-    public PagedResponse<EnrollApplicantResponse> getReceiveEnrollListByBoardId(Long userId, Long boardId, int page, int size) {
+    public PagedResponse<EnrollApplicantResponse> getEnrollReceiveListByBoardId(Long userId, Long boardId, int page, int size) {
         // 도메인 페이징 객체 생성
         DomainPageable domainPageable = DomainPageable.of(page, size);
         Board board = boardService.getBoard(boardId);
@@ -116,7 +137,7 @@ public class EnrollUseCase {
         }
 
         // 직관 신청 리스트 조회
-        DomainPage<Enroll> enrollPage = enrollService.getPendingEnrollsByBoardId(boardId, AcceptStatus.PENDING, domainPageable);
+        DomainPage<Enroll> enrollPage = enrollService.getEnrollListByBoardIdAndStatus(boardId, AcceptStatus.PENDING, domainPageable);
 
         // DTO 변환
         List<EnrollApplicantResponse> responses = enrollPage.getContent().stream()
@@ -126,7 +147,7 @@ public class EnrollUseCase {
         return new PagedResponse<>(enrollPage, responses);
     }
 
-    public PagedResponse<EnrollReceiveResponse> getAllReceiveEnrollList(Long userId, int page, int size) {
+    public PagedResponse<EnrollReceiveResponse> getEnrollReceiveList(Long userId, int page, int size) {
         DomainPageable pageable = DomainPageable.of(page, size);
 
         // 신청이 있는 게시글 ID 목록 조회
@@ -139,7 +160,7 @@ public class EnrollUseCase {
         }
 
         // 위 게시글들에 속한 신청 전체 조회
-        List<Enroll> allEnrolls = enrollService.getEnrollsByBoardIds(boardIds);
+        List<Enroll> allEnrolls = enrollService.getEnrollListByBoardIds(boardIds);
 
         // boardIds 순서를 지키면서 DTO 조립
         List<EnrollReceiveResponse> content = boardIds.stream()
@@ -154,7 +175,7 @@ public class EnrollUseCase {
 
                     // 게시글 DTO 변환
                     Board board = enrolls.get(0).getBoard();
-                    BoardResponse boardResponse = BoardResponse.of(board, false);
+                    BoardResponse boardResponse = BoardResponse.from(board, false);
 
                     // 신청자 목록 DTO 변환
                     List<EnrollResponse> enrollList = enrolls.stream()
@@ -169,50 +190,15 @@ public class EnrollUseCase {
         return new PagedResponse<>(boardIdPage, content);
     }
 
-    @Transactional
-    public EnrollDetailResponse getEnrollDetail(Long userId, Long enrollId) {
-        Enroll enroll = enrollService.getEnrollWithFetch(enrollId);
-
-        Long applicantId = enroll.getUser().getId();
-        Long writerId = enroll.getBoard().getUser().getId();
-
-        // 요청한 유저(userId)가 신청자도 아니고, 작성자도 아니면 에러
-        if (!userId.equals(applicantId) && !userId.equals(writerId)) {
-            throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
-        }
-
-        if (enroll.isNew() && userId.equals(writerId)) {
-            enroll.markAsRead();
-            enrollService.updateEnrollment(enroll);
-        }
-
-        // DTO 변환
-        return EnrollDetailResponse.from(enroll);
-    }
-
-    public EnrollCountResponse getMyPendingEnrollCount(Long userId) {
-        long count = enrollService.getPendingEnrollCountByBoardWriter(userId);
+    public EnrollCountResponse getEnrollPendingCount(Long userId) {
+        long count = enrollService.getEnrollPendingCountByBoardWriter(userId);
         return EnrollCountResponse.of(count);
     }
 
     @Transactional
-    public EnrollCancelResponse cancelEnroll(Long enrollId, Long userId) {
-        // 신청자 정보 조회
-        User user = userService.getUser(userId);
-
-        // 직관 신청 조회
-        Enroll enroll = enrollService.getEnrollById(enrollId);
-
-        // 직관 신청 취소
-        enrollService.cancelEnrollment(enroll, user);
-
-        return EnrollCancelResponse.of(enrollId);
-    }
-
-    @Transactional
-    public EnrollAcceptResponse acceptEnroll(Long userId, Long enrollId) {
+    public EnrollAcceptResponse updateEnrollAccept(Long userId, Long enrollId) {
         // 1. 신청 내역 조회
-        Enroll enroll = enrollService.getEnrollByIdWithLock(enrollId);
+        Enroll enroll = enrollService.getEnrollWithLock(enrollId);
         Board board = enroll.getBoard();
 
         // 2. 게시글 인원 확인 및 증가
@@ -223,7 +209,7 @@ public class EnrollUseCase {
 
         // 4. 변경 사항 저장
         boardService.updateBoard(board);
-        enrollService.updateEnrollment(enroll);
+        enrollService.updateEnroll(enroll);
 
         saveNotification(
                 enroll.getUser(),
@@ -246,16 +232,16 @@ public class EnrollUseCase {
     }
 
     @Transactional
-    public EnrollRejectResponse rejectEnroll(Long userId, Long enrollId) {
+    public EnrollRejectResponse updateEnrollReject(Long userId, Long enrollId) {
         // 1. 신청 내역 조회
-        Enroll enroll = enrollService.getEnrollByIdWithLock(enrollId);
+        Enroll enroll = enrollService.getEnrollWithLock(enrollId);
         Board board = enroll.getBoard();
 
         // 2. 신청 상태 변경
         enroll.reject();
 
         // 3. 변경 사항 저장
-        enrollService.updateEnrollment(enroll);
+        enrollService.updateEnroll(enroll);
 
         saveNotification(
                 enroll.getUser(),
@@ -277,7 +263,33 @@ public class EnrollUseCase {
         return EnrollRejectResponse.of(enrollId);
     }
 
-    private void saveNotification(User user, User sender, String title, AlarmType type, Long referenceId) {
+    @Transactional
+    public EnrollCancelResponse deleteEnroll(Long enrollId, Long userId) {
+        // 직관 신청 조회
+        Enroll enroll = enrollService.getEnroll(enrollId);
+
+        // 권한 확인 (신청자 본인만 취소 가능)
+        if (!enroll.getUser().getId().equals(userId)) {
+            throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
+        }
+
+        // 직관 신청 취소
+        enrollService.deleteEnroll(enroll);
+
+        return EnrollCancelResponse.of(enrollId);
+    }
+
+    // =================================================================================
+    // Private Helpers
+    // =================================================================================
+
+    private void saveNotification(
+            User user,
+            User sender,
+            String title,
+            AlarmType type,
+            Long referenceId
+    ) {
         Notification notification = Notification.createNotification(
                 user,
                 sender,

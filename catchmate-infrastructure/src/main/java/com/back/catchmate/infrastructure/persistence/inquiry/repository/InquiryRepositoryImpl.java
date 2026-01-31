@@ -36,7 +36,7 @@ public class InquiryRepositoryImpl implements InquiryRepository {
     public DomainPage<Inquiry> findAll(DomainPageable pageable) {
         List<InquiryEntity> entities = jpaQueryFactory
                 .selectFrom(inquiryEntity)
-                .join(inquiryEntity.user, userEntity).fetchJoin() // 작성자 정보 Fetch Join
+                .join(inquiryEntity.user, userEntity).fetchJoin()
                 .offset(pageable.getOffset())
                 .limit(pageable.getSize())
                 .orderBy(inquiryEntity.createdAt.desc())

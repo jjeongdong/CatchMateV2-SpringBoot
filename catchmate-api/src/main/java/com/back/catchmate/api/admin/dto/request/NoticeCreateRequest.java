@@ -2,11 +2,13 @@ package com.back.catchmate.api.admin.dto.request;
 
 import com.back.catchmate.application.admin.dto.command.NoticeCreateCommand;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class NoticeCreateRequest {
     @NotBlank(message = "제목을 입력해주세요.")
     private String title;

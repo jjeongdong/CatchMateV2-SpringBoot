@@ -22,7 +22,7 @@ public class BoardResponse {
     private GameResponse gameResponse;
     private UserResponse userResponse;
 
-    public static BoardResponse of(Board board, boolean bookMarked) {
+    public static BoardResponse from(Board board, boolean bookMarked) {
         return BoardResponse.builder()
                 .boardId(board.getId())
                 .title(board.getTitle())

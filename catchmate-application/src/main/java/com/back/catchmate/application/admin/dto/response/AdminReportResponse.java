@@ -3,7 +3,6 @@ package com.back.catchmate.application.admin.dto.response;
 import com.back.catchmate.domain.report.model.Report;
 import lombok.Builder;
 import lombok.Getter;
-import report.ReportReason;
 
 import java.time.LocalDateTime;
 

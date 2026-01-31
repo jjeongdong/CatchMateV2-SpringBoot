@@ -16,30 +16,24 @@ import java.util.Optional;
 public class BookmarkService {
     private final BookmarkRepository bookmarkRepository;
 
-    // =================================================================================
-    // Read
-    // =================================================================================
+    public DomainPage<Bookmark> getBookmarkList(Long userId, DomainPageable pageable) {
+        return bookmarkRepository.findAllByUserId(userId, pageable);
+    }
 
     public boolean isBookmarked(Long userId, Long boardId) {
         return bookmarkRepository.existsByUserIdAndBoardId(userId, boardId);
     }
 
-    public DomainPage<Bookmark> getBookmarkList(Long userId, DomainPageable pageable) {
-        return bookmarkRepository.findAllByUserId(userId, pageable);
-    }
-
-    // =================================================================================
-    // Update (토글)
-    // =================================================================================
-
-    public void updateBookmark(User user, Board board) {
+    public boolean updateBookmark(User user, Board board) {
         Optional<Bookmark> existingBookmark = bookmarkRepository.findByUserIdAndBoardId(user.getId(), board.getId());
 
         if (existingBookmark.isPresent()) {
             bookmarkRepository.delete(existingBookmark.get());
+            return false; // 찜 취소됨
         } else {
             Bookmark newBookmark = Bookmark.createBookmark(user, board);
             bookmarkRepository.save(newBookmark);
+            return true; // 찜 추가됨
         }
     }
 }

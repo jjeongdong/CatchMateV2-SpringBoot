@@ -5,7 +5,7 @@ import com.back.catchmate.domain.user.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import report.ReportReason;
+import report.enums.ReportReason;
 
 @Getter
 @Builder

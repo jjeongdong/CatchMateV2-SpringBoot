@@ -11,6 +11,7 @@ import java.util.Optional;
 
 public interface JpaBookmarkRepository extends JpaRepository<BookmarkEntity, Long> {
     Optional<BookmarkEntity> findByUserIdAndBoardId(Long userId, Long boardId);
+
     boolean existsByUserIdAndBoardId(Long userId, Long boardId);
 
     // N+1 문제 방지를 위해 Fetch Join 사용 (Board와 User 정보를 함께 로딩)

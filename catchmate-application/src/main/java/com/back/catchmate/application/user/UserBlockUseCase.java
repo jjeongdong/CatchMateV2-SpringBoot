@@ -24,7 +24,7 @@ public class UserBlockUseCase {
     private final BlockService blockService;
 
     @Transactional
-    public BlockActionResponse blockUser(Long blockerId, Long blockedId) {
+    public BlockActionResponse createBlock(Long blockerId, Long blockedId) {
         User blocker = userService.getUser(blockerId);
         User blocked = userService.getUser(blockedId);
 
@@ -33,29 +33,29 @@ public class UserBlockUseCase {
             throw new BaseException(ErrorCode.SELF_BLOCK_FAILED);
         }
 
-        blockService.blockUser(blocker, blocked);
+        blockService.createBlock(blocker, blocked);
         return BlockActionResponse.of(blockedId, "유저를 차단했습니다.");
     }
 
-    @Transactional
-    public BlockActionResponse unblockUser(Long blockerId, Long blockedId) {
-        User blocker = userService.getUser(blockerId);
-        User blocked = userService.getUser(blockedId);
-
-        blockService.unblockUser(blocker, blocked);
-        return BlockActionResponse.of(blockedId, "차단을 해제했습니다.");
-    }
-
     @Transactional(readOnly = true)
-    public PagedResponse<BlockedUserResponse> getBlockedList(Long userId, int pageable, int size) {
-        DomainPageable domainPageable = DomainPageable.of(pageable, size);
+    public PagedResponse<BlockedUserResponse> getBlockList(Long userId, int page, int size) {
+        DomainPageable domainPageable = DomainPageable.of(page, size);
 
-        DomainPage<Block> blockPage = blockService.getBlockedUsers(userId, domainPageable);
+        DomainPage<Block> blockPage = blockService.getBlockList(userId, domainPageable);
 
         List<BlockedUserResponse> responses = blockPage.getContent().stream()
                 .map(BlockedUserResponse::from)
                 .toList();
 
         return new PagedResponse<>(blockPage, responses);
+    }
+
+    @Transactional
+    public BlockActionResponse deleteBlock(Long blockerId, Long blockedId) {
+        User blocker = userService.getUser(blockerId);
+        User blocked = userService.getUser(blockedId);
+
+        blockService.deleteBlock(blocker, blocked);
+        return BlockActionResponse.of(blockedId, "차단을 해제했습니다.");
     }
 }

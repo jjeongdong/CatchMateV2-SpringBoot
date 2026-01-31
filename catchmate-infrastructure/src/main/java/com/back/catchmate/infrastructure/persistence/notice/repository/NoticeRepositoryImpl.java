@@ -27,8 +27,8 @@ public class NoticeRepositoryImpl implements NoticeRepository {
     }
 
     @Override
-    public Optional<Notice> findById(Long noticeId) {
-        return jpaNoticeRepository.findByIdWithWriter(noticeId)
+    public Optional<Notice> findById(Long id) {
+        return jpaNoticeRepository.findByIdWithWriter(id)
                 .map(NoticeEntity::toModel);
     }
 

@@ -1,6 +1,7 @@
 package com.back.catchmate.application.bookmark;
 
 import com.back.catchmate.application.board.dto.response.BoardResponse;
+import com.back.catchmate.application.bookmark.dto.response.BookmarkUpdateResponse;
 import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.domain.board.model.Board;
 import com.back.catchmate.domain.board.service.BoardService;
@@ -17,8 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class BookmarkUseCase {
     private final BookmarkService bookmarkService;
     private final BoardService boardService;
@@ -33,7 +34,7 @@ public class BookmarkUseCase {
 
         // Bookmark 객체를 BoardResponse DTO로 변환
         List<BoardResponse> boardResponses = bookmarkPage.getContent().stream()
-                .map(bookmark -> BoardResponse.of(bookmark.getBoard(), true))
+                .map(bookmark -> BoardResponse.from(bookmark.getBoard(), true))
                 .toList();
 
         // 페이징 응답 생성 및 반환
@@ -41,12 +42,14 @@ public class BookmarkUseCase {
     }
 
     @Transactional
-    public void updateBookmark(Long userId, Long boardId) {
+    public BookmarkUpdateResponse updateBookmark(Long userId, Long boardId) {
         // 게시글 존재 확인
         Board board = boardService.getBoard(boardId);
         User user = userService.getUser(userId);
 
         // 찜 여부 확인 후 토글 처리
-        bookmarkService.updateBookmark(user, board);
+        boolean isBookmarked = bookmarkService.updateBookmark(user, board);
+
+        return BookmarkUpdateResponse.of(boardId, isBookmarked);
     }
 }
