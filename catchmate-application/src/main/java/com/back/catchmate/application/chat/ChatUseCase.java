@@ -4,6 +4,7 @@ import com.back.catchmate.application.chat.dto.command.ChatMessageCommand;
 import com.back.catchmate.application.chat.dto.response.ChatMessageResponse;
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.chat.model.ChatRoom;
+import com.back.catchmate.domain.chat.model.MessageType;
 import com.back.catchmate.domain.chat.service.ChatMessageService;
 import com.back.catchmate.domain.chat.service.ChatRoomService;
 import com.back.catchmate.domain.user.model.User;
@@ -70,5 +71,51 @@ public class ChatUseCase {
      */
     public boolean canAccessChatRoom(Long userId, Long chatRoomId) {
         return chatRoomService.isUserParticipant(userId, chatRoomId);
+    }
+
+    /**
+     * 채팅방 입장 메시지 생성 및 저장
+     * 서버가 입장 메시지를 자동으로 생성
+     */
+    @Transactional
+    public ChatMessageResponse enterChatRoom(Long userId, Long chatRoomId) {
+        ChatRoom chatRoom = chatRoomService.getChatRoom(chatRoomId);
+        User user = userService.getUser(userId);
+
+        // 서버에서 입장 메시지 생성
+        String enterMessage = user.getNickName() + "님이 입장하셨습니다.";
+
+        ChatMessage chatMessage = ChatMessage.createMessage(
+                chatRoom,
+                user,
+                enterMessage,
+                MessageType.SYSTEM
+        );
+
+        ChatMessage savedMessage = chatMessageService.save(chatMessage);
+        return ChatMessageResponse.from(savedMessage);
+    }
+
+    /**
+     * 채팅방 퇴장 메시지 생성 및 저장
+     * 서버가 퇴장 메시지를 자동으로 생성
+     */
+    @Transactional
+    public ChatMessageResponse leaveChatRoom(Long userId, Long chatRoomId) {
+        ChatRoom chatRoom = chatRoomService.getChatRoom(chatRoomId);
+        User user = userService.getUser(userId);
+
+        // 서버에서 퇴장 메시지 생성
+        String leaveMessage = user.getNickName() + "님이 퇴장하셨습니다.";
+
+        ChatMessage chatMessage = ChatMessage.createMessage(
+                chatRoom,
+                user,
+                leaveMessage,
+                MessageType.SYSTEM
+        );
+
+        ChatMessage savedMessage = chatMessageService.save(chatMessage);
+        return ChatMessageResponse.from(savedMessage);
     }
 }

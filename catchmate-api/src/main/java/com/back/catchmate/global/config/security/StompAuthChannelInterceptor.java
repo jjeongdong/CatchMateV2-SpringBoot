@@ -90,11 +90,11 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                         throw new BaseException(ErrorCode.SOCKET_CONNECT_FAILED);
                     }
 
-                    boolean participant = chatUseCase.canAccessChatRoom(userId, chatRoomId);
-                    if (!participant) {
-                        log.warn("User {} tried to subscribe to chatRoom {} without participation", userId, chatRoomId);
-                        throw new BaseException(ErrorCode.USER_CHATROOM_NOT_FOUND);
-                    }
+//                    boolean participant = chatUseCase.canAccessChatRoom(userId, chatRoomId);
+//                    if (!participant) {
+//                        log.warn("User {} tried to subscribe to chatRoom {} without participation", userId, chatRoomId);
+//                        throw new BaseException(ErrorCode.USER_CHATROOM_NOT_FOUND);
+//                    }
 
                 } catch (NumberFormatException e) {
                     log.warn("Invalid chatRoomId in destination: {}", dest);
