@@ -3,9 +3,11 @@ package com.back.catchmate.application.chat;
 import com.back.catchmate.application.chat.dto.command.ChatMessageCommand;
 import com.back.catchmate.application.chat.dto.response.ChatMessageResponse;
 import com.back.catchmate.application.chat.dto.response.ChatRoomResponse;
+import com.back.catchmate.application.chat.event.ChatNotificationEvent;
 import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.chat.model.ChatRoom;
+import com.back.catchmate.domain.chat.model.ChatRoomMember;
 import com.back.catchmate.domain.chat.model.MessageType;
 import com.back.catchmate.domain.chat.service.ChatMessageService;
 import com.back.catchmate.domain.chat.service.ChatRoomMemberService;
@@ -15,6 +17,7 @@ import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +32,7 @@ public class ChatUseCase {
     private final ChatMessageService chatMessageService;
     private final ChatRoomMemberService chatRoomMemberService;
     private final UserService userService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 채팅 메시지 저장
@@ -46,7 +50,29 @@ public class ChatUseCase {
         );
 
         ChatMessage savedMessage = chatMessageService.save(chatMessage);
+
+        // 발신자를 제외한 채팅방 멤버들에게 FCM 알림 이벤트 발행
+        publishChatNotificationEvent(savedMessage, command.getSenderId());
+
         return ChatMessageResponse.from(savedMessage);
+    }
+
+    /**
+     * 채팅 알림 이벤트 발행
+     * 발신자를 제외한 채팅방 멤버들에게 FCM Push 알림
+     */
+    private void publishChatNotificationEvent(ChatMessage savedMessage, Long senderId) {
+        // 채팅방의 활성 멤버 조회 (발신자 제외)
+        List<User> recipients = chatRoomMemberService
+                .getActiveMembersByChatRoomId(savedMessage.getChatRoom().getId())
+                .stream()
+                .map(ChatRoomMember::getUser)
+                .filter(user -> !user.getId().equals(senderId))  // 발신자 제외
+                .toList();
+
+        if (!recipients.isEmpty()) {
+            eventPublisher.publishEvent(ChatNotificationEvent.of(savedMessage, recipients));
+        }
     }
 
     /**

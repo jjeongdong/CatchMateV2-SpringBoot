@@ -29,7 +29,9 @@ public class EnrollNotificationEventListener {
                 "boardId", event.board().getId().toString()
         );
 
-        notificationSender.sendNotification(
+        // 오프라인 사용자에게만 FCM 알림 전송
+        notificationSender.sendNotificationIfOffline(
+                recipient.getId(),
                 recipient.getFcmToken(),
                 event.title(),
                 event.body(),

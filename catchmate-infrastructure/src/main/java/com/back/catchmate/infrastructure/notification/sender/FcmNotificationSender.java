@@ -1,6 +1,7 @@
 package com.back.catchmate.infrastructure.notification.sender;
 
 import com.back.catchmate.domain.notification.port.NotificationSender;
+import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
@@ -19,6 +20,8 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class FcmNotificationSender implements NotificationSender {
+
+    private final UserOnlineStatusPort userOnlineStatusPort;
     @Override
     public void sendNotification(String token, String title, String body, Map<String, String> data) {
         Message message = Message.builder()
@@ -66,5 +69,18 @@ public class FcmNotificationSender implements NotificationSender {
         } catch (FirebaseMessagingException e) {
             log.error("FCM 멀티캐스트 전송 중 심각한 오류 발생", e);
         }
+    }
+
+    @Override
+    public void sendNotificationIfOffline(Long userId, String token, String title, String body, Map<String, String> data) {
+        // 사용자가 온라인 상태인지 확인
+        if (userOnlineStatusPort.isUserOnline(userId)) {
+            log.debug("User {} is ONLINE - FCM 알림 전송 생략", userId);
+            return;
+        }
+
+        // 오프라인 상태인 경우에만 FCM 알림 전송
+        log.info("User {} is OFFLINE - FCM 알림 전송", userId);
+        sendNotification(token, title, body, data);
     }
 }
