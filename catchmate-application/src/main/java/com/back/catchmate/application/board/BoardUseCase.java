@@ -15,6 +15,9 @@ import com.back.catchmate.domain.board.dto.BoardSearchCondition;
 import com.back.catchmate.domain.board.model.Board;
 import com.back.catchmate.domain.board.service.BoardService;
 import com.back.catchmate.domain.bookmark.service.BookmarkService;
+import com.back.catchmate.domain.chat.model.ChatRoom;
+import com.back.catchmate.domain.chat.service.ChatRoomMemberService;
+import com.back.catchmate.domain.chat.service.ChatRoomService;
 import com.back.catchmate.domain.club.model.Club;
 import com.back.catchmate.domain.club.service.ClubService;
 import com.back.catchmate.domain.common.page.DomainPage;
@@ -50,6 +53,8 @@ public class BoardUseCase {
     private final BlockService blockService;
     private final EnrollService enrollService;
     private final BookmarkService bookmarkService;
+    private final ChatRoomService chatRoomService;
+    private final ChatRoomMemberService chatRoomMemberService;
 
     @Transactional
     public BoardCreateResponse createBoard(Long userId, BoardCreateCommand command) {
@@ -77,6 +82,13 @@ public class BoardUseCase {
 
         // 게시글 저장
         Board savedBoard = boardService.createBoard(board);
+
+        // 게시글이 발행(completed=true)되면 채팅방 생성 및 작성자를 멤버로 추가
+        if (command.isCompleted()) {
+            ChatRoom chatRoom = chatRoomService.getOrCreateChatRoom(savedBoard);
+            chatRoomMemberService.addMember(chatRoom, user);
+        }
+
         return BoardCreateResponse.of(savedBoard.getId());
     }
 
@@ -92,8 +104,7 @@ public class BoardUseCase {
         String buttonStatus = getButtonStatus(user, board, myEnroll);
         Long myEnrollId = myEnroll.map(Enroll::getId).orElse(null);
 
-        // TODO: ChatService 연동 채팅방 ID 조회
-        Long chatRoomId = null;
+        Long chatRoomId = chatRoomService.getOrCreateChatRoom(board).getId();
 
         return BoardDetailResponse.from(board, isBookMarked, buttonStatus, myEnrollId, chatRoomId);
     }

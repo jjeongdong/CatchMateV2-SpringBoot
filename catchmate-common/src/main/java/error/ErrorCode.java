@@ -66,6 +66,7 @@ public enum ErrorCode {
 
     // 채팅방
     CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 채팅방입니다."),
+    CHATROOM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방 멤버를 찾을 수 없습니다."),
     USER_CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자가 해당 채팅방에 참여하지 않았습니다."),
     CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 채팅 메시지입니다."),
 

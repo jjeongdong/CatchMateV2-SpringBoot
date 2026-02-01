@@ -17,6 +17,9 @@ import com.back.catchmate.application.enroll.event.EnrollNotificationEvent;
 import com.back.catchmate.domain.board.model.Board;
 import com.back.catchmate.domain.board.service.BoardService;
 import com.back.catchmate.domain.bookmark.service.BookmarkService;
+import com.back.catchmate.domain.chat.model.ChatRoom;
+import com.back.catchmate.domain.chat.service.ChatRoomMemberService;
+import com.back.catchmate.domain.chat.service.ChatRoomService;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.enroll.model.AcceptStatus;
@@ -49,6 +52,8 @@ public class EnrollUseCase {
     private final UserService userService;
     private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ChatRoomService chatRoomService;
+    private final ChatRoomMemberService chatRoomMemberService;
 
     @Transactional
     public EnrollCreateResponse createEnroll(EnrollCreateCommand command) {
@@ -209,6 +214,10 @@ public class EnrollUseCase {
         // 4. 변경 사항 저장
         boardService.updateBoard(board);
         enrollService.updateEnroll(enroll);
+
+        // 5. 채팅방에 신청자 추가
+        ChatRoom chatRoom = chatRoomService.getOrCreateChatRoom(board);
+        chatRoomMemberService.addMember(chatRoom, enroll.getUser());
 
         saveNotification(
                 enroll.getUser(),

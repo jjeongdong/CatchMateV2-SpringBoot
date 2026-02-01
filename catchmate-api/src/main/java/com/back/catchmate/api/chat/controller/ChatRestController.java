@@ -2,6 +2,7 @@ package com.back.catchmate.api.chat.controller;
 
 import com.back.catchmate.application.chat.ChatUseCase;
 import com.back.catchmate.application.chat.dto.response.ChatMessageResponse;
+import com.back.catchmate.application.chat.dto.response.ChatRoomResponse;
 import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.common.page.DomainPage;
@@ -21,6 +22,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatRestController {
     private final ChatUseCase chatUseCase;
+
+    @GetMapping("/rooms")
+    @Operation(summary = "내가 속한 채팅방 목록 조회 (페이징)", description = "현재 사용자가 참여 중인 모든 채팅방을 조회합니다. 각 채팅방의 마지막 메시지도 함께 반환됩니다.")
+    public ResponseEntity<PagedResponse<ChatRoomResponse>> getMyChatRooms(
+            @AuthUser Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        DomainPageable pageable = DomainPageable.of(page, size);
+        PagedResponse<ChatRoomResponse> response = chatUseCase.getMyChatRooms(userId, pageable);
+
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/rooms/{chatRoomId}/messages")
     @Operation(summary = "채팅 메시지 목록 조회 (페이징)", description = "특정 채팅방의 메시지를 페이징하여 조회합니다.")

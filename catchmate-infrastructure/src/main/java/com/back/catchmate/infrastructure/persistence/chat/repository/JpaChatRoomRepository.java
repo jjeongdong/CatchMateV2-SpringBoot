@@ -24,17 +24,8 @@ public interface JpaChatRoomRepository extends JpaRepository<ChatRoomEntity, Lon
 
     @Query("SELECT cr FROM ChatRoomEntity cr " +
             "JOIN FETCH cr.board b " +
-            "JOIN EnrollEntity e ON e.board.id = b.id " +
-            "WHERE (e.user.id = :userId OR b.user.id = :userId) " +
-            "AND e.acceptStatus = 'ACCEPTED'")
-    Page<ChatRoomEntity> findAllByUserId(@Param("userId") Long userId, Pageable pageable);
-
-    @Query("SELECT cr FROM ChatRoomEntity cr " +
-            "JOIN FETCH cr.board b " +
-            "JOIN EnrollEntity e ON e.board.id = b.id " +
-            "WHERE (e.user.id = :userId OR b.user.id = :userId) " +
-            "AND e.acceptStatus = 'ACCEPTED'")
-    List<ChatRoomEntity> findAllByUserIdList(@Param("userId") Long userId);
+            "WHERE cr.id IN :chatRoomIds")
+    Page<ChatRoomEntity> findAllByIdIn(@Param("chatRoomIds") List<Long> chatRoomIds, Pageable pageable);
 
     boolean existsByBoardId(Long boardId);
 }
