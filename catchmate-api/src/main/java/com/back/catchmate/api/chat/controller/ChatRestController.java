@@ -2,6 +2,7 @@ package com.back.catchmate.api.chat.controller;
 
 import com.back.catchmate.application.chat.ChatUseCase;
 import com.back.catchmate.application.chat.dto.response.ChatMessageResponse;
+import com.back.catchmate.application.chat.dto.response.ChatRoomMemberResponse;
 import com.back.catchmate.application.chat.dto.response.ChatRoomResponse;
 import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.domain.chat.model.ChatMessage;
@@ -63,6 +64,16 @@ public class ChatRestController {
         if (response == null) {
             return ResponseEntity.noContent().build();
         }
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/rooms/{chatRoomId}/members")
+    @Operation(summary = "채팅방 참여자 목록 조회", description = "특정 채팅방에 현재 참여 중인 사용자 목록을 조회합니다.")
+    public ResponseEntity<List<ChatRoomMemberResponse>> getChatRoomMembers(
+            @AuthUser Long userId,
+            @PathVariable Long chatRoomId) {
+
+        List<ChatRoomMemberResponse> response = chatUseCase.getChatRoomMembers(chatRoomId);
         return ResponseEntity.ok(response);
     }
 }

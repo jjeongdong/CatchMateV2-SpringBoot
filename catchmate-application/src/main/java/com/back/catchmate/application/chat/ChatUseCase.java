@@ -2,6 +2,7 @@ package com.back.catchmate.application.chat;
 
 import com.back.catchmate.application.chat.dto.command.ChatMessageCommand;
 import com.back.catchmate.application.chat.dto.response.ChatMessageResponse;
+import com.back.catchmate.application.chat.dto.response.ChatRoomMemberResponse;
 import com.back.catchmate.application.chat.dto.response.ChatRoomResponse;
 import com.back.catchmate.application.chat.event.ChatNotificationEvent;
 import com.back.catchmate.application.common.PagedResponse;
@@ -169,5 +170,22 @@ public class ChatUseCase {
 
         ChatMessage savedMessage = chatMessageService.save(chatMessage);
         return ChatMessageResponse.from(savedMessage);
+    }
+
+    /**
+     * 특정 채팅방의 참여자 목록 조회
+     * @param chatRoomId 채팅방 ID
+     * @return 채팅방에 현재 참여중인 사용자 목록
+     */
+    public List<ChatRoomMemberResponse> getChatRoomMembers(Long chatRoomId) {
+        // 채팅방 존재 여부 확인
+        chatRoomService.getChatRoom(chatRoomId);
+
+        // 활성 멤버 목록 조회
+        List<ChatRoomMember> activeMembers = chatRoomMemberService.getActiveMembersByChatRoomId(chatRoomId);
+
+        return activeMembers.stream()
+                .map(ChatRoomMemberResponse::from)
+                .toList();
     }
 }
