@@ -22,7 +22,7 @@ public class EnrollResponse {
                 .enrollId(enroll.getId())
                 .description(enroll.getDescription())
                 .requestDate(enroll.getRequestedAt())
-                .newEnroll(enroll.isNew())
+                .newEnroll(enroll.isNewEnroll())
                 .applicant(ApplicantResponse.from(enroll.getUser()))
                 .build();
     }

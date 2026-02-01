@@ -18,7 +18,7 @@ public class Enroll implements ResourceOwnership {
     private Board board;
     private String description;
     private AcceptStatus acceptStatus;
-    private boolean isNew;
+    private boolean newEnroll;
     private LocalDateTime requestedAt;
 
     public static Enroll createEnroll(User user, Board board, String description) {
@@ -27,13 +27,13 @@ public class Enroll implements ResourceOwnership {
                 .board(board)
                 .description(description)
                 .acceptStatus(AcceptStatus.PENDING)
-                .isNew(true)
+                .newEnroll(true)
                 .requestedAt(LocalDateTime.now())
                 .build();
     }
 
     public void markAsRead() {
-        this.isNew = false;
+        this.newEnroll = false;
     }
 
     // 수락 비즈니스 로직

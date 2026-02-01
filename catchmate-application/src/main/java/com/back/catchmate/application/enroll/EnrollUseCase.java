@@ -103,7 +103,7 @@ public class EnrollUseCase {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }
 
-        if (enroll.isNew() && userId.equals(writerId)) {
+        if (enroll.isNewEnroll() && userId.equals(writerId)) {
             enroll.markAsRead();
             enrollService.updateEnroll(enroll);
         }

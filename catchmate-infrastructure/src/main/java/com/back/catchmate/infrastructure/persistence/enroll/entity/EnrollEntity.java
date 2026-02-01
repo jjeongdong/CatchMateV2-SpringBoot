@@ -58,7 +58,7 @@ public class EnrollEntity extends BaseTimeEntity {
     private String description;
 
     @Column(nullable = false)
-    private boolean isNew;
+    private boolean newEnroll;
 
     public static EnrollEntity from(Enroll enroll) {
         return EnrollEntity.builder()
@@ -67,7 +67,7 @@ public class EnrollEntity extends BaseTimeEntity {
                 .board(BoardEntity.from(enroll.getBoard()))
                 .description(enroll.getDescription())
                 .acceptStatus(enroll.getAcceptStatus())
-                .isNew(enroll.isNew())
+                .newEnroll(enroll.isNewEnroll())
                 .build();
     }
 
@@ -78,7 +78,7 @@ public class EnrollEntity extends BaseTimeEntity {
                 .board(board.toModel())
                 .description(description)
                 .acceptStatus(acceptStatus)
-                .isNew(isNew)
+                .newEnroll(newEnroll)
                 .requestedAt(getCreatedAt())
                 .build();
     }
