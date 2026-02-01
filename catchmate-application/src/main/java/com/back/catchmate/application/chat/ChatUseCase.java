@@ -7,14 +7,14 @@ import com.back.catchmate.domain.chat.model.ChatRoom;
 import com.back.catchmate.domain.chat.model.MessageType;
 import com.back.catchmate.domain.chat.service.ChatMessageService;
 import com.back.catchmate.domain.chat.service.ChatRoomService;
+import com.back.catchmate.domain.common.page.DomainPage;
+import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -44,13 +44,10 @@ public class ChatUseCase {
     }
 
     /**
-     * 채팅방의 모든 메시지 조회
+     * 채팅방의 모든 메시지 조회 (페이징)
      */
-    public List<ChatMessageResponse> getMessages(Long chatRoomId) {
-        List<ChatMessage> messages = chatMessageService.findAllByChatRoomId(chatRoomId);
-        return messages.stream()
-                .map(ChatMessageResponse::from)
-                .collect(Collectors.toList());
+    public DomainPage<ChatMessage> getMessages(Long chatRoomId, DomainPageable pageable) {
+        return chatMessageService.findAllByChatRoomId(chatRoomId, pageable);
     }
 
     /**

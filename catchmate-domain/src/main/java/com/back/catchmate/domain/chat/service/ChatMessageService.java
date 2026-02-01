@@ -2,6 +2,8 @@ package com.back.catchmate.domain.chat.service;
 
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.chat.repository.ChatMessageRepository;
+import com.back.catchmate.domain.common.page.DomainPage;
+import com.back.catchmate.domain.common.page.DomainPageable;
 import error.ErrorCode;
 import error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,10 @@ public class ChatMessageService {
 
     public Optional<ChatMessage> findById(Long messageId) {
         return chatMessageRepository.findById(messageId);
+    }
+
+    public DomainPage<ChatMessage> findAllByChatRoomId(Long chatRoomId, DomainPageable pageable) {
+        return chatMessageRepository.findAllByChatRoomId(chatRoomId, pageable);
     }
 
     public List<ChatMessage> findAllByChatRoomId(Long chatRoomId) {
