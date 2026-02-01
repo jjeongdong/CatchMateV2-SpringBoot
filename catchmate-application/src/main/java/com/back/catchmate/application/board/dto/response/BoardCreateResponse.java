@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class BoardCreateResponse {
     private Long boardId;
-    private Long chatRoomId;
     private LocalDateTime createdAt;
 
     public static BoardCreateResponse of(Long boardId) {

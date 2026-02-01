@@ -53,4 +53,8 @@ public class NotificationUseCase {
     public void deleteNotification(Long userId, Long notificationId) {
         notificationService.deleteNotification(userId, notificationId);
     }
+
+    public boolean hasUnreadNotifications(Long userId) {
+        return notificationService.hasUnreadNotifications(userId);
+    }
 }

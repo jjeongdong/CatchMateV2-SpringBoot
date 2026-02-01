@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 public class NotificationResponse {
     private Long id;
     private String title;
-    private String body;
     private AlarmType alarmType;
     private boolean read;
     private LocalDateTime createdAt;

@@ -3,7 +3,7 @@ package com.back.catchmate.api.notification.controller;
 import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.application.notification.NotificationUseCase;
 import com.back.catchmate.application.notification.dto.response.NotificationResponse;
-import com.back.catchmate.domain.common.permission.CheckDataPermission;
+import com.back.catchmate.application.notification.dto.response.UnreadNotificationResponse;
 import com.back.catchmate.domain.common.permission.PermissionId;
 import com.back.catchmate.global.annotation.AuthUser;
 import com.back.catchmate.global.aop.permission.CheckNotificationPermission;
@@ -53,5 +53,14 @@ public class NotificationController {
             @PermissionId @PathVariable Long notificationId
     ) {
         notificationUseCase.deleteNotification(userId, notificationId);
+    }
+
+    @Operation(summary = "읽지 않은 알림 존재 여부 확인", description = "로그인한 사용자의 읽지 않은 알림이 있는지 확인합니다.")
+    @GetMapping("/unread")
+    public UnreadNotificationResponse hasUnreadNotifications(
+            @Parameter(hidden = true) @AuthUser Long userId
+    ) {
+        boolean hasUnread = notificationUseCase.hasUnreadNotifications(userId);
+        return UnreadNotificationResponse.of(hasUnread);
     }
 }

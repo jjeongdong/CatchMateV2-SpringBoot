@@ -74,6 +74,7 @@ public class EnrollUseCase {
         saveNotification(
                 board.getUser(),
                 applicant,
+                board,
                 "직관 신청 알림",
                 board.getId()
         );
@@ -222,6 +223,7 @@ public class EnrollUseCase {
         saveNotification(
                 enroll.getUser(),
                 board.getUser(),
+                board,
                 "직관 신청 수락 알림",
                 board.getId()
         );
@@ -253,6 +255,7 @@ public class EnrollUseCase {
         saveNotification(
                 enroll.getUser(),
                 board.getUser(),
+                board,
                 "직관 신청 거절 알림",
                 board.getId()
         );
@@ -285,10 +288,11 @@ public class EnrollUseCase {
         return EnrollCancelResponse.of(enrollId);
     }
 
-    private void saveNotification(User user, User sender, String title, Long referenceId) {
+    private void saveNotification(User user, User sender, Board board, String title, Long referenceId) {
         Notification notification = Notification.createNotification(
                 user,
                 sender,
+                board,
                 title,
                 AlarmType.ENROLL,
                 referenceId

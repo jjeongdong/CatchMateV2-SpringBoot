@@ -37,4 +37,8 @@ public class NotificationService {
 
         notificationRepository.delete(notification);
     }
+
+    public boolean hasUnreadNotifications(Long userId) {
+        return notificationRepository.hasUnreadNotifications(userId);
+    }
 }

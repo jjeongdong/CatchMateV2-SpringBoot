@@ -29,7 +29,7 @@ public class User implements ResourceOwnership {
     private Character eventAlarm;
     private String fcmToken;
     private Authority authority;
-    private boolean isReported;
+    private boolean reported;
     private Club club;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -60,7 +60,7 @@ public class User implements ResourceOwnership {
                 .eventAlarm('Y')
                 .fcmToken(fcmToken)
                 .authority(Authority.ROLE_USER)
-                .isReported(false)
+                .reported(false)
                 .watchStyle(watchStyle)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -114,7 +114,7 @@ public class User implements ResourceOwnership {
     }
 
     public void markAsReported() {
-        this.isReported = true;
+        this.reported = true;
     }
 
     @Override

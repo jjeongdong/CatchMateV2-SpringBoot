@@ -85,7 +85,7 @@ public class UserEntity extends BaseTimeEntity {
     private Authority authority;
 
     @Column(nullable = false)
-    private boolean isReported;
+    private boolean reported;
 
     public static UserEntity from(User user) {
         return UserEntity.builder()
@@ -104,7 +104,7 @@ public class UserEntity extends BaseTimeEntity {
                 .eventAlarm(user.getEventAlarm())
                 .fcmToken(user.getFcmToken())
                 .authority(user.getAuthority())
-                .isReported(user.isReported())
+                .reported(user.isReported())
                 .club(ClubEntity.from(user.getClub()))
                 .build();
     }
@@ -126,7 +126,7 @@ public class UserEntity extends BaseTimeEntity {
                 .eventAlarm(this.eventAlarm)
                 .fcmToken(this.fcmToken)
                 .authority(this.authority)
-                .isReported(this.isReported)
+                .reported(this.reported)
                 .club(this.club.toModel())
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getModifiedAt())

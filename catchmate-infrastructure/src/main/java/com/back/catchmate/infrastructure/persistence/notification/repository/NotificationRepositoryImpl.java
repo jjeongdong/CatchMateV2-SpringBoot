@@ -61,4 +61,9 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         NotificationEntity entity = NotificationEntity.from(notification);
         jpaNotificationRepository.delete(entity);
     }
+
+    @Override
+    public boolean hasUnreadNotifications(Long userId) {
+        return jpaNotificationRepository.existsByUserIdAndRead(userId, false);
+    }
 }

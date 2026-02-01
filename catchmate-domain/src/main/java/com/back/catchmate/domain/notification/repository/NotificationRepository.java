@@ -14,4 +14,6 @@ public interface NotificationRepository {
     DomainPage<Notification> findAllByUserId(Long userId, DomainPageable pageable);
 
     void delete(Notification notification);
+
+    boolean hasUnreadNotifications(Long userId);
 }

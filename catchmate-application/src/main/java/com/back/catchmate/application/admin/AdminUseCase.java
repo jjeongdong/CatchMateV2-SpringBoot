@@ -254,6 +254,7 @@ public class AdminUseCase {
         Notification notification = Notification.createNotification(
                 user,
                 sender,
+                null,
                 title,
                 AlarmType.INQUIRY_ANSWER,
                 referenceId

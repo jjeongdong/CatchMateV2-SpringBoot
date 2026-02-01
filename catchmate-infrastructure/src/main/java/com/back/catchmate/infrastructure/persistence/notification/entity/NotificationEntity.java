@@ -52,8 +52,8 @@ public class NotificationEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private AlarmType type;
 
-    @Column(nullable = false)
-    private boolean isRead;
+    @Column(name = "is_read", nullable = false)
+    private boolean read;
 
     public static NotificationEntity from(Notification notification) {
         return NotificationEntity.builder()
@@ -63,7 +63,7 @@ public class NotificationEntity extends BaseTimeEntity {
                 .board(notification.getBoard() != null ? BoardEntity.from(notification.getBoard()) : null)
                 .title(notification.getTitle())
                 .type(notification.getType())
-                .isRead(notification.isRead())
+                .read(notification.isRead())
                 .build();
     }
 
@@ -75,7 +75,7 @@ public class NotificationEntity extends BaseTimeEntity {
                 .board(this.board != null ? this.board.toModel() : null)
                 .title(this.title)
                 .type(this.type)
-                .isRead(this.isRead)
+                .read(this.read)
                 .createdAt(this.getCreatedAt())
                 .build();
     }

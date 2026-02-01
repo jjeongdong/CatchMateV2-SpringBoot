@@ -19,23 +19,24 @@ public class Notification implements ResourceOwnership {
     private String title;
     private AlarmType type;
     private Long targetId;
-    private boolean isRead;
+    private boolean read;
     private LocalDateTime createdAt;
 
-    public static Notification createNotification(User user, User sender, String title, AlarmType type, Long targetId) {
+    public static Notification createNotification(User user, User sender, Board board, String title, AlarmType type, Long targetId) {
         return Notification.builder()
                 .user(user)
                 .sender(sender)
+                .board(board)
                 .title(title)
                 .type(type)
                 .targetId(targetId)
-                .isRead(false)
+                .read(false)
                 .createdAt(LocalDateTime.now())
                 .build();
     }
 
     public void markAsRead() {
-        this.isRead = true;
+        this.read = true;
     }
 
     @Override
