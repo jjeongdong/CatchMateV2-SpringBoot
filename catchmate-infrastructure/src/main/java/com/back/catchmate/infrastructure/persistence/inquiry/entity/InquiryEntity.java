@@ -37,8 +37,6 @@ public class InquiryEntity extends BaseTimeEntity {
     @JoinColumn(name = "user_id")
     private UserEntity user;
 
-    private String title;
-    
     @Column(columnDefinition = "TEXT")
     private String content;
 
@@ -55,10 +53,10 @@ public class InquiryEntity extends BaseTimeEntity {
         return InquiryEntity.builder()
                 .id(inquiry.getId())
                 .user(UserEntity.from(inquiry.getUser()))
-                .title(inquiry.getTitle())
                 .content(inquiry.getContent())
                 .answer(inquiry.getAnswer())
                 .status(inquiry.getStatus())
+                .type(inquiry.getType())
                 .build();
     }
 
@@ -66,7 +64,7 @@ public class InquiryEntity extends BaseTimeEntity {
         return Inquiry.builder()
                 .id(this.id)
                 .user(this.user.toModel())
-                .title(this.title)
+                .type(this.type)
                 .content(this.content)
                 .answer(this.answer)
                 .status(this.status)

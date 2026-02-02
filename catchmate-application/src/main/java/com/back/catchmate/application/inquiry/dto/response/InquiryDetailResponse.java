@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 public class InquiryDetailResponse {
     private Long inquiryId;
     private String type;
-    private String title;
     private String content;
     private String answer;
     private String status;
@@ -23,7 +22,6 @@ public class InquiryDetailResponse {
         return InquiryDetailResponse.builder()
                 .inquiryId(inquiry.getId())
                 .type(inquiry.getType().getDescription())
-                .title(inquiry.getTitle())
                 .content(inquiry.getContent())
                 .answer(inquiry.getAnswer())
                 .status(inquiry.getStatus().getDescription())

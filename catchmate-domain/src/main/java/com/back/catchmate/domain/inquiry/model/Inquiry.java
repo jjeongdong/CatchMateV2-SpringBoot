@@ -14,17 +14,15 @@ public class Inquiry implements ResourceOwnership {
     private Long id;
     private User user;
     private InquiryType type;
-    private String title;
     private String content;
     private String answer;
     private InquiryStatus status;
     private LocalDateTime createdAt;
 
-    public static Inquiry createInquiry(User user, InquiryType type, String title, String content) {
+    public static Inquiry createInquiry(User user, InquiryType type, String content) {
         return Inquiry.builder()
                 .user(user)
                 .type(type)
-                .title(title)
                 .content(content)
                 .status(InquiryStatus.WAITING)
                 .createdAt(LocalDateTime.now())

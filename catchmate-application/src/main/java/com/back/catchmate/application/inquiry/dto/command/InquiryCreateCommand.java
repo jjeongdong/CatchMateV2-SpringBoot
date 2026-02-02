@@ -10,6 +10,5 @@ import lombok.Getter;
 @AllArgsConstructor
 public class InquiryCreateCommand {
     private InquiryType type;
-    private String title;
     private String content;
 }

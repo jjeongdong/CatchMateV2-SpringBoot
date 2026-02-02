@@ -15,16 +15,12 @@ public class InquiryCreateRequest {
     @NotNull(message = "문의 유형을 선택해주세요.")
     private InquiryType type;
 
-    @NotBlank(message = "제목을 입력해주세요.")
-    private String title;
-
     @NotBlank(message = "내용을 입력해주세요.")
     private String content;
 
     public InquiryCreateCommand toCommand() {
         return InquiryCreateCommand.builder()
                 .type(this.type)
-                .title(this.title)
                 .content(this.content)
                 .build();
     }

@@ -18,7 +18,6 @@ public class AdminInquiryDetailResponse {
     private String userProfileImage;
 
     private String type;    // 문의 유형
-    private String title;
     private String content;
     private String status;  // 처리 상태
     private LocalDateTime createdAt;
@@ -31,7 +30,6 @@ public class AdminInquiryDetailResponse {
                 .userEmail(inquiry.getUser().getEmail())
                 .userProfileImage(inquiry.getUser().getProfileImageUrl())
                 .type(inquiry.getType().name())
-                .title(inquiry.getTitle())
                 .content(inquiry.getContent())
                 .status(inquiry.getStatus().name())
                 .createdAt(inquiry.getCreatedAt())

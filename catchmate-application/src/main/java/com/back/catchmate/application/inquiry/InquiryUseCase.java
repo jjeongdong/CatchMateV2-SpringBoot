@@ -25,7 +25,6 @@ public class InquiryUseCase {
         Inquiry inquiry = Inquiry.createInquiry(
                 user,
                 command.getType(),
-                command.getTitle(),
                 command.getContent()
         );
 
