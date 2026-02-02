@@ -104,7 +104,10 @@ public class BoardUseCase {
         String buttonStatus = getButtonStatus(user, board, myEnroll);
         Long myEnrollId = myEnroll.map(Enroll::getId).orElse(null);
 
-        Long chatRoomId = chatRoomService.getOrCreateChatRoom(board).getId();
+        // 발행된 게시글만 채팅방 ID 조회 (임시저장 글은 채팅방 없음)
+        Long chatRoomId = board.isCompleted()
+                ? chatRoomService.getOrCreateChatRoom(board).getId()
+                : null;
 
         return BoardDetailResponse.from(board, isBookMarked, buttonStatus, myEnrollId, chatRoomId);
     }
@@ -171,6 +174,10 @@ public class BoardUseCase {
     @Transactional
     public BoardUpdateResponse updateBoard(Long userId, Long boardId, BoardUpdateCommand command) {
         Board board = boardService.getBoard(boardId);
+        User user = userService.getUser(userId);
+
+        // 기존 발행 상태 저장 (임시저장→발행 전환 체크용)
+        boolean wasCompleted = board.isCompleted();
 
         Club cheerClub = getCheerClub(command.getCheerClubId());
         Game game = getGame(command.getGameUpdateCommand());
@@ -189,6 +196,13 @@ public class BoardUseCase {
 
         // 변경사항 저장
         boardService.updateBoard(board);
+
+        // 임시저장→발행 전환 시 채팅방 생성 및 작성자 멤버 추가
+        if (!wasCompleted && command.isCompleted()) {
+            ChatRoom chatRoom = chatRoomService.getOrCreateChatRoom(board);
+            chatRoomMemberService.addMember(chatRoom, user);
+        }
+
         return BoardUpdateResponse.of(board.getId());
     }
 
@@ -197,6 +211,14 @@ public class BoardUseCase {
         Board board = boardService.getBoard(boardId);
 
         LocalDateTime now = LocalDateTime.now();
+
+        // liftUpDate가 null인 경우 (첫 끌어올리기) 바로 업데이트 허용
+        if (board.getLiftUpDate() == null) {
+            board.updateLiftUpDate(now);
+            boardService.updateBoard(board);
+            return BoardLiftUpResponse.of(true, null);
+        }
+
         LocalDateTime nextLiftUpAllowed = board.getLiftUpDate().plusDays(3);
 
         if (nextLiftUpAllowed.isBefore(now)) {
@@ -228,6 +250,8 @@ public class BoardUseCase {
 
     private Game getGame(GameCreateCommand command) {
         if (command == null) return null;
+        // 임시 저장 시 경기 정보가 불완전할 수 있음
+        if (command.getHomeClubId() == null || command.getAwayClubId() == null) return null;
         return fetchGame(
                 command.getHomeClubId(),
                 command.getAwayClubId(),
@@ -238,6 +262,8 @@ public class BoardUseCase {
 
     private Game getGame(GameUpdateCommand command) {
         if (command == null) return null;
+        // 임시 저장 시 경기 정보가 불완전할 수 있음
+        if (command.getHomeClubId() == null || command.getAwayClubId() == null) return null;
         return fetchGame(
                 command.getHomeClubId(),
                 command.getAwayClubId(),
