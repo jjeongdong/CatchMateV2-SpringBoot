@@ -250,31 +250,68 @@ public class BoardUseCase {
 
     private Game getGame(GameCreateCommand command) {
         if (command == null) return null;
-        // 임시 저장 시 경기 정보가 불완전할 수 있음
-        if (command.getHomeClubId() == null || command.getAwayClubId() == null) return null;
-        return fetchGame(
-                command.getHomeClubId(),
-                command.getAwayClubId(),
-                command.getGameStartDate(),
-                command.getLocation()
-        );
+
+        // 게임의 일부 정보라도 있으면 게임 생성 (gameStartDate, homeClubId, awayClubId, location 중 하나라도 있으면)
+        if (command.getGameStartDate() != null || command.getHomeClubId() != null ||
+            command.getAwayClubId() != null || command.getLocation() != null) {
+
+            // 홈/원정 클럽 정보와 gameStartDate가 모두 있는 경우 완전한 게임 생성
+            if (command.getHomeClubId() != null && command.getAwayClubId() != null && command.getGameStartDate() != null) {
+                return fetchGame(
+                        command.getHomeClubId(),
+                        command.getAwayClubId(),
+                        command.getGameStartDate(),
+                        command.getLocation()
+                );
+            }
+            // 그 외의 경우 부분적인 게임 생성 (임시저장용)
+            else {
+                return createPartialGame(command);
+            }
+        }
+
+        return null;
     }
 
     private Game getGame(GameUpdateCommand command) {
         if (command == null) return null;
-        // 임시 저장 시 경기 정보가 불완전할 수 있음
-        if (command.getHomeClubId() == null || command.getAwayClubId() == null) return null;
-        return fetchGame(
-                command.getHomeClubId(),
-                command.getAwayClubId(),
-                command.getGameStartDate(),
-                command.getLocation()
-        );
+
+        // 게임의 일부 정보라도 있으면 게임 생성 (gameStartDate, homeClubId, awayClubId, location 중 하나라도 있으면)
+        if (command.getGameStartDate() != null || command.getHomeClubId() != null ||
+            command.getAwayClubId() != null || command.getLocation() != null) {
+
+            // 홈/원정 클럽 정보와 gameStartDate가 모두 있는 경우 완전한 게임 생성
+            if (command.getHomeClubId() != null && command.getAwayClubId() != null && command.getGameStartDate() != null) {
+                return fetchGame(
+                        command.getHomeClubId(),
+                        command.getAwayClubId(),
+                        command.getGameStartDate(),
+                        command.getLocation()
+                );
+            }
+            // 그 외의 경우 부분적인 게임 생성 (임시저장용)
+            else {
+                return createPartialGame(command.getGameStartDate(), command.getLocation(),
+                    command.getHomeClubId(), command.getAwayClubId());
+            }
+        }
+
+        return null;
     }
 
     private Game fetchGame(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {
+        // null 체크 추가
+//        if (homeClubId == null || awayClubId == null) {
+//            return null;
+//        }
+
         Club homeClub = clubService.getClub(homeClubId);
         Club awayClub = clubService.getClub(awayClubId);
+
+//        // 클럽 조회에 실패한 경우
+//        if (homeClub == null || awayClub == null) {
+//            return null;
+//        }
 
         return gameService.findOrCreateGame(
                 homeClub,
@@ -282,6 +319,25 @@ public class BoardUseCase {
                 gameStartDate,
                 location
         );
+    }
+
+    private Game createPartialGame(GameCreateCommand command) {
+        Club homeClub = command.getHomeClubId() != null ? clubService.getClub(command.getHomeClubId()) : null;
+        Club awayClub = command.getAwayClubId() != null ? clubService.getClub(command.getAwayClubId()) : null;
+
+        return gameService.savePartialGame(
+                command.getGameStartDate(),
+                command.getLocation(),
+                homeClub,
+                awayClub
+        );
+    }
+
+    private Game createPartialGame(LocalDateTime gameStartDate, String location, Long homeClubId, Long awayClubId) {
+        Club homeClub = homeClubId != null ? clubService.getClub(homeClubId) : null;
+        Club awayClub = awayClubId != null ? clubService.getClub(awayClubId) : null;
+
+        return gameService.savePartialGame(gameStartDate, location, homeClub, awayClub);
     }
 
     private String getButtonStatus(User user, Board board, Optional<Enroll> enrollOptional) {

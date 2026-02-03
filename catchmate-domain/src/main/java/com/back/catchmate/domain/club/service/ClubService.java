@@ -15,6 +15,9 @@ public class ClubService {
     private final ClubRepository clubRepository;
 
     public Club getClub(Long clubId) {
+        if (clubId == null) {
+            return null;
+        }
         return clubRepository.findById(clubId)
                 .orElseThrow(() -> new BaseException(ErrorCode.CLUB_NOT_FOUND));
     }

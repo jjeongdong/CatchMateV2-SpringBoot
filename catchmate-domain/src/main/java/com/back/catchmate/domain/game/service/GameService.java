@@ -20,4 +20,15 @@ public class GameService {
                     return gameRepository.save(newGame);
                 });
     }
+
+    // 부분적인 게임 정보로 게임 생성 및 저장 (임시 저장용)
+    public Game savePartialGame(LocalDateTime gameStartDate, String location, Club homeClub, Club awayClub) {
+        Game partialGame = Game.builder()
+                .gameStartDate(gameStartDate)
+                .location(location)
+                .homeClub(homeClub)
+                .awayClub(awayClub)
+                .build();
+        return gameRepository.save(partialGame);
+    }
 }
