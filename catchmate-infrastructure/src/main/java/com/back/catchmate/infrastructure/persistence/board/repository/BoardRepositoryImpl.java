@@ -20,7 +20,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class BoardRepositoryImpl implements BoardRepository {
     private final JpaBoardRepository jpaBoardRepository;
-    private final BoardQueryRepository boardQueryRepository;
+    private final QueryDSLBoardRepository queryDSLBoardRepository;
 
     @Override
     public Board save(Board board) {
@@ -68,7 +68,7 @@ public class BoardRepositoryImpl implements BoardRepository {
     public DomainPage<Board> findAllByCondition(BoardSearchCondition condition, DomainPageable domainPageable) {
         Pageable pageable = PageRequest.of(domainPageable.getPage(), domainPageable.getSize());
 
-        Page<BoardEntity> entityPage = boardQueryRepository.findAllByCondition(condition, pageable);
+        Page<BoardEntity> entityPage = queryDSLBoardRepository.findAllByCondition(condition, pageable);
 
         List<Board> domains = entityPage.getContent().stream()
                 .map(BoardEntity::toModel)

@@ -20,7 +20,7 @@ import static com.back.catchmate.infrastructure.persistence.user.entity.QUserEnt
 
 @Repository
 @RequiredArgsConstructor
-public class BoardQueryRepositoryImpl implements BoardQueryRepository {
+public class QueryDSLBoardRepositoryImpl implements QueryDSLBoardRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
