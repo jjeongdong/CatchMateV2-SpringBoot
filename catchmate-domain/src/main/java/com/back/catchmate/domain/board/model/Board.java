@@ -6,8 +6,11 @@ import com.back.catchmate.domain.game.model.Game;
 import com.back.catchmate.domain.user.model.User;
 import error.ErrorCode;
 import error.exception.BaseException;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -15,6 +18,8 @@ import java.util.List;
 
 @Getter
 @Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Board implements ResourceOwnership {
     private Long id;
     private String title;

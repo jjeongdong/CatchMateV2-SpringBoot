@@ -1,13 +1,18 @@
 package com.back.catchmate.domain.chat.model;
 
 import com.back.catchmate.domain.board.model.Board;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoom {
     private Long id;
     private Board board;

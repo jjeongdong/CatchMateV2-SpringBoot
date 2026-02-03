@@ -3,14 +3,19 @@ package com.back.catchmate.domain.notification.model;
 import com.back.catchmate.domain.board.model.Board;
 import com.back.catchmate.domain.common.permission.ResourceOwnership;
 import com.back.catchmate.domain.user.model.User;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import user.enums.AlarmType;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Notification implements ResourceOwnership {
     private Long id;
     private User user;
