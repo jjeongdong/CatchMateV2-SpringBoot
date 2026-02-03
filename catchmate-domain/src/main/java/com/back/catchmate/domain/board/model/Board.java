@@ -9,6 +9,7 @@ import error.exception.BaseException;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -78,6 +79,30 @@ public class Board implements ResourceOwnership {
         this.completed = completed;
 
         validateForPublish();
+    }
+
+    // 게시글 끌어올리기 가능 여부 확인 메서드
+    public boolean canLiftUp() {
+        if (this.liftUpDate == null) return true;
+        return LocalDateTime.now().isAfter(this.liftUpDate.plusDays(3));
+    }
+
+    // 게시글 끌어올리기 남은 시간(분) 계산 메서드
+    // - 가능하면 0 반환
+    // - 불가능하면 다음 가능 시각까지 남은 분(ceil) 반환
+    public long getRemainingMinutesForLiftUp() {
+        if (this.liftUpDate == null) return 0;
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime nextLiftUpAllowed = this.liftUpDate.plusDays(3);
+
+        if (!now.isBefore(nextLiftUpAllowed)) {
+            return 0;
+        }
+
+        long seconds = Duration.between(now, nextLiftUpAllowed).getSeconds();
+        // 초 단위 올림 -> 분 단위 올림
+        return (seconds + 59) / 60;
     }
 
     // 게시글 끌어올리기 메서드

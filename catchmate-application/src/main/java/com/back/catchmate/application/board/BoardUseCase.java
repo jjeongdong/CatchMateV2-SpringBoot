@@ -35,7 +35,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -210,36 +209,30 @@ public class BoardUseCase {
     public BoardLiftUpResponse updateLiftUpDate(Long userId, Long boardId) {
         Board board = boardService.getBoard(boardId);
 
-        LocalDateTime now = LocalDateTime.now();
+        // 본인 게시글만 끌어올릴 수 있음
+        if (!board.getUser().getId().equals(userId)) {
+            throw new BaseException(ErrorCode.BOARD_LIFT_UP_BAD_REQUEST);
+        }
 
-        // liftUpDate가 null인 경우 (첫 끌어올리기) 바로 업데이트 허용
-        if (board.getLiftUpDate() == null) {
-            board.updateLiftUpDate(now);
+        if (board.canLiftUp()) {
+            board.updateLiftUpDate(LocalDateTime.now());
             boardService.updateBoard(board);
             return BoardLiftUpResponse.of(true, null);
         }
 
-        LocalDateTime nextLiftUpAllowed = board.getLiftUpDate().plusDays(3);
-
-        if (nextLiftUpAllowed.isBefore(now)) {
-            board.updateLiftUpDate(now);
-            boardService.updateBoard(board);
-            return BoardLiftUpResponse.of(true, null);
-        }
-
-        long remainingMinutes = Duration.between(now, nextLiftUpAllowed).toMinutes();
-        return BoardLiftUpResponse.of(false, formatRemainingTime(remainingMinutes));
+        long remainingMinutes = board.getRemainingMinutesForLiftUp();
+        return BoardLiftUpResponse.fromRemainingMinutes(false, remainingMinutes);
     }
 
     @Transactional
     public void deleteBoard(Long userId, Long boardId) {
-        // 게시글 조회
         Board board = boardService.getBoard(boardId);
 
-        // 도메인 로직 실행
-        board.delete();
+        if (!board.getUser().getId().equals(userId)) {
+            throw new BaseException(ErrorCode.BOARD_DELETE_BAD_REQUEST);
+        }
 
-        // 변경 사항 저장
+        board.delete();
         boardService.updateBoard(board);
     }
 
@@ -300,18 +293,8 @@ public class BoardUseCase {
     }
 
     private Game fetchGame(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {
-        // null 체크 추가
-//        if (homeClubId == null || awayClubId == null) {
-//            return null;
-//        }
-
         Club homeClub = clubService.getClub(homeClubId);
         Club awayClub = clubService.getClub(awayClubId);
-
-//        // 클럽 조회에 실패한 경우
-//        if (homeClub == null || awayClub == null) {
-//            return null;
-//        }
 
         return gameService.findOrCreateGame(
                 homeClub,
@@ -358,13 +341,5 @@ public class BoardUseCase {
             case REJECTED -> "REJECTED";  // 거절됨 -> 거절됨
             default -> "APPLY";
         };
-    }
-
-    private String formatRemainingTime(long remainingMinutes) {
-        long days = remainingMinutes / 1440;
-        long hours = (remainingMinutes % 1440) / 60;
-        long minutes = remainingMinutes % 60;
-
-        return String.format("%d일 %02d시간 %02d분", days, hours, minutes);
     }
 }

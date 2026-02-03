@@ -50,11 +50,10 @@ public class BoardRepositoryImpl implements BoardRepository {
     public DomainPage<Board> findAll(DomainPageable domainPageable) {
         Pageable pageable = PageRequest.of(domainPageable.getPage(), domainPageable.getSize());
 
-        Page<BoardEntity> entityPage = jpaBoardRepository.findAll(pageable);
+        Page<BoardEntity> entityPage = jpaBoardRepository.findAllByCompletedTrue(pageable);
 
         List<Board> domains = entityPage.getContent().stream()
                 .map(BoardEntity::toModel)
-                .filter(Board::isCompleted)
                 .toList();
 
         return new DomainPage<>(

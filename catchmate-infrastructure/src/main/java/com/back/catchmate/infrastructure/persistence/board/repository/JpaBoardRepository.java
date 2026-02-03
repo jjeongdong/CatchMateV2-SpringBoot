@@ -13,4 +13,6 @@ public interface JpaBoardRepository extends JpaRepository<BoardEntity, Long> {
     Optional<BoardEntity> findFirstByUserIdAndCompletedFalse(Long userId);
 
     Page<BoardEntity> findAllByUserId(Long userId, Pageable pageable);
+
+    Page<BoardEntity> findAllByCompletedTrue(Pageable pageable);
 }
