@@ -25,8 +25,6 @@ import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.enroll.model.AcceptStatus;
 import com.back.catchmate.domain.enroll.model.Enroll;
 import com.back.catchmate.domain.enroll.service.EnrollService;
-import com.back.catchmate.domain.notification.model.Notification;
-import com.back.catchmate.domain.notification.service.NotificationService;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.service.UserService;
 import error.ErrorCode;
@@ -35,7 +33,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import user.enums.AlarmType;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +47,6 @@ public class EnrollUseCase {
     private final BookmarkService bookmarkService;
     private final BoardService boardService;
     private final UserService userService;
-    private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
     private final ChatRoomService chatRoomService;
     private final ChatRoomMemberService chatRoomMemberService;
@@ -71,21 +67,15 @@ public class EnrollUseCase {
         Enroll savedEnroll = enrollService.createEnroll(applicant, board, command.getDescription());
 
         // 게시글 작성자에게 신청 알림 발송 및 저장
-        saveNotification(
-                board.getUser(),
-                applicant,
-                board,
-                "직관 신청 알림",
-                board.getId()
-        );
-
         publishEnrollEvent(
-                board.getUser(),
+                board.getUser(), // recipient
+                applicant,       // sender
                 board,
                 "직관 신청 알림",
                 String.format("%s님이 [%s] 직관을 신청했습니다.",
                         applicant.getNickName(), board.getTitle()),
-                "ENROLL_REQUEST"
+                "ENROLL_REQUEST",
+                board.getId()
         );
 
         return EnrollCreateResponse.of(savedEnroll.getId());
@@ -202,9 +192,11 @@ public class EnrollUseCase {
 
     @Transactional
     public EnrollAcceptResponse updateEnrollAccept(Long userId, Long enrollId) {
-        // 1. 신청 내역 조회
+        // 1. 신청 내역 조회 (Enroll lock)
         Enroll enroll = enrollService.getEnrollWithLock(enrollId);
-        Board board = enroll.getBoard();
+
+        // 1-1. Board도 lock으로 조회 (인원 증가 동시성 제어)
+        Board board = boardService.getBoardWithLock(enroll.getBoard().getId());
 
         // 2. 게시글 인원 확인 및 증가
         board.increaseCurrentPerson();
@@ -220,21 +212,15 @@ public class EnrollUseCase {
         ChatRoom chatRoom = chatRoomService.getOrCreateChatRoom(board);
         chatRoomMemberService.addMember(chatRoom, enroll.getUser());
 
-        saveNotification(
+        publishEnrollEvent(
                 enroll.getUser(),
                 board.getUser(),
                 board,
                 "직관 신청 수락 알림",
-                board.getId()
-        );
-
-        publishEnrollEvent(
-                enroll.getUser(),
-                board,
-                "직관 신청 수락 알림",
                 String.format("[%s] 신청이 수락되었습니다. 채팅방을 확인해보세요!",
                         board.getTitle()),
-                "ENROLL_ACCEPTED"
+                "ENROLL_ACCEPTED",
+                board.getId()
         );
 
         return EnrollAcceptResponse.of(enrollId);
@@ -242,9 +228,11 @@ public class EnrollUseCase {
 
     @Transactional
     public EnrollRejectResponse updateEnrollReject(Long userId, Long enrollId) {
-        // 1. 신청 내역 조회
+        // 1. 신청 내역 조회 (Enroll lock)
         Enroll enroll = enrollService.getEnrollWithLock(enrollId);
-        Board board = enroll.getBoard();
+
+        // 1-1. Board도 lock으로 조회 (일관된 상태 보장)
+        Board board = boardService.getBoardWithLock(enroll.getBoard().getId());
 
         // 2. 신청 상태 변경
         enroll.reject();
@@ -252,21 +240,15 @@ public class EnrollUseCase {
         // 3. 변경 사항 저장
         enrollService.updateEnroll(enroll);
 
-        saveNotification(
+        publishEnrollEvent(
                 enroll.getUser(),
                 board.getUser(),
                 board,
                 "직관 신청 거절 알림",
-                board.getId()
-        );
-
-        publishEnrollEvent(
-                enroll.getUser(),
-                board,
-                "직관 신청 거절 알림",
                 String.format("아쉽지만 [%s] 신청이 거절되었습니다.",
                         board.getTitle()),
-                "ENROLL_REJECTED"
+                "ENROLL_REJECTED",
+                board.getId()
         );
 
         return EnrollRejectResponse.of(enrollId);
@@ -288,26 +270,16 @@ public class EnrollUseCase {
         return EnrollCancelResponse.of(enrollId);
     }
 
-    private void saveNotification(User user, User sender, Board board, String title, Long referenceId) {
-        Notification notification = Notification.createNotification(
-                user,
-                sender,
-                board,
-                title,
-                AlarmType.ENROLL,
-                referenceId
-        );
-        notificationService.createNotification(notification);
-    }
-
-    private void publishEnrollEvent(User recipient, Board board, String title, String body, String type) {
+    private void publishEnrollEvent(User recipient, User sender, Board board, String title, String body, String type, Long referenceId) {
         eventPublisher.publishEvent(
                 new EnrollNotificationEvent(
                         recipient,
+                        sender,
                         board,
                         title,
                         body,
-                        type
+                        type,
+                        referenceId
                 )
         );
     }
