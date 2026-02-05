@@ -4,6 +4,7 @@ import com.back.catchmate.api.user.dto.request.UserProfileUpdateRequest;
 import com.back.catchmate.api.user.dto.request.UserRegisterRequest;
 import com.back.catchmate.application.user.UserUseCase;
 import com.back.catchmate.application.user.dto.UploadFile;
+import com.back.catchmate.application.user.dto.response.UserAlarmSettingsResponse;
 import com.back.catchmate.application.user.dto.response.UserAlarmUpdateResponse;
 import com.back.catchmate.application.user.dto.response.UserNicknameCheckResponse;
 import com.back.catchmate.application.user.dto.response.UserRegisterResponse;
@@ -85,5 +86,11 @@ public class UserController {
                                                                    @RequestParam("alarmType") AlarmType alarmType,
                                                                    @RequestParam("isEnabled") boolean isEnabled) {
         return ResponseEntity.ok(userUseCase.updateUserAlarm(userId, alarmType, isEnabled));
+    }
+
+    @GetMapping("/alarm")
+    @Operation(summary = "알림 설정 조회 API", description = "알림 설정 페이지에서 유저의 알람 설정 상태를 조회하는 API 입니다.")
+    public ResponseEntity<UserAlarmSettingsResponse> getUserAlarmSettings(@AuthUser Long userId) {
+        return ResponseEntity.ok(userUseCase.getUserAlarmSettings(userId));
     }
 }

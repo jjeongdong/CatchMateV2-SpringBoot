@@ -3,6 +3,7 @@ package com.back.catchmate.application.user;
 import com.back.catchmate.application.user.dto.UploadFile;
 import com.back.catchmate.application.user.dto.command.UserProfileUpdateCommand;
 import com.back.catchmate.application.user.dto.command.UserRegisterCommand;
+import com.back.catchmate.application.user.dto.response.UserAlarmSettingsResponse;
 import com.back.catchmate.application.user.dto.response.UserAlarmUpdateResponse;
 import com.back.catchmate.application.user.dto.response.UserNicknameCheckResponse;
 import com.back.catchmate.application.user.dto.response.UserRegisterResponse;
@@ -99,5 +100,10 @@ public class UserUseCase {
         userService.updateUser(user);
 
         return UserAlarmUpdateResponse.of(alarmType, isEnabled);
+    }
+
+    public UserAlarmSettingsResponse getUserAlarmSettings(Long userId) {
+        User user = userService.getUser(userId);
+        return UserAlarmSettingsResponse.from(user);
     }
 }
