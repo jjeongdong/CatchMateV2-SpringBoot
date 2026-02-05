@@ -1,6 +1,7 @@
 package com.back.catchmate.infrastructure.persistence.user.entity;
 
 import com.back.catchmate.domain.user.model.Block;
+import com.back.catchmate.infrastructure.global.BaseTimeEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -25,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class BlockEntity {
+public class BlockEntity extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
