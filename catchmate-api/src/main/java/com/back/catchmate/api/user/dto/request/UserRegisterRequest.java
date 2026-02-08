@@ -1,6 +1,6 @@
 package com.back.catchmate.api.user.dto.request;
 
-import com.back.catchmate.application.user.dto.command.UserRegisterCommand;
+import com.back.catchmate.orchestration.user.dto.command.UserRegisterCommand;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

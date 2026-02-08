@@ -138,7 +138,7 @@ public class Board implements ResourceOwnership {
         if (cheerClub == null) {
             throw new BaseException(ErrorCode.BOARD_CHEER_CLUB_MISSING);
         }
-        if (game == null) {
+        if (game == null || !game.isComplete()) {
             throw new BaseException(ErrorCode.BOARD_GAME_MISSING);
         }
     }

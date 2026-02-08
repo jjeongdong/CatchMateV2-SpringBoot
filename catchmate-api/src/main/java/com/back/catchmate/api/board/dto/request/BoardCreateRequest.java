@@ -1,7 +1,7 @@
 package com.back.catchmate.api.board.dto.request;
 
-import com.back.catchmate.application.board.dto.command.BoardCreateCommand;
-import com.back.catchmate.application.board.dto.command.GameCreateCommand;
+import com.back.catchmate.orchestration.board.dto.command.BoardCreateCommand;
+import com.back.catchmate.orchestration.board.dto.command.GameCreateCommand;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

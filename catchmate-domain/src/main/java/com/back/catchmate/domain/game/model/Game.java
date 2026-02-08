@@ -35,4 +35,11 @@ public class Game {
         this.gameStartDate = gameStartDate;
         this.location = location;
     }
+
+    /**
+     * 게임 정보가 완전히 입력되었는지 확인하는 메서드
+     */
+    public boolean isComplete() {
+        return homeClub != null && awayClub != null && gameStartDate != null && location != null;
+    }
 }

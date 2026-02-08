@@ -1,0 +1,12 @@
+dependencies {
+    implementation project(':catchmate-common')
+    implementation project(':catchmate-domain')
+    implementation project(':catchmate-application')
+
+    // Spring annotations and transaction support (beans are in application/boot)
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-tx'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+}

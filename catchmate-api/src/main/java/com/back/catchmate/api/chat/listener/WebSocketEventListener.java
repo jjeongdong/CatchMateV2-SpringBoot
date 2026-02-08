@@ -1,6 +1,6 @@
 package com.back.catchmate.api.chat.listener;
 
-import com.back.catchmate.application.user.UserOnlineStatusUseCase;
+import com.back.catchmate.orchestration.user.UserOnlineStatusOrchestrator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -18,7 +18,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 @RequiredArgsConstructor
 public class WebSocketEventListener {
 
-    private final UserOnlineStatusUseCase userOnlineStatusUseCase;
+    private final UserOnlineStatusOrchestrator userOnlineStatusOrchestrator;
 
     /**
      * WebSocket 연결 성공 시 사용자를 온라인 상태로 설정
@@ -31,7 +31,7 @@ public class WebSocketEventListener {
         if (user != null && user.getPrincipal() != null) {
             try {
                 Long userId = Long.parseLong(user.getPrincipal().toString());
-                userOnlineStatusUseCase.setUserOnline(userId);
+                userOnlineStatusOrchestrator.setUserOnline(userId);
                 log.info("WebSocket connected - User {} set to ONLINE", userId);
             } catch (NumberFormatException e) {
                 log.warn("Failed to parse userId from principal: {}", user.getPrincipal());
@@ -50,7 +50,7 @@ public class WebSocketEventListener {
         if (user != null && user.getPrincipal() != null) {
             try {
                 Long userId = Long.parseLong(user.getPrincipal().toString());
-                userOnlineStatusUseCase.setUserOffline(userId);
+                userOnlineStatusOrchestrator.setUserOffline(userId);
                 log.info("WebSocket disconnected - User {} set to OFFLINE", userId);
             } catch (NumberFormatException e) {
                 log.warn("Failed to parse userId from principal: {}", user.getPrincipal());

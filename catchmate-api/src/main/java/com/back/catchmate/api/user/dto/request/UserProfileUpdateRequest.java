@@ -1,6 +1,6 @@
 package com.back.catchmate.api.user.dto.request;
 
-import com.back.catchmate.application.user.dto.command.UserProfileUpdateCommand;
+import com.back.catchmate.orchestration.user.dto.command.UserProfileUpdateCommand;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,7 +19,7 @@ public class UserProfileUpdateRequest {
 
     public static UserProfileUpdateCommand toCommand(UserProfileUpdateRequest request) {
         if (request == null) {
-            return com.back.catchmate.application.user.dto.command.UserProfileUpdateCommand.builder().build();
+            return com.back.catchmate.orchestration.user.dto.command.UserProfileUpdateCommand.builder().build();
         }
         return request.toCommand();
     }

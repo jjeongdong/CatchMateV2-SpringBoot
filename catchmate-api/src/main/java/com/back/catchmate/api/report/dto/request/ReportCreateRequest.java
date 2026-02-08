@@ -1,6 +1,6 @@
 package com.back.catchmate.api.report.dto.request;
 
-import com.back.catchmate.application.report.dto.command.ReportCreateCommand;
+import com.back.catchmate.orchestration.report.dto.command.ReportCreateCommand;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

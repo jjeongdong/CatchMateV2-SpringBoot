@@ -2,7 +2,6 @@ package com.back.catchmate.application.enroll.service;
 
 import com.back.catchmate.domain.common.permission.DomainFinder;
 import com.back.catchmate.domain.enroll.model.Enroll;
-import com.back.catchmate.domain.enroll.service.EnrollService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -1,7 +1,6 @@
 package com.back.catchmate.global.config.security;
 
-import com.back.catchmate.application.auth.AuthUseCase;
-import com.back.catchmate.application.chat.ChatUseCase;
+import com.back.catchmate.orchestration.auth.AuthOrchestrator;
 import error.ErrorCode;
 import error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +23,7 @@ import java.util.Collections;
 @Component
 @RequiredArgsConstructor
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
-    private final AuthUseCase authUseCase;
-    private final ChatUseCase chatUseCase;
+    private final AuthOrchestrator authOrchestrator;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -50,8 +48,8 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             }
 
             try {
-                Long userId = authUseCase.getUserId(token);
-                String role = authUseCase.getUserRole(token);
+                Long userId = authOrchestrator.getUserId(token);
+                String role = authOrchestrator.getUserRole(token);
 
                 Authentication authentication = new UsernamePasswordAuthenticationToken(
                         userId,

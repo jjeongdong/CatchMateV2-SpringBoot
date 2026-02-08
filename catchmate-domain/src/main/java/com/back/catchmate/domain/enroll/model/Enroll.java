@@ -37,6 +37,7 @@ public class Enroll implements ResourceOwnership {
                 .build();
     }
 
+    // 읽음 처리
     public void markAsRead() {
         this.newEnroll = false;
     }
@@ -60,9 +61,5 @@ public class Enroll implements ResourceOwnership {
     @Override
     public Long getOwnershipId() {
         return user.getId();
-    }
-
-    public Long getHostId() {
-        return this.board.getUser().getId();
     }
 }

@@ -1,6 +1,6 @@
 package com.back.catchmate.api.auth.dto.request;
 
-import com.back.catchmate.application.auth.dto.command.AuthLoginCommand;
+import com.back.catchmate.orchestration.auth.dto.command.AuthLoginCommand;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

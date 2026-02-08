@@ -1,6 +1,6 @@
 package com.back.catchmate.api.admin.dto.request;
 
-import com.back.catchmate.application.admin.dto.command.InquiryAnswerCommand;
+import com.back.catchmate.orchestration.admin.dto.command.InquiryAnswerCommand;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

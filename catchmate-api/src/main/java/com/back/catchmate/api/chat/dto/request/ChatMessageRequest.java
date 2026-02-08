@@ -1,7 +1,7 @@
 package com.back.catchmate.api.chat.dto.request;
 
-import com.back.catchmate.application.chat.dto.command.ChatMessageCommand;
 import com.back.catchmate.domain.chat.model.MessageType;
+import com.back.catchmate.orchestration.chat.dto.command.ChatMessageCommand;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;

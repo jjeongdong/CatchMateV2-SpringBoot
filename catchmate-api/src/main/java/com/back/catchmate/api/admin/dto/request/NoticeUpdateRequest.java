@@ -1,6 +1,6 @@
 package com.back.catchmate.api.admin.dto.request;
 
-import com.back.catchmate.application.admin.dto.command.NoticeUpdateCommand;
+import com.back.catchmate.orchestration.admin.dto.command.NoticeUpdateCommand;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

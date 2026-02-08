@@ -20,8 +20,8 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class FcmNotificationSender implements NotificationSender {
-
     private final UserOnlineStatusPort userOnlineStatusPort;
+
     @Override
     public void sendNotification(String token, String title, String body, Map<String, String> data) {
         Message message = Message.builder()

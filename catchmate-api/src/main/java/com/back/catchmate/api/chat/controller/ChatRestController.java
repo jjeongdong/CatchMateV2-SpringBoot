@@ -1,14 +1,11 @@
 package com.back.catchmate.api.chat.controller;
 
-import com.back.catchmate.application.chat.ChatUseCase;
-import com.back.catchmate.application.chat.dto.response.ChatMessageResponse;
-import com.back.catchmate.application.chat.dto.response.ChatRoomMemberResponse;
-import com.back.catchmate.application.chat.dto.response.ChatRoomResponse;
 import com.back.catchmate.application.common.PagedResponse;
-import com.back.catchmate.domain.chat.model.ChatMessage;
-import com.back.catchmate.domain.common.page.DomainPage;
-import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.global.annotation.AuthUser;
+import com.back.catchmate.orchestration.chat.ChatOrchestrator;
+import com.back.catchmate.orchestration.chat.dto.response.ChatMessageResponse;
+import com.back.catchmate.orchestration.chat.dto.response.ChatRoomMemberResponse;
+import com.back.catchmate.orchestration.chat.dto.response.ChatRoomResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +19,7 @@ import java.util.List;
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
 public class ChatRestController {
-    private final ChatUseCase chatUseCase;
+    private final ChatOrchestrator chatOrchestrator;
 
     @GetMapping("/rooms")
     @Operation(summary = "내가 속한 채팅방 목록 조회 (페이징)", description = "현재 사용자가 참여 중인 모든 채팅방을 조회합니다. 각 채팅방의 마지막 메시지도 함께 반환됩니다.")
@@ -31,10 +28,7 @@ public class ChatRestController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        DomainPageable pageable = DomainPageable.of(page, size);
-        PagedResponse<ChatRoomResponse> response = chatUseCase.getMyChatRooms(userId, pageable);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(chatOrchestrator.getMyChatRooms(userId, page, size));
     }
 
     @GetMapping("/rooms/{chatRoomId}/messages")
@@ -45,22 +39,14 @@ public class ChatRestController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        DomainPageable pageable = DomainPageable.of(page, size);
-        DomainPage<ChatMessage> messagePage = chatUseCase.getMessages(chatRoomId, pageable);
-
-        List<ChatMessageResponse> responses = messagePage.getContent().stream()
-                .map(ChatMessageResponse::from)
-                .toList();
-
-        PagedResponse<ChatMessageResponse> pagedResponse = new PagedResponse<>(messagePage, responses);
-        return ResponseEntity.ok(pagedResponse);
+        return ResponseEntity.ok(chatOrchestrator.getMessages(chatRoomId, page, size));
     }
 
     @GetMapping("/rooms/{chatRoomId}/messages/last")
     @Operation(summary = "마지막 메시지 조회", description = "특정 채팅방의 마지막 메시지를 조회합니다.")
     public ResponseEntity<ChatMessageResponse> getLastMessage(@AuthUser Long userId,
                                                               @PathVariable Long chatRoomId) {
-        ChatMessageResponse response = chatUseCase.getLastMessage(chatRoomId);
+        ChatMessageResponse response = chatOrchestrator.getLastMessage(chatRoomId);
         if (response == null) {
             return ResponseEntity.noContent().build();
         }
@@ -73,7 +59,6 @@ public class ChatRestController {
             @AuthUser Long userId,
             @PathVariable Long chatRoomId) {
 
-        List<ChatRoomMemberResponse> response = chatUseCase.getChatRoomMembers(chatRoomId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(chatOrchestrator.getChatRoomMembers(chatRoomId));
     }
 }

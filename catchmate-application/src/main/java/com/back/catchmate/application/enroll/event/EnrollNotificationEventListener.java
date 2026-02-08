@@ -1,8 +1,8 @@
 package com.back.catchmate.application.enroll.event;
 
+import com.back.catchmate.application.notification.service.NotificationService;
 import com.back.catchmate.domain.notification.model.Notification;
 import com.back.catchmate.domain.notification.port.NotificationSender;
-import com.back.catchmate.domain.notification.service.NotificationService;
 import com.back.catchmate.domain.user.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;

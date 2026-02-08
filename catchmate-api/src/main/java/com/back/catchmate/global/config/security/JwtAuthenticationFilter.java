@@ -1,6 +1,6 @@
 package com.back.catchmate.global.config.security;
 
-import com.back.catchmate.application.auth.AuthUseCase;
+import com.back.catchmate.orchestration.auth.AuthOrchestrator;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +22,7 @@ import java.util.Collections;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final AuthUseCase authUseCase;
+    private final AuthOrchestrator authOrchestrator;
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
 
@@ -35,8 +35,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(token)) {
             try {
                 // 1. 토큰 파싱 및 검증 (실패 시 예외 발생)
-                Long userId = authUseCase.getUserId(token);
-                String role = authUseCase.getUserRole(token);
+                Long userId = authOrchestrator.getUserId(token);
+                String role = authOrchestrator.getUserRole(token);
 
                 // 2. 인증 객체 생성 (권한이 있다면 Authorities에 추가)
                 // 여기서는 간단히 ROLE_USER로 고정하거나, DB에서 조회하여 설정 가능

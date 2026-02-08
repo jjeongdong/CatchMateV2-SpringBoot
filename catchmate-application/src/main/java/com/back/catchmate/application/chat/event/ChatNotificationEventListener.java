@@ -17,7 +17,6 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class ChatNotificationEventListener {
-
     private final NotificationSender notificationSender;
 
     @Async

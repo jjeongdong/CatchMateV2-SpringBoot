@@ -1,5 +1,5 @@
 rootProject.name = 'catchmate-springboot'
 include 'catchmate-common', 'catchmate-infrastructure', 'catchmate-domain',
-        'catchmate-api', 'catchmate-application'
+        'catchmate-orchestration', 'catchmate-api', 'catchmate-application'
 
 include 'catchmate-boot'
