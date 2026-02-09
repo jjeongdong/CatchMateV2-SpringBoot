@@ -1,5 +1,6 @@
 package com.back.catchmate.orchestration.notification;
 
+import com.back.catchmate.application.notification.service.NotificationRetryService;
 import com.back.catchmate.application.notification.service.NotificationService;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
@@ -18,6 +19,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class NotificationOrchestrator {
     private final NotificationService notificationService;
+    private final NotificationRetryService notificationRetryService;
 
     @Transactional
     public NotificationResponse getNotification(Long userId, Long notificationId) {
@@ -50,5 +52,9 @@ public class NotificationOrchestrator {
     public UnreadNotificationResponse hasUnreadNotifications(Long userId) {
         boolean hasUnread = notificationService.hasUnreadNotifications(userId);
         return UnreadNotificationResponse.of(hasUnread);
+    }
+
+    public void retryFailedNotifications() {
+        notificationRetryService.retryFailedNotifications();
     }
 }
