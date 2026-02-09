@@ -1,10 +1,10 @@
 package com.back.catchmate.api.bookmark.controller;
 
+import com.back.catchmate.authorization.annotation.AuthUser;
 import com.back.catchmate.orchestration.board.dto.response.BoardResponse;
 import com.back.catchmate.orchestration.bookmark.BookmarkOrchestrator;
-import com.back.catchmate.application.common.PagedResponse;
-import com.back.catchmate.global.annotation.AuthUser;
 import com.back.catchmate.orchestration.bookmark.dto.response.BookmarkUpdateResponse;
+import com.back.catchmate.orchestration.common.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

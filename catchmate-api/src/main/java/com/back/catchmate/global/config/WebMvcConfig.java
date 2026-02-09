@@ -1,6 +1,6 @@
 package com.back.catchmate.global.config;
 
-import com.back.catchmate.global.resolver.AuthUserArgumentResolver;
+import com.back.catchmate.authorization.aspect.AuthUserArgumentResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;

@@ -2,7 +2,6 @@ package com.back.catchmate.orchestration.chat;
 
 import com.back.catchmate.application.chat.event.ChatNotificationEvent;
 import com.back.catchmate.application.chat.service.ChatService;
-import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.application.user.service.UserService;
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.chat.model.ChatRoom;
@@ -14,6 +13,7 @@ import com.back.catchmate.orchestration.chat.dto.command.ChatMessageCommand;
 import com.back.catchmate.orchestration.chat.dto.response.ChatMessageResponse;
 import com.back.catchmate.orchestration.chat.dto.response.ChatRoomMemberResponse;
 import com.back.catchmate.orchestration.chat.dto.response.ChatRoomResponse;
+import com.back.catchmate.orchestration.common.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;

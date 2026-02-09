@@ -19,7 +19,7 @@ import com.back.catchmate.application.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import user.enums.AlarmType;
+import com.back.catchmate.user.enums.AlarmType;
 
 @Component
 @Transactional(readOnly = true)

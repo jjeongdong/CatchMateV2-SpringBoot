@@ -2,8 +2,8 @@ package com.back.catchmate.infrastructure.auth.provider;
 
 import com.back.catchmate.domain.auth.port.TokenProvider;
 import com.back.catchmate.domain.user.model.Authority;
-import error.ErrorCode;
-import error.exception.BaseException;
+import com.back.catchmate.error.ErrorCode;
+import com.back.catchmate.error.exception.BaseException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

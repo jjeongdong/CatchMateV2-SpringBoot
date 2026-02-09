@@ -4,8 +4,8 @@ import com.back.catchmate.domain.club.model.Club;
 import com.back.catchmate.domain.common.permission.ResourceOwnership;
 import lombok.Builder;
 import lombok.Getter;
-import user.enums.AlarmType;
-import user.enums.Provider;
+import com.back.catchmate.user.enums.AlarmType;
+import com.back.catchmate.user.enums.Provider;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

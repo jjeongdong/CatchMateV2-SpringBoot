@@ -1,9 +1,9 @@
 package com.back.catchmate.api.notification.controller;
 
-import com.back.catchmate.application.common.PagedResponse;
-import com.back.catchmate.domain.common.permission.PermissionId;
-import com.back.catchmate.global.annotation.AuthUser;
-import com.back.catchmate.global.aop.permission.CheckNotificationPermission;
+import com.back.catchmate.authorization.annotation.AuthUser;
+import com.back.catchmate.authorization.annotation.CheckNotificationPermission;
+import com.back.catchmate.authorization.annotation.PermissionId;
+import com.back.catchmate.orchestration.common.PagedResponse;
 import com.back.catchmate.orchestration.notification.NotificationOrchestrator;
 import com.back.catchmate.orchestration.notification.dto.response.NotificationResponse;
 import com.back.catchmate.orchestration.notification.dto.response.UnreadNotificationResponse;

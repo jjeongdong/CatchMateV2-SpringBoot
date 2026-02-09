@@ -1,7 +1,7 @@
 package com.back.catchmate.orchestration.chat.dto.response;
 
+import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.domain.chat.model.ChatMessage;
-import com.back.catchmate.domain.chat.model.MessageType;
 import lombok.Builder;
 import lombok.Getter;
 

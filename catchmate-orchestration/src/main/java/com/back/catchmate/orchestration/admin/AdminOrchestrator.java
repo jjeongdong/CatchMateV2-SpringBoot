@@ -2,7 +2,6 @@ package com.back.catchmate.orchestration.admin;
 
 import com.back.catchmate.application.admin.event.AdminInquiryAnswerNotificationEvent;
 import com.back.catchmate.application.board.service.BoardService;
-import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.application.enroll.service.EnrollService;
 import com.back.catchmate.application.inquiry.service.InquiryService;
 import com.back.catchmate.application.notice.service.NoticeService;
@@ -35,6 +34,7 @@ import com.back.catchmate.orchestration.admin.dto.response.InquiryAnswerResponse
 import com.back.catchmate.orchestration.admin.dto.response.NoticeActionResponse;
 import com.back.catchmate.orchestration.admin.dto.response.NoticeCreateResponse;
 import com.back.catchmate.orchestration.admin.dto.response.ReportActionResponse;
+import com.back.catchmate.orchestration.common.PagedResponse;
 import com.back.catchmate.orchestration.notice.dto.response.NoticeDetailResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;

@@ -2,8 +2,8 @@ package com.back.catchmate.application.club.service;
 
 import com.back.catchmate.domain.club.model.Club;
 import com.back.catchmate.domain.club.repository.ClubRepository;
-import error.ErrorCode;
-import error.exception.BaseException;
+import com.back.catchmate.error.ErrorCode;
+import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

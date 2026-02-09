@@ -1,7 +1,7 @@
 package com.back.catchmate.api.report.controller;
 
 import com.back.catchmate.api.report.dto.request.ReportCreateRequest;
-import com.back.catchmate.global.annotation.AuthUser;
+import com.back.catchmate.authorization.annotation.AuthUser;
 import com.back.catchmate.orchestration.report.ReportOrchestrator;
 import com.back.catchmate.orchestration.report.dto.response.ReportCreateResponse;
 import io.swagger.v3.oas.annotations.Operation;

@@ -3,7 +3,7 @@ package com.back.catchmate.orchestration.user.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import user.enums.AlarmType;
+import com.back.catchmate.user.enums.AlarmType;
 
 @Getter
 @Builder

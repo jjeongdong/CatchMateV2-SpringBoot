@@ -1,7 +1,7 @@
 package com.back.catchmate.infrastructure.persistence.chat.entity;
 
+import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.domain.chat.model.ChatMessage;
-import com.back.catchmate.domain.chat.model.MessageType;
 import com.back.catchmate.infrastructure.global.BaseTimeEntity;
 import com.back.catchmate.infrastructure.persistence.user.entity.UserEntity;
 import jakarta.persistence.Column;

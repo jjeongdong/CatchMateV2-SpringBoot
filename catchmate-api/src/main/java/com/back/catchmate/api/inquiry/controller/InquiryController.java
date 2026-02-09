@@ -1,9 +1,8 @@
 package com.back.catchmate.api.inquiry.controller;
 
 import com.back.catchmate.api.inquiry.dto.request.InquiryCreateRequest;
-import com.back.catchmate.domain.common.permission.PermissionId;
-import com.back.catchmate.global.annotation.AuthUser;
-import com.back.catchmate.global.aop.permission.CheckInquiryPermission;
+import com.back.catchmate.authorization.annotation.AuthUser;
+import com.back.catchmate.authorization.annotation.PermissionId;
 import com.back.catchmate.orchestration.inquiry.InquiryOrchestrator;
 import com.back.catchmate.orchestration.inquiry.dto.response.InquiryCreateResponse;
 import com.back.catchmate.orchestration.inquiry.dto.response.InquiryDetailResponse;
@@ -28,7 +27,6 @@ public class InquiryController {
         return ResponseEntity.ok(inquiryOrchestrator.createInquiry(userId, request.toCommand()));
     }
 
-    @CheckInquiryPermission
     @GetMapping("/{inquiryId}")
     @Operation(summary = "문의 상세 조회", description = "문의 내용과 답변을 상세 조회합니다.")
     public ResponseEntity<InquiryDetailResponse> getInquiry(@AuthUser Long userId,

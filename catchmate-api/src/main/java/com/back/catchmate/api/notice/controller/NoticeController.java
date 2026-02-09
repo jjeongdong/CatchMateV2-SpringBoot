@@ -1,6 +1,6 @@
 package com.back.catchmate.api.notice.controller;
 
-import com.back.catchmate.application.common.PagedResponse;
+import com.back.catchmate.orchestration.common.PagedResponse;
 import com.back.catchmate.orchestration.notice.NoticeOrchestrator;
 import com.back.catchmate.orchestration.notice.dto.response.NoticeDetailResponse;
 import com.back.catchmate.orchestration.notice.dto.response.NoticeResponse;

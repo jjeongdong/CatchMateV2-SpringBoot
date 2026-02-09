@@ -1,18 +1,18 @@
 package com.back.catchmate.application.chat.service;
 
+import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.domain.board.model.Board;
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.chat.model.ChatRoom;
 import com.back.catchmate.domain.chat.model.ChatRoomMember;
-import com.back.catchmate.domain.chat.model.MessageType;
 import com.back.catchmate.domain.chat.repository.ChatMessageRepository;
 import com.back.catchmate.domain.chat.repository.ChatRoomMemberRepository;
 import com.back.catchmate.domain.chat.repository.ChatRoomRepository;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.user.model.User;
-import error.ErrorCode;
-import error.exception.BaseException;
+import com.back.catchmate.error.ErrorCode;
+import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

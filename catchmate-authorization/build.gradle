@@ -1,0 +1,11 @@
+dependencies {
+    implementation project(':catchmate-domain')
+    implementation project(':catchmate-application')
+    implementation project(':catchmate-common')
+
+    // AOP 및 Web 관련 기능
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+}

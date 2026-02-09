@@ -1,6 +1,6 @@
 package com.back.catchmate.orchestration.chat.dto.command;
 
-import com.back.catchmate.domain.chat.model.MessageType;
+import com.back.catchmate.chat.enums.MessageType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

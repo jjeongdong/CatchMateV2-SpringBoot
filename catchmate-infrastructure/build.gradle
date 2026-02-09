@@ -26,4 +26,8 @@ dependencies {
 
     // FCM
     implementation 'com.google.firebase:firebase-admin:9.3.0'
+
+    // Spring Retry & AOP
+    implementation 'org.springframework.retry:spring-retry'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
 }

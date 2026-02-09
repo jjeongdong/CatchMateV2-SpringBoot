@@ -1,10 +1,10 @@
 package com.back.catchmate.orchestration.notice;
 
-import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.application.notice.service.NoticeService;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.notice.model.Notice;
+import com.back.catchmate.orchestration.common.PagedResponse;
 import com.back.catchmate.orchestration.notice.dto.response.NoticeDetailResponse;
 import com.back.catchmate.orchestration.notice.dto.response.NoticeResponse;
 import lombok.RequiredArgsConstructor;

@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import report.enums.ReportReason;
+import com.back.catchmate.report.enums.ReportReason;
 
 import java.time.LocalDateTime;
 

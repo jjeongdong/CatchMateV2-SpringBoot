@@ -6,7 +6,7 @@ import com.back.catchmate.domain.notification.model.Notification;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import user.enums.AlarmType;
+import com.back.catchmate.user.enums.AlarmType;
 
 import java.time.LocalDateTime;
 

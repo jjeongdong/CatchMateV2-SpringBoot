@@ -1,5 +1,6 @@
 package com.back.catchmate.domain.chat.model;
 
+import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.domain.user.model.User;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

@@ -1,6 +1,6 @@
 package com.back.catchmate.api.chat.dto.request;
 
-import com.back.catchmate.domain.chat.model.MessageType;
+import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.orchestration.chat.dto.command.ChatMessageCommand;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

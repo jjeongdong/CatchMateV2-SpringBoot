@@ -4,17 +4,19 @@ import com.back.catchmate.application.notification.service.NotificationService;
 import com.back.catchmate.domain.notification.model.Notification;
 import com.back.catchmate.domain.notification.port.NotificationSender;
 import com.back.catchmate.domain.user.model.User;
+import com.back.catchmate.user.enums.AlarmType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.event.TransactionPhase;
-import user.enums.AlarmType;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class EnrollNotificationEventListener {
@@ -25,34 +27,50 @@ public class EnrollNotificationEventListener {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleEnrollNotification(EnrollNotificationEvent event) {
-        // 1) 알림 저장은 사용자 온라인/FCM 여부와 무관하게 항상 수행
-        Notification notification = Notification.createNotification(
-                event.recipient(),
-                event.sender(),
-                event.board(),
-                event.title(),
-                AlarmType.ENROLL,
-                event.referenceId()
-        );
-        notificationService.createNotification(notification);
+        // 1. 알림 내역 저장은 실패하면 안 되므로 재시도 로직 밖에 둡니다.
+        try {
+            Notification notification = Notification.createNotification(
+                    event.recipient(),
+                    event.sender(),
+                    event.board(),
+                    event.title(),
+                    AlarmType.ENROLL,
+                    event.referenceId()
+            );
+            notificationService.createNotification(notification);
+        } catch (Exception e) {
+            log.error("알림 DB 저장 실패 (푸시 전송 중단) - boardId: {}, recipientId: {}, error: {}",
+                    event.board().getId(), event.recipient().getId(), e.getMessage(), e);
 
-        // 2) 푸시는 토큰/설정 체크 후 오프라인 사용자에게만 전송
-        User recipient = event.recipient();
-        if (recipient.getFcmToken() == null || recipient.getEnrollAlarm() != 'Y') {
             return;
         }
 
-        Map<String, String> data = Map.of(
-                "type", event.type(),
-                "boardId", event.board().getId().toString()
-        );
+        // 2. 푸시 전송만 별도 메서드로 분리하여 재시도 적용
+        try {
+            User recipient = event.recipient();
 
-        notificationSender.sendNotificationIfOffline(
-                recipient.getId(),
-                recipient.getFcmToken(),
-                event.title(),
-                event.body(),
-                data
-        );
+            // 토큰이나 알림 설정이 꺼져있으면 아예 시도하지 않음
+            if (recipient.getFcmToken() == null || recipient.getEnrollAlarm() != 'Y') {
+                return;
+            }
+
+            Map<String, String> data = Map.of(
+                    "type", event.type(),
+                    "boardId", event.board().getId().toString()
+            );
+
+            // Sender 내부에서 실패 시 알아서 3회 재시도함
+            notificationSender.sendNotificationIfOffline(
+                    recipient.getId(),
+                    recipient.getFcmToken(),
+                    event.title(),
+                    event.body(),
+                    data
+            );
+
+        } catch (Exception e) {
+            // DB는 이미 저장되었으므로, 여기서는 로그만 남기고 조용히 종료
+            log.warn("알림 DB 저장은 성공했으나, 푸시 전송에 최종 실패했습니다. - recipientId: {}", event.recipient().getId());
+        }
     }
 }

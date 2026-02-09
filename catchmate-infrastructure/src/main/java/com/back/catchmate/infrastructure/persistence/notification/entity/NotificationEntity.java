@@ -20,7 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import user.enums.AlarmType;
+import com.back.catchmate.user.enums.AlarmType;
 
 @Entity
 @Table(name = "notifications")

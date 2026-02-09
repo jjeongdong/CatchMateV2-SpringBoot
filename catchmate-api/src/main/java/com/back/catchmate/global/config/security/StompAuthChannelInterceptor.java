@@ -1,8 +1,8 @@
 package com.back.catchmate.global.config.security;
 
 import com.back.catchmate.orchestration.auth.AuthOrchestrator;
-import error.ErrorCode;
-import error.exception.BaseException;
+import com.back.catchmate.error.ErrorCode;
+import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;

@@ -2,6 +2,7 @@ package com.back.catchmate.api.user.controller;
 
 import com.back.catchmate.api.user.dto.request.UserProfileUpdateRequest;
 import com.back.catchmate.api.user.dto.request.UserRegisterRequest;
+import com.back.catchmate.authorization.annotation.AuthUser;
 import com.back.catchmate.orchestration.user.UserOrchestrator;
 import com.back.catchmate.orchestration.user.dto.command.UploadFile;
 import com.back.catchmate.orchestration.user.dto.response.UserAlarmSettingsResponse;
@@ -10,7 +11,6 @@ import com.back.catchmate.orchestration.user.dto.response.UserNicknameCheckRespo
 import com.back.catchmate.orchestration.user.dto.response.UserRegisterResponse;
 import com.back.catchmate.orchestration.user.dto.response.UserResponse;
 import com.back.catchmate.orchestration.user.dto.response.UserUpdateResponse;
-import com.back.catchmate.global.annotation.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import user.enums.AlarmType;
+import com.back.catchmate.user.enums.AlarmType;
 
 import java.io.IOException;
 

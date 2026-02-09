@@ -3,3 +3,5 @@ include 'catchmate-common', 'catchmate-infrastructure', 'catchmate-domain',
         'catchmate-orchestration', 'catchmate-api', 'catchmate-application'
 
 include 'catchmate-boot'
+
+include 'catchmate-authorization'

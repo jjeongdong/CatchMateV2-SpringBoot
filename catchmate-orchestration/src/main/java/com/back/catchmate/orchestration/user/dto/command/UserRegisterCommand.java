@@ -3,7 +3,7 @@ package com.back.catchmate.orchestration.user.dto.command;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import user.enums.Provider;
+import com.back.catchmate.user.enums.Provider;
 
 import java.time.LocalDate;
 

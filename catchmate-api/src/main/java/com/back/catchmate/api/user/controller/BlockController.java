@@ -1,10 +1,10 @@
 package com.back.catchmate.api.user.controller;
 
+import com.back.catchmate.authorization.annotation.AuthUser;
 import com.back.catchmate.orchestration.common.PagedResponse;
 import com.back.catchmate.orchestration.user.UserBlockOrchestrator;
 import com.back.catchmate.orchestration.user.dto.response.BlockActionResponse;
 import com.back.catchmate.orchestration.user.dto.response.BlockedUserResponse;
-import com.back.catchmate.global.annotation.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

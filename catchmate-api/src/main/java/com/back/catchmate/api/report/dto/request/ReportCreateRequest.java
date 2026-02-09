@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import report.enums.ReportReason;
+import com.back.catchmate.report.enums.ReportReason;
 
 @Getter
 @NoArgsConstructor

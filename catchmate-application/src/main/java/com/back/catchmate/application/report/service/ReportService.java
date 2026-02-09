@@ -5,11 +5,11 @@ import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.report.model.Report;
 import com.back.catchmate.domain.report.repository.ReportRepository;
 import com.back.catchmate.domain.user.model.User;
-import error.ErrorCode;
-import error.exception.BaseException;
+import com.back.catchmate.error.ErrorCode;
+import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import report.enums.ReportReason;
+import com.back.catchmate.report.enums.ReportReason;
 
 @Service
 @RequiredArgsConstructor

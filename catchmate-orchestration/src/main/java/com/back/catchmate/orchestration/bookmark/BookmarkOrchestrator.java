@@ -2,7 +2,6 @@ package com.back.catchmate.orchestration.bookmark;
 
 import com.back.catchmate.application.board.service.BoardService;
 import com.back.catchmate.application.bookmark.service.BookmarkService;
-import com.back.catchmate.application.common.PagedResponse;
 import com.back.catchmate.application.user.service.UserService;
 import com.back.catchmate.domain.board.model.Board;
 import com.back.catchmate.domain.bookmark.model.Bookmark;
@@ -11,6 +10,7 @@ import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.orchestration.board.dto.response.BoardResponse;
 import com.back.catchmate.orchestration.bookmark.dto.response.BookmarkUpdateResponse;
+import com.back.catchmate.orchestration.common.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;

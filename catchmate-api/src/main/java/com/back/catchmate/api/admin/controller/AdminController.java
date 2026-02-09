@@ -3,8 +3,7 @@ package com.back.catchmate.api.admin.controller;
 import com.back.catchmate.api.admin.dto.request.InquiryAnswerRequest;
 import com.back.catchmate.api.admin.dto.request.NoticeCreateRequest;
 import com.back.catchmate.api.admin.dto.request.NoticeUpdateRequest;
-import com.back.catchmate.application.common.PagedResponse;
-import com.back.catchmate.global.annotation.AuthUser;
+import com.back.catchmate.authorization.annotation.AuthUser;
 import com.back.catchmate.orchestration.admin.AdminOrchestrator;
 import com.back.catchmate.orchestration.admin.dto.response.AdminBoardDetailWithEnrollResponse;
 import com.back.catchmate.orchestration.admin.dto.response.AdminBoardResponse;
@@ -21,6 +20,7 @@ import com.back.catchmate.orchestration.admin.dto.response.InquiryAnswerResponse
 import com.back.catchmate.orchestration.admin.dto.response.NoticeActionResponse;
 import com.back.catchmate.orchestration.admin.dto.response.NoticeCreateResponse;
 import com.back.catchmate.orchestration.admin.dto.response.ReportActionResponse;
+import com.back.catchmate.orchestration.common.PagedResponse;
 import com.back.catchmate.orchestration.notice.dto.response.NoticeDetailResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

@@ -4,8 +4,8 @@ import com.back.catchmate.domain.auth.model.AuthToken;
 import com.back.catchmate.domain.auth.port.TokenProvider;
 import com.back.catchmate.domain.auth.repository.RefreshTokenRepository;
 import com.back.catchmate.domain.user.model.User;
-import error.ErrorCode;
-import error.exception.BaseException;
+import com.back.catchmate.error.ErrorCode;
+import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

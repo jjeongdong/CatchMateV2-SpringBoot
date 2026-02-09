@@ -1,11 +1,11 @@
 package com.back.catchmate.api.enroll.controller;
 
 import com.back.catchmate.api.enroll.dto.request.EnrollCreateRequest;
-import com.back.catchmate.application.common.PagedResponse;
-import com.back.catchmate.domain.common.permission.PermissionId;
-import com.back.catchmate.global.annotation.AuthUser;
-import com.back.catchmate.global.aop.permission.CheckEnrollApplicantPermission;
-import com.back.catchmate.global.aop.permission.CheckEnrollHostPermission;
+import com.back.catchmate.authorization.annotation.AuthUser;
+import com.back.catchmate.authorization.annotation.CheckEnrollApplicantPermission;
+import com.back.catchmate.authorization.annotation.CheckEnrollHostPermission;
+import com.back.catchmate.authorization.annotation.PermissionId;
+import com.back.catchmate.orchestration.common.PagedResponse;
 import com.back.catchmate.orchestration.enroll.EnrollOrchestrator;
 import com.back.catchmate.orchestration.enroll.dto.response.EnrollAcceptResponse;
 import com.back.catchmate.orchestration.enroll.dto.response.EnrollApplicantResponse;

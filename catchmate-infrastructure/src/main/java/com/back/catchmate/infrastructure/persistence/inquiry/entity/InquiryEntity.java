@@ -4,7 +4,7 @@ import com.back.catchmate.domain.inquiry.model.Inquiry;
 import com.back.catchmate.domain.inquiry.model.InquiryStatus;
 import com.back.catchmate.infrastructure.global.BaseTimeEntity;
 import com.back.catchmate.infrastructure.persistence.user.entity.UserEntity;
-import inquiry.enums.InquiryType;
+import com.back.catchmate.inquiry.enums.InquiryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

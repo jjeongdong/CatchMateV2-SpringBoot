@@ -2,7 +2,7 @@ package com.back.catchmate.domain.inquiry.model;
 
 import com.back.catchmate.domain.common.permission.ResourceOwnership;
 import com.back.catchmate.domain.user.model.User;
-import inquiry.enums.InquiryType;
+import com.back.catchmate.inquiry.enums.InquiryType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

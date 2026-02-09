@@ -1,6 +1,6 @@
 package com.back.catchmate.orchestration.inquiry.dto.command;
 
-import inquiry.enums.InquiryType;
+import com.back.catchmate.inquiry.enums.InquiryType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

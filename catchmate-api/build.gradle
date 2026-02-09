@@ -1,8 +1,7 @@
 dependencies {
     implementation project(':catchmate-common')
-    implementation project(':catchmate-domain')
     implementation project(':catchmate-orchestration')
-    implementation project(':catchmate-application')
+    implementation project(':catchmate-authorization')
 
     implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'org.springframework.boot:spring-boot-starter-web'

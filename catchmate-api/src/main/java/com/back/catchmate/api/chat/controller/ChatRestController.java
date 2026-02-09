@@ -1,11 +1,11 @@
 package com.back.catchmate.api.chat.controller;
 
-import com.back.catchmate.application.common.PagedResponse;
-import com.back.catchmate.global.annotation.AuthUser;
+import com.back.catchmate.authorization.annotation.AuthUser;
 import com.back.catchmate.orchestration.chat.ChatOrchestrator;
 import com.back.catchmate.orchestration.chat.dto.response.ChatMessageResponse;
 import com.back.catchmate.orchestration.chat.dto.response.ChatRoomMemberResponse;
 import com.back.catchmate.orchestration.chat.dto.response.ChatRoomResponse;
+import com.back.catchmate.orchestration.common.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

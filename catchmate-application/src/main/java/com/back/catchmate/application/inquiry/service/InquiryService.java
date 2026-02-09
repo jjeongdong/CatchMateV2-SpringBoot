@@ -5,9 +5,9 @@ import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.inquiry.model.Inquiry;
 import com.back.catchmate.domain.inquiry.repository.InquiryRepository;
 import com.back.catchmate.domain.user.model.User;
-import error.ErrorCode;
-import error.exception.BaseException;
-import inquiry.enums.InquiryType;
+import com.back.catchmate.error.ErrorCode;
+import com.back.catchmate.error.exception.BaseException;
+import com.back.catchmate.inquiry.enums.InquiryType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

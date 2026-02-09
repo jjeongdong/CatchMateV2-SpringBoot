@@ -5,6 +5,7 @@ import java.util.Map;
 
 public interface NotificationSender {
     void sendNotification(String token, String title, String body, Map<String, String> data);
+
     void sendMulticastNotification(List<String> tokens, String title, String body, Map<String, String> data);
 
     /**
