@@ -23,29 +23,22 @@ public class EnrollNotificationEventListener {
     private final NotificationSender notificationSender;
     private final NotificationService notificationService;
 
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
+    public void saveNotification(EnrollNotificationEvent event) {
+        Notification notification = Notification.createNotification(
+                event.recipient(),
+                event.sender(),
+                event.board(),
+                event.title(),
+                AlarmType.ENROLL,
+                event.referenceId()
+        );
+        notificationService.createNotification(notification);
+    }
+
     @Async
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleEnrollNotification(EnrollNotificationEvent event) {
-        // 1. 알림 내역 저장은 실패하면 안 되므로 재시도 로직 밖에 둡니다.
-        try {
-            Notification notification = Notification.createNotification(
-                    event.recipient(),
-                    event.sender(),
-                    event.board(),
-                    event.title(),
-                    AlarmType.ENROLL,
-                    event.referenceId()
-            );
-            notificationService.createNotification(notification);
-        } catch (Exception e) {
-            log.error("알림 DB 저장 실패 (푸시 전송 중단) - boardId: {}, recipientId: {}, error: {}",
-                    event.board().getId(), event.recipient().getId(), e.getMessage(), e);
-
-            return;
-        }
-
-        // 2. 푸시 전송만 별도 메서드로 분리하여 재시도 적용
         try {
             User recipient = event.recipient();
 
