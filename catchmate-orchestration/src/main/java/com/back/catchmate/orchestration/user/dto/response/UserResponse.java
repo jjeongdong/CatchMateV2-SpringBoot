@@ -1,6 +1,7 @@
 package com.back.catchmate.orchestration.user.dto.response;
 
 import com.back.catchmate.domain.user.model.User;
+import com.back.catchmate.orchestration.club.dto.response.ClubResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,7 +21,7 @@ public class UserResponse {
     private LocalDate birthDate;
     private String watchStyle;
 
-    private Object club; // keep generic to avoid depending on application API club DTO
+    private ClubResponse club;
 
     public static UserResponse from(User user) {
         return UserResponse.builder()
@@ -29,7 +30,7 @@ public class UserResponse {
                 .profileImageUrl(user.getProfileImageUrl())
                 .gender(user.getGender())
                 .nickName(user.getNickName())
-                .club(null)
+                .club(ClubResponse.from(user.getClub()))
                 .birthDate(user.getBirthDate())
                 .watchStyle(user.getWatchStyle())
                 .build();
