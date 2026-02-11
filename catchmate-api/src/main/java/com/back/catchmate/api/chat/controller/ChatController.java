@@ -30,12 +30,8 @@ public class ChatController {
         log.info("채팅 메시지 수신 - chatRoomId: {}, senderId: {}, content: {}",
                 request.getChatRoomId(), senderId, request.getContent());
 
-        ChatMessageResponse response = chatOrchestrator.sendMessage(senderId, request.toCommand(senderId));
-
-        String destination = "/sub/chat/room/" + request.getChatRoomId();
-        messagingTemplate.convertAndSend(destination, response);
-
-        log.info("채팅 메시지 브로드캐스트 완료 - destination: {}", destination);
+        chatOrchestrator.sendMessage(senderId, request.toCommand(senderId));
+        log.info("채팅 메시지 처리 위임 완료 (Redis Pub/Sub 동작 중)");
     }
 
     @MessageMapping("/chat/enter")

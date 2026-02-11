@@ -1,6 +1,8 @@
 package com.back.catchmate.orchestration.chat;
 
+import com.back.catchmate.application.chat.event.ChatMessageEvent;
 import com.back.catchmate.application.chat.event.ChatNotificationEvent;
+import com.back.catchmate.application.chat.port.MessagePublisher;
 import com.back.catchmate.application.chat.service.ChatService;
 import com.back.catchmate.application.user.service.UserService;
 import com.back.catchmate.domain.chat.model.ChatMessage;
@@ -28,17 +30,28 @@ public class ChatOrchestrator {
     private final ChatService chatService;
     private final UserService userService;
     private final ApplicationEventPublisher eventPublisher;
+    private final MessagePublisher messagePublisher;
 
     @Transactional
-    public ChatMessageResponse sendMessage(Long senderId, ChatMessageCommand command) {
+    public void sendMessage(Long senderId, ChatMessageCommand command) {
         User sender = userService.getUser(senderId);
 
         ChatMessage savedMessage = chatService.saveMessage(command.getChatRoomId(), sender, command.getContent(), command.getMessageType());
 
-        // 이벤트 발행
-        publishChatNotificationEvent(savedMessage, senderId);
+        // Redis를 통한 메시지 발행
+        messagePublisher.publish("catchmate-chat-topic", ChatMessageEvent.from(savedMessage));
 
-        return ChatMessageResponse.from(savedMessage);
+        // 채팅방 멤버 중 발신자를 제외한 모든 사용자에게 알림 이벤트 발행
+        // FCM 알림은 별도의 이벤트 리스너에서 처리
+        List<User> recipients = chatService.getChatRoomMembers(savedMessage.getChatRoom().getId())
+                .stream()
+                .map(ChatRoomMember::getUser)
+                .filter(user -> !user.getId().equals(senderId))
+                .toList();
+
+        if (!recipients.isEmpty()) {
+            eventPublisher.publishEvent(ChatNotificationEvent.of(savedMessage, recipients));
+        }
     }
 
     @Transactional
@@ -97,14 +110,6 @@ public class ChatOrchestrator {
     }
 
     private void publishChatNotificationEvent(ChatMessage savedMessage, Long senderId) {
-        List<User> recipients = chatService.getChatRoomMembers(savedMessage.getChatRoom().getId())
-                .stream()
-                .map(ChatRoomMember::getUser)
-                .filter(user -> !user.getId().equals(senderId))
-                .toList();
 
-        if (!recipients.isEmpty()) {
-            eventPublisher.publishEvent(ChatNotificationEvent.of(savedMessage, recipients));
-        }
     }
 }
