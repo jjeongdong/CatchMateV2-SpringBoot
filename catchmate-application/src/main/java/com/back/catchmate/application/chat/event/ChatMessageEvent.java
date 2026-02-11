@@ -10,6 +10,10 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * 채팅 메시지 이벤트 DTO
+ * Redis Pub/Sub을 통해 전송되는 메시지 포맷
+ */
 @Getter
 @Builder
 @NoArgsConstructor

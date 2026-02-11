@@ -17,7 +17,6 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 @Component
 @RequiredArgsConstructor
 public class WebSocketEventListener {
-
     private final UserOnlineStatusOrchestrator userOnlineStatusOrchestrator;
 
     /**
@@ -26,8 +25,8 @@ public class WebSocketEventListener {
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-
         Authentication user = (Authentication) headerAccessor.getUser();
+
         if (user != null && user.getPrincipal() != null) {
             try {
                 Long userId = Long.parseLong(user.getPrincipal().toString());
@@ -45,8 +44,8 @@ public class WebSocketEventListener {
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-
         Authentication user = (Authentication) headerAccessor.getUser();
+
         if (user != null && user.getPrincipal() != null) {
             try {
                 Long userId = Long.parseLong(user.getPrincipal().toString());

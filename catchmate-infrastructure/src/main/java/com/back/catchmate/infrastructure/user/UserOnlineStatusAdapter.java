@@ -16,11 +16,9 @@ import java.time.Duration;
 @Service
 @RequiredArgsConstructor
 public class UserOnlineStatusAdapter implements UserOnlineStatusPort {
-
+    private final RedisTemplate<String, String> redisTemplate;
     private static final String ONLINE_USER_KEY_PREFIX = "user:online:";
     private static final Duration ONLINE_EXPIRE_TIME = Duration.ofMinutes(5);
-
-    private final RedisTemplate<String, String> redisTemplate;
 
     @Override
     public void setUserOnline(Long userId) {
