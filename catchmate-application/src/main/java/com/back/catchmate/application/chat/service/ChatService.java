@@ -15,6 +15,7 @@ import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -92,6 +93,10 @@ public class ChatService {
         return chatRoomRepository.findAllByUserId(userId, pageable);
     }
 
+    public List<ChatMessage> getChatHistory(Long roomId, Long lastMessageId, int size) {
+        return chatMessageRepository.findChatHistory(roomId, lastMessageId, size);
+    }
+
     public DomainPage<ChatMessage> getMessages(Long chatRoomId, DomainPageable pageable) {
         return chatMessageRepository.findAllByChatRoomId(chatRoomId, pageable);
     }
@@ -109,5 +114,16 @@ public class ChatService {
     private ChatRoom getChatRoom(Long chatRoomId) {
         return chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_NOT_FOUND));
+    }
+
+    public void validateUserInChatRoom(Long userId, Long roomId) {
+        boolean isMember = chatRoomMemberRepository
+                .findByChatRoomIdAndUserId(roomId, userId)
+                .filter(ChatRoomMember::isActive)
+                .isPresent();
+
+        if (!isMember) {
+            throw new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND);
+        }
     }
 }

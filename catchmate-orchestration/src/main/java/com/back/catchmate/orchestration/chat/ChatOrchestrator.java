@@ -84,6 +84,19 @@ public class ChatOrchestrator {
         return new PagedResponse<>(chatRoomPage, responses);
     }
 
+    public List<ChatMessageResponse> getChatHistory(Long userId, Long roomId, Long lastMessageId, int size) {
+        // 권한 체크 (사용자가 해당 채팅방의 멤버인지 확인)
+        chatService.validateUserInChatRoom(userId, roomId);
+
+        // 1. 데이터 조회
+        List<ChatMessage> messages = chatService.getChatHistory(roomId, lastMessageId, size);
+
+        // 2. DTO 변환 (Domain -> Response)
+        return messages.stream()
+                .map(ChatMessageResponse::from)
+                .toList();
+    }
+
     public PagedResponse<ChatMessageResponse> getMessages(Long chatRoomId, int page, int size) {
         DomainPageable pageable = new DomainPageable(page, size);
         DomainPage<ChatMessage> messagePage = chatService.getMessages(chatRoomId, pageable);
@@ -107,9 +120,5 @@ public class ChatOrchestrator {
         return activeMembers.stream()
                 .map(ChatRoomMemberResponse::from)
                 .toList();
-    }
-
-    private void publishChatNotificationEvent(ChatMessage savedMessage, Long senderId) {
-
     }
 }

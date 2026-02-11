@@ -16,6 +16,8 @@ public interface ChatMessageRepository {
 
     List<ChatMessage> findAllByChatRoomId(Long chatRoomId);
 
+    List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size);
+
     Optional<ChatMessage> findLastMessageByChatRoomId(Long chatRoomId);
 
     long countByChatRoomId(Long chatRoomId);

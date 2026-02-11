@@ -19,6 +19,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     private final JpaChatMessageRepository jpaChatMessageRepository;
+    private final ChatMessageQuerydslRepository chatMessageQuerydslRepository;
 
     @Override
     public ChatMessage save(ChatMessage chatMessage) {
@@ -59,6 +60,11 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
         return jpaChatMessageRepository.findAllByChatRoomIdList(chatRoomId).stream()
                 .map(ChatMessageEntity::toModel)
                 .toList();
+    }
+
+    @Override
+    public List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size) {
+        return chatMessageQuerydslRepository.findChatHistory(roomId, lastMessageId, size);
     }
 
     @Override
