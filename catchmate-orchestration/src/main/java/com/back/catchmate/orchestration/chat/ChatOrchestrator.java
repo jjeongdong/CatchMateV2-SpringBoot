@@ -36,7 +36,12 @@ public class ChatOrchestrator {
     public void sendMessage(Long senderId, ChatMessageCommand command) {
         User sender = userService.getUser(senderId);
 
-        ChatMessage savedMessage = chatService.saveMessage(command.getChatRoomId(), sender, command.getContent(), command.getMessageType());
+        ChatMessage savedMessage = chatService.saveMessage(
+                command.getChatRoomId(),
+                sender,
+                command.getContent(),
+                command.getMessageType()
+        );
 
         // Redis를 통한 메시지 발행
         messagePublisher.publish("catchmate-chat-topic", ChatMessageEvent.from(savedMessage));
@@ -55,17 +60,17 @@ public class ChatOrchestrator {
     }
 
     @Transactional
-    public ChatMessageResponse enterChatRoom(Long userId, Long chatRoomId) {
+    public void enterChatRoom(Long userId, Long chatRoomId) {
         User user = userService.getUser(userId);
         ChatMessage savedMessage = chatService.enterChatRoom(chatRoomId, user);
-        return ChatMessageResponse.from(savedMessage);
+        messagePublisher.publish("catchmate-chat-topic", ChatMessageEvent.from(savedMessage));
     }
 
     @Transactional
-    public ChatMessageResponse leaveChatRoom(Long userId, Long chatRoomId) {
+    public void leaveChatRoom(Long userId, Long chatRoomId) {
         User user = userService.getUser(userId);
         ChatMessage savedMessage = chatService.leaveChatRoom(chatRoomId, user);
-        return ChatMessageResponse.from(savedMessage);
+        messagePublisher.publish("catchmate-chat-topic", ChatMessageEvent.from(savedMessage));
     }
 
     public PagedResponse<ChatRoomResponse> getMyChatRooms(Long userId, int page, int size) {

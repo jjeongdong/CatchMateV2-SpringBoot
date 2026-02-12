@@ -24,7 +24,7 @@ public class ChatMessageEvent {
     private Long roomId;
     private Long senderId;
     private String senderNickname;
-    private String senderProfileImage; // 프사 보여줘야 하니까
+    private String senderProfileImage;
     private String content;
     private MessageType messageType;
 

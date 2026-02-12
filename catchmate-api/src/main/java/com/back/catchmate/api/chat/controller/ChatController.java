@@ -3,15 +3,13 @@ package com.back.catchmate.api.chat.controller;
 import com.back.catchmate.api.chat.dto.request.ChatMessageRequest;
 import com.back.catchmate.api.chat.dto.request.ChatRoomEnterRequest;
 import com.back.catchmate.api.chat.dto.request.ChatRoomLeaveRequest;
-import com.back.catchmate.orchestration.chat.ChatOrchestrator;
-import com.back.catchmate.orchestration.chat.dto.response.ChatMessageResponse;
 import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
+import com.back.catchmate.orchestration.chat.ChatOrchestrator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
@@ -21,7 +19,6 @@ import java.security.Principal;
 @RequiredArgsConstructor
 public class ChatController {
     private final ChatOrchestrator chatOrchestrator;
-    private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/chat/message")
     public void sendMessage(@Payload ChatMessageRequest request, Principal principal) {
@@ -37,31 +34,19 @@ public class ChatController {
     @MessageMapping("/chat/enter")
     public void enterChatRoom(@Payload ChatRoomEnterRequest request, Principal principal) {
         Long userId = extractUserId(principal);
-
         log.info("채팅방 입장 - chatRoomId: {}, userId: {}", request.getChatRoomId(), userId);
 
-        ChatMessageResponse response = chatOrchestrator.enterChatRoom(userId, request.getChatRoomId());
-
-        String destination = "/sub/chat/room/" + request.getChatRoomId();
-        messagingTemplate.convertAndSend(destination, response);
-
-        log.info("채팅방 입장 알림 브로드캐스트 완료 - destination: {}, message: {}",
-                destination, response.getContent());
+        chatOrchestrator.enterChatRoom(userId, request.getChatRoomId());
+        log.info("채팅방 입장 처리 완료");
     }
 
     @MessageMapping("/chat/leave")
     public void leaveChatRoom(@Payload ChatRoomLeaveRequest request, Principal principal) {
         Long userId = extractUserId(principal);
-
         log.info("채팅방 퇴장 - chatRoomId: {}, userId: {}", request.getChatRoomId(), userId);
 
-        ChatMessageResponse response = chatOrchestrator.leaveChatRoom(userId, request.getChatRoomId());
-
-        String destination = "/sub/chat/room/" + request.getChatRoomId();
-        messagingTemplate.convertAndSend(destination, response);
-
-        log.info("채팅방 퇴장 알림 브로드캐스트 완료 - destination: {}, message: {}",
-                destination, response.getContent());
+        chatOrchestrator.leaveChatRoom(userId, request.getChatRoomId());
+        log.info("채팅방 퇴장 처리 완료");
     }
 
     private Long extractUserId(Principal principal) {
