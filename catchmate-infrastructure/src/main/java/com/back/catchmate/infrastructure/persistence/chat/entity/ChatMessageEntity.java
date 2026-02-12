@@ -57,6 +57,9 @@ public class ChatMessageEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private MessageType messageType;
 
+    @Column(nullable = false)
+    private Long sequence;
+
     private LocalDateTime deletedAt;
 
     public static ChatMessageEntity from(ChatMessage chatMessage) {
@@ -66,6 +69,7 @@ public class ChatMessageEntity extends BaseTimeEntity {
                 .sender(UserEntity.from(chatMessage.getSender()))
                 .content(chatMessage.getContent())
                 .messageType(chatMessage.getMessageType())
+                .sequence(chatMessage.getSequence())
                 .deletedAt(chatMessage.getDeletedAt())
                 .build();
     }
@@ -78,6 +82,7 @@ public class ChatMessageEntity extends BaseTimeEntity {
                 .content(this.content)
                 .messageType(this.messageType)
                 .createdAt(this.getCreatedAt())
+                .sequence(this.sequence)
                 .deletedAt(this.deletedAt)
                 .build();
     }

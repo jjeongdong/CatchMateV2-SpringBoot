@@ -38,12 +38,16 @@ public class ChatRoomEntity extends BaseTimeEntity {
     @JoinColumn(name = "board_id", nullable = false)
     private BoardEntity board;
 
+    @Column(name = "last_message_sequence", nullable = false)
+    private Long lastMessageSequence;
+
     private LocalDateTime deletedAt;
 
     public static ChatRoomEntity from(ChatRoom chatRoom) {
         return ChatRoomEntity.builder()
                 .id(chatRoom.getId())
                 .board(BoardEntity.from(chatRoom.getBoard()))
+                .lastMessageSequence(chatRoom.getLastMessageSequence())
                 .deletedAt(chatRoom.getDeletedAt())
                 .build();
     }
@@ -52,6 +56,7 @@ public class ChatRoomEntity extends BaseTimeEntity {
         return ChatRoom.builder()
                 .id(this.id)
                 .board(this.board.toModel())
+                .lastMessageSequence(this.lastMessageSequence)
                 .createdAt(this.getCreatedAt())
                 .deletedAt(this.deletedAt)
                 .build();

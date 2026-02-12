@@ -38,13 +38,38 @@ public class ChatService {
     public ChatMessage saveMessage(Long chatRoomId, User sender, String content, MessageType messageType) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
 
+        // 1. 방의 시퀀스 증가 및 저장
+        // TODO: 시퀀스 증가와 메시지 저장을 원자적으로 처리하기 위해서는 DB 트랜잭션과 락이 필요할 수 있음
+        chatRoom.increaseSequence();
+        chatRoomRepository.save(chatRoom);
+
         ChatMessage chatMessage = ChatMessage.createMessage(
                 chatRoom,
                 sender,
                 content,
                 messageType
         );
+
+        updateReadSequence(chatRoom, sender);
         return chatMessageRepository.save(chatMessage);
+    }
+
+    public void markAsRead(Long chatRoomId, Long userId) {
+        ChatRoom chatRoom = getChatRoom(chatRoomId);
+        User user = User.builder().id(userId).build(); // ID만 있는 User 객체 (조회 비용 절감)
+
+        updateReadSequence(chatRoom, user);
+    }
+
+    // 내부 헬퍼 메서드: 회원의 lastReadSequence를 방의 lastMessageSequence로 업데이트
+    private void updateReadSequence(ChatRoom chatRoom, User user) {
+        chatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoom.getId(), user.getId())
+                .ifPresent(member -> {
+                    if (member.isActive()) {
+                        member.updateLastReadSequence(chatRoom.getLastMessageSequence());
+                        chatRoomMemberRepository.save(member);
+                    }
+                });
     }
 
     public ChatMessage enterChatRoom(Long chatRoomId, User user) {
@@ -109,6 +134,12 @@ public class ChatService {
         // 존재 확인
         getChatRoom(chatRoomId);
         return chatRoomMemberRepository.findAllByChatRoomIdAndActive(chatRoomId);
+    }
+
+    public ChatRoomMember getChatRoomMember(Long chatRoomId, Long userId) {
+        return chatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoomId, userId)
+                .filter(ChatRoomMember::isActive) // 탈퇴한 멤버는 조회되지 않도록 필터링
+                .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
     }
 
     private ChatRoom getChatRoom(Long chatRoomId) {

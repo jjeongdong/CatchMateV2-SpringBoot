@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 public class ChatRoom {
     private Long id;
     private Board board;
+    private Long lastMessageSequence;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
 
@@ -23,8 +24,14 @@ public class ChatRoom {
     public static ChatRoom createChatRoom(Board board) {
         return ChatRoom.builder()
                 .board(board)
+                .lastMessageSequence(0L)
                 .createdAt(LocalDateTime.now())
                 .build();
+    }
+
+    // 채팅 메시지 시퀀스 증가 메서드
+    public void increaseSequence() {
+        this.lastMessageSequence = (this.lastMessageSequence == null ? 0 : this.lastMessageSequence) + 1;
     }
 
     // 삭제 메서드

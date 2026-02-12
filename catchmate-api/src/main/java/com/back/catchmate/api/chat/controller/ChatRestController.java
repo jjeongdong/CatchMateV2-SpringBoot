@@ -41,6 +41,7 @@ public class ChatRestController {
             @RequestParam(required = false) Long lastMessageId,
             @RequestParam(defaultValue = "20") int size
     ) {
+        chatOrchestrator.readChatRoom(userId, roomId);
         return chatOrchestrator.getChatHistory(userId, roomId, lastMessageId, size);
     }
 

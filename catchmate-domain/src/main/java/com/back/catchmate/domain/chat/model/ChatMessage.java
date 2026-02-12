@@ -19,6 +19,7 @@ public class ChatMessage {
     private ChatRoom chatRoom;
     private User sender;
     private String content;
+    private Long sequence;
     private MessageType messageType;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
@@ -29,6 +30,7 @@ public class ChatMessage {
                 .chatRoom(chatRoom)
                 .sender(sender)
                 .content(content)
+                .sequence(chatRoom.getLastMessageSequence())
                 .messageType(messageType)
                 .createdAt(LocalDateTime.now())
                 .build();

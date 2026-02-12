@@ -34,6 +34,9 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
     @Column(name = "left_at")
     private LocalDateTime leftAt;
 
+    @Column(name = "last_read_sequence", nullable = false)
+    private Long lastReadSequence;
+
     public static ChatRoomMemberEntity from(ChatRoomMember member) {
         return ChatRoomMemberEntity.builder()
                 .id(member.getId())
@@ -41,6 +44,7 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
                 .user(UserEntity.from(member.getUser()))
                 .joinedAt(member.getJoinedAt())
                 .leftAt(member.getLeftAt())
+                .lastReadSequence(member.getLastReadSequence())
                 .build();
     }
 

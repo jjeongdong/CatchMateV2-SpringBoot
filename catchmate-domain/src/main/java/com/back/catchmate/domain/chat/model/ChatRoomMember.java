@@ -17,6 +17,7 @@ public class ChatRoomMember {
     private Long id;
     private ChatRoom chatRoom;
     private User user;
+    private Long lastReadSequence;
     private LocalDateTime joinedAt;
     private LocalDateTime leftAt;
 
@@ -27,8 +28,15 @@ public class ChatRoomMember {
         return ChatRoomMember.builder()
                 .chatRoom(chatRoom)
                 .user(user)
+                .lastReadSequence(chatRoom.getLastMessageSequence())
                 .joinedAt(LocalDateTime.now())
                 .build();
+    }
+    // 읽음 처리 메서드
+    public void updateLastReadSequence(Long currentRoomSequence) {
+        if (currentRoomSequence > this.lastReadSequence) {
+            this.lastReadSequence = currentRoomSequence;
+        }
     }
 
     /**
@@ -43,5 +51,10 @@ public class ChatRoomMember {
      */
     public boolean isActive() {
         return this.leftAt == null;
+    }
+
+    public Long calculateUnreadCount(Long currentRoomSequence) {
+        long count = currentRoomSequence - this.lastReadSequence;
+        return count < 0 ? 0 : count;
     }
 }

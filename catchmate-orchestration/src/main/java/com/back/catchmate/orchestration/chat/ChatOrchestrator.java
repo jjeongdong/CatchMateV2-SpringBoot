@@ -77,11 +77,19 @@ public class ChatOrchestrator {
                     ChatMessageResponse lastMessage = chatService.getLastMessage(chatRoom.getId())
                             .map(ChatMessageResponse::from)
                             .orElse(null);
-                    return ChatRoomResponse.from(chatRoom, lastMessage);
+
+                    ChatRoomMember member = chatService.getChatRoomMember(chatRoom.getId(), userId); // *Service에 해당 메서드 필요
+                    long unreadCount = member.calculateUnreadCount(chatRoom.getLastMessageSequence());
+                    return ChatRoomResponse.from(chatRoom, lastMessage, unreadCount);
                 })
                 .toList();
 
         return new PagedResponse<>(chatRoomPage, responses);
+    }
+
+    @Transactional
+    public void readChatRoom(Long userId, Long chatRoomId) {
+        chatService.markAsRead(chatRoomId, userId);
     }
 
     public List<ChatMessageResponse> getChatHistory(Long userId, Long roomId, Long lastMessageId, int size) {
