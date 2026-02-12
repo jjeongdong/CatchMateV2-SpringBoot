@@ -44,11 +44,18 @@ public class RedisConfig {
     public RedisMessageListenerContainer redisMessageListenerContainer(
             RedisConnectionFactory connectionFactory,
             MessageListenerAdapter listenerAdapter,
-            ChannelTopic channelTopic) {
+            MessageListenerAdapter notificationListenerAdapter,
+            ChannelTopic channelTopic,
+            ChannelTopic notificationTopic) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        // 컨테이너에 리스너(Subscriber)와 토픽 연결
+
+        // 채팅 메시지 토픽 리스너 등록
         container.addMessageListener(listenerAdapter, channelTopic);
+
+        // 알림 메시지 토픽 리스너 등록
+        container.addMessageListener(notificationListenerAdapter, notificationTopic);
+
         return container;
     }
 
@@ -68,5 +75,21 @@ public class RedisConfig {
     @Bean
     public ChannelTopic channelTopic() {
         return new ChannelTopic("catchmate-chat-topic");
+    }
+
+    /**
+     * 알림용 메시지 리스너 어댑터
+     */
+    @Bean
+    public MessageListenerAdapter notificationListenerAdapter(RedisSubscriber subscriber) {
+        return new MessageListenerAdapter(subscriber, "onNotification");
+    }
+
+    /**
+     * 알림용 단일 Topic 생성
+     */
+    @Bean
+    public ChannelTopic notificationTopic() {
+        return new ChannelTopic("catchmate-notification-topic");
     }
 }

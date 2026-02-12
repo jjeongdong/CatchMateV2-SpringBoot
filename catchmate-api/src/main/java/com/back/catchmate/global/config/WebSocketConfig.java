@@ -13,15 +13,16 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
     private final StompAuthChannelInterceptor stompAuthChannelInterceptor;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // 클라이언트가 구독할 prefix 설정 (서버 -> 클라이언트)
-        registry.enableSimpleBroker("/sub");
+        registry.enableSimpleBroker("/sub", "/queue");
         // 클라이언트가 메시지를 보낼 prefix 설정 (클라이언트 -> 서버)
         registry.setApplicationDestinationPrefixes("/pub");
+        // 특정 사용자에게 메시지를 보낼 때 사용하는 prefix 설정
+        registry.setUserDestinationPrefix("/user");
     }
 
     @Override
