@@ -35,15 +35,8 @@ public class User implements ResourceOwnership {
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
 
-    public static User createUser(Provider provider,
-                                  String providerId,
-                                  String email,
-                                  String nickName,
-                                  Character gender,
-                                  LocalDate birthDate,
-                                  Club favoriteClub,
-                                  String profileImageUrl,
-                                  String fcmToken,
+    public static User createUser(Provider provider, String providerId, String email, String nickName, Character gender,
+                                  LocalDate birthDate, Club favoriteClub, String profileImageUrl, String fcmToken,
                                   String watchStyle) {
         return User.builder()
                 .email(email)

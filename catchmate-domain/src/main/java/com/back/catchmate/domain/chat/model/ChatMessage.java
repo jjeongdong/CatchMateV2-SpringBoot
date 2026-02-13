@@ -25,12 +25,12 @@ public class ChatMessage {
     private LocalDateTime deletedAt;
 
     // 채팅 메시지 생성 메서드
-    public static ChatMessage createMessage(ChatRoom chatRoom, User sender, String content, MessageType messageType) {
+    public static ChatMessage createMessage(ChatRoom chatRoom, User sender, String content, MessageType messageType, Long sequence) {
         return ChatMessage.builder()
                 .chatRoom(chatRoom)
                 .sender(sender)
                 .content(content)
-                .sequence(chatRoom.getLastMessageSequence())
+                .sequence(sequence)
                 .messageType(messageType)
                 .createdAt(LocalDateTime.now())
                 .build();

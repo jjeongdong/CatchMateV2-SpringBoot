@@ -10,8 +10,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -23,7 +21,11 @@ public class RedisPublisher implements MessagePublisher {
 
     @Override
     public void publishChat(ChatMessageEvent event) {
-        redisTemplate.convertAndSend(chatTopic.getTopic(), event);
+        try {
+            redisTemplate.convertAndSend(chatTopic.getTopic(), event);
+        } catch (Exception e) {
+            log.error("Redis Pub/Sub 장애: 채팅 메시지 전송 실패", e);
+        }
     }
 
     @Override

@@ -51,8 +51,9 @@ public class UserController {
 
     @GetMapping("/profile/{profileUserId}")
     @Operation(summary = "유저 정보 조회 API", description = "다른 유저의 정보를 조회하는 API 입니다.")
-    public ResponseEntity<UserResponse> getUserProfileById(@AuthUser Long userId,
-                                                           @PathVariable Long profileUserId) {
+    public ResponseEntity<UserResponse> getUserProfileById(
+            @AuthUser Long userId,
+            @PathVariable Long profileUserId) {
         return ResponseEntity.ok(userOrchestrator.getUserProfileById(userId, profileUserId));
     }
 

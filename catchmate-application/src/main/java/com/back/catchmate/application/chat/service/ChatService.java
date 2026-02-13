@@ -5,6 +5,7 @@ import com.back.catchmate.domain.board.model.Board;
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.chat.model.ChatRoom;
 import com.back.catchmate.domain.chat.model.ChatRoomMember;
+import com.back.catchmate.domain.chat.port.ChatSequencePort;
 import com.back.catchmate.domain.chat.repository.ChatMessageRepository;
 import com.back.catchmate.domain.chat.repository.ChatRoomMemberRepository;
 import com.back.catchmate.domain.chat.repository.ChatRoomRepository;
@@ -15,7 +16,6 @@ import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +26,7 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final ChatSequencePort chatSequencePort;
 
     public ChatRoom getOrCreateChatRoom(Board board) {
         return chatRoomRepository.findByBoardId(board.getId())
@@ -37,6 +38,7 @@ public class ChatService {
 
     public ChatMessage saveMessage(Long chatRoomId, User sender, String content, MessageType messageType) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
+        Long sequence = chatSequencePort.generateSequence(chatRoomId);
 
         // 1. 방의 시퀀스 증가 및 저장
         // TODO: 시퀀스 증가와 메시지 저장을 원자적으로 처리하기 위해서는 DB 트랜잭션과 락이 필요할 수 있음
@@ -47,7 +49,8 @@ public class ChatService {
                 chatRoom,
                 sender,
                 content,
-                messageType
+                messageType,
+                sequence
         );
 
         updateReadSequence(chatRoom, sender);
@@ -61,7 +64,9 @@ public class ChatService {
         updateReadSequence(chatRoom, user);
     }
 
-    // 내부 헬퍼 메서드: 회원의 lastReadSequence를 방의 lastMessageSequence로 업데이트
+    /**
+     *  내부 헬퍼 메서드: 회원의 lastReadSequence를 방의 lastMessageSequence로 업데이트
+     */
     private void updateReadSequence(ChatRoom chatRoom, User user) {
         chatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoom.getId(), user.getId())
                 .ifPresent(member -> {
@@ -74,6 +79,7 @@ public class ChatService {
 
     public ChatMessage enterChatRoom(Long chatRoomId, User user) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
+        Long sequence = chatSequencePort.generateSequence(chatRoomId);
 
 //        // 멤버 추가 로직 (기존 Domain Service 로직 통합)
 //        Optional<ChatRoomMember> existing = chatRoomMemberRepository
@@ -89,13 +95,15 @@ public class ChatService {
                 chatRoom,
                 user,
                 enterMessage,
-                MessageType.SYSTEM
+                MessageType.SYSTEM,
+                sequence
         );
         return chatMessageRepository.save(chatMessage);
     }
 
     public ChatMessage leaveChatRoom(Long chatRoomId, User user) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
+        Long sequence = chatSequencePort.generateSequence(chatRoomId);
 
         ChatRoomMember member = chatRoomMemberRepository
                 .findByChatRoomIdAndUserId(chatRoomId, user.getId())
@@ -109,7 +117,8 @@ public class ChatService {
                 chatRoom,
                 user,
                 leaveMessage,
-                MessageType.SYSTEM
+                MessageType.SYSTEM,
+                sequence
         );
         return chatMessageRepository.save(chatMessage);
     }

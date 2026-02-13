@@ -32,7 +32,10 @@ public class ChatRoomMember {
                 .joinedAt(LocalDateTime.now())
                 .build();
     }
-    // 읽음 처리 메서드
+
+    /**
+     * 읽음 처리 메서드
+     */
     public void updateLastReadSequence(Long currentRoomSequence) {
         if (currentRoomSequence > this.lastReadSequence) {
             this.lastReadSequence = currentRoomSequence;
@@ -53,6 +56,9 @@ public class ChatRoomMember {
         return this.leftAt == null;
     }
 
+    /**
+     * 읽지 않은 메시지 수 계산
+     */
     public Long calculateUnreadCount(Long currentRoomSequence) {
         long count = currentRoomSequence - this.lastReadSequence;
         return count < 0 ? 0 : count;
