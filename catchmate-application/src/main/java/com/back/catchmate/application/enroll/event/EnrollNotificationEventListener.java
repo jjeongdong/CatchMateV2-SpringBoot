@@ -1,6 +1,7 @@
 package com.back.catchmate.application.enroll.event;
 
 import com.back.catchmate.application.chat.port.MessagePublisher;
+import com.back.catchmate.application.notification.event.NotificationEvent;
 import com.back.catchmate.application.notification.service.NotificationRetryService;
 import com.back.catchmate.application.notification.service.NotificationService;
 import com.back.catchmate.domain.notification.model.Notification;
@@ -62,7 +63,7 @@ public class EnrollNotificationEventListener {
         try {
             boolean isOnline = userOnlineStatusPort.isUserOnline(recipient.getId());
             if (isOnline) {
-                messagePublisher.publishNotification(recipient.getId(), data);
+                messagePublisher.publishNotification(NotificationEvent.of(recipient.getId(), data));
             }
         } catch (Exception e) {
             log.warn("WebSocket notification failed", e);
