@@ -2,6 +2,7 @@ package com.back.catchmate.orchestration.chat;
 
 import com.back.catchmate.application.chat.event.ChatMessageEvent;
 import com.back.catchmate.application.chat.event.ChatNotificationEvent;
+import com.back.catchmate.application.chat.event.ChatReadEvent;
 import com.back.catchmate.application.chat.port.MessagePublisher;
 import com.back.catchmate.application.chat.service.ChatService;
 import com.back.catchmate.application.user.service.UserService;
@@ -44,7 +45,7 @@ public class ChatOrchestrator {
         );
 
         // Redis를 통한 메시지 발행
-        messagePublisher.publish("catchmate-chat-topic", ChatMessageEvent.from(savedMessage));
+        messagePublisher.publishChat(ChatMessageEvent.from(savedMessage));
 
         // 채팅방 멤버 중 발신자를 제외한 모든 사용자에게 알림 이벤트 발행
         // FCM 알림은 별도의 이벤트 리스너에서 처리
@@ -54,6 +55,7 @@ public class ChatOrchestrator {
                 .filter(user -> !user.getId().equals(senderId))
                 .toList();
 
+        // 알림을 받을 사용자가 있을 때만 이벤트 발행
         if (!recipients.isEmpty()) {
             eventPublisher.publishEvent(ChatNotificationEvent.of(savedMessage, recipients));
         }
@@ -63,14 +65,14 @@ public class ChatOrchestrator {
     public void enterChatRoom(Long userId, Long chatRoomId) {
         User user = userService.getUser(userId);
         ChatMessage savedMessage = chatService.enterChatRoom(chatRoomId, user);
-        messagePublisher.publish("catchmate-chat-topic", ChatMessageEvent.from(savedMessage));
+        messagePublisher.publishChat(ChatMessageEvent.from(savedMessage));
     }
 
     @Transactional
     public void leaveChatRoom(Long userId, Long chatRoomId) {
         User user = userService.getUser(userId);
         ChatMessage savedMessage = chatService.leaveChatRoom(chatRoomId, user);
-        messagePublisher.publish("catchmate-chat-topic", ChatMessageEvent.from(savedMessage));
+        messagePublisher.publishChat(ChatMessageEvent.from(savedMessage));
     }
 
     public PagedResponse<ChatRoomResponse> getMyChatRooms(Long userId, int page, int size) {
@@ -95,6 +97,7 @@ public class ChatOrchestrator {
     @Transactional
     public void readChatRoom(Long userId, Long chatRoomId) {
         chatService.markAsRead(chatRoomId, userId);
+        messagePublisher.publishRead(ChatReadEvent.of(chatRoomId, userId));
     }
 
     public List<ChatMessageResponse> getChatHistory(Long userId, Long roomId, Long lastMessageId, int size) {

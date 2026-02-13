@@ -43,42 +43,44 @@ public class RedisConfig {
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(
             RedisConnectionFactory connectionFactory,
-            MessageListenerAdapter listenerAdapter,
+            MessageListenerAdapter chatListenerAdapter,
             MessageListenerAdapter notificationListenerAdapter,
-            ChannelTopic channelTopic,
-            ChannelTopic notificationTopic) {
+            MessageListenerAdapter readListenerAdapter,
+            ChannelTopic chatTopic,
+            ChannelTopic notificationTopic,
+            ChannelTopic readTopic
+    ) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
 
-        // 채팅 메시지 토픽 리스너 등록
-        container.addMessageListener(listenerAdapter, channelTopic);
-
-        // 알림 메시지 토픽 리스너 등록
+        // 1. 채팅 메시지
+        container.addMessageListener(chatListenerAdapter, chatTopic);
+        // 2. 알림 메시지
         container.addMessageListener(notificationListenerAdapter, notificationTopic);
+        // 3. [추가] 읽음 처리 메시지
+        container.addMessageListener(readListenerAdapter, readTopic);
 
         return container;
     }
 
     /**
-     * 실제 메시지를 수신했을 때 실행될 메서드를 지정 (delegate 패턴)
+     * 채팅 방 내부에 있을 경우에 사용하는 채팅용 메시지 리스너 어댑터
      */
     @Bean
-    public MessageListenerAdapter listenerAdapter(RedisSubscriber subscriber) {
-        // RedisSubscriber 클래스의 "onMessage" 메서드를 실행하라고 지정
+    public MessageListenerAdapter chatListenerAdapter(RedisSubscriber subscriber) {
         return new MessageListenerAdapter(subscriber, "onMessage");
     }
 
     /**
      * 채팅용 단일 Topic 생성
-     * (방마다 Topic을 만들지 않고, 하나의 'chat' 채널로 모든 메시지를 받은 뒤 roomId로 필터링하는 것이 리소스 관리에 유리함)
      */
     @Bean
-    public ChannelTopic channelTopic() {
+    public ChannelTopic chatTopic() {
         return new ChannelTopic("catchmate-chat-topic");
     }
 
     /**
-     * 알림용 메시지 리스너 어댑터
+     * 앱 안에 있는데 실시간 반영을 위한 알림용 메시지 리스너 어댑터
      */
     @Bean
     public MessageListenerAdapter notificationListenerAdapter(RedisSubscriber subscriber) {
@@ -91,5 +93,21 @@ public class RedisConfig {
     @Bean
     public ChannelTopic notificationTopic() {
         return new ChannelTopic("catchmate-notification-topic");
+    }
+
+    /**
+     * 읽음 처리용 메시지 리스너 어댑터
+     */
+    @Bean
+    public MessageListenerAdapter readListenerAdapter(RedisSubscriber subscriber) {
+        return new MessageListenerAdapter(subscriber, "onRead");
+    }
+
+    /**
+     * 읽음 처리용 단일 Topic 생성
+     */
+    @Bean
+    public ChannelTopic readTopic() {
+        return new ChannelTopic("catchmate-read-topic");
     }
 }

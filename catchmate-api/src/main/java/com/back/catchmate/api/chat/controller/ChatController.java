@@ -1,6 +1,7 @@
 package com.back.catchmate.api.chat.controller;
 
 import com.back.catchmate.api.chat.dto.request.ChatMessageRequest;
+import com.back.catchmate.api.chat.dto.request.ChatReadRequest;
 import com.back.catchmate.api.chat.dto.request.ChatRoomEnterRequest;
 import com.back.catchmate.api.chat.dto.request.ChatRoomLeaveRequest;
 import com.back.catchmate.error.ErrorCode;
@@ -47,6 +48,14 @@ public class ChatController {
 
         chatOrchestrator.leaveChatRoom(userId, request.getChatRoomId());
         log.info("채팅방 퇴장 처리 완료");
+    }
+
+    @MessageMapping("/chat/read")
+    public void readChatRoom(@Payload ChatReadRequest request, Principal principal) {
+        Long userId = extractUserId(principal);
+        log.info("채팅 읽음 처리 - chatRoomId: {}, userId: {}", request.getChatRoomId(), userId);
+
+        chatOrchestrator.readChatRoom(userId, request.getChatRoomId());
     }
 
     private Long extractUserId(Principal principal) {

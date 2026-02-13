@@ -10,7 +10,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -27,7 +31,6 @@ public class ChatRestController {
             @AuthUser Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-
         return ResponseEntity.ok(chatOrchestrator.getMyChatRooms(userId, page, size));
     }
 
@@ -39,8 +42,7 @@ public class ChatRestController {
             @AuthUser Long userId,
             @PathVariable Long roomId,
             @RequestParam(required = false) Long lastMessageId,
-            @RequestParam(defaultValue = "20") int size
-    ) {
+            @RequestParam(defaultValue = "20") int size) {
         chatOrchestrator.readChatRoom(userId, roomId);
         return chatOrchestrator.getChatHistory(userId, roomId, lastMessageId, size);
     }
@@ -58,8 +60,9 @@ public class ChatRestController {
 
     @GetMapping("/rooms/{chatRoomId}/messages/last")
     @Operation(summary = "마지막 메시지 조회", description = "특정 채팅방의 마지막 메시지를 조회합니다.")
-    public ResponseEntity<ChatMessageResponse> getLastMessage(@AuthUser Long userId,
-                                                              @PathVariable Long chatRoomId) {
+    public ResponseEntity<ChatMessageResponse> getLastMessage(
+            @AuthUser Long userId,
+            @PathVariable Long chatRoomId) {
         ChatMessageResponse response = chatOrchestrator.getLastMessage(chatRoomId);
         if (response == null) {
             return ResponseEntity.noContent().build();

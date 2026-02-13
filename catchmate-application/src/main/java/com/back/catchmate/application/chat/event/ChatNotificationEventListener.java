@@ -1,6 +1,7 @@
 package com.back.catchmate.application.chat.event;
 
 import com.back.catchmate.application.chat.port.MessagePublisher;
+import com.back.catchmate.application.notification.event.NotificationEvent;
 import com.back.catchmate.domain.notification.port.NotificationSender;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
@@ -30,12 +31,11 @@ public class ChatNotificationEventListener {
     public void handleChatNotification(ChatNotificationEvent event) {
         Map<String, String> data = Map.of(
                 "type", "CHAT",
-                "roomId", event.chatMessage().getChatRoom().getId().toString(), // 채팅방 ID
+                "roomId", event.chatMessage().getChatRoom().getId().toString(),
                 "senderId", event.chatMessage().getSender().getId().toString(),
                 "senderNickname", event.chatMessage().getSender().getNickName(),
                 "content", event.chatMessage().getContent()
         );
-
 
         // 2. 수신자 목록 순회 (이미 발신자는 제외된 리스트라고 가정)
         for (User recipient : event.recipients()) {
@@ -44,7 +44,7 @@ public class ChatNotificationEventListener {
                 boolean isOnline = userOnlineStatusPort.isUserOnline(recipient.getId());
 
                 if (isOnline) {
-                    messagePublisher.publishNotification(recipient.getId(), data);
+                    messagePublisher.publishNotification(NotificationEvent.of(recipient.getId(), data));
                 }
 
                 if (!isOnline && recipient.getFcmToken() != null) {

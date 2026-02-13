@@ -32,6 +32,7 @@ public class UserOrchestrator {
 
     @Transactional
     public UserRegisterResponse createUser(UserRegisterCommand command) {
+        System.out.println("command.getProviderIdWithProvider() = " + command.getProviderIdWithProvider());
         Club club = clubService.getClub(command.getFavoriteClubId());
 
         User user = User.createUser(

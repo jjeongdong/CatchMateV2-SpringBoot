@@ -1,16 +1,16 @@
 package com.back.catchmate.application.chat.port;
 
 import com.back.catchmate.application.chat.event.ChatMessageEvent;
-
-import java.util.Map;
+import com.back.catchmate.application.chat.event.ChatReadEvent;
+import com.back.catchmate.application.notification.event.NotificationEvent;
 
 public interface MessagePublisher {
-    /**
-     * 메시지 브로커(Redis)에 메시지를 발행합니다.
-     * @param topicName 발행할 토픽 이름 (예: chat-room)
-     * @param message 전송할 메시지 객체
-     */
-    void publish(String topicName, ChatMessageEvent message);
+    // 채팅 메시지 이벤트 발행 (message는 채팅 메시지에 대한 정보가 담긴 이벤트 객체)
+    void publishChat(ChatMessageEvent chatMessageEvent);
 
-    void publishNotification(Long userId, Map<String, String> data);
+    // FCM 알림 이벤트 발행 (userId는 알림을 받을 사용자 ID, data는 알림에 필요한 추가 정보)
+    void publishNotification(NotificationEvent notificationEvent);
+
+    // 채팅 읽음 이벤트 발행 (chatRoomId는 읽음 처리할 채팅방 ID, userId는 읽음 처리한 사용자 ID)
+    void publishRead(ChatReadEvent chatReadEvent);
 }
