@@ -46,6 +46,7 @@ public class RedisSubscriber {
      * @param messageJson
      */
     public void onNotification(String messageJson) {
+        log.info("Redis에서 수신한 원본 메시지: {}", messageJson);
         try {
             NotificationEvent event = objectMapper.readValue(messageJson, NotificationEvent.class);
 

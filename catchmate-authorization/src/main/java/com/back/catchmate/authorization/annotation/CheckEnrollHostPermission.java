@@ -10,7 +10,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-// Finder 클래스를 직접 명시!
 @CheckDataPermission(finder = EnrollHostFinder.class)
 public @interface CheckEnrollHostPermission {
 }
