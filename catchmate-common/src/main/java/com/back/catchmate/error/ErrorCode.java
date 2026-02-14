@@ -69,6 +69,7 @@ public enum ErrorCode {
     CHATROOM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방 멤버를 찾을 수 없습니다."),
     USER_CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자가 해당 채팅방에 참여하지 않았습니다."),
     CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 채팅 메시지입니다."),
+    CHATROOM_REENTRY_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "이미 퇴장한 채팅방에는 다시 입장할 수 없습니다."),
 
     // 파일
     FILE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "파일 업로드를 실패했습니다."),

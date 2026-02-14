@@ -53,22 +53,20 @@ public class ChatService {
                 sequence
         );
 
-        updateReadSequence(chatRoom, sender);
+        updateReadSequence(chatRoom, sender.getId());
         return chatMessageRepository.save(chatMessage);
     }
 
     public void markAsRead(Long chatRoomId, Long userId) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
-        User user = User.builder().id(userId).build(); // ID만 있는 User 객체 (조회 비용 절감)
-
-        updateReadSequence(chatRoom, user);
+        updateReadSequence(chatRoom, userId);
     }
 
     /**
      *  내부 헬퍼 메서드: 회원의 lastReadSequence를 방의 lastMessageSequence로 업데이트
      */
-    private void updateReadSequence(ChatRoom chatRoom, User user) {
-        chatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoom.getId(), user.getId())
+    private void updateReadSequence(ChatRoom chatRoom, Long userId) {
+        chatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoom.getId(), userId)
                 .ifPresent(member -> {
                     if (member.isActive()) {
                         member.updateLastReadSequence(chatRoom.getLastMessageSequence());

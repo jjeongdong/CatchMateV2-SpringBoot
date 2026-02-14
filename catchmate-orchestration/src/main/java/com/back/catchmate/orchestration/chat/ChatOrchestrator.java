@@ -97,7 +97,6 @@ public class ChatOrchestrator {
     @Transactional
     public void readChatRoom(Long userId, Long chatRoomId) {
         chatService.markAsRead(chatRoomId, userId);
-        messagePublisher.publishRead(ChatReadEvent.of(chatRoomId, userId));
     }
 
     public List<ChatMessageResponse> getChatHistory(Long userId, Long roomId, Long lastMessageId, int size) {

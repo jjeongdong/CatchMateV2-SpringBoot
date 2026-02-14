@@ -34,7 +34,7 @@ public class ChatRestController {
         return ResponseEntity.ok(chatOrchestrator.getMyChatRooms(userId, page, size));
     }
 
-    @GetMapping("/room/{roomId}/messages")
+    @GetMapping("/rooms/{roomId}/messages")
     @Operation(summary = "채팅 메시지 목록 조회 (무한 스크롤)", description = "특정 채팅방의 메시지를 무한 스크롤 방식으로 조회합니다. " +
             "마지막으로 불러온 메시지 ID를 기준으로 이전 메시지들을 가져옵니다. " +
             "lastMessageId가 없으면 최신 메시지부터 조회합니다.")
@@ -47,16 +47,16 @@ public class ChatRestController {
         return chatOrchestrator.getChatHistory(userId, roomId, lastMessageId, size);
     }
 
-    @GetMapping("/rooms/{chatRoomId}/messages")
-    @Operation(summary = "채팅 메시지 목록 조회 (페이징)", description = "특정 채팅방의 메시지를 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<ChatMessageResponse>> getMessages(
-            @AuthUser Long userId,
-            @PathVariable Long chatRoomId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-
-        return ResponseEntity.ok(chatOrchestrator.getMessages(chatRoomId, page, size));
-    }
+//    @GetMapping("/rooms/{chatRoomId}/messages")
+//    @Operation(summary = "채팅 메시지 목록 조회 (페이징)", description = "특정 채팅방의 메시지를 페이징하여 조회합니다.")
+//    public ResponseEntity<PagedResponse<ChatMessageResponse>> getMessages(
+//            @AuthUser Long userId,
+//            @PathVariable Long chatRoomId,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "20") int size) {
+//
+//        return ResponseEntity.ok(chatOrchestrator.getMessages(chatRoomId, page, size));
+//    }
 
     @GetMapping("/rooms/{chatRoomId}/messages/last")
     @Operation(summary = "마지막 메시지 조회", description = "특정 채팅방의 마지막 메시지를 조회합니다.")

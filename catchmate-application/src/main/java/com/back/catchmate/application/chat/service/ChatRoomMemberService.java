@@ -31,6 +31,9 @@ public class ChatRoomMemberService {
             if (member.isActive()) {
                 return;
             }
+
+            // 비활성 멤버면 재입장 허용 여부에 따라 처리
+            throw new BaseException(ErrorCode.CHATROOM_REENTRY_NOT_ALLOWED);
         }
 
         ChatRoomMember newMember = ChatRoomMember.create(chatRoom, user);
