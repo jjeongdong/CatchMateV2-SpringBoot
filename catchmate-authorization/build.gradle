@@ -1,6 +1,6 @@
 dependencies {
-    implementation project(':catchmate-domain')
     implementation project(':catchmate-application')
+    implementation project(':catchmate-domain')
     implementation project(':catchmate-common')
 
     // AOP 및 Web 관련 기능

@@ -1,7 +1,7 @@
 package com.back.catchmate.authorization.finder;
 
 import com.back.catchmate.application.notification.service.NotificationService;
-import com.back.catchmate.domain.common.permission.DomainFinder;
+import com.back.catchmate.authorization.common.DomainFinder;
 import com.back.catchmate.domain.notification.model.Notification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

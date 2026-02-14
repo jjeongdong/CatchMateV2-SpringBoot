@@ -1,7 +1,7 @@
 package com.back.catchmate.authorization.finder;
 
 import com.back.catchmate.application.inquiry.service.InquiryService;
-import com.back.catchmate.domain.common.permission.DomainFinder;
+import com.back.catchmate.authorization.common.DomainFinder;
 import com.back.catchmate.domain.inquiry.model.Inquiry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

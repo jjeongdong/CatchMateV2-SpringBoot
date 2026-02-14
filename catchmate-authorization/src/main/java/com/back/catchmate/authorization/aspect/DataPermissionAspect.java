@@ -1,8 +1,8 @@
 package com.back.catchmate.authorization.aspect;
 
+import com.back.catchmate.authorization.annotation.CheckDataPermission;
 import com.back.catchmate.authorization.annotation.PermissionId;
-import com.back.catchmate.domain.common.permission.CheckDataPermission;
-import com.back.catchmate.domain.common.permission.DomainFinder;
+import com.back.catchmate.authorization.common.DomainFinder;
 import com.back.catchmate.domain.common.permission.ResourceOwnership;
 import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
