@@ -13,7 +13,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     private final JpaChatMessageRepository jpaChatMessageRepository;
-    private final ChatMessageQuerydslRepository chatMessageQuerydslRepository;
+    private final QueryDSLChatMessageRepository querydslChatMessageRepository;
 
     @Override
     public ChatMessage save(ChatMessage chatMessage) {
@@ -29,7 +29,12 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
 
     @Override
     public List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size) {
-        return chatMessageQuerydslRepository.findChatHistory(roomId, lastMessageId, size);
+        return querydslChatMessageRepository.findChatHistory(roomId, lastMessageId, size);
+    }
+
+    @Override
+    public List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size) {
+        return querydslChatMessageRepository.findSyncMessages(roomId, lastMessageId, size);
     }
 
     @Override

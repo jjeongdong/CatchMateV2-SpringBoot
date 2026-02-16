@@ -47,6 +47,17 @@ public class ChatRestController {
         return chatOrchestrator.getChatHistory(userId, roomId, lastMessageId, size);
     }
 
+    @Operation(summary = "메시지 동기화 (Sync)", description = "소켓 재연결 시 누락된 최신 메시지들을 가져옵니다.")
+    @GetMapping("/rooms/{roomId}/sync")
+    public ResponseEntity<List<ChatMessageResponse>> syncChatMessages(
+            @AuthUser Long userId,
+            @PathVariable Long roomId,
+            @RequestParam Long lastMessageId,
+            @RequestParam(defaultValue = "100") int size) {
+        List<ChatMessageResponse> response = chatOrchestrator.syncMessages(userId, roomId, lastMessageId, size);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/rooms/{chatRoomId}/messages/last")
     @Operation(summary = "마지막 메시지 조회", description = "특정 채팅방의 마지막 메시지를 조회합니다.")
     public ResponseEntity<ChatMessageResponse> getLastMessage(

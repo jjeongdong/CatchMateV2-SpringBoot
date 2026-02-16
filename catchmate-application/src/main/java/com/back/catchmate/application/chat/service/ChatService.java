@@ -121,6 +121,10 @@ public class ChatService {
         return chatMessageRepository.findChatHistory(roomId, lastMessageId, size);
     }
 
+    public List<ChatMessage> getSyncMessages(Long roomId, Long lastMessageId, int size) {
+        return chatMessageRepository.findSyncMessages(roomId, lastMessageId, size);
+    }
+
     public Optional<ChatMessage> getLastMessage(Long chatRoomId) {
         return chatMessageRepository.findLastMessageByChatRoomId(chatRoomId);
     }

@@ -3,6 +3,7 @@ package com.back.catchmate.orchestration.chat;
 import com.back.catchmate.application.chat.event.ChatMessageEvent;
 import com.back.catchmate.application.chat.event.ChatNotificationEvent;
 import com.back.catchmate.application.chat.port.MessagePublisherPort;
+import com.back.catchmate.application.chat.service.ChatRoomMemberService;
 import com.back.catchmate.application.chat.service.ChatService;
 import com.back.catchmate.application.user.service.UserService;
 import com.back.catchmate.domain.chat.model.ChatMessage;
@@ -29,6 +30,7 @@ import java.util.List;
 public class ChatOrchestrator {
     private final ChatService chatService;
     private final UserService userService;
+    private final ChatRoomMemberService chatRoomMemberService;
     private final MessagePublisherPort messagePublisherPort;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -99,14 +101,27 @@ public class ChatOrchestrator {
     }
 
     public List<ChatMessageResponse> getChatHistory(Long userId, Long roomId, Long lastMessageId, int size) {
-        // 권한 체크 (사용자가 해당 채팅방의 멤버인지 확인)
+        // 1. 해당 채팅방의 멤버인지 권한 검증
         chatService.validateUserInChatRoom(userId, roomId);
 
-        // 1. 데이터 조회
+        // 2. 채팅 메시지 조회
         List<ChatMessage> messages = chatService.getChatHistory(roomId, lastMessageId, size);
 
-        // 2. DTO 변환 (Domain -> Response)
+        // 3. 응답 DTO로 변환하여 반환
         return messages.stream()
+                .map(ChatMessageResponse::from)
+                .toList();
+    }
+
+    public List<ChatMessageResponse> syncMessages(Long userId, Long roomId, Long lastMessageId, int size) {
+        // 1. 해당 채팅방의 멤버인지 권한 검증
+        chatService.validateUserInChatRoom(userId, roomId);
+
+        // 2. 누락된 동기화 메시지 조회
+        List<ChatMessage> syncMessages = chatService.getSyncMessages(roomId, lastMessageId, size);
+
+        // 3. 응답 DTO로 변환하여 반환
+        return syncMessages.stream()
                 .map(ChatMessageResponse::from)
                 .toList();
     }

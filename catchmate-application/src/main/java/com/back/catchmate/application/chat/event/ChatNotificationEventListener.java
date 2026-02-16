@@ -22,9 +22,9 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class ChatNotificationEventListener {
-    private final NotificationSenderPort notificationSenderPort;
     private final UserOnlineStatusPort userOnlineStatusPort;
     private final MessagePublisherPort messagePublisherPort;
+    private final NotificationSenderPort notificationSenderPort;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)

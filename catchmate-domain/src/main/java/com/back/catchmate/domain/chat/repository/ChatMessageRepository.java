@@ -14,6 +14,8 @@ public interface ChatMessageRepository {
 
     List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size);
 
+    List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size);
+
     Optional<ChatMessage> findLastMessageByChatRoomId(Long chatRoomId);
 
     void delete(ChatMessage chatMessage);

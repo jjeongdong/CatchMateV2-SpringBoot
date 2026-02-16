@@ -15,11 +15,11 @@ import static com.back.catchmate.infrastructure.persistence.user.entity.QUserEnt
 
 @Component
 @RequiredArgsConstructor
-public class ChatMessageQuerydslRepository {
-    private final JPAQueryFactory queryFactory;
+public class QueryDSLChatMessageRepository {
+    private final JPAQueryFactory jpaQueryFactory;
 
     public List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size) {
-        List<ChatMessageEntity> entities = queryFactory
+        List<ChatMessageEntity> entities = jpaQueryFactory
                 .selectFrom(chatMessageEntity)
                 .join(chatMessageEntity.sender, userEntity).fetchJoin()
                 .where(
@@ -42,5 +42,28 @@ public class ChatMessageQuerydslRepository {
             return null;
         }
         return chatMessageEntity.id.lt(lastMessageId);
+    }
+
+    public List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size) {
+        return jpaQueryFactory
+                .selectFrom(chatMessageEntity)
+                .join(chatMessageEntity.sender, userEntity).fetchJoin()
+                .where(
+                        chatMessageEntity.chatRoom.id.eq(roomId),
+                        gtMessageId(lastMessageId)
+                )
+                .orderBy(chatMessageEntity.id.asc())
+                .limit(size)
+                .fetch()
+                .stream()
+                .map(ChatMessageEntity::toModel)
+                .toList();
+    }
+
+    private BooleanExpression gtMessageId(Long lastMessageId) {
+        if (lastMessageId == null) {
+            return null;
+        }
+        return chatMessageEntity.id.gt(lastMessageId);
     }
 }
