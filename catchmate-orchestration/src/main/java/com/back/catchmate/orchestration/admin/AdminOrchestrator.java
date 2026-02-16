@@ -55,7 +55,7 @@ public class AdminOrchestrator {
     private final NoticeService noticeService;
     private final ReportService reportService;
     private final InquiryService inquiryService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public NoticeCreateResponse createNotice(Long userId, NoticeCreateCommand command) {
@@ -71,7 +71,7 @@ public class AdminOrchestrator {
         inquiry.registerAnswer(command.getContent());
         Inquiry updatedInquiry = inquiryService.updateInquiry(inquiry);
 
-        eventPublisher.publishEvent(AdminInquiryAnswerNotificationEvent.of(
+        applicationEventPublisher.publishEvent(AdminInquiryAnswerNotificationEvent.of(
                 updatedInquiry.getUser(),
                 updatedInquiry
         ));

@@ -1,6 +1,5 @@
 package com.back.catchmate.application.enroll.event;
 
-import com.back.catchmate.application.chat.port.MessagePublisherPort;
 import com.back.catchmate.application.notification.event.NotificationEvent;
 import com.back.catchmate.application.notification.service.NotificationRetryService;
 import com.back.catchmate.application.notification.service.NotificationService;
@@ -11,6 +10,7 @@ import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
 import com.back.catchmate.user.enums.AlarmType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -22,11 +22,11 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class EnrollNotificationEventListener {
-    private final NotificationSenderPort notificationSenderPort;
     private final NotificationService notificationService;
+    private final NotificationSenderPort notificationSenderPort;
     private final NotificationRetryService notificationRetryService;
-    private final MessagePublisherPort messagePublisherPort;
     private final UserOnlineStatusPort userOnlineStatusPort;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void saveNotification(EnrollNotificationEvent event) {
@@ -54,11 +54,13 @@ public class EnrollNotificationEventListener {
         // 2. 공통 데이터 생성
         Map<String, String> payload = createNotificationData(event);
 
-        // 3. WebSocket 알림 전송 (실시간)
-        sendWebSocketNotification(recipient.getId(), payload);
+        boolean isOnline = userOnlineStatusPort.isUserOnline(recipient.getId());
 
-        // 4. FCM 푸시 알림 전송 (실시간, 실패 시 DLQ 저장)
-        sendFcmNotificationWithFallback(recipient, event, payload);
+        if (isOnline) {
+            sendWebSocketNotification(recipient.getId(), payload);
+        } else {
+            sendFcmNotificationWithFallback(recipient, event, payload);
+        }
     }
 
     private Map<String, String> createNotificationData(EnrollNotificationEvent event) {
@@ -72,9 +74,7 @@ public class EnrollNotificationEventListener {
 
     private void sendWebSocketNotification(Long userId, Map<String, String> payload) {
         try {
-            if (userOnlineStatusPort.isUserOnline(userId)) {
-                messagePublisherPort.publishNotification(NotificationEvent.of(userId, payload));
-            }
+            applicationEventPublisher.publishEvent(NotificationEvent.of(userId, payload));
         } catch (Exception e) {
             log.warn("WebSocket notification failed. userId: {}", userId, e);
         }

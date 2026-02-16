@@ -52,7 +52,7 @@ public class EnrollOrchestrator {
     private final EnrollService enrollService;
     private final BookmarkService bookmarkService;
     private final ChatRoomMemberService chatRoomMemberService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public EnrollCreateResponse createEnroll(EnrollCreateCommand command) {
@@ -66,7 +66,7 @@ public class EnrollOrchestrator {
         Enroll savedEnroll = enrollService.createEnroll(applicant, board, command.getDescription());
 
         // FCM 알림 발송
-        eventPublisher.publishEvent(EnrollNotificationEvent.of(
+        applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(
                 NotificationTemplate.ENROLL_REQUEST,
                 board.getUser(),
                 applicant,
@@ -165,7 +165,7 @@ public class EnrollOrchestrator {
         chatRoomMemberService.addMember(chatRoom, enroll.getUser());
 
         // FCM 알림 발송
-        eventPublisher.publishEvent(EnrollNotificationEvent.of(
+        applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(
                 NotificationTemplate.ENROLL_ACCEPT,
                 enroll.getUser(),
                 board.getUser(),
@@ -186,7 +186,7 @@ public class EnrollOrchestrator {
         enrollService.updateEnroll(enroll);
 
         // FCM 알림 발송
-        eventPublisher.publishEvent(EnrollNotificationEvent.of(
+        applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(
                 NotificationTemplate.ENROLL_REJECT,
                 enroll.getUser(),
                 board.getUser(),

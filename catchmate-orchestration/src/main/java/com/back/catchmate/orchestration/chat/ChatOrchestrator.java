@@ -2,8 +2,6 @@ package com.back.catchmate.orchestration.chat;
 
 import com.back.catchmate.application.chat.event.ChatMessageEvent;
 import com.back.catchmate.application.chat.event.ChatNotificationEvent;
-import com.back.catchmate.application.chat.port.MessagePublisherPort;
-import com.back.catchmate.application.chat.service.ChatRoomMemberService;
 import com.back.catchmate.application.chat.service.ChatService;
 import com.back.catchmate.application.user.service.UserService;
 import com.back.catchmate.domain.chat.model.ChatMessage;
@@ -30,9 +28,7 @@ import java.util.List;
 public class ChatOrchestrator {
     private final ChatService chatService;
     private final UserService userService;
-    private final ChatRoomMemberService chatRoomMemberService;
-    private final MessagePublisherPort messagePublisherPort;
-    private final ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public void sendMessage(Long senderId, ChatMessageCommand command) {
@@ -45,8 +41,7 @@ public class ChatOrchestrator {
                 command.getMessageType()
         );
 
-        // Redis를 통한 메시지 발행
-        messagePublisherPort.publishChat(ChatMessageEvent.from(savedMessage));
+        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
 
         // 채팅방 멤버 중 발신자를 제외한 모든 사용자에게 알림 이벤트 발행
         // FCM 알림은 별도의 이벤트 리스너에서 처리
@@ -58,7 +53,7 @@ public class ChatOrchestrator {
 
         // 알림을 받을 사용자가 있을 때만 이벤트 발행
         if (!recipients.isEmpty()) {
-            eventPublisher.publishEvent(ChatNotificationEvent.of(savedMessage, recipients));
+            applicationEventPublisher.publishEvent(ChatNotificationEvent.of(savedMessage, recipients));
         }
     }
 
@@ -66,14 +61,14 @@ public class ChatOrchestrator {
     public void enterChatRoom(Long userId, Long chatRoomId) {
         User user = userService.getUser(userId);
         ChatMessage savedMessage = chatService.enterChatRoom(chatRoomId, user);
-        messagePublisherPort.publishChat(ChatMessageEvent.from(savedMessage));
+        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
     }
 
     @Transactional
     public void leaveChatRoom(Long userId, Long chatRoomId) {
         User user = userService.getUser(userId);
         ChatMessage savedMessage = chatService.leaveChatRoom(chatRoomId, user);
-        messagePublisherPort.publishChat(ChatMessageEvent.from(savedMessage));
+        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
     }
 
     public PagedResponse<ChatRoomResponse> getMyChatRooms(Long userId, int page, int size) {
