@@ -35,6 +35,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                         "/ws/chat/**",
+                        "/actuator/health",
                         "/api/auth/login",
                         "/api/auth/reissue",
                         "/api/auth/logout",

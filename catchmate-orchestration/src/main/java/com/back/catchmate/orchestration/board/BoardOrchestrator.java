@@ -19,9 +19,9 @@ import com.back.catchmate.domain.enroll.model.Enroll;
 import com.back.catchmate.domain.game.model.Game;
 import com.back.catchmate.domain.game.service.GameService;
 import com.back.catchmate.domain.user.model.User;
-import com.back.catchmate.orchestration.board.dto.command.BoardCreateCommand;
 import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
+import com.back.catchmate.orchestration.board.dto.command.BoardCreateCommand;
 import com.back.catchmate.orchestration.board.dto.command.BoardUpdateCommand;
 import com.back.catchmate.orchestration.board.dto.command.GameCreateCommand;
 import com.back.catchmate.orchestration.board.dto.command.GameUpdateCommand;
@@ -38,7 +38,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
