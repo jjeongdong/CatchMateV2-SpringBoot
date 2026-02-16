@@ -7,6 +7,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.back.catchmate.infrastructure.persistence.chat.entity.QChatMessageEntity.chatMessageEntity;
@@ -18,7 +19,7 @@ public class ChatMessageQuerydslRepository {
     private final JPAQueryFactory queryFactory;
 
     public List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size) {
-        return queryFactory
+        List<ChatMessageEntity> entities = queryFactory
                 .selectFrom(chatMessageEntity)
                 .join(chatMessageEntity.sender, userEntity).fetchJoin()
                 .where(
@@ -27,8 +28,11 @@ public class ChatMessageQuerydslRepository {
                 )
                 .orderBy(chatMessageEntity.id.desc())
                 .limit(size)
-                .fetch()
-                .stream()
+                .fetch();
+
+        Collections.reverse(entities);
+
+        return entities.stream()
                 .map(ChatMessageEntity::toModel)
                 .toList();
     }

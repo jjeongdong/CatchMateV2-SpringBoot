@@ -12,15 +12,9 @@ public interface ChatMessageRepository {
 
     Optional<ChatMessage> findById(Long id);
 
-    DomainPage<ChatMessage> findAllByChatRoomId(Long chatRoomId, DomainPageable pageable);
-
-    List<ChatMessage> findAllByChatRoomId(Long chatRoomId);
-
     List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size);
 
     Optional<ChatMessage> findLastMessageByChatRoomId(Long chatRoomId);
-
-    long countByChatRoomId(Long chatRoomId);
 
     void delete(ChatMessage chatMessage);
 }
