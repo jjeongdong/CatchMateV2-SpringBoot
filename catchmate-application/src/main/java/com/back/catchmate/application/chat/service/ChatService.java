@@ -41,8 +41,7 @@ public class ChatService {
         Long sequence = chatSequencePort.generateSequence(chatRoomId);
 
         // 1. 방의 시퀀스 증가 및 저장
-        // TODO: 시퀀스 증가와 메시지 저장을 원자적으로 처리하기 위해서는 DB 트랜잭션과 락이 필요할 수 있음
-        chatRoom.increaseSequence();
+        chatRoom.updateLastMessageSequence(sequence);
         chatRoomRepository.save(chatRoom);
 
         ChatMessage chatMessage = ChatMessage.createMessage(
@@ -52,7 +51,6 @@ public class ChatService {
                 messageType,
                 sequence
         );
-
         updateReadSequence(chatRoom, sender.getId());
         return chatMessageRepository.save(chatMessage);
     }
@@ -62,9 +60,6 @@ public class ChatService {
         updateReadSequence(chatRoom, userId);
     }
 
-    /**
-     *  내부 헬퍼 메서드: 회원의 lastReadSequence를 방의 lastMessageSequence로 업데이트
-     */
     private void updateReadSequence(ChatRoom chatRoom, Long userId) {
         chatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoom.getId(), userId)
                 .ifPresent(member -> {
@@ -79,14 +74,8 @@ public class ChatService {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
         Long sequence = chatSequencePort.generateSequence(chatRoomId);
 
-//        // 멤버 추가 로직 (기존 Domain Service 로직 통합)
-//        Optional<ChatRoomMember> existing = chatRoomMemberRepository
-//                .findByChatRoomIdAndUserId(chatRoomId, user.getId());
-//
-//        if (existing.isEmpty() || !existing.get().isActive()) {
-//            ChatRoomMember newMember = ChatRoomMember.create(chatRoom, user);
-//            chatRoomMemberRepository.save(newMember);
-//        }
+        chatRoom.updateLastMessageSequence(sequence);
+        chatRoomRepository.save(chatRoom);
 
         String enterMessage = user.getNickName() + "님이 입장하셨습니다.";
         ChatMessage chatMessage = ChatMessage.createMessage(
@@ -103,12 +92,15 @@ public class ChatService {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
         Long sequence = chatSequencePort.generateSequence(chatRoomId);
 
-        ChatRoomMember member = chatRoomMemberRepository
+        chatRoom.updateLastMessageSequence(sequence);
+        chatRoomRepository.save(chatRoom);
+
+        ChatRoomMember chatRoomMember = chatRoomMemberRepository
                 .findByChatRoomIdAndUserId(chatRoomId, user.getId())
                 .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
 
-        member.leave();
-        chatRoomMemberRepository.save(member);
+        chatRoomMember.leave();
+        chatRoomMemberRepository.save(chatRoomMember);
 
         String leaveMessage = user.getNickName() + "님이 퇴장하셨습니다.";
         ChatMessage chatMessage = ChatMessage.createMessage(
@@ -129,10 +121,6 @@ public class ChatService {
         return chatMessageRepository.findChatHistory(roomId, lastMessageId, size);
     }
 
-    public DomainPage<ChatMessage> getMessages(Long chatRoomId, DomainPageable pageable) {
-        return chatMessageRepository.findAllByChatRoomId(chatRoomId, pageable);
-    }
-
     public Optional<ChatMessage> getLastMessage(Long chatRoomId) {
         return chatMessageRepository.findLastMessageByChatRoomId(chatRoomId);
     }
@@ -145,13 +133,8 @@ public class ChatService {
 
     public ChatRoomMember getChatRoomMember(Long chatRoomId, Long userId) {
         return chatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoomId, userId)
-                .filter(ChatRoomMember::isActive) // 탈퇴한 멤버는 조회되지 않도록 필터링
+                .filter(ChatRoomMember::isActive)
                 .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
-    }
-
-    private ChatRoom getChatRoom(Long chatRoomId) {
-        return chatRoomRepository.findById(chatRoomId)
-                .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_NOT_FOUND));
     }
 
     public void validateUserInChatRoom(Long userId, Long roomId) {
@@ -163,5 +146,10 @@ public class ChatService {
         if (!isMember) {
             throw new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND);
         }
+    }
+
+    private ChatRoom getChatRoom(Long chatRoomId) {
+        return chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_NOT_FOUND));
     }
 }

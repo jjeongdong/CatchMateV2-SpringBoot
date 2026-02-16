@@ -30,8 +30,11 @@ public class ChatRoom {
     }
 
     // 채팅 메시지 시퀀스 증가 메서드
-    public void increaseSequence() {
-        this.lastMessageSequence = (this.lastMessageSequence == null ? 0 : this.lastMessageSequence) + 1;
+    public void updateLastMessageSequence(Long sequence) {
+        // 혹시 모를 과거 시퀀스 덮어쓰기 방지
+        if (this.lastMessageSequence == null || this.lastMessageSequence < sequence) {
+            this.lastMessageSequence = sequence;
+        }
     }
 
     // 삭제 메서드
