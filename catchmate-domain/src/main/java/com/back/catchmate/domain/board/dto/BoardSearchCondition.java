@@ -20,12 +20,14 @@ public class BoardSearchCondition {
                                           Integer maxPerson,
                                           List<Long> preferredTeamIdList,
                                           List<Long> blockedUserIds) {
+
         return BoardSearchCondition.builder()
                 .userId(userId)
                 .gameDate(gameDate)
                 .maxPerson(maxPerson)
-                .preferredTeamIdList(preferredTeamIdList)
-                .blockedUserIds(blockedUserIds)
+                .preferredTeamIdList(preferredTeamIdList == null ? List.of() : List.copyOf(preferredTeamIdList))
+                .blockedUserIds(blockedUserIds == null ? List.of() : List.copyOf(blockedUserIds))
                 .build();
     }
+
 }

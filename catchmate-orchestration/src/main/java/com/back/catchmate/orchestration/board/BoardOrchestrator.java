@@ -114,7 +114,7 @@ public class BoardOrchestrator {
                 userId,
                 gameDate,
                 maxPerson,
-                preferredTeamIdList != null ? preferredTeamIdList : Collections.emptyList(),
+                preferredTeamIdList,
                 blockedUserIds
         );
 
