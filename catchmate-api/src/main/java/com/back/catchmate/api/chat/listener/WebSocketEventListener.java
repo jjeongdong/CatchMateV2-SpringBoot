@@ -20,9 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @RequiredArgsConstructor
 public class WebSocketEventListener {
-    private final UserOnlineStatusOrchestrator userOnlineStatusOrchestrator;
     private final ChatOrchestrator chatOrchestrator;
-    private final Map<String, Map<String, Long>> sessionRoomMap = new ConcurrentHashMap<>();
+    private final UserOnlineStatusOrchestrator userOnlineStatusOrchestrator;
 
     /**
      * WebSocket 연결 성공
@@ -39,25 +38,19 @@ public class WebSocketEventListener {
     }
 
     /**
-     * WebSocket 구독 취소 (채팅방 퇴장 / 로비 이동)
+     * WebSocket 연결 해제 (브라우저 종료 등)
      */
     @EventListener
-    public void handleSessionUnsubscribeEvent(SessionUnsubscribeEvent event) {
+    public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         Long userId = extractUserId(headerAccessor);
-        String sessionId = headerAccessor.getSessionId();
-        String subscriptionId = headerAccessor.getSubscriptionId();
 
-        if (userId != null && sessionId != null && subscriptionId != null) {
-            // 저장해둔 맵에서 RoomId 찾기
-            Map<String, Long> subs = sessionRoomMap.get(sessionId);
-            if (subs != null && subs.containsKey(subscriptionId)) {
-                Long roomId = subs.remove(subscriptionId);
-
-                // userOnlineStatusOrchestrator.leaveChatRoom(userId, roomId); // 구현 필요 시 주석 해제
-
-                log.info("User {} left room {} (Unsubscribed).", userId, roomId);
-            }
+        if (userId != null) {
+            // 온라인 상태 해제
+            userOnlineStatusOrchestrator.setUserOffline(userId);
+            // 포커스 룸 정보 제거
+            userOnlineStatusOrchestrator.removeUserFocusRoom(userId);
+            log.info("WebSocket disconnected - User {} set to OFFLINE", userId);
         }
     }
 
@@ -69,41 +62,28 @@ public class WebSocketEventListener {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         Long userId = extractUserId(headerAccessor);
         String destination = headerAccessor.getDestination();
-        String sessionId = headerAccessor.getSessionId();
-        String subscriptionId = headerAccessor.getSubscriptionId();
 
         if (userId != null && destination != null && destination.contains("/chat/room/")) {
             Long roomId = extractRoomIdFromDestination(destination);
             if (roomId != null) {
-                // 1. 읽음 처리
                 chatOrchestrator.readChatRoom(userId, roomId);
-
-                // 2. [추가] "현재 이 방에 있음" 상태 저장 (알림 방지용)
-                // userOnlineStatusOrchestrator.enterChatRoom(userId, roomId); // 구현 필요 시 주석 해제
-
-                // 3. [추가] Unsubscribe 처리를 위해 매핑 정보 저장
-                sessionRoomMap.computeIfAbsent(sessionId, k -> new ConcurrentHashMap<>())
-                        .put(subscriptionId, roomId);
-
-                log.info("User {} entered room {}. (SubId: {})", userId, roomId, subscriptionId);
+                userOnlineStatusOrchestrator.setUserFocusRoom(userId, roomId);
+                log.info("User {} is focusing room {}", userId, roomId);
             }
         }
     }
 
     /**
-     * WebSocket 연결 해제 (브라우저 종료 등)
+     * WebSocket 구독 취소 (채팅방 퇴장 / 로비 이동)
      */
     @EventListener
-    public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
+    public void handleSessionUnsubscribeEvent(SessionUnsubscribeEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         Long userId = extractUserId(headerAccessor);
-        String sessionId = headerAccessor.getSessionId();
 
         if (userId != null) {
-            userOnlineStatusOrchestrator.setUserOffline(userId);
-            // 메모리 누수 방지를 위해 맵 정리
-            sessionRoomMap.remove(sessionId);
-            log.info("WebSocket disconnected - User {} set to OFFLINE", userId);
+            userOnlineStatusOrchestrator.removeUserFocusRoom(userId);
+            log.info("User {} left the room (Focus removed)", userId);
         }
     }
 
@@ -114,7 +94,6 @@ public class WebSocketEventListener {
         Authentication user = (Authentication) accessor.getUser();
         if (user != null) {
             try {
-                // user.getPrincipal().toString() 대신 user.getName() 사용 권장
                 return Long.parseLong(user.getName());
             } catch (NumberFormatException e) {
                 log.warn("Invalid userId format: {}", user.getName());

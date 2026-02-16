@@ -23,4 +23,17 @@ public class UserOnlineStatusOrchestrator {
     public boolean isUserOnline(Long userId) {
         return userOnlineStatusPort.isUserOnline(userId);
     }
+
+    public void setUserFocusRoom(Long userId, Long roomId) {
+        userOnlineStatusPort.setUserFocusRoom(userId, roomId);
+    }
+
+    public void removeUserFocusRoom(Long userId) {
+        userOnlineStatusPort.removeUserFocusRoom(userId);
+    }
+
+    public Long getUserFocusRoom(Long userId) {
+        return userOnlineStatusPort.getUserFocusRoom(userId);
+    }
 }
+

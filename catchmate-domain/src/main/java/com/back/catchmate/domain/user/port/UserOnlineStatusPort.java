@@ -9,4 +9,10 @@ public interface UserOnlineStatusPort {
     void setUserOffline(Long userId);
 
     boolean isUserOnline(Long userId);
+
+    void setUserFocusRoom(Long userId, Long roomId);
+
+    void removeUserFocusRoom(Long userId);
+
+    Long getUserFocusRoom(Long userId);
 }

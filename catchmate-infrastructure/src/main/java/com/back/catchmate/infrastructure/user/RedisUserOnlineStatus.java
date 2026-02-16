@@ -19,6 +19,7 @@ public class RedisUserOnlineStatus implements UserOnlineStatusPort {
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String ONLINE_USER_KEY_PREFIX = "user:online:";
+    private static final String USER_ROOM_FOCUS_KEY_PREFIX = "user:focus:";
     private static final Duration ONLINE_EXPIRE_TIME = Duration.ofMinutes(5);
 
     @Override
@@ -39,5 +40,22 @@ public class RedisUserOnlineStatus implements UserOnlineStatusPort {
     public boolean isUserOnline(Long userId) {
         String key = ONLINE_USER_KEY_PREFIX + userId;
         return redisTemplate.hasKey(key);
+    }
+
+    @Override
+    public void setUserFocusRoom(Long userId, Long roomId) {
+        String key = USER_ROOM_FOCUS_KEY_PREFIX + userId;
+        redisTemplate.opsForValue().set(key, roomId.toString(), ONLINE_EXPIRE_TIME);
+    }
+
+    @Override
+    public void removeUserFocusRoom(Long userId) {
+        redisTemplate.delete(USER_ROOM_FOCUS_KEY_PREFIX + userId);
+    }
+
+    @Override
+    public Long getUserFocusRoom(Long userId) {
+        String val = redisTemplate.opsForValue().get(USER_ROOM_FOCUS_KEY_PREFIX + userId);
+        return val != null ? Long.parseLong(val) : null;
     }
 }

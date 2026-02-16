@@ -41,6 +41,7 @@ public class ChatOrchestrator {
                 command.getMessageType()
         );
 
+        // 웹 소켓을 통해 채팅 메시지 이벤트 발행 (채팅방 멤버 전체에게 실시간 전송)
         applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
 
         // 채팅방 멤버 중 발신자를 제외한 모든 사용자에게 알림 이벤트 발행
@@ -53,6 +54,7 @@ public class ChatOrchestrator {
 
         // 알림을 받을 사용자가 있을 때만 이벤트 발행
         if (!recipients.isEmpty()) {
+            // 채팅 메시지 알림 이벤트 발행 (FCM 또는 웹 소켓을 통해 사용자에게 전송)
             applicationEventPublisher.publishEvent(ChatNotificationEvent.of(savedMessage, recipients));
         }
     }
