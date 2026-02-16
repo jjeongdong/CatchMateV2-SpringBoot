@@ -18,7 +18,7 @@ public interface ChatRoomRepository {
 
     List<ChatRoom> findAllByUserId(Long userId);
 
-    boolean existsByBoardId(Long boardId);
+    void updateMaxSequence(Long roomId, Long sequence);
 
     void delete(ChatRoom chatRoom);
 }
