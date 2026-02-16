@@ -14,11 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Component
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class AuthOrchestrator {
-    private final UserService userService;
     private final AuthService authService;
+    private final UserService userService;
 
     @Transactional
     public AuthLoginResponse createToken(AuthLoginCommand command) {

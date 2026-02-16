@@ -13,8 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class ReportOrchestrator {
-    private final ReportService reportService;
     private final UserService userService;
+    private final ReportService reportService;
 
     @Transactional
     public ReportCreateResponse createReport(Long reporterId, ReportCreateCommand command) {

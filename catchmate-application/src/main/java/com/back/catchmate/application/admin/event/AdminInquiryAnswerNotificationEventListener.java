@@ -3,7 +3,7 @@ package com.back.catchmate.application.admin.event;
 import com.back.catchmate.application.notification.service.NotificationService;
 import com.back.catchmate.domain.inquiry.model.Inquiry;
 import com.back.catchmate.domain.notification.model.Notification;
-import com.back.catchmate.domain.notification.port.NotificationSender;
+import com.back.catchmate.domain.notification.port.NotificationSenderPort;
 import com.back.catchmate.domain.user.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
@@ -19,13 +19,13 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class AdminInquiryAnswerNotificationEventListener {
-    private final NotificationSender notificationSender;
+    private final NotificationSenderPort notificationSenderPort;
     private final NotificationService notificationService;
 
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handle(AdminInquiryAnswerNotificationEvent event) {
+    public void handleInquiryNotification(AdminInquiryAnswerNotificationEvent event) {
         User recipient = event.recipient();
         Inquiry inquiry = event.inquiry();
 
@@ -49,7 +49,7 @@ public class AdminInquiryAnswerNotificationEventListener {
         );
 
         // 오프라인 사용자에게만 FCM 알림 전송
-        notificationSender.sendNotificationIfOffline(
+        notificationSenderPort.sendNotificationIfOffline(
                 recipient.getId(),
                 recipient.getFcmToken(),
                 event.title(),

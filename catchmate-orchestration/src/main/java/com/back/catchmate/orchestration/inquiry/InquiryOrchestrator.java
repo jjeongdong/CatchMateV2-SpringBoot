@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class InquiryOrchestrator {
     private final InquiryService inquiryService;
@@ -30,7 +31,6 @@ public class InquiryOrchestrator {
         return InquiryCreateResponse.of(inquiry.getId());
     }
 
-    @Transactional(readOnly = true)
     public InquiryDetailResponse getInquiry(Long inquiryId) {
         Inquiry inquiry = inquiryService.getInquiry(inquiryId);
         return InquiryDetailResponse.from(inquiry);

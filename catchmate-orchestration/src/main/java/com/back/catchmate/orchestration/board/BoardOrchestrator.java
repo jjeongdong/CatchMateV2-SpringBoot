@@ -10,6 +10,7 @@ import com.back.catchmate.application.user.service.BlockService;
 import com.back.catchmate.application.user.service.UserService;
 import com.back.catchmate.domain.board.dto.BoardSearchCondition;
 import com.back.catchmate.domain.board.model.Board;
+import com.back.catchmate.domain.board.model.BoardButtonStatus;
 import com.back.catchmate.domain.chat.model.ChatRoom;
 import com.back.catchmate.domain.club.model.Club;
 import com.back.catchmate.domain.common.page.DomainPage;
@@ -18,10 +19,18 @@ import com.back.catchmate.domain.enroll.model.Enroll;
 import com.back.catchmate.domain.game.model.Game;
 import com.back.catchmate.domain.game.service.GameService;
 import com.back.catchmate.domain.user.model.User;
-import com.back.catchmate.orchestration.board.dto.command.*;
-import com.back.catchmate.orchestration.board.dto.response.*;
+import com.back.catchmate.orchestration.board.dto.command.BoardCreateCommand;
 import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
+import com.back.catchmate.orchestration.board.dto.command.BoardUpdateCommand;
+import com.back.catchmate.orchestration.board.dto.command.GameCreateCommand;
+import com.back.catchmate.orchestration.board.dto.command.GameUpdateCommand;
+import com.back.catchmate.orchestration.board.dto.response.BoardCreateResponse;
+import com.back.catchmate.orchestration.board.dto.response.BoardDetailResponse;
+import com.back.catchmate.orchestration.board.dto.response.BoardLiftUpResponse;
+import com.back.catchmate.orchestration.board.dto.response.BoardResponse;
+import com.back.catchmate.orchestration.board.dto.response.BoardTempDetailResponse;
+import com.back.catchmate.orchestration.board.dto.response.BoardUpdateResponse;
 import com.back.catchmate.orchestration.common.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -34,13 +43,14 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class BoardOrchestrator {
-    private final BoardService boardService;
-    private final UserService userService;
     private final ClubService clubService;
     private final GameService gameService;
+    private final UserService userService;
     private final BlockService blockService;
+    private final BoardService boardService;
     private final EnrollService enrollService;
     private final BookmarkService bookmarkService;
     private final ChatRoomService chatRoomService;
@@ -80,14 +90,13 @@ public class BoardOrchestrator {
         return BoardCreateResponse.of(savedBoard.getId());
     }
 
-    @Transactional(readOnly = true)
     public BoardDetailResponse getBoard(Long userId, Long boardId) {
         User user = userService.getUser(userId);
         Board board = boardService.getBoard(boardId);
         boolean isBookMarked = bookmarkService.isBookmarked(userId, boardId);
 
         Optional<Enroll> myEnroll = enrollService.findEnrollByUserAndBoard(user, board);
-        String buttonStatus = getButtonStatus(user, board, myEnroll);
+        BoardButtonStatus buttonStatus = getButtonStatus(user, board, myEnroll);
         Long myEnrollId = myEnroll.map(Enroll::getId).orElse(null);
 
         Long chatRoomId = board.isCompleted()
@@ -97,7 +106,6 @@ public class BoardOrchestrator {
         return BoardDetailResponse.from(board, isBookMarked, buttonStatus, myEnrollId, chatRoomId);
     }
 
-    @Transactional(readOnly = true)
     public PagedResponse<BoardResponse> getBoardList(Long userId, LocalDate gameDate, Integer maxPerson, List<Long> preferredTeamIdList, int page, int size) {
         User user = userService.getUser(userId);
         List<Long> blockedUserIds = blockService.getBlockedUserIds(user);
@@ -123,7 +131,6 @@ public class BoardOrchestrator {
         return new PagedResponse<>(boardPage, boardResponses);
     }
 
-    @Transactional(readOnly = true)
     public PagedResponse<BoardResponse> getBoardListByUserId(Long targetUserId, Long loginUserId, int page, int size) {
         User targetUser = userService.getUser(targetUserId);
         User loginUser = userService.getUser(loginUserId);
@@ -145,7 +152,6 @@ public class BoardOrchestrator {
         return new PagedResponse<>(boardPage, responses);
     }
 
-    @Transactional(readOnly = true)
     public BoardTempDetailResponse getTempBoard(Long userId) {
         Optional<Board> tempBoard = boardService.findTempBoard(userId);
         return tempBoard.map(BoardTempDetailResponse::from).orElse(null);
@@ -210,7 +216,6 @@ public class BoardOrchestrator {
     }
 
     // --- Private Helper Methods ---
-
     private Club getCheerClub(Long clubId) {
         if (clubId == null) return null;
         return clubService.getClub(clubId);
@@ -256,19 +261,24 @@ public class BoardOrchestrator {
         return gameService.savePartialGame(gameStartDate, location, homeClub, awayClub);
     }
 
-    private String getButtonStatus(User user, Board board, Optional<Enroll> enrollOptional) {
+    private BoardButtonStatus getButtonStatus(User user, Board board, Optional<Enroll> enrollOptional) {
+        // 내가 작성한 글인 경우
         if (board.getUser().getId().equals(user.getId())) {
-            return "VIEW_CHAT";
+            return BoardButtonStatus.VIEW_CHAT;
         }
+
+        // 신청 기록이 없는 경우
         if (enrollOptional.isEmpty()) {
-            return "APPLY";
+            return BoardButtonStatus.APPLY;
         }
+
+        // 신청 기록이 있는 경우 상태에 따라 분기
         Enroll enroll = enrollOptional.get();
         return switch (enroll.getAcceptStatus()) {
-            case ACCEPTED -> "VIEW_CHAT";
-            case PENDING -> "CANCEL";
-            case REJECTED -> "REJECTED";
-            default -> "APPLY";
+            case ACCEPTED -> BoardButtonStatus.VIEW_CHAT;
+            case PENDING -> BoardButtonStatus.CANCEL;
+            case REJECTED -> BoardButtonStatus.REJECTED;
+            default -> BoardButtonStatus.APPLY;
         };
     }
 }

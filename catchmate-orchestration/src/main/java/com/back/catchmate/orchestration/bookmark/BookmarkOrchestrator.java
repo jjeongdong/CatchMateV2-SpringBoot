@@ -19,11 +19,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class BookmarkOrchestrator {
-    private final BookmarkService bookmarkService;
     private final UserService userService;
     private final BoardService boardService;
+    private final BookmarkService bookmarkService;
 
     @Transactional
     public BookmarkUpdateResponse updateBookmark(Long userId, Long boardId) {
@@ -45,7 +46,6 @@ public class BookmarkOrchestrator {
         }
     }
 
-    @Transactional(readOnly = true)
     public PagedResponse<BoardResponse> getBookmarkedBoards(Long userId, int page, int size) {
         User user = userService.getUser(userId);
         DomainPageable pageable = DomainPageable.of(page, size);

@@ -15,8 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class NotificationOrchestrator {
     private final NotificationService notificationService;
     private final NotificationRetryService notificationRetryService;

@@ -1,6 +1,6 @@
 package com.back.catchmate.infrastructure.notification.sender;
 
-import com.back.catchmate.domain.notification.port.NotificationSender;
+import com.back.catchmate.domain.notification.port.NotificationSenderPort;
 import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
 import com.google.firebase.messaging.*;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FcmNotificationSender implements NotificationSender {
+public class FcmNotificationSender implements NotificationSenderPort {
     private final UserOnlineStatusPort userOnlineStatusPort;
 
     /**

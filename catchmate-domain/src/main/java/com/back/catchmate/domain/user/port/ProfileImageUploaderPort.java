@@ -7,7 +7,7 @@ import java.io.InputStream;
  *
  * 구현체는 infrastructure 레이어에서 S3/Cloud Storage 등을 이용해 업로드 후 접근 가능한 URL을 반환합니다.
  */
-public interface ProfileImageUploader {
+public interface ProfileImageUploaderPort {
 
     /**
      * @param originalFilename 업로드 파일명

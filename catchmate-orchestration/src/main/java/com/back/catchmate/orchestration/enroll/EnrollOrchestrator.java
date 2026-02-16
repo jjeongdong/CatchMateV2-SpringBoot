@@ -13,6 +13,7 @@ import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.enroll.model.AcceptStatus;
 import com.back.catchmate.domain.enroll.model.Enroll;
+import com.back.catchmate.domain.notification.model.NotificationTemplate;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.orchestration.board.dto.response.BoardResponse;
 import com.back.catchmate.orchestration.common.PagedResponse;
@@ -42,13 +43,14 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class EnrollOrchestrator {
-    private final EnrollService enrollService;
+    private final ChatService chatService;
     private final UserService userService;
     private final BoardService boardService;
+    private final EnrollService enrollService;
     private final BookmarkService bookmarkService;
-    private final ChatService chatService;
     private final ChatRoomMemberService chatRoomMemberService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -63,15 +65,14 @@ public class EnrollOrchestrator {
 
         Enroll savedEnroll = enrollService.createEnroll(applicant, board, command.getDescription());
 
-        publishEnrollEvent(
+        // FCM 알림 발송
+        eventPublisher.publishEvent(EnrollNotificationEvent.of(
+                NotificationTemplate.ENROLL_REQUEST,
                 board.getUser(),
                 applicant,
                 board,
-                "직관 신청 알림",
-                String.format("%s님이 [%s] 직관을 신청했습니다.", applicant.getNickName(), board.getTitle()),
-                "ENROLL_REQUEST",
-                board.getId()
-        );
+                "ENROLL_REQUEST"
+        ));
 
         return EnrollCreateResponse.of(savedEnroll.getId());
     }
@@ -94,7 +95,6 @@ public class EnrollOrchestrator {
         return EnrollDetailResponse.from(enroll);
     }
 
-    @Transactional(readOnly = true)
     public PagedResponse<EnrollRequestResponse> getEnrollRequestList(Long userId, int page, int size) {
         DomainPage<Enroll> enrollPage = enrollService.getEnrollListByUserId(userId, DomainPageable.of(page, size));
         Map<Long, Boolean> bookmarkMap = getBookmarkStatusMap(userId, enrollPage.getContent());
@@ -109,7 +109,6 @@ public class EnrollOrchestrator {
         return new PagedResponse<>(enrollPage, responses);
     }
 
-    @Transactional(readOnly = true)
     public PagedResponse<EnrollApplicantResponse> getEnrollReceiveListByBoardId(Long userId, Long boardId, int page, int size) {
         Board board = boardService.getBoard(boardId);
         if (!board.getUser().getId().equals(userId)) {
@@ -125,7 +124,6 @@ public class EnrollOrchestrator {
         return new PagedResponse<>(enrollPage, responses);
     }
 
-    @Transactional(readOnly = true)
     public PagedResponse<EnrollReceiveResponse> getEnrollReceiveList(Long userId, int page, int size) {
         DomainPage<Long> boardIdPage = enrollService.getBoardIdsWithPendingEnrolls(userId, DomainPageable.of(page, size));
         List<Long> boardIds = boardIdPage.getContent();
@@ -144,7 +142,6 @@ public class EnrollOrchestrator {
         return new PagedResponse<>(boardIdPage, content);
     }
 
-    @Transactional(readOnly = true)
     public EnrollCountResponse getEnrollPendingCount(Long userId) {
         long count = enrollService.getEnrollPendingCountByBoardWriter(userId);
         return EnrollCountResponse.of(count);
@@ -159,7 +156,7 @@ public class EnrollOrchestrator {
         board.increaseCurrentPerson();
         enroll.accept();
 
-        // 저장
+        // 게시글 현재 인원수 증가, 신청 수락에 대한 정보 변경 사항 저장
         boardService.updateBoard(board);
         enrollService.updateEnroll(enroll);
 
@@ -168,15 +165,13 @@ public class EnrollOrchestrator {
         chatRoomMemberService.addMember(chatRoom, enroll.getUser());
 
         // FCM 알림 발송
-        publishEnrollEvent(
+        eventPublisher.publishEvent(EnrollNotificationEvent.of(
+                NotificationTemplate.ENROLL_ACCEPT,
                 enroll.getUser(),
                 board.getUser(),
                 board,
-                "직관 신청 수락 알림",
-                String.format("[%s] 신청이 수락되었습니다. 채팅방을 확인해보세요!", board.getTitle()),
-                "ENROLL_ACCEPTED",
-                board.getId()
-        );
+                "ENROLL_ACCEPTED"
+        ));
 
         return EnrollAcceptResponse.of(enrollId);
     }
@@ -190,16 +185,14 @@ public class EnrollOrchestrator {
         enroll.reject();
         enrollService.updateEnroll(enroll);
 
-        // 알림 발송
-        publishEnrollEvent(
+        // FCM 알림 발송
+        eventPublisher.publishEvent(EnrollNotificationEvent.of(
+                NotificationTemplate.ENROLL_REJECT,
                 enroll.getUser(),
                 board.getUser(),
                 board,
-                "직관 신청 거절 알림",
-                String.format("아쉽지만 [%s] 신청이 거절되었습니다.", board.getTitle()),
-                "ENROLL_REJECTED",
-                board.getId()
-        );
+                "ENROLL_REJECTED"
+        ));
 
         return EnrollRejectResponse.of(enrollId);
     }
@@ -216,12 +209,7 @@ public class EnrollOrchestrator {
         return EnrollCancelResponse.of(enrollId);
     }
 
-    // --- Private Helpers ---
-
-    private void publishEnrollEvent(User recipient, User sender, Board board, String title, String body, String type, Long referenceId) {
-        eventPublisher.publishEvent(new EnrollNotificationEvent(recipient, sender, board, title, body, type, referenceId));
-    }
-
+    // --- Private Helper Methods ---
     private Map<Long, Boolean> getBookmarkStatusMap(Long userId, List<Enroll> enrolls) {
         Map<Long, Boolean> map = new HashMap<>();
         for (Enroll enroll : enrolls) {

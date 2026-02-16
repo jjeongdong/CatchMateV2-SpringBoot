@@ -10,8 +10,7 @@ import org.springframework.stereotype.Component;
 public class NotificationScheduler {
     private final NotificationOrchestrator notificationOrchestrator;
 
-    // 10분마다 실행
-    @Scheduled(fixedDelay = 600000) 
+    @Scheduled(fixedDelay = 600000)
     public void retryFailedPush() {
         notificationOrchestrator.retryFailedNotifications();
     }

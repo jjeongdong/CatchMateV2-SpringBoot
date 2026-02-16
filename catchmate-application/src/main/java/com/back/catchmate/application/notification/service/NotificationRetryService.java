@@ -1,7 +1,7 @@
 package com.back.catchmate.application.notification.service;
 
 import com.back.catchmate.domain.notification.model.NotificationDelivery;
-import com.back.catchmate.domain.notification.port.NotificationSender;
+import com.back.catchmate.domain.notification.port.NotificationSenderPort;
 import com.back.catchmate.domain.notification.repository.NotificationDeliveryRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class NotificationRetryService {
     private final NotificationDeliveryRepository deliveryRepository;
-    private final NotificationSender notificationSender;
+    private final NotificationSenderPort notificationSenderPort;
     private final ObjectMapper objectMapper;
 
     private static final int MAX_RETRY_COUNT = 5;
@@ -47,7 +47,7 @@ public class NotificationRetryService {
                 @SuppressWarnings("unchecked")
                 Map<String, String> data = objectMapper.readValue(delivery.getPayload(), Map.class);
                 
-                notificationSender.sendNotificationIfOffline(
+                notificationSenderPort.sendNotificationIfOffline(
                         delivery.getRecipientId(),
                         delivery.getFcmToken(),
                         delivery.getTitle(),

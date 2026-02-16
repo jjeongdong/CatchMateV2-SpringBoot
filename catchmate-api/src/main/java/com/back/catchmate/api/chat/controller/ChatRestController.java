@@ -47,17 +47,6 @@ public class ChatRestController {
         return chatOrchestrator.getChatHistory(userId, roomId, lastMessageId, size);
     }
 
-//    @GetMapping("/rooms/{chatRoomId}/messages")
-//    @Operation(summary = "채팅 메시지 목록 조회 (페이징)", description = "특정 채팅방의 메시지를 페이징하여 조회합니다.")
-//    public ResponseEntity<PagedResponse<ChatMessageResponse>> getMessages(
-//            @AuthUser Long userId,
-//            @PathVariable Long chatRoomId,
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "20") int size) {
-//
-//        return ResponseEntity.ok(chatOrchestrator.getMessages(chatRoomId, page, size));
-//    }
-
     @GetMapping("/rooms/{chatRoomId}/messages/last")
     @Operation(summary = "마지막 메시지 조회", description = "특정 채팅방의 마지막 메시지를 조회합니다.")
     public ResponseEntity<ChatMessageResponse> getLastMessage(
@@ -75,7 +64,6 @@ public class ChatRestController {
     public ResponseEntity<List<ChatRoomMemberResponse>> getChatRoomMembers(
             @AuthUser Long userId,
             @PathVariable Long chatRoomId) {
-
         return ResponseEntity.ok(chatOrchestrator.getChatRoomMembers(chatRoomId));
     }
 }

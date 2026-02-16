@@ -15,8 +15,9 @@ import java.time.Duration;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserOnlineStatusAdapter implements UserOnlineStatusPort {
+public class RedisUserOnlineStatus implements UserOnlineStatusPort {
     private final RedisTemplate<String, String> redisTemplate;
+
     private static final String ONLINE_USER_KEY_PREFIX = "user:online:";
     private static final Duration ONLINE_EXPIRE_TIME = Duration.ofMinutes(5);
 

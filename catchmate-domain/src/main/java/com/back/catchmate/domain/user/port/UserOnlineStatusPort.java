@@ -5,6 +5,8 @@ package com.back.catchmate.domain.user.port;
  */
 public interface UserOnlineStatusPort {
     void setUserOnline(Long userId);
+
     void setUserOffline(Long userId);
+
     boolean isUserOnline(Long userId);
 }

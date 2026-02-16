@@ -1,8 +1,8 @@
 package com.back.catchmate.application.chat.event;
 
-import com.back.catchmate.application.chat.port.MessagePublisher;
+import com.back.catchmate.application.chat.port.MessagePublisherPort;
 import com.back.catchmate.application.notification.event.NotificationEvent;
-import com.back.catchmate.domain.notification.port.NotificationSender;
+import com.back.catchmate.domain.notification.port.NotificationSenderPort;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
 import lombok.RequiredArgsConstructor;
@@ -22,9 +22,9 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class ChatNotificationEventListener {
-    private final NotificationSender notificationSender; // FCM 알림 전송
-    private final UserOnlineStatusPort userOnlineStatusPort; // 온라인 상태 확인
-    private final MessagePublisher messagePublisher; // WebSocket 알림 전송
+    private final NotificationSenderPort notificationSenderPort;
+    private final UserOnlineStatusPort userOnlineStatusPort;
+    private final MessagePublisherPort messagePublisherPort;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -44,11 +44,11 @@ public class ChatNotificationEventListener {
                 boolean isOnline = userOnlineStatusPort.isUserOnline(recipient.getId());
 
                 if (isOnline) {
-                    messagePublisher.publishNotification(NotificationEvent.of(recipient.getId(), data));
+                    messagePublisherPort.publishNotification(NotificationEvent.of(recipient.getId(), data));
                 }
 
                 if (!isOnline && recipient.getFcmToken() != null) {
-                    notificationSender.sendNotification(
+                    notificationSenderPort.sendNotification(
                             recipient.getFcmToken(),
                             event.title(),
                             event.body(),

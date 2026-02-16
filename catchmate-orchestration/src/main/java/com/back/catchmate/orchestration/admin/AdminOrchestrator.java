@@ -51,10 +51,10 @@ import java.util.stream.Collectors;
 public class AdminOrchestrator {
     private final UserService userService;
     private final BoardService boardService;
-    private final InquiryService inquiryService;
     private final EnrollService enrollService;
     private final NoticeService noticeService;
     private final ReportService reportService;
+    private final InquiryService inquiryService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -71,8 +71,10 @@ public class AdminOrchestrator {
         inquiry.registerAnswer(command.getContent());
         Inquiry updatedInquiry = inquiryService.updateInquiry(inquiry);
 
-        publishInquiryAnswerEvent(updatedInquiry.getUser(), updatedInquiry, "문의 답변이 도착했어요",
-                                  "관리자님이 회원님의 문의에 답변을 남겼어요. 확인해보세요!", "INQUIRY_ANSWER");
+        eventPublisher.publishEvent(AdminInquiryAnswerNotificationEvent.of(
+                updatedInquiry.getUser(),
+                updatedInquiry
+        ));
 
         return InquiryAnswerResponse.of(updatedInquiry.getId(), updatedInquiry.getUser().getId());
     }
@@ -218,9 +220,5 @@ public class AdminOrchestrator {
         Notice notice = noticeService.getNotice(noticeId);
         noticeService.deleteNotice(notice);
         return NoticeActionResponse.of(noticeId, "공지사항이 삭제되었습니다.");
-    }
-
-    private void publishInquiryAnswerEvent(User recipient, Inquiry inquiry, String title, String body, String type) {
-        eventPublisher.publishEvent(new AdminInquiryAnswerNotificationEvent(recipient, inquiry, title, body, type));
     }
 }

@@ -1,6 +1,7 @@
 package com.back.catchmate.application.chat.event;
 
 import com.back.catchmate.domain.chat.model.ChatMessage;
+import com.back.catchmate.domain.notification.model.NotificationTemplate;
 import com.back.catchmate.domain.user.model.User;
 
 import java.util.List;
@@ -17,8 +18,10 @@ public record ChatNotificationEvent(
 ) {
     public static ChatNotificationEvent of(ChatMessage chatMessage, List<User> recipients) {
         String senderName = chatMessage.getSender().getNickName();
-        String title = "새로운 채팅 메시지";
-        String body = senderName + ": " + chatMessage.getContent();
+        String content = chatMessage.getContent();
+
+        String title = NotificationTemplate.CHAT_NEW_MESSAGE.formatTitle(senderName);
+        String body = NotificationTemplate.CHAT_NEW_MESSAGE.formatBody(content);
 
         return new ChatNotificationEvent(chatMessage, recipients, title, body);
     }

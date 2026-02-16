@@ -1,6 +1,7 @@
 package com.back.catchmate.orchestration.board.dto.response;
 
 import com.back.catchmate.domain.board.model.Board;
+import com.back.catchmate.domain.board.model.BoardButtonStatus;
 import com.back.catchmate.orchestration.club.dto.response.ClubResponse;
 import com.back.catchmate.orchestration.user.dto.response.UserResponse;
 import lombok.AllArgsConstructor;
@@ -31,7 +32,7 @@ public class BoardDetailResponse {
     private GameResponse game;
     private UserResponse user;
 
-    public static BoardDetailResponse from(Board board, boolean bookMarked, String buttonStatus, Long myEnrollId, Long chatRoomId) {
+    public static BoardDetailResponse from(Board board, boolean bookMarked, BoardButtonStatus buttonStatus, Long myEnrollId, Long chatRoomId) {
         return BoardDetailResponse.builder()
                 .boardId(board.getId())
                 .title(board.getTitle())
@@ -42,7 +43,7 @@ public class BoardDetailResponse {
                 .preferredAgeRange(board.getPreferredAgeRange())
                 .liftUpDate(board.getLiftUpDate())
                 .bookMarked(bookMarked)
-                .buttonStatus(buttonStatus)
+                .buttonStatus(buttonStatus.name())
                 .myEnrollId(myEnrollId)
                 .chatRoomId(chatRoomId)
                 .cheerClub(ClubResponse.from(board.getCheerClub()))

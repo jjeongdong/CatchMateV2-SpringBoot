@@ -1,17 +1,16 @@
 package com.back.catchmate.application.enroll.event;
 
-import com.back.catchmate.application.chat.port.MessagePublisher;
+import com.back.catchmate.application.chat.port.MessagePublisherPort;
 import com.back.catchmate.application.notification.event.NotificationEvent;
 import com.back.catchmate.application.notification.service.NotificationRetryService;
 import com.back.catchmate.application.notification.service.NotificationService;
 import com.back.catchmate.domain.notification.model.Notification;
-import com.back.catchmate.domain.notification.port.NotificationSender;
+import com.back.catchmate.domain.notification.port.NotificationSenderPort;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
 import com.back.catchmate.user.enums.AlarmType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -23,11 +22,11 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class EnrollNotificationEventListener {
-    private final NotificationSender notificationSender;
+    private final NotificationSenderPort notificationSenderPort;
     private final NotificationService notificationService;
     private final NotificationRetryService notificationRetryService;
+    private final MessagePublisherPort messagePublisherPort;
     private final UserOnlineStatusPort userOnlineStatusPort;
-    private final MessagePublisher messagePublisher;
 
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void saveNotification(EnrollNotificationEvent event) {
@@ -52,56 +51,64 @@ public class EnrollNotificationEventListener {
             return;
         }
 
-        Map<String, String> data = Map.of(
+        // 2. 공통 데이터 생성
+        Map<String, String> payload = createNotificationData(event);
+
+        // 3. WebSocket 알림 전송 (실시간)
+        sendWebSocketNotification(recipient.getId(), payload);
+
+        // 4. FCM 푸시 알림 전송 (실시간, 실패 시 DLQ 저장)
+        sendFcmNotificationWithFallback(recipient, event, payload);
+    }
+
+    private Map<String, String> createNotificationData(EnrollNotificationEvent event) {
+        return Map.of(
                 "type", event.type(),
                 "boardId", event.board().getId().toString(),
                 "title", event.title(),
                 "body", event.body()
         );
+    }
 
-        // 2. [WebSocket] 사용자 온라인 여부 확인 -> 토큰 없어도 전송 가능
+    private void sendWebSocketNotification(Long userId, Map<String, String> payload) {
         try {
-            boolean isOnline = userOnlineStatusPort.isUserOnline(recipient.getId());
-            if (isOnline) {
-                messagePublisher.publishNotification(NotificationEvent.of(recipient.getId(), data));
+            if (userOnlineStatusPort.isUserOnline(userId)) {
+                messagePublisherPort.publishNotification(NotificationEvent.of(userId, payload));
             }
         } catch (Exception e) {
-            log.warn("WebSocket notification failed", e);
+            log.warn("WebSocket notification failed. userId: {}", userId, e);
+        }
+    }
+
+    private void sendFcmNotificationWithFallback(User recipient, EnrollNotificationEvent event, Map<String, String> payload) {
+        if (recipient.getFcmToken() == null) {
+            return;
         }
 
-        // 3. 무조건 FCM 전송 (신청 중요 알림은 시스템 트레이에 남기기 위해)
-        if (recipient.getFcmToken() != null) {
-            try {
-                notificationSender.sendNotification(
-                        recipient.getFcmToken(),
-                        event.title(),
-                        event.body(),
-                        data
-                );
-            } catch (Exception e) {
-                log.warn("푸시 전송 실패 -> DLQ 저장 시도. recipientId: {}", event.recipient().getId());
+        try {
+            notificationSenderPort.sendNotification(
+                    recipient.getFcmToken(),
+                    event.title(),
+                    event.body(),
+                    payload
+            );
+        } catch (Exception e) {
+            log.warn("푸시 전송 실패 -> DLQ 저장 시도. recipientId: {}", recipient.getId());
+            saveToDeadLetterQueue(recipient, event, payload);
+        }
+    }
 
-                // 전송 실패 시 DLQ 저장
-                try {
-                    Map<String, String> retryData = Map.of(
-                            "type", event.type(),
-                            "boardId", event.board().getId().toString(),
-                            "title", event.title(),
-                            "body", event.body()
-                    );
-
-                    notificationRetryService.saveFailedNotification(
-                            event.recipient().getId(),
-                            event.recipient().getFcmToken(),
-                            event.title(),
-                            event.body(),
-                            retryData
-                    );
-
-                } catch (Exception dlqError) {
-                    log.error("DLQ 저장조차 실패했습니다.", dlqError);
-                }
-            }
+    private void saveToDeadLetterQueue(User recipient, EnrollNotificationEvent event, Map<String, String> payload) {
+        try {
+            notificationRetryService.saveFailedNotification(
+                    recipient.getId(),
+                    recipient.getFcmToken(),
+                    event.title(),
+                    event.body(),
+                    payload
+            );
+        } catch (Exception dlqError) {
+            log.error("DLQ 저장조차 실패했습니다. recipientId: {}", recipient.getId(), dlqError);
         }
     }
 }
