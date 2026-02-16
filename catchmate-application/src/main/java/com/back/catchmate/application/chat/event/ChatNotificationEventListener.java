@@ -33,16 +33,20 @@ public class ChatNotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleChatNotification(ChatNotificationEvent event) {
         Map<String, String> payload = createNotificationData(event);
+        Long messageRoomId = event.chatMessage().getChatRoom().getId();
 
         for (User recipient : event.recipients()) {
             if (recipient.getChatAlarm() != 'Y') {
                 continue;
             }
 
-            boolean isOnline = userOnlineStatusPort.isUserOnline(recipient.getId()); 
+            boolean isOnline = userOnlineStatusPort.isUserOnline(recipient.getId());
+            Long focusRoomId = userOnlineStatusPort.getUserFocusRoom(recipient.getId());
 
             if (isOnline) {
-                sendWebSocketNotification(recipient.getId(), payload);
+                if (!messageRoomId.equals(focusRoomId)) {
+                    sendWebSocketNotification(recipient.getId(), payload);
+                }
             } else {
                 sendFcmNotificationWithFallback(recipient, event, payload);
             }
