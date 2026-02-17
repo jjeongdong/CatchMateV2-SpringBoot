@@ -27,6 +27,18 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Create application.yml
+        run: |
+          mkdir -p ./catchmate-boot/src/main/resources
+          echo "${{ secrets.APPLICATION_YML }}" > ./catchmate-boot/src/main/resources/application-dev.yml
+        shell: bash
+
+      - name: Create Firebase Config Directory
+        run: |
+          mkdir -p ./catchmate-boot/src/main/resources
+          echo "${{ secrets.FIREBASE_SERVICE_KEY }}" | base64 --decode > ./catchmate-boot/src/main/resources/firebase-adminsdk.json
+        shell: bash
+
       # 4. Docker 이미지 빌드 및 업로드 (Push)
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v4
