@@ -1,0 +1,33 @@
+plugins {
+    id 'org.springframework.boot' version '3.4.2'
+    id 'io.spring.dependency-management'
+    id 'java'
+}
+
+group = 'com.back.catchmate'
+version = '1.0.0-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/snapshot' }
+    maven { url 'https://repo.spring.io/milestone' }
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:1.0.0-M6"
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.ai:spring-ai-mcp-server-spring-boot-starter'
+
+    // MCP SDK 버전 M6과 호환되는 버전으로 명시
+    implementation 'io.modelcontextprotocol.sdk:mcp:0.8.1'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+}

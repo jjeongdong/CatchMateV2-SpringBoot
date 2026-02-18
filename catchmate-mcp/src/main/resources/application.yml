@@ -1,0 +1,18 @@
+server:
+  port: 8082
+
+spring:
+  main:
+    web-application-type: none
+    banner-mode: off
+  ai:
+    mcp:
+      server:
+        transport: stdio
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+
+logging:
+  level:
+    root: OFF

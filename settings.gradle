@@ -5,3 +5,4 @@ include 'catchmate-common', 'catchmate-infrastructure', 'catchmate-domain',
 include 'catchmate-boot'
 
 include 'catchmate-authorization'
+include 'catchmate-mcp'
