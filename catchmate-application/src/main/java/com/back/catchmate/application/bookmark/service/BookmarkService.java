@@ -9,6 +9,7 @@ import com.back.catchmate.domain.user.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -28,11 +29,15 @@ public class BookmarkService {
         return bookmarkRepository.findByUserIdAndBoardId(user.getId(), board.getId());
     }
 
-    public boolean isBookmarked(Long userId, Long boardId) {
-        return bookmarkRepository.existsByUserIdAndBoardId(userId, boardId);
-    }
-
     public DomainPage<Bookmark> findAllByUser(User user, DomainPageable pageable) {
         return bookmarkRepository.findAllByUserId(user.getId(), pageable);
+    }
+
+    public List<Long> findBookmarkedBoardIds(User user, List<Long> boardIds) {
+        return bookmarkRepository.findBookmarkedBoardIds(user.getId(), boardIds);
+    }
+
+    public boolean isBookmarked(Long userId, Long boardId) {
+        return bookmarkRepository.existsByUserIdAndBoardId(userId, boardId);
     }
 }

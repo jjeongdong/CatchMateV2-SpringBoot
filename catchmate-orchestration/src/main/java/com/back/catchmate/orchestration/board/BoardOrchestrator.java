@@ -38,8 +38,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @Transactional(readOnly = true)
@@ -120,9 +122,17 @@ public class BoardOrchestrator {
         DomainPageable domainPageable = DomainPageable.of(page, size);
         DomainPage<Board> boardPage = boardService.getBoardList(condition, domainPageable);
 
+        List<Long> boardIds = boardPage.getContent().stream()
+                .map(Board::getId)
+                .toList();
+
+        Set<Long> myBookmarkedBoardIds = new HashSet<>(
+                bookmarkService.findBookmarkedBoardIds(user, boardIds)
+        );
+
         List<BoardResponse> boardResponses = boardPage.getContent().stream()
                 .map(board -> {
-                    boolean isBookMarked = bookmarkService.isBookmarked(userId, board.getId());
+                    boolean isBookMarked = myBookmarkedBoardIds.contains(board.getId());
                     return BoardResponse.from(board, isBookMarked);
                 })
                 .toList();

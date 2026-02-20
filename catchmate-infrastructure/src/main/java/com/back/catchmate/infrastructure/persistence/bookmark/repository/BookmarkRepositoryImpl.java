@@ -55,6 +55,11 @@ public class BookmarkRepositoryImpl implements BookmarkRepository {
     }
 
     @Override
+    public List<Long> findBookmarkedBoardIds(Long userId, List<Long> boardIds) {
+        return jpaBookmarkRepository.findBookmarkedBoardIds(userId, boardIds);
+    }
+
+    @Override
     public boolean existsByUserIdAndBoardId(Long userId, Long boardId) {
         return jpaBookmarkRepository.existsByUserIdAndBoardId(userId, boardId);
     }

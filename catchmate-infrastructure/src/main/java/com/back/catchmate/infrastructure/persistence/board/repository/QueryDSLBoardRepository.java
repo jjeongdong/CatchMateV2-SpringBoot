@@ -8,10 +8,11 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.back.catchmate.infrastructure.persistence.board.entity.QBoardEntity.boardEntity;
@@ -27,9 +28,6 @@ public class QueryDSLBoardRepository {
         QClubEntity cheerClub = new QClubEntity("cheerClub");
         QClubEntity homeClub  = new QClubEntity("homeClub");
         QClubEntity awayClub  = new QClubEntity("awayClub");
-
-        // QClass 정의 (ChatRoom은 파일에 없어 주석 처리했으나, 필요시 해제하여 사용)
-        // QChatRoomEntity chatRoomEntity = QChatRoomEntity.chatRoomEntity;
 
         // 1. 동적 쿼리 빌더 생성
         BooleanBuilder builder = new BooleanBuilder();
@@ -61,7 +59,33 @@ public class QueryDSLBoardRepository {
             builder.and(boardEntity.user.id.notIn(condition.getBlockedUserIds()));
         }
 
-        // 2. 쿼리 실행
+        JPAQuery<Long> idQuery = jpaQueryFactory
+                .select(boardEntity.id)
+                .from(boardEntity);
+
+        if (condition.getGameDate() != null) {
+            idQuery.join(boardEntity.game, gameEntity);
+        }
+
+        int pageSize = pageable.getPageSize();
+
+        List<Long> boardIds = idQuery
+                .where(builder)
+                .orderBy(boardEntity.liftUpDate.desc())
+                .offset(pageable.getOffset())
+                .limit(pageSize + 1) // 여기서 +1을 해줍니다!
+                .fetch();
+
+        boolean hasNext = false;
+        if (boardIds.size() > pageSize) {
+            boardIds.remove(pageSize);
+            hasNext = true;
+        }
+
+        if (boardIds.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
         List<BoardEntity> content = jpaQueryFactory
                 .selectFrom(boardEntity)
                 .leftJoin(boardEntity.game, gameEntity).fetchJoin()
@@ -69,19 +93,12 @@ public class QueryDSLBoardRepository {
                 .leftJoin(boardEntity.game.homeClub, homeClub).fetchJoin()
                 .leftJoin(boardEntity.game.awayClub, awayClub).fetchJoin()
                 .leftJoin(boardEntity.user, userEntity).fetchJoin()
-                // .leftJoin(boardEntity.chatRoom, chatRoomEntity).fetchJoin()
-                .where(builder)
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
+                .where(boardEntity.id.in(boardIds))
                 .orderBy(boardEntity.liftUpDate.desc())
                 .fetch();
 
-        // 3. Count 쿼리
-        JPAQuery<Long> countQuery = jpaQueryFactory
-                .select(boardEntity.count())
-                .from(boardEntity)
-                .where(builder);
+        long totalElements = hasNext ? pageable.getOffset() + pageSize + 1 : pageable.getOffset() + content.size();
 
-        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+        return new PageImpl<>(content, pageable, totalElements);
     }
 }

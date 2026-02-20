@@ -47,13 +47,6 @@ public class QueryDSLChatMessageRepository {
                 .toList();
     }
 
-    private BooleanExpression ltMessageId(Long lastMessageId) {
-        if (lastMessageId == null) {
-            return null;
-        }
-        return chatMessageEntity.id.lt(lastMessageId);
-    }
-
     public List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size) {
         return jpaQueryFactory
                 .selectFrom(chatMessageEntity)
