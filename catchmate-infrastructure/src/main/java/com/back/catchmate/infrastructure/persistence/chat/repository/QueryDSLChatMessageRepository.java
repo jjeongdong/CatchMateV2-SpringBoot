@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.back.catchmate.infrastructure.persistence.chat.entity.QChatMessageEntity.chatMessageEntity;
 import static com.back.catchmate.infrastructure.persistence.user.entity.QUserEntity.userEntity;
@@ -19,18 +20,27 @@ public class QueryDSLChatMessageRepository {
     private final JPAQueryFactory jpaQueryFactory;
 
     public List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size) {
-        List<ChatMessageEntity> entities = jpaQueryFactory
-                .selectFrom(chatMessageEntity)
-                .join(chatMessageEntity.sender, userEntity).fetchJoin()
+        List<Long> messageIds = jpaQueryFactory
+                .select(chatMessageEntity.id)
+                .from(chatMessageEntity)
                 .where(
                         chatMessageEntity.chatRoom.id.eq(roomId),
-                        ltMessageId(lastMessageId)
+                        lastMessageId != null ? chatMessageEntity.id.lt(lastMessageId) : null
                 )
                 .orderBy(chatMessageEntity.id.desc())
                 .limit(size)
                 .fetch();
 
-        Collections.reverse(entities);
+        if (messageIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<ChatMessageEntity> entities = jpaQueryFactory
+                .selectFrom(chatMessageEntity)
+                .join(chatMessageEntity.sender, userEntity).fetchJoin()
+                .where(chatMessageEntity.id.in(messageIds))
+                .orderBy(chatMessageEntity.id.desc())
+                .fetch();
 
         return entities.stream()
                 .map(ChatMessageEntity::toModel)
