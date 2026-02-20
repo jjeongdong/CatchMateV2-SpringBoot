@@ -55,6 +55,7 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
                 .user(this.user.toModel())
                 .joinedAt(this.joinedAt)
                 .leftAt(this.leftAt)
+                .lastReadSequence(this.lastReadSequence)
                 .build();
     }
 }
