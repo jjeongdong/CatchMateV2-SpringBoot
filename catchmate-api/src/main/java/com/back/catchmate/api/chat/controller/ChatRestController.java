@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -76,5 +77,14 @@ public class ChatRestController {
             @AuthUser Long userId,
             @PathVariable Long chatRoomId) {
         return ResponseEntity.ok(chatOrchestrator.getChatRoomMembers(chatRoomId));
+    }
+
+    @DeleteMapping("/rooms/{roomId}")
+    @Operation(summary = "채팅방 퇴장", description = "특정 채팅방에서 퇴장합니다. 채팅 목록 화면에서 REST API를 통해 바로 나갈 때 사용합니다.")
+    public ResponseEntity<Void> leaveChatRoom(
+            @AuthUser Long userId,
+            @PathVariable Long roomId) {
+        chatOrchestrator.leaveChatRoom(userId, roomId);
+        return ResponseEntity.noContent().build();
     }
 }
