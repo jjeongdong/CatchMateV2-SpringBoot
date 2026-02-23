@@ -1,6 +1,6 @@
 package com.back.catchmate.infrastructure.user;
 
-import com.back.catchmate.domain.user.port.ProfileImageUploaderPort;
+import com.back.catchmate.domain.user.port.ImageUploaderPort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -14,12 +14,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Component
-public class S3ProfileImageUploader implements ProfileImageUploaderPort {
+public class S3ImageUploader implements ImageUploaderPort {
     private final S3Client s3Client;
     private final String bucket;
     private final String publicBaseUrl;
 
-    public S3ProfileImageUploader(
+    public S3ImageUploader(
             S3Client s3Client,
             @Value("${aws.s3.bucket}") String bucket,
             @Value("${aws.s3.publicBaseUrl}") String publicBaseUrl

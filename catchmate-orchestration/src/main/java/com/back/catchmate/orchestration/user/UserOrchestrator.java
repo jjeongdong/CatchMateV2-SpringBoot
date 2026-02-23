@@ -14,7 +14,7 @@ import com.back.catchmate.application.auth.service.AuthService;
 import com.back.catchmate.domain.club.model.Club;
 import com.back.catchmate.application.club.service.ClubService;
 import com.back.catchmate.domain.user.model.User;
-import com.back.catchmate.domain.user.port.ProfileImageUploaderPort;
+import com.back.catchmate.domain.user.port.ImageUploaderPort;
 import com.back.catchmate.application.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ public class UserOrchestrator {
     private final AuthService authService;
     private final ClubService clubService;
     private final UserService userService;
-    private final ProfileImageUploaderPort profileImageUploader;
+    private final ImageUploaderPort profileImageUploader;
 
     @Transactional
     public UserRegisterResponse createUser(UserRegisterCommand command) {

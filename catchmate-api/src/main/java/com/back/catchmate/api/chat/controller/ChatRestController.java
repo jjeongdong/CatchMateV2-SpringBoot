@@ -7,19 +7,25 @@ import com.back.catchmate.orchestration.chat.dto.response.ChatMessageResponse;
 import com.back.catchmate.orchestration.chat.dto.response.ChatRoomMemberResponse;
 import com.back.catchmate.orchestration.chat.dto.response.ChatRoomResponse;
 import com.back.catchmate.orchestration.common.PagedResponse;
+import com.back.catchmate.orchestration.user.dto.command.UploadFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @Tag(name = "[사용자] 채팅 API")
@@ -89,6 +95,27 @@ public class ChatRestController {
             @PathVariable Long roomId,
             @RequestBody ChatNotificationUpdateRequest request) {
         chatOrchestrator.updateNotificationSetting(userId, roomId, request.isOn());
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping(value = "/rooms/{roomId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "채팅방 대표 이미지 수정", description = "특정 채팅방의 대표 이미지를 MultipartFile로 받아 변경합니다.")
+    public ResponseEntity<Void> updateChatRoomImage(
+            @AuthUser Long userId,
+            @PathVariable Long roomId,
+            @RequestPart(value = "chatRoomImage", required = false) MultipartFile chatRoomImage) throws IOException {
+
+        UploadFile uploadFile = null;
+        if (chatRoomImage != null && !chatRoomImage.isEmpty()) {
+            uploadFile = UploadFile.builder()
+                    .originalFilename(chatRoomImage.getOriginalFilename())
+                    .contentType(chatRoomImage.getContentType())
+                    .size(chatRoomImage.getSize())
+                    .inputStream(chatRoomImage.getInputStream())
+                    .build();
+        }
+
+        chatOrchestrator.updateChatRoomImage(userId, roomId, uploadFile);
         return ResponseEntity.ok().build();
     }
 

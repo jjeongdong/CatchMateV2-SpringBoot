@@ -162,4 +162,16 @@ public class ChatService {
         member.updateNotificationSetting(isOn);
         chatRoomMemberRepository.save(member);
     }
+
+    public void updateChatRoomImage(Long chatRoomId, Long userId, String imageUrl) {
+        // 1. 해당 채팅방의 멤버인지 권한 검증
+        validateUserInChatRoom(userId, chatRoomId);
+
+        // 2. 채팅방 조회 및 이미지 업데이트
+        ChatRoom chatRoom = getChatRoom(chatRoomId);
+        chatRoom.updateImageUrl(imageUrl);
+
+        // 3. 저장
+        chatRoomRepository.save(chatRoom);
+    }
 }

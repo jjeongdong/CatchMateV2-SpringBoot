@@ -41,6 +41,9 @@ public class ChatRoomEntity extends BaseTimeEntity {
     @Column(name = "last_message_sequence", nullable = false)
     private Long lastMessageSequence;
 
+    @Column(name = "chat_room_image_url")
+    private String chatRoomImageUrl;
+
     private LocalDateTime deletedAt;
 
     public static ChatRoomEntity from(ChatRoom chatRoom) {
@@ -48,6 +51,7 @@ public class ChatRoomEntity extends BaseTimeEntity {
                 .id(chatRoom.getId())
                 .board(BoardEntity.from(chatRoom.getBoard()))
                 .lastMessageSequence(chatRoom.getLastMessageSequence())
+                .chatRoomImageUrl(chatRoom.getChatRoomImageUrl())
                 .deletedAt(chatRoom.getDeletedAt())
                 .build();
     }
@@ -57,6 +61,7 @@ public class ChatRoomEntity extends BaseTimeEntity {
                 .id(this.id)
                 .board(this.board.toModel())
                 .lastMessageSequence(this.lastMessageSequence)
+                .chatRoomImageUrl(this.chatRoomImageUrl)
                 .createdAt(this.getCreatedAt())
                 .deletedAt(this.deletedAt)
                 .build();

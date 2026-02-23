@@ -10,11 +10,13 @@ import com.back.catchmate.domain.chat.model.ChatRoomMember;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.user.model.User;
+import com.back.catchmate.domain.user.port.ImageUploaderPort;
 import com.back.catchmate.orchestration.chat.dto.command.ChatMessageCommand;
 import com.back.catchmate.orchestration.chat.dto.response.ChatMessageResponse;
 import com.back.catchmate.orchestration.chat.dto.response.ChatRoomMemberResponse;
 import com.back.catchmate.orchestration.chat.dto.response.ChatRoomResponse;
 import com.back.catchmate.orchestration.common.PagedResponse;
+import com.back.catchmate.orchestration.user.dto.command.UploadFile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -28,6 +30,7 @@ import java.util.List;
 public class ChatOrchestrator {
     private final ChatService chatService;
     private final UserService userService;
+    private final ImageUploaderPort imageUploaderPort;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
@@ -144,5 +147,23 @@ public class ChatOrchestrator {
     @Transactional
     public void updateNotificationSetting(Long userId, Long roomId, boolean isOn) {
         chatService.updateNotificationSetting(roomId, userId, isOn);
+    }
+
+    @Transactional
+    public void updateChatRoomImage(Long userId, Long roomId, UploadFile uploadFile) {
+        String imageUrl = null;
+
+        // 1. 이미지가 전달된 경우 S3 등에 업로드하여 URL 획득
+        if (uploadFile != null) {
+            imageUrl = imageUploaderPort.upload(
+                    uploadFile.getOriginalFilename(),
+                    uploadFile.getContentType(),
+                    uploadFile.getInputStream(),
+                    uploadFile.getSize()
+            );
+        }
+
+        // 2. ChatService를 호출하여 획득한 URL을 DB에 반영 (이전 답변의 로직 재사용)
+        chatService.updateChatRoomImage(roomId, userId, imageUrl);
     }
 }
