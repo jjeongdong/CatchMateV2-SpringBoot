@@ -127,4 +127,14 @@ public class ChatRestController {
         chatOrchestrator.leaveChatRoom(userId, roomId);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/rooms/{roomId}/members/{targetUserId}")
+    @Operation(summary = "채팅방 참여자 내보내기 (강퇴)", description = "채팅방의 방장이 특정 참여자를 강제로 내보냅니다.")
+    public ResponseEntity<Void> kickChatRoomMember(
+            @AuthUser Long userId,
+            @PathVariable Long roomId,
+            @PathVariable Long targetUserId) {
+        chatOrchestrator.kickChatRoomMember(userId, roomId, targetUserId);
+        return ResponseEntity.noContent().build();
+    }
 }

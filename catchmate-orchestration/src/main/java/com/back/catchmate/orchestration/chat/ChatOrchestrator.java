@@ -166,4 +166,13 @@ public class ChatOrchestrator {
         // 2. ChatService를 호출하여 획득한 URL을 DB에 반영 (이전 답변의 로직 재사용)
         chatService.updateChatRoomImage(roomId, userId, imageUrl);
     }
+
+    @Transactional
+    public void kickChatRoomMember(Long hostId, Long chatRoomId, Long targetUserId) {
+        // 1. 서비스 비즈니스 로직 수행
+        ChatMessage savedMessage = chatService.kickChatRoomMember(chatRoomId, hostId, targetUserId);
+
+        // 2. 방에 남아있는 사람들에게 강퇴 시스템 메시지를 소켓으로 실시간 전송
+        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
+    }
 }

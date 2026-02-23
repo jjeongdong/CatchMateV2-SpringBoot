@@ -16,6 +16,7 @@ import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -173,5 +174,45 @@ public class ChatService {
 
         // 3. 저장
         chatRoomRepository.save(chatRoom);
+    }
+
+    public ChatMessage kickChatRoomMember(Long chatRoomId, Long hostId, Long targetUserId) {
+        ChatRoom chatRoom = getChatRoom(chatRoomId);
+
+        // 1. 방장 권한 검증 (게시글 작성자가 방장이라고 가정)
+        if (!chatRoom.getBoard().getUser().getId().equals(hostId)) {
+            throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
+        }
+
+        // 2. 본인 스스로를 내보낼 수 없음 (자진 퇴장 API 사용 권장)
+        if (hostId.equals(targetUserId)) {
+            throw new BaseException(ErrorCode.BAD_REQUEST);
+        }
+
+        // 3. 내보낼 대상자가 현재 방에 참여 중인지 확인
+        ChatRoomMember targetMember = chatRoomMemberRepository
+                .findByChatRoomIdAndUserId(chatRoomId, targetUserId)
+                .filter(ChatRoomMember::isActive)
+                .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
+
+        // 4. 대상자 퇴장 처리 (leftAt 시간 업데이트)
+        targetMember.leave();
+        chatRoomMemberRepository.save(targetMember);
+
+        // 5. 시퀀스 증가 및 시스템 메시지 생성
+        Long sequence = chatSequencePort.generateSequence(chatRoomId);
+        chatRoom.updateLastMessageSequence(sequence);
+        chatRoomRepository.save(chatRoom);
+
+        String kickMessage = targetMember.getUser().getNickName() + "님이 내보내졌습니다.";
+        ChatMessage chatMessage = ChatMessage.createMessage(
+                chatRoom,
+                targetMember.getUser(),
+                kickMessage,
+                MessageType.SYSTEM,
+                sequence
+        );
+
+        return chatMessageRepository.save(chatMessage);
     }
 }
