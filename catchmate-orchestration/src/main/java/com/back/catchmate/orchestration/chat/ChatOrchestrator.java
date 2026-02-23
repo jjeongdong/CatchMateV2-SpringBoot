@@ -84,9 +84,12 @@ public class ChatOrchestrator {
                             .map(ChatMessageResponse::from)
                             .orElse(null);
 
-                    ChatRoomMember member = chatService.getChatRoomMember(chatRoom.getId(), userId); // *Service에 해당 메서드 필요
+                    ChatRoomMember member = chatService.getChatRoomMember(chatRoom.getId(), userId);
+
                     long unreadCount = member.calculateUnreadCount(chatRoom.getLastMessageSequence());
-                    return ChatRoomResponse.from(chatRoom, lastMessage, unreadCount);
+                    boolean isNotificationOn = member.isNotificationOn();
+
+                    return ChatRoomResponse.from(chatRoom, lastMessage, unreadCount, isNotificationOn);
                 })
                 .toList();
 

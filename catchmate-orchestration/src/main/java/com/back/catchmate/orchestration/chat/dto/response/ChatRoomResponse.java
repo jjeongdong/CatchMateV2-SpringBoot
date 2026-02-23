@@ -16,22 +16,16 @@ public class ChatRoomResponse {
     private BoardResponse board;
     private ChatMessageResponse lastMessage;
     private Long unreadCount;
+    private boolean isNotificationOn;
     private LocalDateTime createdAt;
 
-    public static ChatRoomResponse from(ChatRoom chatRoom) {
-        return ChatRoomResponse.builder()
-                .chatRoomId(chatRoom.getId())
-                .board(BoardResponse.from(chatRoom.getBoard(), false))
-                .createdAt(chatRoom.getCreatedAt())
-                .build();
-    }
-
-    public static ChatRoomResponse from(ChatRoom chatRoom, ChatMessageResponse lastMessage, Long unreadCount) {
+    public static ChatRoomResponse from(ChatRoom chatRoom, ChatMessageResponse lastMessage, Long unreadCount, boolean isNotificationOn) {
         return ChatRoomResponse.builder()
                 .chatRoomId(chatRoom.getId())
                 .board(BoardResponse.from(chatRoom.getBoard(), false))
                 .lastMessage(lastMessage)
                 .unreadCount(unreadCount)
+                .isNotificationOn(isNotificationOn)
                 .createdAt(chatRoom.getCreatedAt())
                 .build();
     }
