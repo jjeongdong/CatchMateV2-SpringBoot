@@ -75,7 +75,7 @@ public class JwtTokenProvider implements TokenProvider {
 
             return claims.get(ROLE_CLAIM, String.class);
         } catch (Exception e) {
-            return Authority.ROLE_USER.name(); // 기본값 설정
+            throw new BaseException(ErrorCode.INVALID_TOKEN);
         }
     }
 

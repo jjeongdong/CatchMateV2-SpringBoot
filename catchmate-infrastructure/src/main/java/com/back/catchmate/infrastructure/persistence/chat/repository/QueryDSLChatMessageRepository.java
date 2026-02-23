@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.back.catchmate.infrastructure.persistence.chat.entity.QChatMessageEntity.chatMessageEntity;
 import static com.back.catchmate.infrastructure.persistence.user.entity.QUserEntity.userEntity;
@@ -39,7 +38,7 @@ public class QueryDSLChatMessageRepository {
                 .selectFrom(chatMessageEntity)
                 .join(chatMessageEntity.sender, userEntity).fetchJoin()
                 .where(chatMessageEntity.id.in(messageIds))
-                .orderBy(chatMessageEntity.id.desc())
+                .orderBy(chatMessageEntity.id.asc())
                 .fetch();
 
         return entities.stream()
