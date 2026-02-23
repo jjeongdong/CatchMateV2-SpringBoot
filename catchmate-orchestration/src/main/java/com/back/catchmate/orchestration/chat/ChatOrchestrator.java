@@ -48,8 +48,9 @@ public class ChatOrchestrator {
         // FCM 알림은 별도의 이벤트 리스너에서 처리
         List<User> recipients = chatService.getChatRoomMembers(savedMessage.getChatRoom().getId())
                 .stream()
-                .map(ChatRoomMember::getUser)
                 .filter(user -> !user.getId().equals(senderId))
+                .filter(ChatRoomMember::isNotificationOn)
+                .map(ChatRoomMember::getUser)
                 .toList();
 
         // 알림을 받을 사용자가 있을 때만 이벤트 발행
@@ -135,5 +136,10 @@ public class ChatOrchestrator {
         return activeMembers.stream()
                 .map(ChatRoomMemberResponse::from)
                 .toList();
+    }
+
+    @Transactional
+    public void updateNotificationSetting(Long userId, Long roomId, boolean isOn) {
+        chatService.updateNotificationSetting(roomId, userId, isOn);
     }
 }

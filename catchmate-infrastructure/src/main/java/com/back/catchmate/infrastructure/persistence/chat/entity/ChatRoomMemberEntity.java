@@ -37,6 +37,9 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
     @Column(name = "last_read_sequence", nullable = false)
     private Long lastReadSequence;
 
+    @Column(name = "is_notification_on", nullable = false)
+    private boolean isNotificationOn = true;
+
     public static ChatRoomMemberEntity from(ChatRoomMember member) {
         return ChatRoomMemberEntity.builder()
                 .id(member.getId())
@@ -45,6 +48,7 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
                 .joinedAt(member.getJoinedAt())
                 .leftAt(member.getLeftAt())
                 .lastReadSequence(member.getLastReadSequence())
+                .isNotificationOn(member.isNotificationOn())
                 .build();
     }
 
@@ -56,6 +60,7 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
                 .joinedAt(this.joinedAt)
                 .leftAt(this.leftAt)
                 .lastReadSequence(this.lastReadSequence)
+                .isNotificationOn(this.isNotificationOn)
                 .build();
     }
 }

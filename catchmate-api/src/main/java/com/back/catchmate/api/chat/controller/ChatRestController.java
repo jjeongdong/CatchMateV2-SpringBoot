@@ -1,5 +1,6 @@
 package com.back.catchmate.api.chat.controller;
 
+import com.back.catchmate.api.chat.dto.request.ChatNotificationUpdateRequest;
 import com.back.catchmate.authorization.annotation.AuthUser;
 import com.back.catchmate.orchestration.chat.ChatOrchestrator;
 import com.back.catchmate.orchestration.chat.dto.response.ChatMessageResponse;
@@ -13,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -77,6 +80,16 @@ public class ChatRestController {
             @AuthUser Long userId,
             @PathVariable Long chatRoomId) {
         return ResponseEntity.ok(chatOrchestrator.getChatRoomMembers(chatRoomId));
+    }
+
+    @PutMapping("/rooms/{roomId}/notifications")
+    @Operation(summary = "채팅방 알림 설정 변경", description = "특정 채팅방의 푸시 알림 수신 여부를 ON/OFF 합니다.")
+    public ResponseEntity<Void> updateNotificationSetting(
+            @AuthUser Long userId,
+            @PathVariable Long roomId,
+            @RequestBody ChatNotificationUpdateRequest request) {
+        chatOrchestrator.updateNotificationSetting(userId, roomId, request.isOn());
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/rooms/{roomId}")

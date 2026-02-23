@@ -20,6 +20,7 @@ public class ChatRoomMember {
     private Long lastReadSequence;
     private LocalDateTime joinedAt;
     private LocalDateTime leftAt;
+    private boolean isNotificationOn;
 
     /**
      * 채팅방 멤버 생성 메서드
@@ -30,6 +31,7 @@ public class ChatRoomMember {
                 .user(user)
                 .lastReadSequence(chatRoom.getLastMessageSequence())
                 .joinedAt(LocalDateTime.now())
+                .isNotificationOn(true)
                 .build();
     }
 
@@ -62,5 +64,12 @@ public class ChatRoomMember {
     public Long calculateUnreadCount(Long currentRoomSequence) {
         long count = currentRoomSequence - this.lastReadSequence;
         return count < 0 ? 0 : count;
+    }
+
+    /**
+     * 알림 설정 업데이트
+     */
+    public void updateNotificationSetting(boolean isOn) {
+        this.isNotificationOn = isOn;
     }
 }

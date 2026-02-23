@@ -156,4 +156,10 @@ public class ChatService {
         return chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_NOT_FOUND));
     }
+
+    public void updateNotificationSetting(Long chatRoomId, Long userId, boolean isOn) {
+        ChatRoomMember member = getChatRoomMember(chatRoomId, userId);
+        member.updateNotificationSetting(isOn);
+        chatRoomMemberRepository.save(member);
+    }
 }
