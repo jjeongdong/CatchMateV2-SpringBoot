@@ -16,6 +16,7 @@ public class ChatRoomResponse {
     private BoardResponse board;
     private ChatMessageResponse lastMessage;
     private Long unreadCount;
+    private String chatRoomImageUrl;
     private boolean isNotificationOn;
     private LocalDateTime createdAt;
 
@@ -25,6 +26,7 @@ public class ChatRoomResponse {
                 .board(BoardResponse.from(chatRoom.getBoard(), false))
                 .lastMessage(lastMessage)
                 .unreadCount(unreadCount)
+                .chatRoomImageUrl(chatRoom.getChatRoomImageUrl())
                 .isNotificationOn(isNotificationOn)
                 .createdAt(chatRoom.getCreatedAt())
                 .build();
