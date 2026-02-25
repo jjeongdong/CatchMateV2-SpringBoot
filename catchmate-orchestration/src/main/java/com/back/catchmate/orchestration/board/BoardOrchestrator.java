@@ -61,7 +61,7 @@ public class BoardOrchestrator {
     public BoardCreateResponse createBoard(Long userId, BoardCreateCommand command) {
         // 기존 임시저장 글 삭제
         Optional<Board> oldDraft = boardService.findTempBoard(userId);
-        oldDraft.ifPresent(boardService::deleteBoard);
+        oldDraft.ifPresent(boardService::deleteBoardHard);
 
         User user = userService.getUser(userId);
         Club cheerClub = getCheerClub(command.getCheerClubId());
@@ -200,10 +200,6 @@ public class BoardOrchestrator {
     public BoardLiftUpResponse updateLiftUpDate(Long userId, Long boardId) {
         Board board = boardService.getBoard(boardId);
 
-        if (!board.getUser().getId().equals(userId)) {
-            throw new BaseException(ErrorCode.BOARD_LIFT_UP_BAD_REQUEST);
-        }
-
         if (board.canLiftUp()) {
             board.updateLiftUpDate(LocalDateTime.now());
             boardService.updateBoard(board);
@@ -217,10 +213,8 @@ public class BoardOrchestrator {
     @Transactional
     public void deleteBoard(Long userId, Long boardId) {
         Board board = boardService.getBoard(boardId);
-        if (!board.getUser().getId().equals(userId)) {
-            throw new BaseException(ErrorCode.BOARD_DELETE_BAD_REQUEST);
-        }
         board.delete();
+
         boardService.updateBoard(board);
     }
 

@@ -1,7 +1,6 @@
 package com.back.catchmate.infrastructure.redis;
 
 import com.back.catchmate.application.chat.event.ChatMessageEvent;
-import com.back.catchmate.application.chat.port.MessagePublisherPort;
 import com.back.catchmate.application.notification.event.NotificationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,12 +14,11 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RedisPublisher implements MessagePublisherPort {
+public class RedisPublisher {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ChannelTopic chatTopic;
     private final ChannelTopic notificationTopic;
 
-    @Override
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishChat(ChatMessageEvent event) {
         try {
@@ -30,7 +28,6 @@ public class RedisPublisher implements MessagePublisherPort {
         }
     }
 
-    @Override
     @EventListener
     public void publishNotification(NotificationEvent event) {
         try {

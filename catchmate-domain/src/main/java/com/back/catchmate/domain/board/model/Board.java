@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Builder
@@ -69,11 +70,17 @@ public class Board implements ResourceOwnership {
                             Club cheerClub, Game game, String preferredGender,
                             List<String> preferredAgeRangeList, boolean completed) {
 
-        validateUpdatable();
         String preferredAgeRange = preferredAgeRangeList != null
                 ? String.join(",", preferredAgeRangeList)
                 : "";
 
+        // 1. 핵심 데이터(인원, 경기, 모집 조건 등)가 변경되었는지 확인
+        if (isCriticalFieldChanged(maxPerson, cheerClub, game, preferredGender, preferredAgeRange, completed)) {
+            // 핵심 데이터가 변경되었다면 신청자가 없을 때(1명일 때)만 허용
+            validateUpdatable();
+        }
+
+        // 2. 값 업데이트 (단순 제목, 본문 수정은 항상 허용됨)
         this.title = title;
         this.content = content;
         this.maxPerson = maxPerson;
@@ -84,6 +91,28 @@ public class Board implements ResourceOwnership {
         this.completed = completed;
 
         validateForPublish();
+    }
+
+    // 핵심 조건 변경 여부를 체크하는 내부 메서드 추가
+    private boolean isCriticalFieldChanged(int newMaxPerson, Club newCheerClub, Game newGame,
+                                           String newPreferredGender, String newPreferredAgeRange, boolean newCompleted) {
+
+        if (this.maxPerson != newMaxPerson) return true;
+        if (this.completed != newCompleted) return true;
+        if (!Objects.equals(this.preferredGender, newPreferredGender)) return true;
+        if (!Objects.equals(this.preferredAgeRange, newPreferredAgeRange)) return true;
+
+        // Club 비교 (ID 기준)
+        Long currentClubId = this.cheerClub != null ? this.cheerClub.getId() : null;
+        Long newClubId = newCheerClub != null ? newCheerClub.getId() : null;
+        if (!Objects.equals(currentClubId, newClubId)) return true;
+
+        // Game 비교 (ID 기준)
+        Long currentGameId = this.game != null ? this.game.getId() : null;
+        Long newGameId = newGame != null ? newGame.getId() : null;
+        if (!Objects.equals(currentGameId, newGameId)) return true;
+
+        return false;
     }
 
     // 게시글 끌어올리기 가능 여부 확인 메서드

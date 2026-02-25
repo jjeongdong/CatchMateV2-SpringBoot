@@ -60,7 +60,7 @@ public class BoardService {
         boardRepository.save(board);
     }
 
-    public void deleteBoard(Board board) {
+    public void deleteBoardHard(Board board) {
         boardRepository.delete(board);
     }
 }

@@ -36,9 +36,9 @@ class BulkChatDataInsertTest {
                 @Override
                 public void setValues(PreparedStatement ps, int j) throws SQLException {
                     long sequence = start + j + 1;
-                    long senderId = (sequence % 2 == 0) ? 2L : 1L;
+                    long senderId = (sequence % 2 == 0) ? 10L : 9L;
 
-                    ps.setLong(1, 1L);
+                    ps.setLong(1, 9L);
                     ps.setLong(2, senderId);
                     ps.setString(3, "성능 테스트를 위한 대용량 메시지 " + sequence);
                     ps.setString(4, "TEXT");
