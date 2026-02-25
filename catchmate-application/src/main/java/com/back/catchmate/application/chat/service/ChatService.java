@@ -16,7 +16,6 @@ import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +40,6 @@ public class ChatService {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
         Long sequence = chatSequencePort.generateSequence(chatRoomId);
 
-        // 1. 방의 시퀀스 증가 및 저장
         chatRoom.updateLastMessageSequence(sequence);
         chatRoomRepository.save(chatRoom);
 
@@ -73,10 +71,7 @@ public class ChatService {
 
     public ChatMessage enterChatRoom(Long chatRoomId, User user) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
-        Long sequence = chatSequencePort.generateSequence(chatRoomId);
-
-        chatRoom.updateLastMessageSequence(sequence);
-        chatRoomRepository.save(chatRoom);
+        Long sequence = chatRoom.getLastMessageSequence();
 
         String enterMessage = user.getNickName() + "님이 입장하셨습니다.";
         ChatMessage chatMessage = ChatMessage.createMessage(
@@ -91,10 +86,7 @@ public class ChatService {
 
     public ChatMessage leaveChatRoom(Long chatRoomId, User user) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
-        Long sequence = chatSequencePort.generateSequence(chatRoomId);
-
-        chatRoom.updateLastMessageSequence(sequence);
-        chatRoomRepository.save(chatRoom);
+        Long sequence = chatRoom.getLastMessageSequence();
 
         ChatRoomMember chatRoomMember = chatRoomMemberRepository
                 .findByChatRoomIdAndUserId(chatRoomId, user.getId())
@@ -127,7 +119,7 @@ public class ChatService {
     }
 
     public Optional<ChatMessage> getLastMessage(Long chatRoomId) {
-        return chatMessageRepository.findLastMessageByChatRoomId(chatRoomId);
+        return chatMessageRepository.findLastTextMessageByChatRoomId(chatRoomId);
     }
 
     public List<ChatRoomMember> getChatRoomMembers(Long chatRoomId) {
@@ -178,6 +170,7 @@ public class ChatService {
 
     public ChatMessage kickChatRoomMember(Long chatRoomId, Long hostId, Long targetUserId) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
+        Long sequence = chatRoom.getLastMessageSequence();
 
         // 1. 방장 권한 검증 (게시글 작성자가 방장이라고 가정)
         if (!chatRoom.getBoard().getUser().getId().equals(hostId)) {
@@ -198,11 +191,6 @@ public class ChatService {
         // 4. 대상자 퇴장 처리 (leftAt 시간 업데이트)
         targetMember.leave();
         chatRoomMemberRepository.save(targetMember);
-
-        // 5. 시퀀스 증가 및 시스템 메시지 생성
-        Long sequence = chatSequencePort.generateSequence(chatRoomId);
-        chatRoom.updateLastMessageSequence(sequence);
-        chatRoomRepository.save(chatRoom);
 
         String kickMessage = targetMember.getUser().getNickName() + "님이 내보내졌습니다.";
         ChatMessage chatMessage = ChatMessage.createMessage(

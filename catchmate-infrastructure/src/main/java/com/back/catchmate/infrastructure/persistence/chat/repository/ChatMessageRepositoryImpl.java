@@ -1,5 +1,6 @@
 package com.back.catchmate.infrastructure.persistence.chat.repository;
 
+import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.chat.repository.ChatMessageRepository;
 import com.back.catchmate.infrastructure.persistence.chat.entity.ChatMessageEntity;
@@ -28,6 +29,12 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     }
 
     @Override
+    public Optional<ChatMessage> findLastTextMessageByChatRoomId(Long chatRoomId) {
+        return jpaChatMessageRepository.findTopByChatRoomIdAndMessageTypeOrderByCreatedAtDesc(chatRoomId, MessageType.TEXT)
+                .map(ChatMessageEntity::toModel);
+    }
+
+    @Override
     public List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size) {
         return querydslChatMessageRepository.findChatHistory(roomId, lastMessageId, size);
     }
@@ -35,12 +42,6 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     @Override
     public List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size) {
         return querydslChatMessageRepository.findSyncMessages(roomId, lastMessageId, size);
-    }
-
-    @Override
-    public Optional<ChatMessage> findLastMessageByChatRoomId(Long chatRoomId) {
-        return jpaChatMessageRepository.findLastMessageByChatRoomId(chatRoomId)
-                .map(ChatMessageEntity::toModel);
     }
 
     @Override

@@ -12,11 +12,11 @@ public interface ChatMessageRepository {
 
     Optional<ChatMessage> findById(Long id);
 
+    Optional<ChatMessage> findLastTextMessageByChatRoomId(Long chatRoomId);
+
     List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size);
 
     List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size);
-
-    Optional<ChatMessage> findLastMessageByChatRoomId(Long chatRoomId);
 
     void delete(ChatMessage chatMessage);
 }
