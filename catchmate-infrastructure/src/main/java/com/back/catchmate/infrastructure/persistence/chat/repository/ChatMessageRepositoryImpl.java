@@ -30,7 +30,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
 
     @Override
     public Optional<ChatMessage> findLastTextMessageByChatRoomId(Long chatRoomId) {
-        return jpaChatMessageRepository.findTopByChatRoomIdAndMessageTypeOrderByCreatedAtDesc(chatRoomId, MessageType.TEXT)
+        return jpaChatMessageRepository.findTopByChatRoomIdAndMessageTypeOrderByIdDesc(chatRoomId, MessageType.TEXT)
                 .map(ChatMessageEntity::toModel);
     }
 

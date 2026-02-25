@@ -32,5 +32,5 @@ public interface JpaChatMessageRepository extends JpaRepository<ChatMessageEntit
             "LIMIT 1")
     Optional<ChatMessageEntity> findLastMessageByChatRoomId(@Param("chatRoomId") Long chatRoomId);
 
-    Optional<ChatMessageEntity> findTopByChatRoomIdAndMessageTypeOrderByCreatedAtDesc(Long chatRoomId, MessageType messageType);
+    Optional<ChatMessageEntity> findTopByChatRoomIdAndMessageTypeOrderByIdDesc(Long chatRoomId, MessageType messageType);
 }
