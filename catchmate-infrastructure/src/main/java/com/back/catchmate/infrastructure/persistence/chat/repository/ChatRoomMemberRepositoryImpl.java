@@ -56,4 +56,9 @@ public class ChatRoomMemberRepositoryImpl implements ChatRoomMemberRepository {
         ChatRoomMemberEntity entity = ChatRoomMemberEntity.from(member);
         jpaChatRoomMemberRepository.delete(entity);
     }
+
+    @Override
+    public void updateLastReadSequenceDirectly(Long chatRoomId, Long userId, Long sequence) {
+        jpaChatRoomMemberRepository.updateLastReadSequenceDirectly(chatRoomId, userId, sequence);
+    }
 }

@@ -40,6 +40,11 @@ public class ChatRoomRepositoryImpl implements ChatRoomRepository {
     }
 
     @Override
+    public Optional<Long> findLastMessageSequenceById(Long id) {
+        return jpaChatRoomRepository.findLastMessageSequenceById(id);
+    }
+
+    @Override
     public DomainPage<ChatRoom> findAllByUserId(Long userId, DomainPageable domainPageable) {
         Pageable pageable = PageRequest.of(
                 domainPageable.getPage(),

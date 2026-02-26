@@ -31,4 +31,6 @@ public interface ChatRoomMemberRepository {
     boolean existsByChatRoomIdAndUserIdAndActive(Long chatRoomId, Long userId);
 
     void delete(ChatRoomMember member);
+
+    void updateLastReadSequenceDirectly(Long chatRoomId, Long userId, Long sequence);
 }

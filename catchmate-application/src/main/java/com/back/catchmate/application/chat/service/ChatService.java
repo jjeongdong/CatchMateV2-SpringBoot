@@ -58,7 +58,7 @@ public class ChatService {
                 messageType,
                 sequence
         );
-        updateReadSequence(chatRoom, sender.getId());
+        updateReadSequence(chatRoomId, sequence, sender.getId());
         return chatMessageRepository.save(chatMessage);
     }
 
@@ -66,23 +66,28 @@ public class ChatService {
     @Transactional
     public void markAsRead(Long chatRoomId, Long userId) {
         try {
+            Long lastSequence = chatRoomRepository.findLastMessageSequenceById(chatRoomId)
+                    .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_NOT_FOUND));
+
             // 별도 스레드에서 실행되므로, GET 요청 응답 시간에 전혀 영향을 주지 않습니다.
-            chatRoomRepository.findById(chatRoomId).ifPresent(chatRoom -> {
-                updateReadSequence(chatRoom, userId);
-            });
+            updateReadSequence(chatRoomId, lastSequence, userId);
         } catch (Exception e) {
             log.error("[Async] 비동기 읽음 처리 중 오류 발생 (roomId: {}, userId: {})", chatRoomId, userId, e);
         }
     }
 
-    private void updateReadSequence(ChatRoom chatRoom, Long userId) {
-        chatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoom.getId(), userId)
-                .ifPresent(member -> {
-                    if (member.isActive()) {
-                        member.updateLastReadSequence(chatRoom.getLastMessageSequence());
-                        chatRoomMemberRepository.save(member);
-                    }
-                });
+//    private void updateReadSequence(Long chatRoomId, Long lastSequence, Long userId) {
+//        chatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoomId, userId)
+//                .ifPresent(member -> {
+//                    if (member.isActive()) {
+//                        member.updateLastReadSequence(lastSequence);
+//                        chatRoomMemberRepository.save(member);
+//                    }
+//                });
+//    }
+
+    private void updateReadSequence(Long chatRoomId, Long lastSequence, Long userId) {
+        chatRoomMemberRepository.updateLastReadSequenceDirectly(chatRoomId, userId, lastSequence);
     }
 
     public ChatMessage enterChatRoom(Long chatRoomId, User user) {

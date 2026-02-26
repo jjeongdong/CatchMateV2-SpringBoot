@@ -38,4 +38,7 @@ JpaChatRoomRepository extends JpaRepository<ChatRoomEntity, Long> {
     @Query("UPDATE ChatRoomEntity c SET c.lastMessageSequence = :sequence " +
             "WHERE c.id = :roomId AND (c.lastMessageSequence IS NULL OR c.lastMessageSequence < :sequence)")
     void updateMaxSequence(@Param("roomId") Long roomId, @Param("sequence") Long sequence);
+
+    @Query("SELECT cr.lastMessageSequence FROM ChatRoomEntity cr WHERE cr.id = :id AND cr.deletedAt IS NULL")
+    Optional<Long> findLastMessageSequenceById(@Param("id") Long id);
 }
