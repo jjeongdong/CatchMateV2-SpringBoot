@@ -148,7 +148,12 @@ public class ChatService {
                 .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
     }
 
-    public void validateUserInChatRoom(Long userId, Long roomId) {
+    @Cacheable(
+            value = "chatRoomMemberAuth",
+            key = "#roomId + '_' + #userId",
+            cacheManager = "redisCacheManager"
+    )
+    public boolean validateUserInChatRoom(Long userId, Long roomId) {
         boolean isMember = chatRoomMemberRepository
                 .findByChatRoomIdAndUserId(roomId, userId)
                 .filter(ChatRoomMember::isActive)
@@ -157,6 +162,8 @@ public class ChatService {
         if (!isMember) {
             throw new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND);
         }
+
+        return true;
     }
 
     private ChatRoom getChatRoom(Long chatRoomId) {
