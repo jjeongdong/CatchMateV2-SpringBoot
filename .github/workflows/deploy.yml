@@ -62,6 +62,10 @@ jobs:
             # 프로젝트 폴더로 이동 
             cd /home/ubuntu/catchmatev2-springboot 
             
+            git pull origin main
+            
+            docker-compose up -d nginx
+            
             # 실행 권한 재확인
             chmod +x deploy.sh
             
