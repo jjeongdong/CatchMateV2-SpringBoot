@@ -15,6 +15,7 @@ import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -110,6 +111,11 @@ public class ChatService {
         return chatRoomRepository.findAllByUserId(userId, pageable);
     }
 
+    @Cacheable(
+            value = "chatHistory",
+            key = "#roomId + '_' + (#lastMessageId != null ? #lastMessageId : 'START') + '_' + #size",
+            cacheManager = "redisCacheManager"
+    )
     public List<ChatMessage> getChatHistory(Long roomId, Long lastMessageId, int size) {
         return chatMessageRepository.findChatHistory(roomId, lastMessageId, size);
     }
