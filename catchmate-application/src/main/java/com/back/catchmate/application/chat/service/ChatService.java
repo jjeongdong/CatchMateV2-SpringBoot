@@ -17,12 +17,16 @@ import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatService {
@@ -39,6 +43,7 @@ public class ChatService {
                 });
     }
 
+    @Transactional
     public ChatMessage saveMessage(Long chatRoomId, User sender, String content, MessageType messageType) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
         Long sequence = chatSequencePort.generateSequence(chatRoomId);
@@ -57,9 +62,17 @@ public class ChatService {
         return chatMessageRepository.save(chatMessage);
     }
 
+    @Async
+    @Transactional
     public void markAsRead(Long chatRoomId, Long userId) {
-        ChatRoom chatRoom = getChatRoom(chatRoomId);
-        updateReadSequence(chatRoom, userId);
+        try {
+            // 별도 스레드에서 실행되므로, GET 요청 응답 시간에 전혀 영향을 주지 않습니다.
+            chatRoomRepository.findById(chatRoomId).ifPresent(chatRoom -> {
+                updateReadSequence(chatRoom, userId);
+            });
+        } catch (Exception e) {
+            log.error("[Async] 비동기 읽음 처리 중 오류 발생 (roomId: {}, userId: {})", chatRoomId, userId, e);
+        }
     }
 
     private void updateReadSequence(ChatRoom chatRoom, Long userId) {

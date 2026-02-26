@@ -101,19 +101,15 @@ public class ChatOrchestrator {
         return new PagedResponse<>(chatRoomPage, responses);
     }
 
-    @Transactional
     public void readChatRoom(Long userId, Long chatRoomId) {
         chatService.markAsRead(chatRoomId, userId);
     }
 
     public List<ChatMessageResponse> getChatHistory(Long userId, Long roomId, Long lastMessageId, int size) {
-        // 1. 권한 검증 (캐시를 타기 전에 무조건 실행되어야 하는 보안 로직)
         chatService.validateUserInChatRoom(userId, roomId);
 
-        // 2. 캐시 또는 DB에서 채팅 내역 조회
         ChatMessageListDto cacheDtoList = chatService.getChatHistory(roomId, lastMessageId, size);
 
-        // 3. 껍데기에서 알맹이를 꺼내 최종 화면용 응답 객체(Response)로 변환
         return cacheDtoList.getMessages().stream()
                 .map(dto -> ChatMessageResponse.builder()
                         .messageId(dto.getId())
