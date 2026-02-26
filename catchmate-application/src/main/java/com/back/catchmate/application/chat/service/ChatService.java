@@ -1,5 +1,7 @@
 package com.back.catchmate.application.chat.service;
 
+import com.back.catchmate.application.chat.dto.ChatMessageCacheDto;
+import com.back.catchmate.application.chat.dto.ChatMessageListDto;
 import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.domain.board.model.Board;
 import com.back.catchmate.domain.chat.model.ChatMessage;
@@ -116,8 +118,14 @@ public class ChatService {
             key = "#roomId + '_' + (#lastMessageId != null ? #lastMessageId : 'START') + '_' + #size",
             cacheManager = "redisCacheManager"
     )
-    public List<ChatMessage> getChatHistory(Long roomId, Long lastMessageId, int size) {
-        return chatMessageRepository.findChatHistory(roomId, lastMessageId, size);
+    public ChatMessageListDto getChatHistory(Long roomId, Long lastMessageId, int size) {
+        List<ChatMessage> messages = chatMessageRepository.findChatHistory(roomId, lastMessageId, size);
+
+        List<ChatMessageCacheDto> chatMessageCacheDtoList = messages.stream()
+                .map(ChatMessageCacheDto::from)
+                .toList();
+
+        return new ChatMessageListDto(chatMessageCacheDtoList);
     }
 
     public List<ChatMessage> getSyncMessages(Long roomId, Long lastMessageId, int size) {

@@ -1,9 +1,11 @@
 package com.back.catchmate.orchestration.chat;
 
+import com.back.catchmate.application.chat.dto.ChatMessageListDto;
 import com.back.catchmate.application.chat.event.ChatMessageEvent;
 import com.back.catchmate.application.chat.event.ChatNotificationEvent;
 import com.back.catchmate.application.chat.service.ChatService;
 import com.back.catchmate.application.user.service.UserService;
+import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.chat.model.ChatRoom;
 import com.back.catchmate.domain.chat.model.ChatRoomMember;
@@ -105,15 +107,25 @@ public class ChatOrchestrator {
     }
 
     public List<ChatMessageResponse> getChatHistory(Long userId, Long roomId, Long lastMessageId, int size) {
-        // 1. 해당 채팅방의 멤버인지 권한 검증
+        // 1. 권한 검증 (캐시를 타기 전에 무조건 실행되어야 하는 보안 로직)
         chatService.validateUserInChatRoom(userId, roomId);
 
-        // 2. 채팅 메시지 조회
-        List<ChatMessage> messages = chatService.getChatHistory(roomId, lastMessageId, size);
+        // 2. 캐시 또는 DB에서 채팅 내역 조회
+        ChatMessageListDto cacheDtoList = chatService.getChatHistory(roomId, lastMessageId, size);
 
-        // 3. 응답 DTO로 변환하여 반환
-        return messages.stream()
-                .map(ChatMessageResponse::from)
+        // 3. 껍데기에서 알맹이를 꺼내 최종 화면용 응답 객체(Response)로 변환
+        return cacheDtoList.getMessages().stream()
+                .map(dto -> ChatMessageResponse.builder()
+                        .messageId(dto.getId())
+                        .chatRoomId(dto.getRoomId())
+                        .senderId(dto.getSenderId())
+                        .senderNickName(dto.getSenderNickname())
+                        .senderProfileImageUrl(dto.getSenderProfileImageUrl())
+                        .content(dto.getContent())
+                        .messageType(MessageType.valueOf(dto.getMessageType().name()))
+                        .createdAt(dto.getCreatedAt())
+                        .build()
+                )
                 .toList();
     }
 
