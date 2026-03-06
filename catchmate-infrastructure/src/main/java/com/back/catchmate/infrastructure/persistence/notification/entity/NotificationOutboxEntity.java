@@ -1,8 +1,8 @@
 package com.back.catchmate.infrastructure.persistence.notification.entity;
 
-import com.back.catchmate.domain.notification.model.NotificationDelivery;
+import com.back.catchmate.domain.notification.model.NotificationOutbox;
 import com.back.catchmate.infrastructure.global.BaseTimeEntity;
-import com.back.catchmate.notifications.enums.DeliveryStatus;
+import com.back.catchmate.notifications.enums.OutboxStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -10,9 +10,9 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(name = "notification_delivery")
+@Table(name = "notification_outbox")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class NotificationDeliveryEntity extends BaseTimeEntity {
+public class NotificationOutboxEntity extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,11 +29,11 @@ public class NotificationDeliveryEntity extends BaseTimeEntity {
     private int retryCount;
 
     @Enumerated(EnumType.STRING)
-    private DeliveryStatus status;
+    private OutboxStatus status;
 
     // Domain -> Entity 변환
-    public static NotificationDeliveryEntity from(NotificationDelivery domain) {
-        NotificationDeliveryEntity entity = new NotificationDeliveryEntity();
+    public static NotificationOutboxEntity from(NotificationOutbox domain) {
+        NotificationOutboxEntity entity = new NotificationOutboxEntity();
         entity.id = domain.getId();
         entity.recipientId = domain.getRecipientId();
         entity.fcmToken = domain.getFcmToken();
@@ -46,8 +46,8 @@ public class NotificationDeliveryEntity extends BaseTimeEntity {
     }
 
     // Entity -> Domain 변환
-    public NotificationDelivery toModel() {
-        return NotificationDelivery.builder()
+    public NotificationOutbox toModel() {
+        return NotificationOutbox.builder()
                 .id(this.id)
                 .recipientId(this.recipientId)
                 .fcmToken(this.fcmToken)

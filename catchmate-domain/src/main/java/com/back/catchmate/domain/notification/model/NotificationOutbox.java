@@ -1,12 +1,12 @@
 package com.back.catchmate.domain.notification.model;
 
-import com.back.catchmate.notifications.enums.DeliveryStatus;
+import com.back.catchmate.notifications.enums.OutboxStatus;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
-public class NotificationDelivery {
+public class NotificationOutbox {
     private Long id;
     private Long recipientId;
     private String fcmToken;
@@ -14,17 +14,17 @@ public class NotificationDelivery {
     private String body;
     private String payload;
     private int retryCount;
-    private DeliveryStatus status;
+    private OutboxStatus status;
 
-    public static NotificationDelivery create(Long recipientId, String fcmToken, String title, String body, String payload) {
-        return NotificationDelivery.builder()
+    public static NotificationOutbox create(Long recipientId, String fcmToken, String title, String body, String payload) {
+        return NotificationOutbox.builder()
                 .recipientId(recipientId)
                 .fcmToken(fcmToken)
                 .title(title)
                 .body(body)
                 .payload(payload)
                 .retryCount(0)
-                .status(DeliveryStatus.PENDING)
+                .status(OutboxStatus.PENDING)
                 .build();
     }
 
@@ -33,10 +33,10 @@ public class NotificationDelivery {
     }
 
     public void fail() {
-        this.status = DeliveryStatus.FAILED;
+        this.status = OutboxStatus.FAILED;
     }
 
     public void success() {
-        this.status = DeliveryStatus.SUCCESS;
+        this.status = OutboxStatus.SUCCESS;
     }
 }

@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 public class NotificationScheduler {
     private final NotificationOrchestrator notificationOrchestrator;
 
-    @Scheduled(fixedDelay = 600000)
-    public void retryFailedPush() {
-        notificationOrchestrator.retryFailedNotifications();
+    @Scheduled(fixedDelay = 60000)
+    public void processPendingPush() {
+        notificationOrchestrator.processPendingNotifications();
     }
 }

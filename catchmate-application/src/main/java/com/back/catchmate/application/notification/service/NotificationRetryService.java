@@ -1,8 +1,8 @@
 package com.back.catchmate.application.notification.service;
 
-import com.back.catchmate.domain.notification.model.NotificationDelivery;
+import com.back.catchmate.domain.notification.model.NotificationOutbox;
 import com.back.catchmate.domain.notification.port.NotificationSenderPort;
-import com.back.catchmate.domain.notification.repository.NotificationDeliveryRepository;
+import com.back.catchmate.domain.notification.repository.NotificationOutboxRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,55 +16,61 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class NotificationRetryService {
-    private final NotificationDeliveryRepository deliveryRepository;
+    private final NotificationOutboxRepository outboxRepository;
     private final NotificationSenderPort notificationSenderPort;
     private final ObjectMapper objectMapper;
 
     private static final int MAX_RETRY_COUNT = 5;
 
+    /**
+     * 알림 발송을 위한 아웃박스 데이터를 저장합니다.
+     * 트랜잭션 내에서 호출되어야 하며, 초기 상태는 PENDING입니다.
+     */
     @Transactional
-    public void saveFailedNotification(Long recipientId, String token, String title, String body, Map<String, String> data) {
+    public void saveOutbox(Long recipientId, String token, String title, String body, Map<String, String> data) {
         try {
             String payloadJson = objectMapper.writeValueAsString(data);
-            NotificationDelivery delivery = NotificationDelivery.create(recipientId, token, title, body, payloadJson);
-            deliveryRepository.save(delivery);
-            log.info("푸시 전송 실패 건 DLQ 저장 완료 - recipientId: {}", recipientId);
+            NotificationOutbox outbox = NotificationOutbox.create(recipientId, token, title, body, payloadJson);
+            outboxRepository.save(outbox);
+            log.info("아웃박스 저장 완료 - recipientId: {}", recipientId);
         } catch (Exception e) {
-            log.error("DLQ 저장 중 에러 발생", e);
+            log.error("아웃박스 저장 중 에러 발생", e);
         }
     }
 
+    /**
+     * PENDING 상태인 알림들을 가져와 실제 발송을 시도합니다.
+     */
     @Transactional
-    public void retryFailedNotifications() {
-        List<NotificationDelivery> pendingDeliveries = deliveryRepository.findAllPending(MAX_RETRY_COUNT);
+    public void processPendingNotifications() {
+        List<NotificationOutbox> pendingOutboxes = outboxRepository.findAllPending(MAX_RETRY_COUNT);
 
-        if (pendingDeliveries.isEmpty()) return;
+        if (pendingOutboxes.isEmpty()) return;
         
-        log.info("재전송 대상 {}건 발견. 처리를 시작합니다.", pendingDeliveries.size());
+        log.info("처리 대상 알림 {}건 발견. 발송을 시작합니다.", pendingOutboxes.size());
 
-        for (NotificationDelivery delivery : pendingDeliveries) {
+        for (NotificationOutbox outbox : pendingOutboxes) {
             try {
                 @SuppressWarnings("unchecked")
-                Map<String, String> data = objectMapper.readValue(delivery.getPayload(), Map.class);
+                Map<String, String> data = objectMapper.readValue(outbox.getPayload(), Map.class);
                 
                 notificationSenderPort.sendNotificationIfOffline(
-                        delivery.getRecipientId(),
-                        delivery.getFcmToken(),
-                        delivery.getTitle(),
-                        delivery.getBody(),
+                        outbox.getRecipientId(),
+                        outbox.getFcmToken(),
+                        outbox.getTitle(),
+                        outbox.getBody(),
                         data
                 );
 
-                delivery.success();
+                outbox.success();
             } catch (Exception e) {
-                delivery.incrementRetryCount();
-                if (delivery.getRetryCount() >= MAX_RETRY_COUNT) {
-                    delivery.fail();
+                outbox.incrementRetryCount();
+                if (outbox.getRetryCount() >= MAX_RETRY_COUNT) {
+                    outbox.fail();
                 }
-                log.warn("재전송 실패 - ID: {}, Count: {}", delivery.getId(), delivery.getRetryCount());
+                log.warn("알림 발송 실패 - ID: {}, Count: {}", outbox.getId(), outbox.getRetryCount());
             }
-            // 도메인 객체의 변경사항을 저장
-            deliveryRepository.save(delivery);
+            outboxRepository.save(outbox);
         }
     }
 }

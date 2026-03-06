@@ -54,7 +54,7 @@ public class NotificationOrchestrator {
         return UnreadNotificationResponse.of(hasUnread);
     }
 
-    public void retryFailedNotifications() {
-        notificationRetryService.retryFailedNotifications();
+    public void processPendingNotifications() {
+        notificationRetryService.processPendingNotifications();
     }
 }
