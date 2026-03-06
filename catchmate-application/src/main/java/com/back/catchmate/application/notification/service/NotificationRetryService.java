@@ -42,13 +42,14 @@ public class NotificationRetryService {
     }
 
     public void processPendingNotifications() {
-        List<NotificationOutbox> pendingOutboxes = outboxRepository.findAllPending(MAX_RETRY_COUNT);
+        // 1. 데이터 선점 (트랜잭션 내에서 처리하여 다른 서버가 못 가져가게 함)
+        List<NotificationOutbox> claimList = outboxUpdater.claimPendingNotifications(MAX_RETRY_COUNT);
 
-        if (pendingOutboxes.isEmpty()) return;
+        if (claimList.isEmpty()) return;
         
-        log.info("처리 대상 알림 {}건 발견. 발송을 시작합니다.", pendingOutboxes.size());
+        log.info("처리 대상 알림 {}건을 선점했습니다. 발송을 시작합니다.", claimList.size());
 
-        for (NotificationOutbox outbox : pendingOutboxes) {
+        for (NotificationOutbox outbox : claimList) {
             processIndividualNotification(outbox);
         }
     }
@@ -67,11 +68,11 @@ public class NotificationRetryService {
                     data
             );
 
-            // 3. 별도 컴포넌트를 통한 성공 처리 (REQUIRES_NEW 프록시 정상 동작)
+            // 3. 성공 처리 (SUCCESS로 업데이트)
             outboxUpdater.updateStatusSuccess(outbox);
         } catch (Exception e) {
             log.warn("알림 발송 실패 (ID: {}) - 재시도 카운트 증가", outbox.getId());
-            // 4. 별도 컴포넌트를 통한 실패 처리 (REQUIRES_NEW 프록시 정상 동작)
+            // 4. 실패 처리 (재시도 횟수 초과 시 FAILED, 아니면 다시 PENDING으로 돌려보낼지 결정)
             outboxUpdater.updateStatusFailure(outbox, MAX_RETRY_COUNT);
         }
     }

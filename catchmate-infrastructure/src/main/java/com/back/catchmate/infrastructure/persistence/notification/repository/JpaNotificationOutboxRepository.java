@@ -14,7 +14,7 @@ import java.util.List;
 public interface JpaNotificationOutboxRepository extends JpaRepository<NotificationOutboxEntity, Long> {
     
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "-2")}) // SKIP LOCKED (PostgreSQL/MySQL 8.0+)
+    @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2")}) // SKIP LOCKED (PostgreSQL/MySQL 8.0+)
     @Query("SELECT n FROM NotificationOutboxEntity n WHERE n.status = :status AND n.retryCount < :retryCount")
     List<NotificationOutboxEntity> findAllForProcessing(OutboxStatus status, int retryCount);
 

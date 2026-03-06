@@ -36,6 +36,10 @@ public class NotificationOutbox {
         this.status = OutboxStatus.PROCESSING;
     }
 
+    public void pending() {
+        this.status = OutboxStatus.PENDING;
+    }
+
     public void fail() {
         this.status = OutboxStatus.FAILED;
     }
