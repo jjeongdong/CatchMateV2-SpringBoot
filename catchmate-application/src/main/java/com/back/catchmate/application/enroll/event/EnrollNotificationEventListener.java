@@ -72,7 +72,7 @@ public class EnrollNotificationEventListener {
         if (isOnline) {
             sendWebSocketNotification(recipient.getId(), payload);
         } else {
-            log.info("신청 알림 즉시 발송 시도 (Async AFTER_COMMIT): recipientId: {}", recipient.getId());
+            notificationRetryService.sendPendingOutboxImmediately(recipient.getId());
         }
     }
 

@@ -69,11 +69,8 @@ public class ChatNotificationEventListener {
                     sendWebSocketNotification(recipient.getId(), payload);
                 }
             } else {
-                // 커밋 후 즉시 FCM 발송 시도 (Best effort)
-                // 실제 아웃박스 상태 업데이트는 하지 않음 (복잡성 방지 위해 스케줄러에 위임하거나, 필요시 업데이트 로직 추가 가능)
-                // 여기서는 로그만 남기고 실제 처리는 스케줄러가 담당하도록 비워두거나 간단히 시도만 함
-                log.info("채팅 알림 즉시 발송 시도 (Async AFTER_COMMIT): recipientId: {}", recipient.getId());
-                // (선택) 여기서 바로 성공 처리 로직을 넣을 수도 있지만, 중복 발송 방지를 위해 스케줄러가 전담하는 것이 가장 깔끔함
+                // 커밋 후 즉시 FCM 발송 시도
+                notificationRetryService.sendPendingOutboxImmediately(recipient.getId());
             }
         }
     }

@@ -32,6 +32,10 @@ public class NotificationOutbox {
         this.retryCount++;
     }
 
+    public void startProcessing() {
+        this.status = OutboxStatus.PROCESSING;
+    }
+
     public void fail() {
         this.status = OutboxStatus.FAILED;
     }

@@ -23,8 +23,15 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
 
     @Override
     public List<NotificationOutbox> findAllPending(int maxRetryCount) {
-        return jpaRepository.findAllByStatusAndRetryCountLessThan(OutboxStatus.PENDING, maxRetryCount)
-                .stream()
+        return jpaRepository.findAllForProcessing(OutboxStatus.PENDING, maxRetryCount).stream()
+                .map(NotificationOutboxEntity::toModel)
+                .toList();
+    }
+
+
+    @Override
+    public List<NotificationOutbox> findAllPendingByRecipientId(Long recipientId) {
+        return jpaRepository.findAllByRecipientIdAndStatus(recipientId, OutboxStatus.PENDING).stream()
                 .map(NotificationOutboxEntity::toModel)
                 .toList();
     }

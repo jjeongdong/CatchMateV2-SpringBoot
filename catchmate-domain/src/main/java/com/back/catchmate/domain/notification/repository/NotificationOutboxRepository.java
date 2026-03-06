@@ -7,5 +7,6 @@ import java.util.Optional;
 public interface NotificationOutboxRepository {
     NotificationOutbox save(NotificationOutbox outbox);
     List<NotificationOutbox> findAllPending(int maxRetryCount);
+    List<NotificationOutbox> findAllPendingByRecipientId(Long recipientId);
     Optional<NotificationOutbox> findById(Long id);
 }

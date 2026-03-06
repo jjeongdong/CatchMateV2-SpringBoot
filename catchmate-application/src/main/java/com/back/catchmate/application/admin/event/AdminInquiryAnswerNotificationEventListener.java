@@ -9,7 +9,10 @@ import com.back.catchmate.user.enums.AlarmType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.Map;
 
@@ -54,6 +57,18 @@ public class AdminInquiryAnswerNotificationEventListener {
                     data
             );
             log.info("관리자 답변 알림 아웃박스 저장 완료: recipientId: {}", recipient.getId());
+        }
+    }
+
+    /**
+     * 커밋 후 즉시 발송 시도
+     */
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleInquiryNotification(AdminInquiryAnswerNotificationEvent event) {
+        User recipient = event.recipient();
+        if (recipient.getEventAlarm() == 'Y') {
+            notificationRetryService.sendPendingOutboxImmediately(recipient.getId());
         }
     }
 }
