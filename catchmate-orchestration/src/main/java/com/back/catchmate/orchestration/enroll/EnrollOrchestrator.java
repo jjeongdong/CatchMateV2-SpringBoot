@@ -71,7 +71,8 @@ public class EnrollOrchestrator {
                 board.getUser(),
                 applicant,
                 board,
-                "ENROLL_REQUEST"
+                "ENROLL_REQUEST",
+                savedEnroll.getId()
         ));
 
         return EnrollCreateResponse.of(savedEnroll.getId());
@@ -170,7 +171,8 @@ public class EnrollOrchestrator {
                 enroll.getUser(),
                 board.getUser(),
                 board,
-                "ENROLL_ACCEPTED"
+                "ENROLL_ACCEPTED",
+                enrollId
         ));
 
         return EnrollAcceptResponse.of(enrollId);
@@ -191,7 +193,8 @@ public class EnrollOrchestrator {
                 enroll.getUser(),
                 board.getUser(),
                 board,
-                "ENROLL_REJECTED"
+                "ENROLL_REJECTED",
+                enrollId
         ));
 
         return EnrollRejectResponse.of(enrollId);

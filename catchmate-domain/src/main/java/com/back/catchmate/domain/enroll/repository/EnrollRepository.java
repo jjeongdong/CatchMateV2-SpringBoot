@@ -29,6 +29,8 @@ public interface EnrollRepository {
 
     List<Enroll> findAllByBoardIds(List<Long> boardIds);
 
+    List<Enroll> findAllByIds(List<Long> ids);
+
     long countByBoardWriterAndStatus(Long userId, AcceptStatus status);
 
     void delete(Enroll enroll);

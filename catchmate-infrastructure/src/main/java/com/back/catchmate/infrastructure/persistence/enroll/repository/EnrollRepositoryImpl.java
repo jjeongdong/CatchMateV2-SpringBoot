@@ -123,6 +123,14 @@ public class EnrollRepositoryImpl implements EnrollRepository {
     }
 
     @Override
+    public List<Enroll> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return Collections.emptyList();
+        return jpaEnrollRepository.findAllById(ids).stream()
+                .map(EnrollEntity::toModel)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Optional<Enroll> findByIdWithFetch(Long id) {
         return jpaEnrollRepository.findByIdWithFetch(id)
                 .map(EnrollEntity::toModel);

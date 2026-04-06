@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum NotificationTemplate {
     
     // [모임 신청 관련]
-    ENROLL_REQUEST("새로운 참여 신청", "'%s' 모임에 새로운 참여 신청이 도착했습니다."),
+    ENROLL_REQUEST("%s님이 참여 신청을 보냈습니다", "'%s' 모임에 새로운 참여 신청이 도착했습니다."),
     ENROLL_ACCEPT("신청 수락 완료", "축하합니다! '%s' 모임 참여가 수락되었습니다. 채팅방을 확인해보세요."),
     ENROLL_REJECT("신청 거절 안내", "아쉽지만 '%s' 모임 참여 신청이 거절되었습니다."),
 

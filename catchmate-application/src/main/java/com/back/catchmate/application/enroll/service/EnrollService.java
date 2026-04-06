@@ -61,6 +61,10 @@ public class EnrollService {
         return enrollRepository.findAllByBoardIds(boardIds);
     }
 
+    public List<Enroll> getEnrollListByIds(List<Long> ids) {
+        return enrollRepository.findAllByIds(ids);
+    }
+
     public long getEnrollPendingCountByBoardWriter(Long userId) {
         return enrollRepository.countByBoardWriterAndStatus(userId, AcceptStatus.PENDING);
     }
