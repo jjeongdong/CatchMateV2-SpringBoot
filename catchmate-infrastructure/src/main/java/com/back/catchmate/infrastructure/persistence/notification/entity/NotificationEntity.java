@@ -55,6 +55,9 @@ public class NotificationEntity extends BaseTimeEntity {
     @Column(name = "is_read", nullable = false)
     private boolean read;
 
+    @Column
+    private Long targetId;
+
     public static NotificationEntity from(Notification notification) {
         return NotificationEntity.builder()
                 .id(notification.getId())
@@ -64,6 +67,7 @@ public class NotificationEntity extends BaseTimeEntity {
                 .title(notification.getTitle())
                 .type(notification.getType())
                 .read(notification.isRead())
+                .targetId(notification.getTargetId())
                 .build();
     }
 
@@ -76,6 +80,7 @@ public class NotificationEntity extends BaseTimeEntity {
                 .title(this.title)
                 .type(this.type)
                 .read(this.read)
+                .targetId(this.targetId)
                 .createdAt(this.getCreatedAt())
                 .build();
     }

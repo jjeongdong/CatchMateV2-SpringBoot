@@ -1,5 +1,6 @@
 package com.back.catchmate.infrastructure.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -11,18 +12,28 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 @EnableAsync
 public class AsyncConfig {
+
+    @Value("${async.executor.core-pool-size:10}")
+    private int corePoolSize;
+
+    @Value("${async.executor.max-pool-size:50}")
+    private int maxPoolSize;
+
+    @Value("${async.executor.queue-capacity:100}")
+    private int queueCapacity;
+
     @Bean(name = "taskExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 
         // 1. 기본 스레드 수 (항상 유지되는 스레드)
-        executor.setCorePoolSize(10);
+        executor.setCorePoolSize(corePoolSize);
 
         // 2. 최대 스레드 수 (트래픽 폭증 시 확장)
-        executor.setMaxPoolSize(50);
+        executor.setMaxPoolSize(maxPoolSize);
 
         // 3. 큐 용량 (스레드가 꽉 찼을 때 대기하는 작업 공간)
-        executor.setQueueCapacity(100);
+        executor.setQueueCapacity(queueCapacity);
 
         // 4. 스레드 이름 접두사 (모니터링 시 식별 용이)
         executor.setThreadNamePrefix("AsyncExecutor-");

@@ -15,6 +15,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,6 +31,7 @@ import java.time.LocalDate;
 @Getter
 @Builder
 @Table(name = "users")
+@SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class UserEntity extends BaseTimeEntity {
@@ -87,6 +91,9 @@ public class UserEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean reported;
 
+    @Column
+    private LocalDateTime deletedAt;
+
     public static UserEntity from(User user) {
         return UserEntity.builder()
                 .id(user.getId())
@@ -106,6 +113,7 @@ public class UserEntity extends BaseTimeEntity {
                 .authority(user.getAuthority())
                 .reported(user.isReported())
                 .club(ClubEntity.from(user.getClub()))
+                .deletedAt(user.getDeletedAt())
                 .build();
     }
 
@@ -130,6 +138,7 @@ public class UserEntity extends BaseTimeEntity {
                 .club(this.club.toModel())
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getModifiedAt())
+                .deletedAt(this.deletedAt)
                 .build();
     }
 }

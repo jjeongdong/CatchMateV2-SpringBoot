@@ -3,7 +3,6 @@ package com.back.catchmate.application.chat.service;
 import com.back.catchmate.application.chat.dto.ChatMessageCacheDto;
 import com.back.catchmate.application.chat.dto.ChatMessageListDto;
 import com.back.catchmate.chat.enums.MessageType;
-import com.back.catchmate.domain.board.model.Board;
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.chat.model.ChatRoom;
 import com.back.catchmate.domain.chat.model.ChatRoomMember;
@@ -34,14 +33,6 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatSequencePort chatSequencePort;
-
-    public ChatRoom getOrCreateChatRoom(Board board) {
-        return chatRoomRepository.findByBoardId(board.getId())
-                .orElseGet(() -> {
-                    ChatRoom newChatRoom = ChatRoom.createChatRoom(board);
-                    return chatRoomRepository.save(newChatRoom);
-                });
-    }
 
     @Transactional
     public ChatMessage saveMessage(Long chatRoomId, User sender, String content, MessageType messageType) {

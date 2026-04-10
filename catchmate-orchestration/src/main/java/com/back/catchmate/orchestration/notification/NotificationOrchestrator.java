@@ -1,19 +1,5 @@
 package com.back.catchmate.orchestration.notification;
 
-import com.back.catchmate.application.notification.service.NotificationRetryService;
-import com.back.catchmate.application.notification.service.NotificationService;
-import com.back.catchmate.domain.common.page.DomainPage;
-import com.back.catchmate.domain.common.page.DomainPageable;
-import com.back.catchmate.domain.notification.model.Notification;
-import com.back.catchmate.orchestration.common.PagedResponse;
-import com.back.catchmate.orchestration.notification.dto.response.NotificationResponse;
-import com.back.catchmate.orchestration.notification.dto.response.UnreadNotificationResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-
 import com.back.catchmate.application.enroll.service.EnrollService;
 import com.back.catchmate.application.notification.service.NotificationRetryService;
 import com.back.catchmate.application.notification.service.NotificationService;
@@ -32,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -50,9 +35,9 @@ public class NotificationOrchestrator {
 
         AcceptStatus acceptStatus = null;
         if (notification.getType() == AlarmType.ENROLL && notification.getTargetId() != null) {
-            try {
-                acceptStatus = enrollService.getEnroll(notification.getTargetId()).getAcceptStatus();
-            } catch (Exception ignored) {}
+            acceptStatus = enrollService.findEnrollById(notification.getTargetId())
+                    .map(Enroll::getAcceptStatus)
+                    .orElse(null);
         }
 
         // 2. DTO 변환 및 반환

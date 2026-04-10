@@ -3,6 +3,7 @@ package com.back.catchmate.infrastructure.notification.sender;
 import com.back.catchmate.domain.notification.port.NotificationSenderPort;
 import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
 import com.google.firebase.messaging.*;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.retry.annotation.Backoff;
@@ -19,6 +20,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FcmNotificationSender implements NotificationSenderPort {
     private final UserOnlineStatusPort userOnlineStatusPort;
+    private final MeterRegistry meterRegistry;
 
     /**
      * [재시도 진입점]
@@ -101,6 +103,6 @@ public class FcmNotificationSender implements NotificationSenderPort {
     @Recover
     public void recover(RuntimeException e, Long userId, String token, String title, String body, Map<String, String> data) {
         log.error("FCM 푸시 전송 최종 실패 (User: {}) - {}", userId, e.getMessage());
-        // failedPushRepository.save(...);
+        meterRegistry.counter("notification.fcm.send.failure", "type", "retry_exhausted").increment();
     }
 }

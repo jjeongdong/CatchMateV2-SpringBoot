@@ -16,10 +16,10 @@ public class UserAlarmSettingsResponse {
 
     public static UserAlarmSettingsResponse from(User user) {
         return UserAlarmSettingsResponse.builder()
-                .allAlarm(user.getAllAlarm() == 'Y')
-                .chatAlarm(user.getChatAlarm() == 'Y')
-                .enrollAlarm(user.getEnrollAlarm() == 'Y')
-                .eventAlarm(user.getEventAlarm() == 'Y')
+                .allAlarm(user.isAllAlarmEnabled())
+                .chatAlarm(user.isChatAlarmEnabled())
+                .enrollAlarm(user.isEnrollAlarmEnabled())
+                .eventAlarm(user.isEventAlarmEnabled())
                 .build();
     }
 }

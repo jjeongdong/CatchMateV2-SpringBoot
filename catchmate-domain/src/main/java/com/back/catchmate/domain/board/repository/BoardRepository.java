@@ -2,6 +2,7 @@ package com.back.catchmate.domain.board.repository;
 
 import com.back.catchmate.domain.board.dto.BoardSearchCondition;
 import com.back.catchmate.domain.board.model.Board;
+import com.back.catchmate.domain.common.page.CursorPage;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
 
@@ -24,6 +25,8 @@ public interface BoardRepository {
     DomainPage<Board> findAll(DomainPageable pageable);
 
     DomainPage<Board> findAllByCondition(BoardSearchCondition condition, DomainPageable pageable);
+
+    CursorPage<Board> findAllByConditionWithCursor(BoardSearchCondition condition, int size);
 
     DomainPage<Board> findAllByUserId(Long userId, DomainPageable pageable);
 

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 public class NotificationScheduler {
     private final NotificationOrchestrator notificationOrchestrator;
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelayString = "${notification.outbox.scheduler-delay-ms:60000}")
     public void processPendingPush() {
         notificationOrchestrator.processPendingNotifications();
     }

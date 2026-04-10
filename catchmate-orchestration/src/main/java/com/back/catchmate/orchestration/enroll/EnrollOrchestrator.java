@@ -3,6 +3,7 @@ package com.back.catchmate.orchestration.enroll;
 import com.back.catchmate.application.board.service.BoardService;
 import com.back.catchmate.application.bookmark.service.BookmarkService;
 import com.back.catchmate.application.chat.service.ChatRoomMemberService;
+import com.back.catchmate.application.chat.service.ChatRoomService;
 import com.back.catchmate.application.chat.service.ChatService;
 import com.back.catchmate.application.enroll.event.EnrollNotificationEvent;
 import com.back.catchmate.application.enroll.service.EnrollService;
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EnrollOrchestrator {
     private final ChatService chatService;
+    private final ChatRoomService chatRoomService;
     private final UserService userService;
     private final BoardService boardService;
     private final EnrollService enrollService;
@@ -162,7 +164,7 @@ public class EnrollOrchestrator {
         enrollService.updateEnroll(enroll);
 
         // 채팅방 처리
-        ChatRoom chatRoom = chatService.getOrCreateChatRoom(board);
+        ChatRoom chatRoom = chatRoomService.getOrCreateChatRoom(board);
         chatRoomMemberService.addMember(chatRoom, enroll.getUser());
 
         // FCM 알림 발송

@@ -39,3 +39,4 @@ out/
 /catchmate-boot/src/main/resources/application-dev.yml
 /catchmate-boot/src/main/resources/firebase-adminsdk.json
 /docker-compose.yml
+.mcp.json

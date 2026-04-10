@@ -1,7 +1,11 @@
-package com.back.catchmate.domain.board.model; // 패키지는 프로젝트 구조에 맞게 조정하세요.
+package com.back.catchmate.domain.board.model;
 
+import com.back.catchmate.domain.enroll.model.Enroll;
+import com.back.catchmate.domain.user.model.User;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Optional;
 
 @Getter
 @RequiredArgsConstructor
@@ -11,5 +15,20 @@ public enum BoardButtonStatus {
     CANCEL("신청 취소"),
     REJECTED("거절됨");
 
-    private final String description; // 필요 시 클라이언트에게 상태에 대한 설명을 내려줄 때 활용 가능
+    private final String description;
+
+    public static BoardButtonStatus resolve(User requestingUser, Board board, Optional<Enroll> enrollOptional) {
+        if (board.getUser().getId().equals(requestingUser.getId())) {
+            return VIEW_CHAT;
+        }
+        if (enrollOptional.isEmpty()) {
+            return APPLY;
+        }
+        return switch (enrollOptional.get().getAcceptStatus()) {
+            case ACCEPTED -> VIEW_CHAT;
+            case PENDING -> CANCEL;
+            case REJECTED -> REJECTED;
+            default -> APPLY;
+        };
+    }
 }

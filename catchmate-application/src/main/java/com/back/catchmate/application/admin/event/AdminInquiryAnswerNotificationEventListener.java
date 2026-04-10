@@ -43,7 +43,7 @@ public class AdminInquiryAnswerNotificationEventListener {
         notificationService.createNotification(notification);
 
         // 2. 푸시 발송을 위한 아웃박스 저장
-        if (recipient.getFcmToken() != null && recipient.getEventAlarm() == 'Y') {
+        if (recipient.getFcmToken() != null && recipient.isEventAlarmEnabled()) {
             Map<String, String> data = Map.of(
                     "type", event.type(),
                     "inquiryId", inquiry.getId().toString()
@@ -67,7 +67,7 @@ public class AdminInquiryAnswerNotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleInquiryNotification(AdminInquiryAnswerNotificationEvent event) {
         User recipient = event.recipient();
-        if (recipient.getEventAlarm() == 'Y') {
+        if (recipient.isEventAlarmEnabled()) {
             notificationRetryService.sendPendingOutboxImmediately(recipient.getId());
         }
     }

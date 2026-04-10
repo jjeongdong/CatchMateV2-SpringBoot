@@ -6,6 +6,7 @@ import com.back.catchmate.domain.notification.repository.NotificationOutboxRepos
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +22,8 @@ public class NotificationRetryService {
     private final NotificationSenderPort notificationSenderPort;
     private final ObjectMapper objectMapper;
 
-    private static final int MAX_RETRY_COUNT = 5;
+    @Value("${notification.outbox.max-retry-count:5}")
+    private int maxRetryCount;
 
     @Transactional
     public void saveOutbox(Long recipientId, String token, String title, String body, Map<String, String> data) {
@@ -43,7 +45,7 @@ public class NotificationRetryService {
 
     public void processPendingNotifications() {
         // 1. 데이터 선점 (트랜잭션 내에서 처리하여 다른 서버가 못 가져가게 함)
-        List<NotificationOutbox> claimList = outboxUpdater.claimPendingNotifications(MAX_RETRY_COUNT);
+        List<NotificationOutbox> claimList = outboxUpdater.claimPendingNotifications(maxRetryCount);
 
         if (claimList.isEmpty()) return;
         
@@ -73,7 +75,7 @@ public class NotificationRetryService {
         } catch (Exception e) {
             log.warn("알림 발송 실패 (ID: {}) - 재시도 카운트 증가", outbox.getId());
             // 4. 실패 처리 (재시도 횟수 초과 시 FAILED, 아니면 다시 PENDING으로 돌려보낼지 결정)
-            outboxUpdater.updateStatusFailure(outbox, MAX_RETRY_COUNT);
+            outboxUpdater.updateStatusFailure(outbox, maxRetryCount);
         }
     }
 }

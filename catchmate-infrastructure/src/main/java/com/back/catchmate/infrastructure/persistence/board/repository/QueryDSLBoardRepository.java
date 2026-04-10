@@ -101,4 +101,76 @@ public class QueryDSLBoardRepository {
 
         return new PageImpl<>(content, pageable, totalElements);
     }
+
+    /**
+     * No-Offset 커서 기반 조회 — offset() 없이 WHERE 조건으로 다음 페이지를 결정합니다.
+     * fetchSize = size + 1 로 호출하면 hasNext 판단을 호출자(BoardRepositoryImpl)에서 처리할 수 있습니다.
+     */
+    public List<BoardEntity> findAllByConditionWithCursor(BoardSearchCondition condition, int fetchSize) {
+        QClubEntity cheerClub = new QClubEntity("cheerClub");
+        QClubEntity homeClub  = new QClubEntity("homeClub");
+        QClubEntity awayClub  = new QClubEntity("awayClub");
+
+        BooleanBuilder builder = new BooleanBuilder();
+
+        // @SQLRestriction("deleted_at IS NULL")이 자동 적용되므로 중복 조건 불필요
+        builder.and(boardEntity.completed.isTrue());
+
+        if (condition.getMaxPerson() != null) {
+            builder.and(boardEntity.maxPerson.eq(condition.getMaxPerson()));
+        }
+
+        if (condition.getPreferredTeamIdList() != null && !condition.getPreferredTeamIdList().isEmpty()) {
+            builder.and(boardEntity.cheerClub.id.in(condition.getPreferredTeamIdList()));
+        }
+
+        if (condition.getGameDate() != null) {
+            builder.and(boardEntity.game.gameStartDate.goe(condition.getGameDate().atStartOfDay()));
+            builder.and(boardEntity.game.gameStartDate.lt(condition.getGameDate().plusDays(1).atStartOfDay()));
+        }
+
+        if (condition.getBlockedUserIds() != null && !condition.getBlockedUserIds().isEmpty()) {
+            builder.and(boardEntity.user.id.notIn(condition.getBlockedUserIds()));
+        }
+
+        // 복합 커서 조건: liftUpDate < last OR (liftUpDate = last AND boardId < lastId)
+        if (condition.getLastLiftUpDate() != null && condition.getLastBoardId() != null) {
+            BooleanBuilder cursorCond = new BooleanBuilder();
+            cursorCond.or(boardEntity.liftUpDate.lt(condition.getLastLiftUpDate()));
+            cursorCond.or(
+                    boardEntity.liftUpDate.eq(condition.getLastLiftUpDate())
+                            .and(boardEntity.id.lt(condition.getLastBoardId()))
+            );
+            builder.and(cursorCond);
+        }
+
+        JPAQuery<Long> idQuery = jpaQueryFactory
+                .select(boardEntity.id)
+                .from(boardEntity);
+
+        if (condition.getGameDate() != null) {
+            idQuery.join(boardEntity.game, gameEntity);
+        }
+
+        List<Long> boardIds = idQuery
+                .where(builder)
+                .orderBy(boardEntity.liftUpDate.desc(), boardEntity.id.desc())
+                .limit(fetchSize)
+                .fetch();
+
+        if (boardIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return jpaQueryFactory
+                .selectFrom(boardEntity)
+                .leftJoin(boardEntity.game, gameEntity).fetchJoin()
+                .leftJoin(boardEntity.cheerClub, cheerClub).fetchJoin()
+                .leftJoin(boardEntity.game.homeClub, homeClub).fetchJoin()
+                .leftJoin(boardEntity.game.awayClub, awayClub).fetchJoin()
+                .leftJoin(boardEntity.user, userEntity).fetchJoin()
+                .where(boardEntity.id.in(boardIds))
+                .orderBy(boardEntity.liftUpDate.desc(), boardEntity.id.desc())
+                .fetch();
+    }
 }

@@ -13,6 +13,7 @@ import com.back.catchmate.domain.board.model.Board;
 import com.back.catchmate.domain.board.model.BoardButtonStatus;
 import com.back.catchmate.domain.chat.model.ChatRoom;
 import com.back.catchmate.domain.club.model.Club;
+import com.back.catchmate.domain.common.page.CursorPage;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.enroll.model.Enroll;
@@ -31,6 +32,7 @@ import com.back.catchmate.orchestration.board.dto.response.BoardLiftUpResponse;
 import com.back.catchmate.orchestration.board.dto.response.BoardResponse;
 import com.back.catchmate.orchestration.board.dto.response.BoardTempDetailResponse;
 import com.back.catchmate.orchestration.board.dto.response.BoardUpdateResponse;
+import com.back.catchmate.orchestration.common.CursorPagedResponse;
 import com.back.catchmate.orchestration.common.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -97,7 +99,7 @@ public class BoardOrchestrator {
         boolean isBookMarked = bookmarkService.isBookmarked(userId, boardId);
 
         Optional<Enroll> myEnroll = enrollService.findEnrollByUserAndBoard(user, board);
-        BoardButtonStatus buttonStatus = getButtonStatus(user, board, myEnroll);
+        BoardButtonStatus buttonStatus = BoardButtonStatus.resolve(user, board, myEnroll);
         Long myEnrollId = myEnroll.map(Enroll::getId).orElse(null);
 
         Long chatRoomId = board.isCompleted()
@@ -107,20 +109,23 @@ public class BoardOrchestrator {
         return BoardDetailResponse.from(board, isBookMarked, buttonStatus, myEnrollId, chatRoomId);
     }
 
-    public PagedResponse<BoardResponse> getBoardList(Long userId, LocalDate gameDate, Integer maxPerson, List<Long> preferredTeamIdList, int page, int size) {
+    public CursorPagedResponse<BoardResponse> getBoardList(Long userId, LocalDate gameDate, Integer maxPerson,
+                                                           List<Long> preferredTeamIdList,
+                                                           LocalDateTime lastLiftUpDate, Long lastBoardId, int size) {
         User user = userService.getUser(userId);
         List<Long> blockedUserIds = blockService.getBlockedUserIds(user);
 
-        BoardSearchCondition condition = BoardSearchCondition.of(
+        BoardSearchCondition condition = BoardSearchCondition.ofCursor(
                 userId,
                 gameDate,
                 maxPerson,
                 preferredTeamIdList,
-                blockedUserIds
+                blockedUserIds,
+                lastLiftUpDate,
+                lastBoardId
         );
 
-        DomainPageable domainPageable = DomainPageable.of(page, size);
-        DomainPage<Board> boardPage = boardService.getBoardList(condition, domainPageable);
+        CursorPage<Board> boardPage = boardService.getBoardListWithCursor(condition, size);
 
         List<Long> boardIds = boardPage.getContent().stream()
                 .map(Board::getId)
@@ -131,13 +136,10 @@ public class BoardOrchestrator {
         );
 
         List<BoardResponse> boardResponses = boardPage.getContent().stream()
-                .map(board -> {
-                    boolean isBookMarked = myBookmarkedBoardIds.contains(board.getId());
-                    return BoardResponse.from(board, isBookMarked);
-                })
+                .map(board -> BoardResponse.from(board, myBookmarkedBoardIds.contains(board.getId())))
                 .toList();
 
-        return new PagedResponse<>(boardPage, boardResponses);
+        return new CursorPagedResponse<>(boardPage, boardResponses);
     }
 
     public PagedResponse<BoardResponse> getBoardListByUserId(Long targetUserId, Long loginUserId, int page, int size) {
@@ -151,11 +153,16 @@ public class BoardOrchestrator {
         DomainPageable domainPageable = DomainPageable.of(page, size);
         DomainPage<Board> boardPage = boardService.getBoardListByUserId(targetUserId, domainPageable);
 
+        List<Long> boardIds = boardPage.getContent().stream()
+                .map(Board::getId)
+                .toList();
+
+        Set<Long> myBookmarkedBoardIds = new HashSet<>(
+                bookmarkService.findBookmarkedBoardIds(loginUser, boardIds)
+        );
+
         List<BoardResponse> responses = boardPage.getContent().stream()
-                .map(board -> {
-                    boolean isBookMarked = bookmarkService.isBookmarked(loginUserId, board.getId());
-                    return BoardResponse.from(board, isBookMarked);
-                })
+                .map(board -> BoardResponse.from(board, myBookmarkedBoardIds.contains(board.getId())))
                 .toList();
 
         return new PagedResponse<>(boardPage, responses);
@@ -226,30 +233,22 @@ public class BoardOrchestrator {
 
     private Game getGame(GameCreateCommand command) {
         if (command == null) return null;
-        if (command.getGameStartDate() != null || command.getHomeClubId() != null ||
-                command.getAwayClubId() != null || command.getLocation() != null) {
-
-            if (command.getHomeClubId() != null && command.getAwayClubId() != null && command.getGameStartDate() != null) {
-                return fetchGame(command.getHomeClubId(), command.getAwayClubId(), command.getGameStartDate(), command.getLocation());
-            } else {
-                return createPartialGame(command.getGameStartDate(), command.getLocation(), command.getHomeClubId(), command.getAwayClubId());
-            }
-        }
-        return null;
+        return resolveGame(command.getHomeClubId(), command.getAwayClubId(), command.getGameStartDate(), command.getLocation());
     }
 
     private Game getGame(GameUpdateCommand command) {
         if (command == null) return null;
-        if (command.getGameStartDate() != null || command.getHomeClubId() != null ||
-                command.getAwayClubId() != null || command.getLocation() != null) {
+        return resolveGame(command.getHomeClubId(), command.getAwayClubId(), command.getGameStartDate(), command.getLocation());
+    }
 
-            if (command.getHomeClubId() != null && command.getAwayClubId() != null && command.getGameStartDate() != null) {
-                return fetchGame(command.getHomeClubId(), command.getAwayClubId(), command.getGameStartDate(), command.getLocation());
-            } else {
-                return createPartialGame(command.getGameStartDate(), command.getLocation(), command.getHomeClubId(), command.getAwayClubId());
-            }
+    private Game resolveGame(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {
+        if (gameStartDate == null && homeClubId == null && awayClubId == null && location == null) {
+            return null;
         }
-        return null;
+        if (homeClubId != null && awayClubId != null && gameStartDate != null) {
+            return fetchGame(homeClubId, awayClubId, gameStartDate, location);
+        }
+        return createPartialGame(gameStartDate, location, homeClubId, awayClubId);
     }
 
     private Game fetchGame(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {
@@ -264,24 +263,4 @@ public class BoardOrchestrator {
         return gameService.savePartialGame(gameStartDate, location, homeClub, awayClub);
     }
 
-    private BoardButtonStatus getButtonStatus(User user, Board board, Optional<Enroll> enrollOptional) {
-        // 내가 작성한 글인 경우
-        if (board.getUser().getId().equals(user.getId())) {
-            return BoardButtonStatus.VIEW_CHAT;
-        }
-
-        // 신청 기록이 없는 경우
-        if (enrollOptional.isEmpty()) {
-            return BoardButtonStatus.APPLY;
-        }
-
-        // 신청 기록이 있는 경우 상태에 따라 분기
-        Enroll enroll = enrollOptional.get();
-        return switch (enroll.getAcceptStatus()) {
-            case ACCEPTED -> BoardButtonStatus.VIEW_CHAT;
-            case PENDING -> BoardButtonStatus.CANCEL;
-            case REJECTED -> BoardButtonStatus.REJECTED;
-            default -> BoardButtonStatus.APPLY;
-        };
-    }
 }

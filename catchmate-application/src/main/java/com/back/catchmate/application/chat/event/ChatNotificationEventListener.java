@@ -36,7 +36,7 @@ public class ChatNotificationEventListener {
     public void saveNotification(ChatNotificationEvent event) {
         Map<String, String> payload = createNotificationData(event);
         for (User recipient : event.recipients()) {
-            if (recipient.getChatAlarm() != 'Y') continue;
+            if (!recipient.isChatAlarmEnabled()) continue;
             // 아웃박스에 PENDING 상태로 저장 (트랜잭션 내)
             notificationRetryService.saveOutbox(
                     recipient.getId(),
@@ -59,7 +59,7 @@ public class ChatNotificationEventListener {
         Long messageRoomId = event.chatMessage().getChatRoom().getId();
 
         for (User recipient : event.recipients()) {
-            if (recipient.getChatAlarm() != 'Y') continue;
+            if (!recipient.isChatAlarmEnabled()) continue;
 
             boolean isOnline = userOnlineStatusPort.isUserOnline(recipient.getId());
             Long focusRoomId = userOnlineStatusPort.getUserFocusRoom(recipient.getId());

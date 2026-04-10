@@ -3,11 +3,13 @@ package com.back.catchmate.orchestration.user;
 import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 사용자 온라인 상태 관리 Orchestrator (Orchestration 레이어에서 트랜잭션/조립 책임)
  */
 @Component
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserOnlineStatusOrchestrator {
     private final UserOnlineStatusPort userOnlineStatusPort;

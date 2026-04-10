@@ -5,13 +5,17 @@ import com.back.catchmate.infrastructure.global.BaseTimeEntity;
 import com.back.catchmate.notifications.enums.OutboxStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@Builder
 @Table(name = "notification_outbox")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class NotificationOutboxEntity extends BaseTimeEntity {
 
     @Id
@@ -33,16 +37,16 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
 
     // Domain -> Entity 변환
     public static NotificationOutboxEntity from(NotificationOutbox domain) {
-        NotificationOutboxEntity entity = new NotificationOutboxEntity();
-        entity.id = domain.getId();
-        entity.recipientId = domain.getRecipientId();
-        entity.fcmToken = domain.getFcmToken();
-        entity.title = domain.getTitle();
-        entity.body = domain.getBody();
-        entity.payload = domain.getPayload();
-        entity.retryCount = domain.getRetryCount();
-        entity.status = domain.getStatus();
-        return entity;
+        return NotificationOutboxEntity.builder()
+                .id(domain.getId())
+                .recipientId(domain.getRecipientId())
+                .fcmToken(domain.getFcmToken())
+                .title(domain.getTitle())
+                .body(domain.getBody())
+                .payload(domain.getPayload())
+                .retryCount(domain.getRetryCount())
+                .status(domain.getStatus())
+                .build();
     }
 
     // Entity -> Domain 변환

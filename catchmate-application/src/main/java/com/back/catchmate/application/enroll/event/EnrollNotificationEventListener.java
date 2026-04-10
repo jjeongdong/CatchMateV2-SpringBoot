@@ -45,7 +45,7 @@ public class EnrollNotificationEventListener {
 
         // 2. 푸시 발송을 위한 아웃박스 저장
         User recipient = event.recipient();
-        if (recipient.getEnrollAlarm() == 'Y' && recipient.getFcmToken() != null) {
+        if (recipient.isEnrollAlarmEnabled() && recipient.getFcmToken() != null) {
             Map<String, String> payload = createNotificationData(event);
             notificationRetryService.saveOutbox(
                     recipient.getId(),
@@ -64,7 +64,7 @@ public class EnrollNotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleEnrollNotification(EnrollNotificationEvent event) {
         User recipient = event.recipient();
-        if (recipient.getEnrollAlarm() != 'Y') return;
+        if (!recipient.isEnrollAlarmEnabled()) return;
 
         Map<String, String> payload = createNotificationData(event);
         boolean isOnline = userOnlineStatusPort.isUserOnline(recipient.getId());

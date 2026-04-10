@@ -1,3 +1,14 @@
 spring:
   profiles:
     active: local
+
+notification:
+  outbox:
+    max-retry-count: 5
+    scheduler-delay-ms: 60000
+
+async:
+  executor:
+    core-pool-size: 10
+    max-pool-size: 50
+    queue-capacity: 100

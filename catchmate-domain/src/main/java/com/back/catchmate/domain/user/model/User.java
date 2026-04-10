@@ -102,6 +102,11 @@ public class User implements ResourceOwnership {
         }
     }
 
+    public boolean isAllAlarmEnabled()    { return 'Y' == this.allAlarm; }
+    public boolean isChatAlarmEnabled()   { return 'Y' == this.chatAlarm; }
+    public boolean isEnrollAlarmEnabled() { return 'Y' == this.enrollAlarm; }
+    public boolean isEventAlarmEnabled()  { return 'Y' == this.eventAlarm; }
+
     public void deleteFcmToken() {
         this.fcmToken = null;
     }

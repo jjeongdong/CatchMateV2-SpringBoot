@@ -12,12 +12,14 @@ import com.back.catchmate.orchestration.board.dto.response.BoardLiftUpResponse;
 import com.back.catchmate.orchestration.board.dto.response.BoardResponse;
 import com.back.catchmate.orchestration.board.dto.response.BoardTempDetailResponse;
 import com.back.catchmate.orchestration.board.dto.response.BoardUpdateResponse;
+import com.back.catchmate.orchestration.common.CursorPagedResponse;
 import com.back.catchmate.orchestration.common.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Tag(name = "[사용자] 게시글 관련 API")
@@ -65,19 +68,24 @@ public class BoardController {
     }
 
     @GetMapping
-    @Operation(summary = "게시글 목록 조회")
-    public ResponseEntity<PagedResponse<BoardResponse>> getBoardList(@Parameter(hidden = true) @AuthUser Long userId,
-                                                                     @RequestParam(required = false) LocalDate gameDate,
-                                                                     @RequestParam(required = false) Integer maxPerson,
-                                                                     @RequestParam(required = false) List<Long> preferredTeamIdList,
-                                                                     @RequestParam(defaultValue = "0") int page,
-                                                                     @RequestParam(defaultValue = "10") int size) {
-        PagedResponse<BoardResponse> response = boardOrchestrator.getBoardList(
+    @Operation(summary = "게시글 목록 조회 (무한스크롤)",
+            description = "첫 페이지는 커서 없이 요청. 이후 응답의 nextCursorDateTime, nextCursorId를 파라미터로 전달.")
+    public ResponseEntity<CursorPagedResponse<BoardResponse>> getBoardList(
+            @Parameter(hidden = true) @AuthUser Long userId,
+            @RequestParam(required = false) LocalDate gameDate,
+            @RequestParam(required = false) Integer maxPerson,
+            @RequestParam(required = false) List<Long> preferredTeamIdList,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastLiftUpDate,
+            @RequestParam(required = false) Long lastBoardId,
+            @RequestParam(defaultValue = "10") int size) {
+        CursorPagedResponse<BoardResponse> response = boardOrchestrator.getBoardList(
                 userId,
                 gameDate,
                 maxPerson,
                 preferredTeamIdList,
-                page,
+                lastLiftUpDate,
+                lastBoardId,
                 size
         );
         return ResponseEntity.ok(response);
