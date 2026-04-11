@@ -1,6 +1,9 @@
 server:
   shutdown: graceful
 
+cache:
+  enabled: false
+
 spring:
   profiles:
     active: dev
