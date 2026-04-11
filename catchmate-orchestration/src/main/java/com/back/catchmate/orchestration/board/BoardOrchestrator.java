@@ -142,6 +142,32 @@ public class BoardOrchestrator {
         return new CursorPagedResponse<>(boardPage, boardResponses);
     }
 
+    public PagedResponse<BoardResponse> getBoardListWithOffset(Long userId, int page, int size) {
+        User user = userService.getUser(userId);
+        List<Long> blockedUserIds = blockService.getBlockedUserIds(user);
+
+        BoardSearchCondition condition = BoardSearchCondition.of(
+                userId, null, null, null, blockedUserIds
+        );
+
+        DomainPageable domainPageable = DomainPageable.of(page, size);
+        DomainPage<Board> boardPage = boardService.getBoardList(condition, domainPageable);
+
+        List<Long> boardIds = boardPage.getContent().stream()
+                .map(Board::getId)
+                .toList();
+
+        Set<Long> myBookmarkedBoardIds = new HashSet<>(
+                bookmarkService.findBookmarkedBoardIds(user, boardIds)
+        );
+
+        List<BoardResponse> boardResponses = boardPage.getContent().stream()
+                .map(board -> BoardResponse.from(board, myBookmarkedBoardIds.contains(board.getId())))
+                .toList();
+
+        return new PagedResponse<>(boardPage, boardResponses);
+    }
+
     public PagedResponse<BoardResponse> getBoardListByUserId(Long targetUserId, Long loginUserId, int page, int size) {
         User targetUser = userService.getUser(targetUserId);
         User loginUser = userService.getUser(loginUserId);

@@ -91,6 +91,15 @@ public class BoardController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/offset")
+    @Operation(summary = "[테스트용] OFFSET 기반 게시글 목록 조회")
+    public ResponseEntity<PagedResponse<BoardResponse>> getBoardListWithOffset(
+            @Parameter(hidden = true) @AuthUser Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(boardOrchestrator.getBoardListWithOffset(userId, page, size));
+    }
+
     @Operation(summary = "유저별 게시글 조회")
     @GetMapping("/users/{userId}")
     public ResponseEntity<PagedResponse<BoardResponse>> getBoardListByUserId(@PathVariable Long userId,
