@@ -1,6 +1,7 @@
 package com.back.catchmate.global.config.security;
 
 import com.back.catchmate.orchestration.auth.AuthOrchestrator;
+import com.back.catchmate.orchestration.chat.ChatOrchestrator;
 import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private final AuthOrchestrator authOrchestrator;
+    private final ChatOrchestrator chatOrchestrator;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -88,11 +90,11 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                         throw new BaseException(ErrorCode.SOCKET_CONNECT_FAILED);
                     }
 
-//                    boolean participant = chatUseCase.canAccessChatRoom(userId, chatRoomId);
-//                    if (!participant) {
-//                        log.warn("User {} tried to subscribe to chatRoom {} without participation", userId, chatRoomId);
-//                        throw new BaseException(ErrorCode.USER_CHATROOM_NOT_FOUND);
-//                    }
+                    boolean participant = chatOrchestrator.canAccessChatRoom(userId, chatRoomId);
+                    if (!participant) {
+                        log.warn("User {} tried to subscribe to chatRoom {} without participation", userId, chatRoomId);
+                        throw new BaseException(ErrorCode.USER_CHATROOM_NOT_FOUND);
+                    }
 
                 } catch (NumberFormatException e) {
                     log.warn("Invalid chatRoomId in destination: {}", dest);

@@ -31,6 +31,7 @@ public enum ErrorCode {
     ENROLL_REJECT_INVALID(HttpStatus.BAD_REQUEST, "직관 신청을 거절할 권한이 없습니다."),
     ENROLL_GET_INVALID(HttpStatus.BAD_REQUEST, "직관 신청을 조회할 권한이 없습니다."),
     ENROLL_ALREADY_RESPOND(HttpStatus.BAD_REQUEST, "이미 수락된 신청입니다."),
+    DUPLICATE_ENROLL_ACCEPT_REQUEST(HttpStatus.BAD_REQUEST, "이미 처리 중인 수락 요청입니다."),
 
     // 게시글
     BOARD_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다."),
@@ -58,6 +59,7 @@ public enum ErrorCode {
 
     // 알림
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 알림입니다."),
+    NOTIFICATION_OUTBOX_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "알림 아웃박스 저장에 실패했습니다."),
     EMPTY_FCM_RESPONSE(HttpStatus.BAD_REQUEST, "알림 데이터가 존재하지 않습니다."),
     FCM_TOPIC_SEND_BAD_REQUEST(HttpStatus.BAD_REQUEST, "토픽 알람 전송중 에러가 발생했습니다."),
     FCM_TOKEN_SEND_BAD_REQUEST(HttpStatus.BAD_REQUEST, "토픽 알람 전송중 에러가 발생했습니다."),

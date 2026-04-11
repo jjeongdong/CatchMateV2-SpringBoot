@@ -6,6 +6,7 @@ import com.back.catchmate.application.notification.service.NotificationService;
 import com.back.catchmate.domain.notification.model.Notification;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
+import com.back.catchmate.notifications.enums.NotificationChannel;
 import com.back.catchmate.user.enums.AlarmType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,7 @@ public class EnrollNotificationEventListener {
             notificationRetryService.saveOutbox(
                     recipient.getId(),
                     recipient.getFcmToken(),
+                    NotificationChannel.FCM,
                     event.title(),
                     event.body(),
                     payload
@@ -60,7 +62,7 @@ public class EnrollNotificationEventListener {
     /**
      * 커밋 후 즉시 발송 시도 (Best effort)
      */
-    @Async
+    @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleEnrollNotification(EnrollNotificationEvent event) {
         User recipient = event.recipient();

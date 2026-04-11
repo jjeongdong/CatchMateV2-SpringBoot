@@ -6,6 +6,7 @@ import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.chat.model.ChatRoom;
 import com.back.catchmate.domain.chat.model.ChatRoomMember;
+import com.back.catchmate.domain.chat.port.ChatHistoryCachePort;
 import com.back.catchmate.domain.chat.port.ChatSequencePort;
 import com.back.catchmate.domain.chat.repository.ChatMessageRepository;
 import com.back.catchmate.domain.chat.repository.ChatRoomMemberRepository;
@@ -33,6 +34,7 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatSequencePort chatSequencePort;
+    private final ChatHistoryCachePort chatHistoryCachePort;
 
     @Transactional
     public ChatMessage saveMessage(Long chatRoomId, User sender, String content, MessageType messageType) {
@@ -50,7 +52,9 @@ public class ChatService {
                 sequence
         );
         updateReadSequence(chatRoomId, sequence, sender.getId());
-        return chatMessageRepository.save(chatMessage);
+        ChatMessage saved = chatMessageRepository.save(chatMessage);
+        chatHistoryCachePort.evictLatestPage(chatRoomId);
+        return saved;
     }
 
     @Async

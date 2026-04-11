@@ -2,6 +2,7 @@ package com.back.catchmate.infrastructure.persistence.notification.entity;
 
 import com.back.catchmate.domain.notification.model.NotificationOutbox;
 import com.back.catchmate.infrastructure.global.BaseTimeEntity;
+import com.back.catchmate.notifications.enums.NotificationChannel;
 import com.back.catchmate.notifications.enums.OutboxStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -23,7 +24,14 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
     private Long id;
 
     private Long recipientId;
-    private String fcmToken;
+
+    @Column(name = "fcm_token")
+    private String recipientAddress;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "channel")
+    private NotificationChannel channel;
+
     private String title;
     private String body;
 
@@ -40,7 +48,8 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
         return NotificationOutboxEntity.builder()
                 .id(domain.getId())
                 .recipientId(domain.getRecipientId())
-                .fcmToken(domain.getFcmToken())
+                .recipientAddress(domain.getRecipientAddress())
+                .channel(domain.getChannel())
                 .title(domain.getTitle())
                 .body(domain.getBody())
                 .payload(domain.getPayload())
@@ -54,7 +63,8 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
         return NotificationOutbox.builder()
                 .id(this.id)
                 .recipientId(this.recipientId)
-                .fcmToken(this.fcmToken)
+                .recipientAddress(this.recipientAddress)
+                .channel(this.channel)
                 .title(this.title)
                 .body(this.body)
                 .payload(this.payload)

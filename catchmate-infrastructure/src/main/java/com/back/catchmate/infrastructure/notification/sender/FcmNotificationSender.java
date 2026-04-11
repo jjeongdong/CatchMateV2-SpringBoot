@@ -2,6 +2,7 @@ package com.back.catchmate.infrastructure.notification.sender;
 
 import com.back.catchmate.domain.notification.port.NotificationSenderPort;
 import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
+import com.back.catchmate.notifications.enums.NotificationChannel;
 import com.google.firebase.messaging.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
@@ -96,6 +97,11 @@ public class FcmNotificationSender implements NotificationSenderPort {
         }
     }
 
+    @Override
+    public NotificationChannel getChannel() {
+        return NotificationChannel.FCM;
+    }
+
     /**
      * [복구 메서드]
      * 3번의 재시도(Retry)가 모두 실패했을 때 실행됩니다.
@@ -104,5 +110,6 @@ public class FcmNotificationSender implements NotificationSenderPort {
     public void recover(RuntimeException e, Long userId, String token, String title, String body, Map<String, String> data) {
         log.error("FCM 푸시 전송 최종 실패 (User: {}) - {}", userId, e.getMessage());
         meterRegistry.counter("notification.fcm.send.failure", "type", "retry_exhausted").increment();
+        throw e;
     }
 }

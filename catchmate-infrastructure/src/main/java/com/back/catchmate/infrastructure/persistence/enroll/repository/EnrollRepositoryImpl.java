@@ -38,12 +38,6 @@ public class EnrollRepositoryImpl implements EnrollRepository {
     }
 
     @Override
-    public Optional<Enroll> findByIdWithLock(Long id) {
-        return jpaEnrollRepository.findByIdWithPessimisticLock(id)
-                .map(EnrollEntity::toModel);
-    }
-
-    @Override
     public Optional<Enroll> findByUserAndBoard(User user, Board board) {
         return jpaEnrollRepository.findByUserIdAndBoardId(user.getId(), board.getId())
                 .map(EnrollEntity::toModel);

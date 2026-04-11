@@ -5,6 +5,7 @@ import com.back.catchmate.application.notification.service.NotificationService;
 import com.back.catchmate.domain.inquiry.model.Inquiry;
 import com.back.catchmate.domain.notification.model.Notification;
 import com.back.catchmate.domain.user.model.User;
+import com.back.catchmate.notifications.enums.NotificationChannel;
 import com.back.catchmate.user.enums.AlarmType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,7 @@ public class AdminInquiryAnswerNotificationEventListener {
             notificationRetryService.saveOutbox(
                     recipient.getId(),
                     recipient.getFcmToken(),
+                    NotificationChannel.FCM,
                     event.title(),
                     event.body(),
                     data
@@ -63,7 +65,7 @@ public class AdminInquiryAnswerNotificationEventListener {
     /**
      * 커밋 후 즉시 발송 시도
      */
-    @Async
+    @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleInquiryNotification(AdminInquiryAnswerNotificationEvent event) {
         User recipient = event.recipient();

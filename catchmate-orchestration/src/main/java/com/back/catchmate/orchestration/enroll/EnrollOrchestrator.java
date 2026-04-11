@@ -29,9 +29,11 @@ import com.back.catchmate.orchestration.enroll.dto.response.EnrollReceiveRespons
 import com.back.catchmate.orchestration.enroll.dto.response.EnrollRejectResponse;
 import com.back.catchmate.orchestration.enroll.dto.response.EnrollRequestResponse;
 import com.back.catchmate.orchestration.enroll.dto.response.EnrollResponse;
+import com.back.catchmate.domain.common.idempotency.IdempotencyPort;
 import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +57,10 @@ public class EnrollOrchestrator {
     private final BookmarkService bookmarkService;
     private final ChatRoomMemberService chatRoomMemberService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final IdempotencyPort idempotencyPort;
+
+    @Value("${enroll.idempotency.ttl-seconds:10}")
+    private long idempotencyTtlSeconds;
 
     @Transactional
     public EnrollCreateResponse createEnroll(EnrollCreateCommand command) {
@@ -152,7 +158,12 @@ public class EnrollOrchestrator {
 
     @Transactional
     public EnrollAcceptResponse updateEnrollAccept(Long userId, Long enrollId) {
-        Enroll enroll = enrollService.getEnrollWithLock(enrollId);
+        String idempotencyKey = "idempotent:enroll:accept:" + enrollId;
+        if (!idempotencyPort.acquireIfAbsent(idempotencyKey, idempotencyTtlSeconds)) {
+            throw new BaseException(ErrorCode.DUPLICATE_ENROLL_ACCEPT_REQUEST);
+        }
+
+        Enroll enroll = enrollService.getEnroll(enrollId);
         Board board = boardService.getBoardWithLock(enroll.getBoard().getId());
 
         // 비즈니스 로직
@@ -182,7 +193,7 @@ public class EnrollOrchestrator {
 
     @Transactional
     public EnrollRejectResponse updateEnrollReject(Long userId, Long enrollId) {
-        Enroll enroll = enrollService.getEnrollWithLock(enrollId);
+        Enroll enroll = enrollService.getEnroll(enrollId);
         Board board = boardService.getBoardWithLock(enroll.getBoard().getId());
 
         // 비즈니스 로직

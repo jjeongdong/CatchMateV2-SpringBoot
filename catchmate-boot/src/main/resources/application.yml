@@ -1,6 +1,11 @@
+server:
+  shutdown: graceful
+
 spring:
   profiles:
-    active: local
+    active: dev
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 notification:
   outbox:
@@ -12,3 +17,7 @@ async:
     core-pool-size: 10
     max-pool-size: 50
     queue-capacity: 100
+
+enroll:
+  idempotency:
+    ttl-seconds: 10

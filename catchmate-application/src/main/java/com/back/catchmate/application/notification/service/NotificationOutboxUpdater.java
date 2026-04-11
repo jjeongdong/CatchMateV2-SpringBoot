@@ -2,6 +2,7 @@ package com.back.catchmate.application.notification.service;
 
 import com.back.catchmate.domain.notification.model.NotificationOutbox;
 import com.back.catchmate.domain.notification.repository.NotificationOutboxRepository;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -13,6 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NotificationOutboxUpdater {
     private final NotificationOutboxRepository outboxRepository;
+    private final MeterRegistry meterRegistry;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<NotificationOutbox> claimPendingNotifications(int maxRetryCount) {
@@ -35,6 +37,7 @@ public class NotificationOutboxUpdater {
         outbox.incrementRetryCount();
         if (outbox.getRetryCount() >= maxRetryCount) {
             outbox.fail();
+            meterRegistry.counter("notification.outbox.failure", "type", "max_retry_exceeded").increment();
         } else {
             // 다시 PENDING으로 되돌려 다음 주기에 시도할 수 있게 함
             outbox.pending();

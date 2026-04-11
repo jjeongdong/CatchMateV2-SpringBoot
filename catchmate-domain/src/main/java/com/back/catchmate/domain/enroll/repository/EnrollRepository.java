@@ -15,8 +15,6 @@ public interface EnrollRepository {
 
     Optional<Enroll> findById(Long id);
 
-    Optional<Enroll> findByIdWithLock(Long id);
-
     Optional<Enroll> findByIdWithFetch(Long id);
 
     Optional<Enroll> findByUserAndBoard(User user, Board board);

@@ -144,6 +144,10 @@ public class ChatOrchestrator {
                 .orElse(null);
     }
 
+    public boolean canAccessChatRoom(Long userId, Long chatRoomId) {
+        return chatService.validateUserInChatRoom(userId, chatRoomId);
+    }
+
     public List<ChatRoomMemberResponse> getChatRoomMembers(Long chatRoomId) {
         List<ChatRoomMember> activeMembers = chatService.getChatRoomMembers(chatRoomId);
 

@@ -4,6 +4,7 @@ import com.back.catchmate.application.notification.event.NotificationEvent;
 import com.back.catchmate.application.notification.service.NotificationRetryService;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
+import com.back.catchmate.notifications.enums.NotificationChannel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,6 +42,7 @@ public class ChatNotificationEventListener {
             notificationRetryService.saveOutbox(
                     recipient.getId(),
                     recipient.getFcmToken(),
+                    NotificationChannel.FCM,
                     event.title(),
                     event.body(),
                     payload
@@ -52,7 +54,7 @@ public class ChatNotificationEventListener {
      * 커밋 후 즉시 전송 시도 (선택 사항, 성능을 위해 비동기 처리)
      * 여기서 실패해도 스케줄러가 처리할 것이므로 안전함
      */
-    @Async
+    @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleChatNotification(ChatNotificationEvent event) {
         Map<String, String> payload = createNotificationData(event);

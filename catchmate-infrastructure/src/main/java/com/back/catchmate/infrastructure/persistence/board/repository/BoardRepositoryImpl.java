@@ -7,6 +7,7 @@ import com.back.catchmate.domain.common.page.CursorPage;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.infrastructure.persistence.board.entity.BoardEntity;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +25,7 @@ import java.util.Optional;
 public class BoardRepositoryImpl implements BoardRepository {
     private final JpaBoardRepository jpaBoardRepository;
     private final QueryDSLBoardRepository queryDSLBoardRepository;
+    private final EntityManager entityManager;
 
     @Override
     public Board save(Board board) {
@@ -40,7 +42,10 @@ public class BoardRepositoryImpl implements BoardRepository {
     @Override
     public Optional<Board> findByIdWithLock(Long id) {
         return jpaBoardRepository.findByIdWithPessimisticLock(id)
-                .map(BoardEntity::toModel);
+                .map(entity -> {
+                    entityManager.refresh(entity);
+                    return entity.toModel();
+                });
     }
 
     @Override

@@ -1,8 +1,11 @@
 package com.back.catchmate.application.notification.service;
 
 import com.back.catchmate.domain.notification.model.NotificationOutbox;
-import com.back.catchmate.domain.notification.port.NotificationSenderPort;
+import com.back.catchmate.domain.notification.port.NotificationDispatchPort;
 import com.back.catchmate.domain.notification.repository.NotificationOutboxRepository;
+import com.back.catchmate.error.ErrorCode;
+import com.back.catchmate.error.exception.BaseException;
+import com.back.catchmate.notifications.enums.NotificationChannel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,21 +21,22 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class NotificationRetryService {
     private final NotificationOutboxRepository outboxRepository;
-    private final NotificationOutboxUpdater outboxUpdater; // 1. 업데이터 주입
-    private final NotificationSenderPort notificationSenderPort;
+    private final NotificationDispatchPort notificationDispatchPort;
+    private final NotificationOutboxUpdater outboxUpdater;
     private final ObjectMapper objectMapper;
 
     @Value("${notification.outbox.max-retry-count:5}")
     private int maxRetryCount;
 
     @Transactional
-    public void saveOutbox(Long recipientId, String token, String title, String body, Map<String, String> data) {
+    public void saveOutbox(Long recipientId, String recipientAddress, NotificationChannel channel, String title, String body, Map<String, String> data) {
         try {
             String payloadJson = objectMapper.writeValueAsString(data);
-            NotificationOutbox outbox = NotificationOutbox.create(recipientId, token, title, body, payloadJson);
+            NotificationOutbox outbox = NotificationOutbox.create(recipientId, recipientAddress, channel, title, body, payloadJson);
             outboxRepository.save(outbox);
         } catch (Exception e) {
             log.error("아웃박스 저장 중 에러 발생", e);
+            throw new BaseException(ErrorCode.NOTIFICATION_OUTBOX_SAVE_FAILED);
         }
     }
 
@@ -58,17 +62,8 @@ public class NotificationRetryService {
 
     private void processIndividualNotification(NotificationOutbox outbox) {
         try {
-            @SuppressWarnings("unchecked")
-            Map<String, String> data = objectMapper.readValue(outbox.getPayload(), Map.class);
-            
             // 2. 실제 전송 (트랜잭션 밖에서 실행하여 커넥션 고갈 방지)
-            notificationSenderPort.sendNotificationIfOffline(
-                    outbox.getRecipientId(),
-                    outbox.getFcmToken(),
-                    outbox.getTitle(),
-                    outbox.getBody(),
-                    data
-            );
+            notificationDispatchPort.dispatchIfOffline(outbox.getRecipientId(), outbox);
 
             // 3. 성공 처리 (SUCCESS로 업데이트)
             outboxUpdater.updateStatusSuccess(outbox);
