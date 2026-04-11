@@ -1,12 +1,9 @@
 server:
   shutdown: graceful
 
-cache:
-  enabled: false
-
 spring:
   profiles:
-    active: dev
+    active: local
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
