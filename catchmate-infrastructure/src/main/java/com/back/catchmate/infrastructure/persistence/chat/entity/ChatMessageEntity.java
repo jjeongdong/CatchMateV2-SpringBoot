@@ -29,8 +29,8 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @Table(name = "chat_messages", indexes = {
-        @Index(name = "idx_chat_messages_room_id_message_id",
-                columnList = "chat_room_id, chat_message_id DESC"
+        @Index(name = "idx_chat_messages_room_deleted_id",
+                columnList = "chat_room_id, deleted_at, chat_message_id DESC"
         )
 })
 @SQLRestriction("deleted_at IS NULL")

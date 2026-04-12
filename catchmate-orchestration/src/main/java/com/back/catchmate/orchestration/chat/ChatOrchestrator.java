@@ -180,6 +180,11 @@ public class ChatOrchestrator {
     }
 
     @Transactional
+    public void flushReadSequences() {
+        chatService.flushReadSequences();
+    }
+
+    @Transactional
     public void kickChatRoomMember(Long hostId, Long chatRoomId, Long targetUserId) {
         // 1. 서비스 비즈니스 로직 수행
         ChatMessage savedMessage = chatService.kickChatRoomMember(chatRoomId, hostId, targetUserId);

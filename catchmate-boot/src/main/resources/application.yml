@@ -21,6 +21,10 @@ async:
     max-pool-size: 50
     queue-capacity: 100
 
+chat:
+  read-sequence:
+    flush-delay-ms: 5000
+
 enroll:
   idempotency:
     ttl-seconds: 10
