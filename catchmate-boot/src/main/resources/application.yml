@@ -4,8 +4,6 @@ server:
 spring:
   profiles:
     active: local
-  cache:
-    type: none
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
