@@ -19,6 +19,7 @@ import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 
 import org.springframework.stereotype.Service;
@@ -88,7 +89,7 @@ public class ChatService {
 
     public ChatMessage enterChatRoom(Long chatRoomId, User user) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
-        Long sequence = chatRoom.getLastMessageSequence();
+        Long sequence = chatSequencePort.generateSequence(chatRoomId);
 
         String enterMessage = user.getNickName() + "님이 입장하셨습니다.";
         ChatMessage chatMessage = ChatMessage.createMessage(
@@ -98,12 +99,15 @@ public class ChatService {
                 MessageType.SYSTEM,
                 sequence
         );
-        return chatMessageRepository.save(chatMessage);
+        ChatMessage saved = chatMessageRepository.save(chatMessage);
+        chatHistoryCachePort.evictLatestPage(chatRoomId);
+        return saved;
     }
 
+    @CacheEvict(value = "chatRoomMemberAuth", key = "#chatRoomId + '_' + #user.id", cacheManager = "redisCacheManager")
     public ChatMessage leaveChatRoom(Long chatRoomId, User user) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
-        Long sequence = chatRoom.getLastMessageSequence();
+        Long sequence = chatSequencePort.generateSequence(chatRoomId);
 
         ChatRoomMember chatRoomMember = chatRoomMemberRepository
                 .findByChatRoomIdAndUserId(chatRoomId, user.getId())
@@ -120,7 +124,9 @@ public class ChatService {
                 MessageType.SYSTEM,
                 sequence
         );
-        return chatMessageRepository.save(chatMessage);
+        ChatMessage saved = chatMessageRepository.save(chatMessage);
+        chatHistoryCachePort.evictLatestPage(chatRoomId);
+        return saved;
     }
 
     public DomainPage<ChatRoom> getMyChatRooms(Long userId, DomainPageable pageable) {
@@ -148,6 +154,14 @@ public class ChatService {
 
     public Optional<ChatMessage> getLastMessage(Long chatRoomId) {
         return chatMessageRepository.findLastTextMessageByChatRoomId(chatRoomId);
+    }
+
+    public Map<Long, ChatMessage> getLastMessagesByChatRoomIds(List<Long> chatRoomIds) {
+        return chatMessageRepository.findLastTextMessagesByChatRoomIds(chatRoomIds);
+    }
+
+    public Map<Long, ChatRoomMember> getChatRoomMembersByChatRoomIds(List<Long> chatRoomIds, Long userId) {
+        return chatRoomMemberRepository.findByChatRoomIdsAndUserId(chatRoomIds, userId);
     }
 
     public List<ChatRoomMember> getChatRoomMembers(Long chatRoomId) {
@@ -203,9 +217,10 @@ public class ChatService {
         chatRoomRepository.save(chatRoom);
     }
 
+    @CacheEvict(value = "chatRoomMemberAuth", key = "#chatRoomId + '_' + #targetUserId", cacheManager = "redisCacheManager")
     public ChatMessage kickChatRoomMember(Long chatRoomId, Long hostId, Long targetUserId) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
-        Long sequence = chatRoom.getLastMessageSequence();
+        Long sequence = chatSequencePort.generateSequence(chatRoomId);
 
         // 1. 방장 권한 검증 (게시글 작성자가 방장이라고 가정)
         if (!chatRoom.getBoard().getUser().getId().equals(hostId)) {
@@ -236,6 +251,8 @@ public class ChatService {
                 sequence
         );
 
-        return chatMessageRepository.save(chatMessage);
+        ChatMessage saved = chatMessageRepository.save(chatMessage);
+        chatHistoryCachePort.evictLatestPage(chatRoomId);
+        return saved;
     }
 }

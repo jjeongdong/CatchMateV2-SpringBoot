@@ -25,6 +25,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
 @Transactional(readOnly = true)
@@ -83,16 +85,25 @@ public class ChatOrchestrator {
         DomainPageable pageable = new DomainPageable(page, size);
         DomainPage<ChatRoom> chatRoomPage = chatService.getMyChatRooms(userId, pageable);
 
+        List<Long> chatRoomIds = chatRoomPage.getContent().stream()
+                .map(ChatRoom::getId)
+                .toList();
+
+        Map<Long, ChatMessage> lastMessageMap = chatService.getLastMessagesByChatRoomIds(chatRoomIds);
+        Map<Long, ChatRoomMember> memberMap = chatService.getChatRoomMembersByChatRoomIds(chatRoomIds, userId);
+
         List<ChatRoomResponse> responses = chatRoomPage.getContent().stream()
                 .map(chatRoom -> {
-                    ChatMessageResponse lastMessage = chatService.getLastMessage(chatRoom.getId())
+                    ChatMessageResponse lastMessage = Optional.ofNullable(lastMessageMap.get(chatRoom.getId()))
                             .map(ChatMessageResponse::from)
                             .orElse(null);
 
-                    ChatRoomMember member = chatService.getChatRoomMember(chatRoom.getId(), userId);
+                    ChatRoomMember member = memberMap.get(chatRoom.getId());
 
-                    long unreadCount = member.calculateUnreadCount(chatRoom.getLastMessageSequence());
-                    boolean isNotificationOn = member.isNotificationOn();
+                    long unreadCount = member != null
+                            ? member.calculateUnreadCount(chatRoom.getLastMessageSequence())
+                            : 0;
+                    boolean isNotificationOn = member != null && member.isNotificationOn();
 
                     return ChatRoomResponse.from(chatRoom, lastMessage, unreadCount, isNotificationOn);
                 })

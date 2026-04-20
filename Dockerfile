@@ -34,5 +34,20 @@ WORKDIR /app
 
 COPY --from=builder /app/catchmate-boot/build/libs/*.jar app.jar
 
+RUN mkdir -p /app/logs
+
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENV JAVA_OPTS="\
+  -Xms512m \
+  -Xmx512m \
+  -XX:MaxMetaspaceSize=192m \
+  -Xss512k \
+  -XX:+UseG1GC \
+  -XX:MaxGCPauseMillis=200 \
+  -XX:G1HeapRegionSize=4m \
+  -XX:InitiatingHeapOccupancyPercent=45 \
+  -XX:+UseStringDeduplication \
+  -XX:+UseContainerSupport \
+  -Xlog:gc*:file=/app/logs/gc.log:time,uptime,level,tags:filecount=5,filesize=10m"
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

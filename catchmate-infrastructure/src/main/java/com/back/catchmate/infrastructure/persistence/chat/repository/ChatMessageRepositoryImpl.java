@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -32,6 +33,11 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     public Optional<ChatMessage> findLastTextMessageByChatRoomId(Long chatRoomId) {
         return jpaChatMessageRepository.findTopByChatRoomIdAndMessageTypeOrderByIdDesc(chatRoomId, MessageType.TEXT)
                 .map(ChatMessageEntity::toModel);
+    }
+
+    @Override
+    public Map<Long, ChatMessage> findLastTextMessagesByChatRoomIds(List<Long> chatRoomIds) {
+        return querydslChatMessageRepository.findLastTextMessagesByChatRoomIds(chatRoomIds);
     }
 
     @Override

@@ -50,4 +50,14 @@ public interface JpaChatRoomMemberRepository extends JpaRepository<ChatRoomMembe
     boolean existsByChatRoomIdAndUserIdAndActive(
             @Param("chatRoomId") Long chatRoomId,
             @Param("userId") Long userId);
+
+    @Query("SELECT crm FROM ChatRoomMemberEntity crm " +
+            "JOIN FETCH crm.chatRoom cr " +
+            "JOIN FETCH crm.user u " +
+            "WHERE crm.chatRoom.id IN :chatRoomIds " +
+            "AND crm.user.id = :userId " +
+            "AND crm.leftAt IS NULL")
+    List<ChatRoomMemberEntity> findByChatRoomIdsAndUserId(
+            @Param("chatRoomIds") List<Long> chatRoomIds,
+            @Param("userId") Long userId);
 }

@@ -1,5 +1,6 @@
 package com.back.catchmate.infrastructure.persistence.chat.repository;
 
+import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.infrastructure.persistence.chat.entity.ChatMessageEntity;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -9,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.back.catchmate.infrastructure.persistence.chat.entity.QChatMessageEntity.chatMessageEntity;
 import static com.back.catchmate.infrastructure.persistence.user.entity.QUserEntity.userEntity;
@@ -60,6 +63,40 @@ public class QueryDSLChatMessageRepository {
                 .stream()
                 .map(ChatMessageEntity::toModel)
                 .toList();
+    }
+
+    public Map<Long, ChatMessage> findLastTextMessagesByChatRoomIds(List<Long> chatRoomIds) {
+        if (chatRoomIds.isEmpty()) {
+            return Map.of();
+        }
+
+        // 각 채팅방별 마지막 TEXT 메시지 ID를 서브쿼리로 조회
+        List<Long> messageIds = jpaQueryFactory
+                .select(chatMessageEntity.id.max())
+                .from(chatMessageEntity)
+                .where(
+                        chatMessageEntity.chatRoom.id.in(chatRoomIds),
+                        chatMessageEntity.messageType.eq(MessageType.TEXT)
+                )
+                .groupBy(chatMessageEntity.chatRoom.id)
+                .fetch();
+
+        if (messageIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<ChatMessageEntity> entities = jpaQueryFactory
+                .selectFrom(chatMessageEntity)
+                .join(chatMessageEntity.sender, userEntity).fetchJoin()
+                .where(chatMessageEntity.id.in(messageIds))
+                .fetch();
+
+        return entities.stream()
+                .map(ChatMessageEntity::toModel)
+                .collect(Collectors.toMap(
+                        msg -> msg.getChatRoom().getId(),
+                        msg -> msg
+                ));
     }
 
     private BooleanExpression gtMessageId(Long lastMessageId) {

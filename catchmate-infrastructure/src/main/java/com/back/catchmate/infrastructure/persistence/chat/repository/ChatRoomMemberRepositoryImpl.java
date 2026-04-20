@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -44,6 +46,16 @@ public class ChatRoomMemberRepositoryImpl implements ChatRoomMemberRepository {
         return jpaChatRoomMemberRepository.findAllByChatRoomIdAndActive(chatRoomId).stream()
                 .map(ChatRoomMemberEntity::toModel)
                 .toList();
+    }
+
+    @Override
+    public Map<Long, ChatRoomMember> findByChatRoomIdsAndUserId(List<Long> chatRoomIds, Long userId) {
+        return jpaChatRoomMemberRepository.findByChatRoomIdsAndUserId(chatRoomIds, userId).stream()
+                .map(ChatRoomMemberEntity::toModel)
+                .collect(Collectors.toMap(
+                        member -> member.getChatRoom().getId(),
+                        member -> member
+                ));
     }
 
     @Override
