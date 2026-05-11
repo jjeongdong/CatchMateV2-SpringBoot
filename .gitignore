@@ -40,3 +40,7 @@ out/
 /catchmate-boot/src/main/resources/firebase-adminsdk.json
 /docker-compose.yml
 .mcp.json
+
+### Load test artifacts ###
+scripts/k6/tokens*.json
+scripts/k6/results/

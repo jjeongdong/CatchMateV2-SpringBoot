@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 public class ChatMessageResponse {
     private Long messageId;
+    private Long sequence;
     private Long chatRoomId;
     private Long senderId;
     private String senderNickName;
@@ -22,6 +23,7 @@ public class ChatMessageResponse {
     public static ChatMessageResponse from(ChatMessage chatMessage) {
         return ChatMessageResponse.builder()
                 .messageId(chatMessage.getId())
+                .sequence(chatMessage.getSequence())
                 .chatRoomId(chatMessage.getChatRoom().getId())
                 .senderId(chatMessage.getSender().getId())
                 .senderNickName(chatMessage.getSender().getNickName())

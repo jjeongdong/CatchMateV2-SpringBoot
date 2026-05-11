@@ -1,6 +1,5 @@
 package com.back.catchmate.api.chat.dto.request;
 
-import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.orchestration.chat.dto.command.ChatMessageCommand;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,10 +15,7 @@ public class ChatMessageRequest {
     @NotBlank(message = "메시지 내용은 필수입니다.")
     private String content;
 
-    @NotNull(message = "메시지 타입은 필수입니다.")
-    private MessageType messageType;
-
     public ChatMessageCommand toCommand(Long senderId) {
-        return new ChatMessageCommand(chatRoomId, senderId, content, messageType);
+        return new ChatMessageCommand(chatRoomId, senderId, content);
     }
 }

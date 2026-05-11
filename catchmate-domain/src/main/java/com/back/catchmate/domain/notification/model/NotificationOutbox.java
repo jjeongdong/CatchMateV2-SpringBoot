@@ -2,6 +2,7 @@ package com.back.catchmate.domain.notification.model;
 
 import com.back.catchmate.notifications.enums.NotificationChannel;
 import com.back.catchmate.notifications.enums.OutboxStatus;
+import com.back.catchmate.notifications.enums.ReferenceType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -17,8 +18,12 @@ public class NotificationOutbox {
     private String payload;
     private int retryCount;
     private OutboxStatus status;
+    private ReferenceType referenceType;
+    private Long referenceId;
 
-    public static NotificationOutbox create(Long recipientId, String recipientAddress, NotificationChannel channel, String title, String body, String payload) {
+    public static NotificationOutbox create(Long recipientId, String recipientAddress, NotificationChannel channel,
+                                            String title, String body, String payload,
+                                            ReferenceType referenceType, Long referenceId) {
         return NotificationOutbox.builder()
                 .recipientId(recipientId)
                 .recipientAddress(recipientAddress)
@@ -28,6 +33,8 @@ public class NotificationOutbox {
                 .payload(payload)
                 .retryCount(0)
                 .status(OutboxStatus.PENDING)
+                .referenceType(referenceType)
+                .referenceId(referenceId)
                 .build();
     }
 
@@ -49,5 +56,9 @@ public class NotificationOutbox {
 
     public void success() {
         this.status = OutboxStatus.SUCCESS;
+    }
+
+    public void skip() {
+        this.status = OutboxStatus.SKIPPED;
     }
 }

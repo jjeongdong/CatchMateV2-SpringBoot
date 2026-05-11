@@ -21,6 +21,16 @@ public interface ChatMessageRepository {
      */
     Map<Long, ChatMessage> findLastTextMessagesByChatRoomIds(List<Long> chatRoomIds);
 
+    /**
+     * 단일 채팅방의 최대 sequence 값 조회. 메시지가 없으면 0L 반환.
+     */
+    Long findMaxSequenceByChatRoomId(Long chatRoomId);
+
+    /**
+     * 여러 채팅방의 최대 sequence를 한 번에 조회. 메시지 없는 방은 결과 맵에서 누락됨.
+     */
+    Map<Long, Long> findMaxSequencesByChatRoomIds(List<Long> chatRoomIds);
+
     List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size);
 
     List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size);

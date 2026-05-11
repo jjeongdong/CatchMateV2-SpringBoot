@@ -17,36 +17,98 @@ import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatSequencePort chatSequencePort;
     private final ChatHistoryCachePort chatHistoryCachePort;
-    private final ReadSequenceBufferPort readSequenceBufferPort;
+    private final ReadSequenceBufferPort luaBuffer;
+    private final ReadSequenceBufferPort javaBuffer;
+    private final MeterRegistry meterRegistry;
+
+    @Value("${chat.read-sequence.mode:V4_LUA_BUFFERED}")
+    private ReadSequenceMode mode;
+
+    private Counter readEventsCounter;
+    private Counter dbUpdatesCounter;
+    private Timer flushTimer;
+
+    public ChatService(
+            ChatRoomRepository chatRoomRepository,
+            ChatMessageRepository chatMessageRepository,
+            ChatRoomMemberRepository chatRoomMemberRepository,
+            ChatSequencePort chatSequencePort,
+            ChatHistoryCachePort chatHistoryCachePort,
+            @Qualifier("redisReadSequenceBufferAdapter") ReadSequenceBufferPort luaBuffer,
+            @Qualifier("javaReadSequenceBufferAdapter") ReadSequenceBufferPort javaBuffer,
+            MeterRegistry meterRegistry) {
+        this.chatRoomRepository = chatRoomRepository;
+        this.chatMessageRepository = chatMessageRepository;
+        this.chatRoomMemberRepository = chatRoomMemberRepository;
+        this.chatSequencePort = chatSequencePort;
+        this.chatHistoryCachePort = chatHistoryCachePort;
+        this.luaBuffer = luaBuffer;
+        this.javaBuffer = javaBuffer;
+        this.meterRegistry = meterRegistry;
+    }
+
+    @PostConstruct
+    void initMetrics() {
+        String modeTag = mode.name();
+        this.readEventsCounter = Counter.builder("chat.read.events")
+                .description("Number of markAsRead invocations")
+                .tag("mode", modeTag)
+                .register(meterRegistry);
+        this.dbUpdatesCounter = Counter.builder("chat.read.db.updates")
+                .description("Rows UPDATEd to chat_room_members for last_read_sequence")
+                .tag("mode", modeTag)
+                .register(meterRegistry);
+        this.flushTimer = Timer.builder("chat.read.flush.duration")
+                .description("Duration of one flushReadSequences cycle")
+                .tag("mode", modeTag)
+                .publishPercentileHistogram()
+                .register(meterRegistry);
+        Gauge.builder("chat.read.buffer.size", this, ChatService::activeBufferSize)
+                .description("Current entries in the active read-sequence buffer")
+                .tag("mode", modeTag)
+                .strongReference(true)
+                .register(meterRegistry);
+    }
+
+    private double activeBufferSize() {
+        return switch (mode) {
+            case V3_JAVA_BUFFERED -> javaBuffer.size();
+            case V4_LUA_BUFFERED -> luaBuffer.size();
+            default -> 0.0;
+        };
+    }
 
     @Transactional
     public ChatMessage saveMessage(Long chatRoomId, User sender, String content, MessageType messageType) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
         Long sequence = chatSequencePort.generateSequence(chatRoomId);
-
-        chatRoom.updateLastMessageSequence(sequence);
-        chatRoomRepository.save(chatRoom);
 
         ChatMessage chatMessage = ChatMessage.createMessage(
                 chatRoom,
@@ -55,41 +117,73 @@ public class ChatService {
                 messageType,
                 sequence
         );
-        readSequenceBufferPort.buffer(chatRoomId, sender.getId(), sequence);
+        applyReadSequence(chatRoomId, sender.getId(), sequence);
         ChatMessage saved = chatMessageRepository.save(chatMessage);
         chatHistoryCachePort.evictLatestPage(chatRoomId);
         return saved;
     }
 
     public void markAsRead(Long chatRoomId, Long userId) {
+        readEventsCounter.increment();
         try {
-            Long lastSequence = chatSequencePort.getCurrentSequence(chatRoomId);
-            readSequenceBufferPort.buffer(chatRoomId, userId, lastSequence);
+            Long lastSequence = resolveLastSequence(chatRoomId);
+            applyReadSequence(chatRoomId, userId, lastSequence);
         } catch (Exception e) {
-            log.error("읽음 처리 버퍼링 중 오류 발생 (roomId: {}, userId: {})", chatRoomId, userId, e);
+            log.error("읽음 처리 중 오류 발생 (roomId: {}, userId: {})", chatRoomId, userId, e);
         }
     }
 
-    public void flushReadSequences() {
-        Map<String, Long> buffered = readSequenceBufferPort.drainAll();
+    private Long resolveLastSequence(Long chatRoomId) {
+        return chatSequencePort.getCurrentSequence(chatRoomId);
+    }
 
-        for (Map.Entry<String, Long> entry : buffered.entrySet()) {
-            String[] parts = entry.getKey().split(":");
-            Long chatRoomId = Long.parseLong(parts[0]);
-            Long userId = Long.parseLong(parts[1]);
-            Long sequence = entry.getValue();
-
-            chatRoomMemberRepository.updateLastReadSequenceDirectly(chatRoomId, userId, sequence);
+    private void applyReadSequence(Long chatRoomId, Long userId, Long sequence) {
+        switch (mode) {
+            case V1_DIRTY_CHECK -> applyV1DirtyCheck(chatRoomId, userId, sequence);
+            case V2_DIRECT_UPDATE -> {
+                chatRoomMemberRepository.updateLastReadSequenceDirectly(chatRoomId, userId, sequence);
+                dbUpdatesCounter.increment();
+            }
+            case V3_JAVA_BUFFERED -> javaBuffer.buffer(chatRoomId, userId, sequence);
+            case V4_LUA_BUFFERED -> luaBuffer.buffer(chatRoomId, userId, sequence);
         }
+    }
+
+    private void applyV1DirtyCheck(Long chatRoomId, Long userId, Long sequence) {
+        chatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoomId, userId)
+                .ifPresent(member -> {
+                    if (member.isActive()) {
+                        member.updateLastReadSequence(sequence);
+                        chatRoomMemberRepository.save(member);
+                        dbUpdatesCounter.increment();
+                    }
+                });
+    }
+
+    public void flushReadSequences() {
+        ReadSequenceBufferPort buffer = switch (mode) {
+            case V3_JAVA_BUFFERED -> javaBuffer;
+            case V4_LUA_BUFFERED -> luaBuffer;
+            default -> null;
+        };
+        if (buffer == null) return;
+
+        Timer.Sample sample = Timer.start(meterRegistry);
+        Map<String, Long> buffered = buffer.drainAll();
 
         if (!buffered.isEmpty()) {
-            log.debug("읽음 시퀀스 {} 건 DB 반영 완료", buffered.size());
+            List<Map.Entry<String, Long>> updates = new ArrayList<>(buffered.entrySet());
+            chatRoomMemberRepository.updateLastReadSequenceBatch(updates);
+            dbUpdatesCounter.increment(buffered.size());
+            log.debug("읽음 시퀀스 {} 건 DB 일괄 반영(Batch Update) 완료", buffered.size());
         }
+
+        sample.stop(flushTimer);
     }
 
     public ChatMessage enterChatRoom(Long chatRoomId, User user) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
-        Long sequence = chatSequencePort.generateSequence(chatRoomId);
+        Long sequence = currentMessageSequence(chatRoom);
 
         String enterMessage = user.getNickName() + "님이 입장하셨습니다.";
         ChatMessage chatMessage = ChatMessage.createMessage(
@@ -107,11 +201,13 @@ public class ChatService {
     @CacheEvict(value = "chatRoomMemberAuth", key = "#chatRoomId + '_' + #user.id", cacheManager = "redisCacheManager")
     public ChatMessage leaveChatRoom(Long chatRoomId, User user) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
-        Long sequence = chatSequencePort.generateSequence(chatRoomId);
 
         ChatRoomMember chatRoomMember = chatRoomMemberRepository
                 .findByChatRoomIdAndUserId(chatRoomId, user.getId())
+                .filter(ChatRoomMember::isActive)
                 .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
+
+        Long sequence = currentMessageSequence(chatRoom);
 
         chatRoomMember.leave();
         chatRoomMemberRepository.save(chatRoomMember);
@@ -129,8 +225,20 @@ public class ChatService {
         return saved;
     }
 
+    private Long currentMessageSequence(ChatRoom chatRoom) {
+        return chatSequencePort.getCurrentSequence(chatRoom.getId());
+    }
+
     public DomainPage<ChatRoom> getMyChatRooms(Long userId, DomainPageable pageable) {
         return chatRoomRepository.findAllByUserId(userId, pageable);
+    }
+
+    public Map<Long, Long> getBufferedReadSequences(List<Long> chatRoomIds, Long userId) {
+        return switch (mode) {
+            case V3_JAVA_BUFFERED -> javaBuffer.getBufferedSequences(chatRoomIds, userId);
+            case V4_LUA_BUFFERED -> luaBuffer.getBufferedSequences(chatRoomIds, userId);
+            default -> Map.of();
+        };
     }
 
     @Cacheable(
@@ -183,9 +291,7 @@ public class ChatService {
     )
     public boolean validateUserInChatRoom(Long userId, Long roomId) {
         boolean isMember = chatRoomMemberRepository
-                .findByChatRoomIdAndUserId(roomId, userId)
-                .filter(ChatRoomMember::isActive)
-                .isPresent();
+                .existsByChatRoomIdAndUserIdAndActive(roomId, userId);
 
         if (!isMember) {
             throw new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND);
@@ -220,7 +326,6 @@ public class ChatService {
     @CacheEvict(value = "chatRoomMemberAuth", key = "#chatRoomId + '_' + #targetUserId", cacheManager = "redisCacheManager")
     public ChatMessage kickChatRoomMember(Long chatRoomId, Long hostId, Long targetUserId) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
-        Long sequence = chatSequencePort.generateSequence(chatRoomId);
 
         // 1. 방장 권한 검증 (게시글 작성자가 방장이라고 가정)
         if (!chatRoom.getBoard().getUser().getId().equals(hostId)) {
@@ -237,6 +342,8 @@ public class ChatService {
                 .findByChatRoomIdAndUserId(chatRoomId, targetUserId)
                 .filter(ChatRoomMember::isActive)
                 .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
+
+        Long sequence = currentMessageSequence(chatRoom);
 
         // 4. 대상자 퇴장 처리 (leftAt 시간 업데이트)
         targetMember.leave();

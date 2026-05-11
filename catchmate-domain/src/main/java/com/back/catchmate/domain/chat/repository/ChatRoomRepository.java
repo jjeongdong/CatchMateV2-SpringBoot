@@ -14,13 +14,9 @@ public interface ChatRoomRepository {
 
     Optional<ChatRoom> findByBoardId(Long boardId);
 
-    Optional<Long> findLastMessageSequenceById(Long id);
-
     DomainPage<ChatRoom> findAllByUserId(Long userId, DomainPageable pageable);
 
     List<ChatRoom> findAllByUserId(Long userId);
-
-    void updateMaxSequence(Long roomId, Long sequence);
 
     void delete(ChatRoom chatRoom);
 }

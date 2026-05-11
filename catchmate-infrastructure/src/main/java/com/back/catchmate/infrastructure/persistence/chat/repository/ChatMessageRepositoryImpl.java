@@ -41,6 +41,16 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     }
 
     @Override
+    public Long findMaxSequenceByChatRoomId(Long chatRoomId) {
+        return querydslChatMessageRepository.findMaxSequenceByChatRoomId(chatRoomId);
+    }
+
+    @Override
+    public Map<Long, Long> findMaxSequencesByChatRoomIds(List<Long> chatRoomIds) {
+        return querydslChatMessageRepository.findMaxSequencesByChatRoomIds(chatRoomIds);
+    }
+
+    @Override
     public List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size) {
         return querydslChatMessageRepository.findChatHistory(roomId, lastMessageId, size);
     }

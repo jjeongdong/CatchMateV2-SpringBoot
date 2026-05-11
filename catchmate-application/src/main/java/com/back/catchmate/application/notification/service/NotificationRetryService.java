@@ -6,6 +6,7 @@ import com.back.catchmate.domain.notification.repository.NotificationOutboxRepos
 import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
 import com.back.catchmate.notifications.enums.NotificationChannel;
+import com.back.catchmate.notifications.enums.ReferenceType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,10 +30,16 @@ public class NotificationRetryService {
     private int maxRetryCount;
 
     @Transactional
-    public void saveOutbox(Long recipientId, String recipientAddress, NotificationChannel channel, String title, String body, Map<String, String> data) {
+    public void saveOutbox(Long recipientId, String recipientAddress, NotificationChannel channel,
+                           String title, String body, Map<String, String> data,
+                           ReferenceType referenceType, Long referenceId) {
         try {
             String payloadJson = objectMapper.writeValueAsString(data);
-            NotificationOutbox outbox = NotificationOutbox.create(recipientId, recipientAddress, channel, title, body, payloadJson);
+            NotificationOutbox outbox = NotificationOutbox.create(
+                    recipientId, recipientAddress, channel,
+                    title, body, payloadJson,
+                    referenceType, referenceId
+            );
             outboxRepository.save(outbox);
         } catch (Exception e) {
             log.error("아웃박스 저장 중 에러 발생", e);

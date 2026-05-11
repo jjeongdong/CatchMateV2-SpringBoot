@@ -194,7 +194,7 @@ public class EnrollOrchestrator {
     @Transactional
     public EnrollRejectResponse updateEnrollReject(Long userId, Long enrollId) {
         Enroll enroll = enrollService.getEnroll(enrollId);
-        Board board = boardService.getBoardWithLock(enroll.getBoard().getId());
+        Board board = boardService.getBoard(enroll.getBoard().getId());
 
         // 비즈니스 로직
         enroll.reject();

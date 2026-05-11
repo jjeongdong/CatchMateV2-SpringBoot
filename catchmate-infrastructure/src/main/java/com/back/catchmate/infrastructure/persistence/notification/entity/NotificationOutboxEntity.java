@@ -4,6 +4,7 @@ import com.back.catchmate.domain.notification.model.NotificationOutbox;
 import com.back.catchmate.infrastructure.global.BaseTimeEntity;
 import com.back.catchmate.notifications.enums.NotificationChannel;
 import com.back.catchmate.notifications.enums.OutboxStatus;
+import com.back.catchmate.notifications.enums.ReferenceType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -14,7 +15,15 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @Builder
-@Table(name = "notification_outbox")
+@Table(
+        name = "notification_outbox",
+        indexes = {
+                @Index(
+                        name = "idx_outbox_ref",
+                        columnList = "recipient_id, reference_type, reference_id, status"
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class NotificationOutboxEntity extends BaseTimeEntity {
@@ -23,6 +32,7 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "recipient_id")
     private Long recipientId;
 
     @Column(name = "fcm_token")
@@ -43,6 +53,13 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private OutboxStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reference_type", length = 32)
+    private ReferenceType referenceType;
+
+    @Column(name = "reference_id")
+    private Long referenceId;
+
     // Domain -> Entity 변환
     public static NotificationOutboxEntity from(NotificationOutbox domain) {
         return NotificationOutboxEntity.builder()
@@ -55,6 +72,8 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
                 .payload(domain.getPayload())
                 .retryCount(domain.getRetryCount())
                 .status(domain.getStatus())
+                .referenceType(domain.getReferenceType())
+                .referenceId(domain.getReferenceId())
                 .build();
     }
 
@@ -70,6 +89,8 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
                 .payload(this.payload)
                 .retryCount(this.retryCount)
                 .status(this.status)
+                .referenceType(this.referenceType)
+                .referenceId(this.referenceId)
                 .build();
     }
 }

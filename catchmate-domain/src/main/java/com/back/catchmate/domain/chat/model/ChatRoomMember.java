@@ -25,11 +25,11 @@ public class ChatRoomMember {
     /**
      * 채팅방 멤버 생성 메서드
      */
-    public static ChatRoomMember create(ChatRoom chatRoom, User user) {
+    public static ChatRoomMember create(ChatRoom chatRoom, User user, Long initialReadSequence) {
         return ChatRoomMember.builder()
                 .chatRoom(chatRoom)
                 .user(user)
-                .lastReadSequence(chatRoom.getLastMessageSequence())
+                .lastReadSequence(initialReadSequence)
                 .joinedAt(LocalDateTime.now())
                 .isNotificationOn(true)
                 .build();

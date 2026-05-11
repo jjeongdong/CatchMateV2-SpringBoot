@@ -8,9 +8,13 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import com.querydsl.core.Tuple;
+
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.back.catchmate.infrastructure.persistence.chat.entity.QChatMessageEntity.chatMessageEntity;
@@ -97,6 +101,36 @@ public class QueryDSLChatMessageRepository {
                         msg -> msg.getChatRoom().getId(),
                         msg -> msg
                 ));
+    }
+
+    public Long findMaxSequenceByChatRoomId(Long chatRoomId) {
+        Long max = jpaQueryFactory
+                .select(chatMessageEntity.sequence.max())
+                .from(chatMessageEntity)
+                .where(chatMessageEntity.chatRoom.id.eq(chatRoomId))
+                .fetchOne();
+        return max != null ? max : 0L;
+    }
+
+    public Map<Long, Long> findMaxSequencesByChatRoomIds(List<Long> chatRoomIds) {
+        if (chatRoomIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Tuple> rows = jpaQueryFactory
+                .select(chatMessageEntity.chatRoom.id, chatMessageEntity.sequence.max())
+                .from(chatMessageEntity)
+                .where(chatMessageEntity.chatRoom.id.in(chatRoomIds))
+                .groupBy(chatMessageEntity.chatRoom.id)
+                .fetch();
+
+        Map<Long, Long> result = new HashMap<>();
+        for (Tuple row : rows) {
+            Long roomId = row.get(chatMessageEntity.chatRoom.id);
+            Long max = Optional.ofNullable(row.get(chatMessageEntity.sequence.max())).orElse(0L);
+            result.put(roomId, max);
+        }
+        return result;
     }
 
     private BooleanExpression gtMessageId(Long lastMessageId) {

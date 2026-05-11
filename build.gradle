@@ -37,5 +37,16 @@ subprojects {
 
     test {
         useJUnitPlatform()
+        ['SPRING_DATASOURCE_URL',
+         'SPRING_DATASOURCE_USERNAME',
+         'SPRING_DATASOURCE_PASSWORD',
+         'SPRING_DATA_REDIS_HOST',
+         'SPRING_DATA_REDIS_PORT',
+         'SPRING_PROFILES_ACTIVE'].each { name ->
+            def value = System.getenv(name)
+            if (value) {
+                environment name, value
+            }
+        }
     }
 }

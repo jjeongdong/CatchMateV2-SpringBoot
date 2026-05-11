@@ -10,6 +10,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    testImplementation project(':catchmate-domain')
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-redis'
 }
 
 bootJar { enabled = true }

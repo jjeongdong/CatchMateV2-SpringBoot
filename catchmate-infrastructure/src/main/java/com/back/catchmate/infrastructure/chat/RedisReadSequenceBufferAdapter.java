@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@Component
+@Component("redisReadSequenceBufferAdapter")
 @RequiredArgsConstructor
 public class RedisReadSequenceBufferAdapter implements ReadSequenceBufferPort {
     private static final String BUFFER_KEY = "chat:read-sequence:buffer";
@@ -42,6 +42,42 @@ public class RedisReadSequenceBufferAdapter implements ReadSequenceBufferPort {
     public void buffer(Long chatRoomId, Long userId, Long sequence) {
         String field = chatRoomId + ":" + userId;
         redisTemplate.execute(BUFFER_SCRIPT, Collections.singletonList(BUFFER_KEY), field, String.valueOf(sequence));
+    }
+
+    @Override
+    public Map<Long, Long> getBufferedSequences(List<Long> chatRoomIds, Long userId) {
+        if (chatRoomIds == null || chatRoomIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Object> fields = chatRoomIds.stream()
+                .map(chatRoomId -> chatRoomId + ":" + userId)
+                .map(field -> (Object) field)
+                .toList();
+        List<Object> values = redisTemplate.opsForHash().multiGet(BUFFER_KEY, fields);
+
+        if (values == null || values.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> result = new HashMap<>();
+        for (int i = 0; i < chatRoomIds.size() && i < values.size(); i++) {
+            Object value = values.get(i);
+            if (value != null) {
+                try {
+                    result.put(chatRoomIds.get(i), Long.parseLong(value.toString()));
+                } catch (NumberFormatException e) {
+                    log.warn("읽음 시퀀스 버퍼 값 파싱 실패 (roomId: {}, value: {})", chatRoomIds.get(i), value);
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public int size() {
+        Long n = redisTemplate.opsForHash().size(BUFFER_KEY);
+        return n == null ? 0 : n.intValue();
     }
 
     @Override

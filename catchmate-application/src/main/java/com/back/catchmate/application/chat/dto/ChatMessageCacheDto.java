@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ChatMessageCacheDto {
     private Long id;
+    private Long sequence;
     private Long roomId;
     private Long senderId;
     private String senderNickname;
@@ -24,6 +25,7 @@ public class ChatMessageCacheDto {
     public static ChatMessageCacheDto from(ChatMessage message) {
         return new ChatMessageCacheDto(
                 message.getId(),
+                message.getSequence(),
                 message.getChatRoom().getId(),
                 message.getSender().getId(),
                 message.getSender().getNickName(),

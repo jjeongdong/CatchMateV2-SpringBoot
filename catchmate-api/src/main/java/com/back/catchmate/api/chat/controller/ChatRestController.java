@@ -73,7 +73,7 @@ public class ChatRestController {
     public ResponseEntity<ChatMessageResponse> getLastMessage(
             @AuthUser Long userId,
             @PathVariable Long chatRoomId) {
-        ChatMessageResponse response = chatOrchestrator.getLastMessage(chatRoomId);
+        ChatMessageResponse response = chatOrchestrator.getLastMessage(userId, chatRoomId);
         if (response == null) {
             return ResponseEntity.noContent().build();
         }
@@ -85,7 +85,7 @@ public class ChatRestController {
     public ResponseEntity<List<ChatRoomMemberResponse>> getChatRoomMembers(
             @AuthUser Long userId,
             @PathVariable Long chatRoomId) {
-        return ResponseEntity.ok(chatOrchestrator.getChatRoomMembers(chatRoomId));
+        return ResponseEntity.ok(chatOrchestrator.getChatRoomMembers(userId, chatRoomId));
     }
 
     @PutMapping("/rooms/{roomId}/notifications")

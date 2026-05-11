@@ -40,4 +40,6 @@ public interface ChatRoomMemberRepository {
     void delete(ChatRoomMember member);
 
     void updateLastReadSequenceDirectly(Long chatRoomId, Long userId, Long sequence);
+
+    void updateLastReadSequenceBatch(List<Map.Entry<String, Long>> updates);
 }

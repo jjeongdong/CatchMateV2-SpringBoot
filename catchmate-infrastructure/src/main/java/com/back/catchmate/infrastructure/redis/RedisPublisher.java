@@ -5,7 +5,6 @@ import com.back.catchmate.application.notification.event.NotificationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Service;
@@ -20,7 +19,6 @@ public class RedisPublisher {
     private final ChannelTopic chatTopic;
     private final ChannelTopic notificationTopic;
 
-    @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishChat(ChatMessageEvent event) {
         try {

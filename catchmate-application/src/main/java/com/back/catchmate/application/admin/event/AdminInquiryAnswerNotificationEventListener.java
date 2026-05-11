@@ -6,6 +6,7 @@ import com.back.catchmate.domain.inquiry.model.Inquiry;
 import com.back.catchmate.domain.notification.model.Notification;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.notifications.enums.NotificationChannel;
+import com.back.catchmate.notifications.enums.ReferenceType;
 import com.back.catchmate.user.enums.AlarmType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +57,9 @@ public class AdminInquiryAnswerNotificationEventListener {
                     NotificationChannel.FCM,
                     event.title(),
                     event.body(),
-                    data
+                    data,
+                    ReferenceType.ADMIN_INQUIRY_ANSWER,
+                    inquiry.getId()
             );
             log.info("관리자 답변 알림 아웃박스 저장 완료: recipientId: {}", recipient.getId());
         }

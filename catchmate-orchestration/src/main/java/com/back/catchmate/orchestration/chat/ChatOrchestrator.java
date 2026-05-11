@@ -9,6 +9,7 @@ import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.chat.model.ChatRoom;
 import com.back.catchmate.domain.chat.model.ChatRoomMember;
+import com.back.catchmate.domain.chat.port.ChatSequencePort;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.user.model.User;
@@ -35,17 +36,20 @@ public class ChatOrchestrator {
     private final ChatService chatService;
     private final UserService userService;
     private final ImageUploaderPort imageUploaderPort;
+    private final ChatSequencePort chatSequencePort;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public void sendMessage(Long senderId, ChatMessageCommand command) {
+        chatService.validateUserInChatRoom(senderId, command.getChatRoomId());
+
         User sender = userService.getUser(senderId);
 
         ChatMessage savedMessage = chatService.saveMessage(
                 command.getChatRoomId(),
                 sender,
                 command.getContent(),
-                command.getMessageType()
+                MessageType.TEXT
         );
 
         // 웹 소켓을 통해 채팅 메시지 이벤트 발행 (채팅방 멤버 전체에게 실시간 전송)
@@ -69,6 +73,8 @@ public class ChatOrchestrator {
 
     @Transactional
     public void enterChatRoom(Long userId, Long chatRoomId) {
+        chatService.validateUserInChatRoom(userId, chatRoomId);
+
         User user = userService.getUser(userId);
         ChatMessage savedMessage = chatService.enterChatRoom(chatRoomId, user);
         applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
@@ -76,6 +82,8 @@ public class ChatOrchestrator {
 
     @Transactional
     public void leaveChatRoom(Long userId, Long chatRoomId) {
+        chatService.validateUserInChatRoom(userId, chatRoomId);
+
         User user = userService.getUser(userId);
         ChatMessage savedMessage = chatService.leaveChatRoom(chatRoomId, user);
         applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
@@ -91,6 +99,8 @@ public class ChatOrchestrator {
 
         Map<Long, ChatMessage> lastMessageMap = chatService.getLastMessagesByChatRoomIds(chatRoomIds);
         Map<Long, ChatRoomMember> memberMap = chatService.getChatRoomMembersByChatRoomIds(chatRoomIds, userId);
+        Map<Long, Long> bufferedReadSequenceMap = chatService.getBufferedReadSequences(chatRoomIds, userId);
+        Map<Long, Long> currentSequenceMap = chatSequencePort.getCurrentSequences(chatRoomIds);
 
         List<ChatRoomResponse> responses = chatRoomPage.getContent().stream()
                 .map(chatRoom -> {
@@ -100,9 +110,7 @@ public class ChatOrchestrator {
 
                     ChatRoomMember member = memberMap.get(chatRoom.getId());
 
-                    long unreadCount = member != null
-                            ? member.calculateUnreadCount(chatRoom.getLastMessageSequence())
-                            : 0;
+                    long unreadCount = calculateUnreadCount(chatRoom, member, currentSequenceMap, bufferedReadSequenceMap);
                     boolean isNotificationOn = member != null && member.isNotificationOn();
 
                     return ChatRoomResponse.from(chatRoom, lastMessage, unreadCount, isNotificationOn);
@@ -112,7 +120,31 @@ public class ChatOrchestrator {
         return new PagedResponse<>(chatRoomPage, responses);
     }
 
+    static long calculateUnreadCount(
+            ChatRoom chatRoom,
+            ChatRoomMember member,
+            Map<Long, Long> currentSequenceMap,
+            Map<Long, Long> bufferedReadSequenceMap
+    ) {
+        if (member == null) {
+            return 0;
+        }
+
+        long currentRoomSequence = Optional.ofNullable(currentSequenceMap.get(chatRoom.getId()))
+                .orElse(0L);
+        long dbReadSequence = member.getLastReadSequence() == null
+                ? 0
+                : member.getLastReadSequence();
+        long bufferedReadSequence = Optional.ofNullable(bufferedReadSequenceMap.get(chatRoom.getId()))
+                .orElse(0L);
+        long effectiveReadSequence = Math.max(dbReadSequence, bufferedReadSequence);
+
+        return Math.max(currentRoomSequence - effectiveReadSequence, 0);
+    }
+
+    @Transactional
     public void readChatRoom(Long userId, Long chatRoomId) {
+        chatService.validateUserInChatRoom(userId, chatRoomId);
         chatService.markAsRead(chatRoomId, userId);
     }
 
@@ -124,6 +156,7 @@ public class ChatOrchestrator {
         return cacheDtoList.getMessages().stream()
                 .map(dto -> ChatMessageResponse.builder()
                         .messageId(dto.getId())
+                        .sequence(dto.getSequence())
                         .chatRoomId(dto.getRoomId())
                         .senderId(dto.getSenderId())
                         .senderNickName(dto.getSenderNickname())
@@ -149,7 +182,9 @@ public class ChatOrchestrator {
                 .toList();
     }
 
-    public ChatMessageResponse getLastMessage(Long chatRoomId) {
+    public ChatMessageResponse getLastMessage(Long userId, Long chatRoomId) {
+        chatService.validateUserInChatRoom(userId, chatRoomId);
+
         return chatService.getLastMessage(chatRoomId)
                 .map(ChatMessageResponse::from)
                 .orElse(null);
@@ -159,7 +194,9 @@ public class ChatOrchestrator {
         return chatService.validateUserInChatRoom(userId, chatRoomId);
     }
 
-    public List<ChatRoomMemberResponse> getChatRoomMembers(Long chatRoomId) {
+    public List<ChatRoomMemberResponse> getChatRoomMembers(Long userId, Long chatRoomId) {
+        chatService.validateUserInChatRoom(userId, chatRoomId);
+
         List<ChatRoomMember> activeMembers = chatService.getChatRoomMembers(chatRoomId);
 
         return activeMembers.stream()

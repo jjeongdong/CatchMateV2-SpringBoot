@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 public record ChatMessageEvent(
         Long messageId,
+        Long sequence,
         Long roomId,
         Long senderId,
         String senderNickname,
@@ -26,6 +27,7 @@ public record ChatMessageEvent(
     public static ChatMessageEvent from(ChatMessage domain) {
         return ChatMessageEvent.builder()
                 .messageId(domain.getId())
+                .sequence(domain.getSequence())
                 .roomId(domain.getChatRoom().getId())
                 .senderId(domain.getSender().getId())
                 .senderNickname(domain.getSender().getNickName())

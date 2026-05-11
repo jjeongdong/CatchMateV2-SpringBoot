@@ -4,6 +4,7 @@ import com.back.catchmate.domain.notification.model.NotificationOutbox;
 import com.back.catchmate.domain.notification.repository.NotificationOutboxRepository;
 import com.back.catchmate.infrastructure.persistence.notification.entity.NotificationOutboxEntity;
 import com.back.catchmate.notifications.enums.OutboxStatus;
+import com.back.catchmate.notifications.enums.ReferenceType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -28,7 +29,6 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
                 .toList();
     }
 
-
     @Override
     public List<NotificationOutbox> findAllPendingByRecipientId(Long recipientId) {
         return jpaRepository.findAllByRecipientIdAndStatus(recipientId, OutboxStatus.PENDING).stream()
@@ -39,6 +39,13 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
     @Override
     public Optional<NotificationOutbox> findById(Long id) {
         return jpaRepository.findById(id)
+                .map(NotificationOutboxEntity::toModel);
+    }
+
+    @Override
+    public Optional<NotificationOutbox> findPendingByRecipientAndReference(Long recipientId, ReferenceType referenceType, Long referenceId) {
+        return jpaRepository.findByRecipientIdAndReferenceTypeAndReferenceIdAndStatus(
+                        recipientId, referenceType, referenceId, OutboxStatus.PENDING)
                 .map(NotificationOutboxEntity::toModel);
     }
 }

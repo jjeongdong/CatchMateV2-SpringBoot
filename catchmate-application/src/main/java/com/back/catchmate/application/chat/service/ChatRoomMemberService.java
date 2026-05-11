@@ -2,6 +2,7 @@ package com.back.catchmate.application.chat.service;
 
 import com.back.catchmate.domain.chat.model.ChatRoom;
 import com.back.catchmate.domain.chat.model.ChatRoomMember;
+import com.back.catchmate.domain.chat.port.ChatSequencePort;
 import com.back.catchmate.domain.chat.repository.ChatRoomMemberRepository;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.error.ErrorCode;
@@ -16,6 +17,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ChatRoomMemberService {
     private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final ChatSequencePort chatSequencePort;
 
     /**
      * 채팅방 멤버 추가
@@ -36,7 +38,8 @@ public class ChatRoomMemberService {
             throw new BaseException(ErrorCode.CHATROOM_REENTRY_NOT_ALLOWED);
         }
 
-        ChatRoomMember newMember = ChatRoomMember.create(chatRoom, user);
+        Long currentSequence = chatSequencePort.getCurrentSequence(chatRoom.getId());
+        ChatRoomMember newMember = ChatRoomMember.create(chatRoom, user, currentSequence);
         chatRoomMemberRepository.save(newMember);
     }
 

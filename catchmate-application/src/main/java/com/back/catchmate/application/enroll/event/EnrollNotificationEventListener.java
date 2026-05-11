@@ -1,12 +1,14 @@
 package com.back.catchmate.application.enroll.event;
 
 import com.back.catchmate.application.notification.event.NotificationEvent;
+import com.back.catchmate.application.notification.service.NotificationOutboxUpdater;
 import com.back.catchmate.application.notification.service.NotificationRetryService;
 import com.back.catchmate.application.notification.service.NotificationService;
 import com.back.catchmate.domain.notification.model.Notification;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
 import com.back.catchmate.notifications.enums.NotificationChannel;
+import com.back.catchmate.notifications.enums.ReferenceType;
 import com.back.catchmate.user.enums.AlarmType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ import java.util.Map;
 public class EnrollNotificationEventListener {
     private final NotificationService notificationService;
     private final NotificationRetryService notificationRetryService;
+    private final NotificationOutboxUpdater notificationOutboxUpdater;
     private final UserOnlineStatusPort userOnlineStatusPort;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -54,13 +57,17 @@ public class EnrollNotificationEventListener {
                     NotificationChannel.FCM,
                     event.title(),
                     event.body(),
-                    payload
+                    payload,
+                    ReferenceType.ENROLL,
+                    event.referenceId()
             );
         }
     }
 
     /**
      * 커밋 후 즉시 발송 시도 (Best effort)
+     * - online: WebSocket 발송 + outbox SKIPPED → 중복 FCM 방지
+     * - offline: FCM 즉시 발송
      */
     @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -73,6 +80,11 @@ public class EnrollNotificationEventListener {
 
         if (isOnline) {
             sendWebSocketNotification(recipient.getId(), payload);
+            notificationOutboxUpdater.markSkippedByReference(
+                    recipient.getId(),
+                    ReferenceType.ENROLL,
+                    event.referenceId()
+            );
         } else {
             notificationRetryService.sendPendingOutboxImmediately(recipient.getId());
         }
