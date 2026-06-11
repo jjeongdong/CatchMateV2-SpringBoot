@@ -8,8 +8,6 @@ globs: "**/*.java"
 
 ## 1. 단일 모듈 + Bounded Context 패키지
 
-이 프로젝트는 **단일 Gradle 모듈** 안에서 Bounded Context 별로 패키지를 분리한 **Hexagonal (Ports & Adapters) + DDD** 구조입니다. 모듈 분리는 패키지 경계로 표현합니다.
-
 ```
 com.back.catchmate
 ├── {context}/                  # board, chat, enroll, user, auth, oauth,
@@ -22,56 +20,115 @@ com.back.catchmate
 │   │   ├── event/
 │   │   └── dto/
 │   └── adapter/{in,out}/...
-├── global/                     # cross-cutting (config, authorization, redis, scheduler...)
-└── common/                     # 모든 컨텍스트가 참조하는 공통 (ErrorCode, page, error...)
+├── global/                     # cross-cutting
+└── common/                     # ErrorCode, page, error
 ```
 
 ## 2. 헥사고날 의존성 방향
 
-**바깥 → 안쪽 한 방향만 의존합니다.**
+**바깥 → 안쪽 한 방향만.**
 
 ```
 adapter/in/web (Controller)
-   └─→ application/port/in (UseCase 인터페이스)         ◀ Input Port
+   └─→ application/port/in (UseCase 인터페이스)        ◀ Input Port
             ↑ (implements)
-       application/service (XxxApplicationService)
-            └─→ application/port/out (Repository/외부 Port) ◀ Output Port
-                 ↑ (implements)
-                adapter/out/persistence | adapter/out/external
-
-application/service (또는 domain/service)
-   └─→ domain/model, domain/service
+       application/service ({Ctx}Service)
+            ├─→ application/port/out (own Repository)  ◀ Output Port
+            │        ↑ (implements)
+            │       adapter/out/persistence
+            │
+            └─→ application/port/out (XxxFetchPort)    ◀ Cross-context Output Port
+                     ↑ (implements)
+                    adapter/out/external (Fetch Adapter → other context's Service)
 ```
 
 **금지된 의존성:**
-- ❌ Controller → ApplicationService 구현체 직접 의존
-- ❌ Application → Adapter (구현체) 직접 의존
+- ❌ Controller → Service 구현체 직접 의존
+- ❌ Service → 다른 컨텍스트의 Service / Repository 직접 의존
+- ❌ Application → Adapter 구현체 직접 의존
 - ❌ Domain → Spring / JPA / Infrastructure
-- ❌ 한 컨텍스트의 Adapter / Repository 를 다른 컨텍스트가 직접 호출
 - ❌ Common → 다른 패키지
 
-## 3. 계층별 책임 / 금지 사항
+## 3. 계층별 책임
 
-| 계층 | 패키지 | 책임 | 금지 사항 |
-|:---|:---|:---|:---|
-| **Adapter In (Web)** | `{ctx}.adapter.in.web` | HTTP 요청 수신, Request → Command 변환, UseCase 호출 | 비즈니스 로직, 직접 Repository 호출, ApplicationService 구현체 import |
-| **Adapter In (WebSocket)** | `{ctx}.adapter.in.websocket` | STOMP 이벤트 수신 → UseCase 호출 | 위와 동일 |
-| **Input Port** | `{ctx}.application.port.in` | UseCase 인터페이스 정의 | 구현 코드 절대 X (interface 만) |
-| **Application Service** | `{ctx}.application.service` | UseCase 구현, 트랜잭션 경계, 도메인 Service 조합, 이벤트 발행 | 도메인 로직 직접 구현 (도메인 Service 에 위임), JPA / Redis 직접 사용 |
-| **Domain Service** | `{ctx}.domain.service` 또는 얇은 `{ctx}.application.service` 의 `XxxService` | Aggregate 한 컨텍스트 내부의 영속성/조회 + 단순 정책 | Spring 의존성 (선택), 다른 컨텍스트 Aggregate 직접 조작 |
-| **Domain Model** | `{ctx}.domain.model` | Aggregate, Entity, Value Object, 도메인 이벤트 | Spring / JPA / Infrastructure 의존성 |
-| **Output Port** | `{ctx}.application.port.out` | Repository / 외부 시스템 인터페이스 | 구현 코드 절대 X |
-| **Adapter Out (Persistence)** | `{ctx}.adapter.out.persistence` | JPA Entity + Repository 구현 (QueryDSL 포함) | 도메인 모델로 변환하지 않은 채 Entity 누출 |
-| **Adapter Out (External)** | `{ctx}.adapter.out.external` | FCM, S3, OAuth Client 등 | 비즈니스 결정 (구현체는 단순 어댑터) |
-| **Global** | `global.*` | 보안, AOP 권한, Redis Pub/Sub 인프라, Scheduler, 전역 예외 핸들러 | 특정 도메인 로직 |
-| **Common** | `common.*` | ErrorCode, BaseException, 페이지 유틸 등 공통 코드 | 다른 패키지 import |
+| 계층 | 패키지 | 책임 |
+|:---|:---|:---|
+| **Adapter In (Web)** | `{ctx}.adapter.in.web` | HTTP 요청 수신, Request → Command, UseCase 호출 |
+| **Adapter In (WebSocket)** | `{ctx}.adapter.in.websocket` | STOMP 이벤트 수신 → UseCase 호출 |
+| **Input Port** | `{ctx}.application.port.in` | UseCase 인터페이스 (interface only) |
+| **Service** | `{ctx}.application.service` | UseCase 구현, 트랜잭션 경계, 도메인 모델 조작, own Repository 직접 호출, Fetch Port 호출, 이벤트 발행 |
+| **Domain Model** | `{ctx}.domain.model` | Aggregate, Entity, Value Object, 도메인 이벤트 |
+| **Domain Service** | `{ctx}.domain.service` | 도메인 규칙이 한 Aggregate에 안 들어갈 때 |
+| **Output Port** | `{ctx}.application.port.out` | Repository + 다른 컨텍스트용 `XxxFetchPort` 인터페이스 |
+| **Adapter Out (Persistence)** | `{ctx}.adapter.out.persistence` | JPA Entity, Repository 구현 |
+| **Adapter Out (External)** | `{ctx}.adapter.out.external` | FCM, S3, OAuth Client + Fetch Port 구현 (다른 컨텍스트 Service 래핑) |
+| **Global** | `global.*` | Security, AOP 권한, Redis Pub/Sub 인프라, Scheduler, 전역 예외 핸들러 |
+| **Common** | `common.*` | ErrorCode, BaseException, 페이지 유틸 |
 
-## 4. 의존성 역전 (DIP)
+## 4. Cross-context 호출은 Fetch Port (⭐ 핵심)
 
-모든 외부 호출은 **인터페이스 (Port)** 를 거칩니다.
+같은 컨텍스트는 Repository를 직접 호출. 다른 컨텍스트는 자기 `application/port/out/` 에 정의한 Port 통해서만.
 
 ```java
-// ✅ application/port/out 에 인터페이스 정의
+// ✅ board/application/port/out/UserFetchPort.java
+public interface UserFetchPort {
+    User getUser(Long userId);
+}
+
+// ✅ board/adapter/out/external/BoardUserFetchAdapter.java
+@Component
+@RequiredArgsConstructor
+public class BoardUserFetchAdapter implements UserFetchPort {
+    private final UserService userService;          // 다른 컨텍스트 의존은 여기에만 격리
+    @Override
+    public User getUser(Long userId) {
+        return userService.getUser(userId);
+    }
+}
+
+// ✅ board/application/service/BoardService.java
+@Service
+@RequiredArgsConstructor
+public class BoardService implements BoardUseCase {
+    private final BoardRepository boardRepository;  // own — 직접
+    private final UserFetchPort userFetchPort;      // cross — Port 통해
+
+    @Override
+    public BoardCreateResponse createBoard(Long userId, BoardCreateCommand command) {
+        User user = userFetchPort.getUser(userId);  // 다른 컨텍스트 구체화 모름
+        Board saved = boardRepository.save(...);
+        return BoardCreateResponse.of(saved.getId());
+    }
+}
+
+// ❌ Bad — 다른 컨텍스트 Service 직접 주입
+private final UserService userService;
+```
+
+**예외**: 같은 컨텍스트 안에 여러 Aggregate가 있을 때 (e.g., chat의 ChatRoomService, ChatMessageService 등). 이들은 같은 경계 안의 협력자이므로 직접 호출 OK.
+
+## 5. Controller는 UseCase 인터페이스만 의존
+
+```java
+@RestController
+@RequiredArgsConstructor
+public class BoardController {
+    private final BoardUseCase boardUseCase;        // ⭐ 인터페이스
+
+    @PostMapping("/boards")
+    public ResponseEntity<BoardCreateResponse> create(...) {
+        return ResponseEntity.ok(boardUseCase.createBoard(...));
+    }
+}
+
+// ❌ Bad
+private final BoardService boardService;
+```
+
+## 6. 의존성 역전 (DIP)
+
+```java
+// ✅ application/port/out 에 인터페이스
 public interface BoardRepository {
     Optional<Board> findById(Long id);
     Board save(Board board);
@@ -82,68 +139,26 @@ public interface BoardRepository {
 @RequiredArgsConstructor
 public class BoardRepositoryImpl implements BoardRepository {
     private final JpaBoardRepository jpa;
-    private final QueryDslBoardRepository qdsl;
     @Override
     public Optional<Board> findById(Long id) {
         return jpa.findById(id).map(BoardEntity::toModel);
     }
 }
-
-// ✅ ApplicationService 는 인터페이스에만 의존
-@Service
-@RequiredArgsConstructor
-public class BoardApplicationService implements BoardUseCase {
-    private final BoardRepository boardRepository;  // 구현체 모름
-}
 ```
-
-## 5. Controller 는 UseCase 만 본다
-
-```java
-// ✅ Controller → UseCase 인터페이스
-@RestController
-@RequiredArgsConstructor
-public class BoardController {
-    private final BoardUseCase boardUseCase;        // ⭐ 인터페이스
-
-    @PostMapping("/boards")
-    public ResponseEntity<BoardCreateResponse> create(
-            @AuthUser Long userId,
-            @RequestBody @Valid BoardCreateRequest req) {
-        return ResponseEntity.ok(boardUseCase.createBoard(userId, req.toCommand()));
-    }
-}
-
-// ❌ Bad — 구현체 의존
-private final BoardApplicationService boardApplicationService;
-```
-
-## 6. 컨텍스트 간 호출
-
-다른 컨텍스트 기능이 필요하면:
-
-```java
-// ✅ 다른 컨텍스트의 UseCase 만 호출
-@Service
-@RequiredArgsConstructor
-public class BoardApplicationService implements BoardUseCase {
-    private final UserUseCase userUseCase;     // 다른 컨텍스트는 Input Port 통해
-}
-
-// ❌ Bad — 다른 컨텍스트 Repository 직접 호출
-private final UserRepository userRepository;   // user 컨텍스트의 port.out
-```
-
-도메인 객체가 필요하면 다른 컨텍스트의 UseCase 가 도메인 모델을 반환하도록 설계하거나, ID 만 들고 다닙니다.
 
 ## 7. 새 기능 추가 시 파일 생성 순서
 
-1. `{ctx}/domain/model/` — 도메인 모델 / Aggregate
-2. `common/error/ErrorCode` — 필요한 에러 케이스
-3. `{ctx}/application/port/out/` — Repository / 외부 Port 메서드 추가
+1. `{ctx}/domain/model/` — 도메인 모델
+2. `common/error/ErrorCode` — 새 에러 케이스
+3. `{ctx}/application/port/out/` — Repository / Fetch Port 인터페이스
 4. `{ctx}/adapter/out/persistence/` — JPA Entity + Repository 구현
-5. `{ctx}/application/dto/` — Command / Response DTO
-6. `{ctx}/application/port/in/{Ctx}UseCase` — UseCase 인터페이스에 메서드
-7. `{ctx}/application/service/{Ctx}ApplicationService` — 구현 + 트랜잭션
-8. `{ctx}/adapter/in/web/controller/` — Controller, Request DTO
-9. `global/authorization/` — 권한 어노테이션 (필요 시)
+5. `{ctx}/adapter/out/external/` — Fetch Port 구현 (필요 시)
+6. `{ctx}/application/dto/` — Command / Response DTO
+7. `{ctx}/application/port/in/{Ctx}UseCase` — UseCase 인터페이스
+8. `{ctx}/application/service/{Ctx}Service` — 구현
+9. `{ctx}/adapter/in/web/controller/` — Controller, Request DTO
+10. `global/authorization/` — 권한 어노테이션 (필요 시)
+
+## 8. 점진적 마이그레이션 안내
+
+현재 **`board` 컨텍스트만 Fetch Port 패턴이 완전히 적용**되어 있습니다. 다른 컨텍스트들은 아직 cross-context Service를 직접 주입합니다. 새 기능을 추가하거나 리팩토링할 때는 board를 템플릿 삼아 점진적으로 Fetch Port를 도입하세요.

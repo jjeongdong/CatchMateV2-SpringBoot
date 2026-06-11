@@ -1,6 +1,6 @@
 ---
 trigger: glob
-description: Backend Common Patterns (UseCase Flow, Events, Notification Outbox, Permission)
+description: Backend Common Patterns (UseCase Flow, Fetch Port, Events, Outbox)
 globs: "**/*.java"
 ---
 
@@ -8,14 +8,14 @@ globs: "**/*.java"
 
 ## 1. UseCase 흐름 패턴
 
-Controller 는 Request → Command 변환 후 **UseCase 인터페이스**에 위임합니다. ApplicationService 가 유일한 트랜잭션 경계입니다.
+Controller → Request → Command → UseCase 인터페이스 → ApplicationService 구현.
 
 ```java
 // Controller
 @RestController
 @RequiredArgsConstructor
 public class BoardController {
-    private final BoardUseCase boardUseCase;   // ⭐ 인터페이스만 의존
+    private final BoardUseCase boardUseCase;        // 인터페이스만
 
     @PostMapping("/boards")
     public ResponseEntity<BoardCreateResponse> createBoard(
@@ -35,28 +35,65 @@ public interface BoardUseCase {
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class BoardApplicationService implements BoardUseCase {
-    private final BoardService boardService;
-    private final UserUseCase userUseCase;
+public class BoardService implements BoardUseCase {
+    private final BoardRepository boardRepository;
+    private final UserFetchPort userFetchPort;
     private final ApplicationEventPublisher publisher;
 
     @Override
     @Transactional
     public BoardCreateResponse createBoard(Long userId, BoardCreateCommand command) {
-        User user = userUseCase.getUser(command.getUserId());
-        Board board = boardService.createBoard(Board.createBoard(user, command));
+        User user = userFetchPort.getUser(userId);
+        Board board = boardRepository.save(Board.createBoard(user, command));
         publisher.publishEvent(BoardCreatedEvent.of(board));
         return BoardCreateResponse.from(board);
     }
 }
 ```
 
-## 2. 도메인 이벤트 패턴
+## 2. Cross-context Fetch Port 패턴 (⭐)
 
-이벤트 발행은 **ApplicationService**, 소비는 **`{ctx}/application/event/` 리스너**.
+다른 컨텍스트의 데이터/동작이 필요하면 자기 `application/port/out/` 에 인터페이스 정의 + `adapter/out/external/` 에 어댑터 구현.
 
 ```java
-// 이벤트 발행 (ApplicationService)
+// 1. board/application/port/out/UserFetchPort.java
+public interface UserFetchPort {
+    User getUser(Long userId);
+}
+
+// 2. board/adapter/out/external/BoardUserFetchAdapter.java
+@Component
+@RequiredArgsConstructor
+public class BoardUserFetchAdapter implements UserFetchPort {
+    private final UserService userService;          // 다른 컨텍스트 의존은 여기 하나만
+    @Override
+    public User getUser(Long userId) {
+        return userService.getUser(userId);
+    }
+}
+
+// 3. board/application/service/BoardService.java
+@Service
+@RequiredArgsConstructor
+public class BoardService implements BoardUseCase {
+    private final UserFetchPort userFetchPort;     // 인터페이스에만 의존
+    // ...
+}
+```
+
+**왜 이 패턴인가?**
+- BoardService 는 user 컨텍스트 구현체를 모름 → 결합도 낮음
+- 나중에 user를 별도 서비스로 분리해도 어댑터만 HTTP 클라이언트로 바꾸면 끝
+- 테스트 시 Fetch Port 만 Mock
+
+**같은 컨텍스트 안의 협력자**(예: chat의 ChatRoomService, ChatMessageService)는 Fetch Port 거치지 않고 직접 호출 가능합니다.
+
+## 3. 도메인 이벤트 패턴
+
+이벤트 발행은 **Service** (UseCase 구현), 소비는 **`{ctx}/application/event/` 리스너**.
+
+```java
+// 이벤트 발행 (Service)
 applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(enroll, board, sender));
 
 // 이벤트 소비 (Listener — 이중 단계)
@@ -64,74 +101,64 @@ applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(enroll, board,
 @RequiredArgsConstructor
 public class EnrollNotificationEventListener {
 
-    // Phase 1: 트랜잭션 내 동기 실행 — DB 저장
-    @EventListener
+    @EventListener  // Phase 1: 동기, 트랜잭션 내 — DB 저장
     public void saveNotification(EnrollNotificationEvent event) {
-        notificationService.saveNotification(...);
+        notificationService.createNotification(...);
         notificationRetryService.saveOutbox(...);
     }
 
-    // Phase 2: 커밋 후 비동기 실행 — 실시간 STOMP 전송
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
-    public void handleNotification(EnrollNotificationEvent event) {
+    public void handleNotification(EnrollNotificationEvent event) {  // Phase 2: 비동기, 커밋 후
         notificationDispatchPort.dispatch(recipientId, payload);
     }
 }
 ```
 
-## 3. Transactional Outbox 패턴 (알림 신뢰성)
+## 4. Transactional Outbox 패턴 (알림)
 
-FCM 발송 실패에 대비해 반드시 Outbox 패턴을 사용합니다.
+FCM 신뢰성 보장을 위한 Outbox.
 
 ```
-[ApplicationService]
+[Service]
   → publishEvent(XxxNotificationEvent)
     → @EventListener (동기, 트랜잭션 내)
-      → Notification 저장 (status=PENDING)
-      → NotificationOutbox 저장 (status=PENDING)
+      → Notification + NotificationOutbox 저장 (PENDING)
     → @TransactionalEventListener AFTER_COMMIT (비동기)
-      → NotificationDispatchPort.dispatch(...) — Redis Pub/Sub → STOMP
-      → OfflineFallbackPort.dispatchIfOffline(...) — 오프라인 시 FCM
+      → NotificationDispatchPort.dispatch(...) — STOMP
+      → OfflineFallbackPort.dispatchIfOffline(...) — FCM
 
 [NotificationScheduler — 60초마다]
-  → PENDING / FAILED Outbox 재시도 (max-retry-count 초과 시 FAILED 종료)
+  → PENDING / FAILED Outbox 재시도
 ```
 
-알림 채널 Port:
-- `NotificationDispatchPort.dispatch(Long userId, Map<String,String> payload)` — 실시간 fan-out (RedisPublisher 구현)
-- `OfflineFallbackPort.dispatchIfOffline(Long userId, NotificationOutbox outbox)` — 오프라인 fallback (CompositeNotificationDispatcher → FcmNotificationSender)
+알림 Port:
+- `NotificationDispatchPort.dispatch(Long, Map<String,String>)` — 실시간 fan-out (RedisPublisher)
+- `OfflineFallbackPort.dispatchIfOffline(Long, NotificationOutbox)` — 오프라인 fallback (CompositeNotificationDispatcher → FcmNotificationSender)
 
-새 알림 타입 추가:
-1. `notification/domain/enums/AlarmType` enum 추가
-2. `notification/domain/model/NotificationTemplate` 에 템플릿 추가
-3. `{ctx}/application/event/Xxx{Notification}Event` 생성
-4. `{ctx}/application/event/Xxx{Notification}EventListener` 생성 — 이중 단계 패턴 준수
-5. 해당 컨텍스트 ApplicationService 에서 이벤트 발행
+## 5. AOP 권한 체크 패턴
 
-## 4. AOP 권한 체크 패턴
-
-`global/authorization/` 에 어노테이션 + Finder 를 세트로 만듭니다.
+`global/authorization/` 에 어노테이션 + Finder 세트.
 
 ```java
-// 1. 어노테이션 (global/authorization/annotation)
+// 1. 어노테이션
 @CheckDataPermission(finder = BoardPermissionFinder.class)
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CheckBoardPermission {}
 
-// 2. Finder (global/authorization/finder)
+// 2. Finder
 @Component
 @RequiredArgsConstructor
 public class BoardPermissionFinder implements DomainFinder {
-    private final BoardUseCase boardUseCase;
+    private final BoardService boardService;   // own context는 직접 OK
     @Override
     public ResourceOwnership find(Long resourceId) {
-        return boardUseCase.getBoard(null, resourceId);
+        return boardService.getBoard(resourceId);
     }
 }
 
-// 3. Controller 사용
+// 3. Controller
 @DeleteMapping("/boards/{boardId}")
 public ResponseEntity<Void> deleteBoard(
         @AuthUser Long userId,
@@ -141,14 +168,13 @@ public ResponseEntity<Void> deleteBoard(
 }
 ```
 
-`DataPermissionAspect` 의 `@Before` 절에 새 어노테이션도 추가합니다.
+`DataPermissionAspect.@Before` 절에 새 어노테이션 추가도 필요.
 
-## 5. QueryDSL 복잡 쿼리 패턴
+## 6. QueryDSL 복잡 쿼리 패턴
 
-단순 CRUD 는 `JpaXxxRepository` (Spring Data JPA), 복잡 조건은 `QueryDslXxxRepository` 로 분리합니다.
+단순 CRUD = JPA Spring Data, 복잡 조건 = QueryDSL Repository 분리.
 
 ```java
-// adapter/out/persistence/repository/BoardRepositoryImpl.java
 @Repository
 @RequiredArgsConstructor
 public class BoardRepositoryImpl implements BoardRepository {
@@ -167,33 +193,28 @@ private BooleanExpression eqSportType(SportType sportType) {
 }
 ```
 
-## 6. Soft Delete 패턴
+## 7. Soft Delete 패턴
 
-모든 엔티티는 물리 삭제 대신 `deletedAt` 컬럼으로 소프트 삭제합니다.
+모든 엔티티는 `deletedAt` 컬럼으로 소프트 삭제.
 
 ```java
 @Entity
-@SQLRestriction("deleted_at IS NULL")  // 자동으로 삭제 필터 적용
+@SQLRestriction("deleted_at IS NULL")  // 자동 필터
 public class BoardEntity extends BaseEntity {
     private LocalDateTime deletedAt;
 }
 ```
 
-- `@SQLRestriction` 으로 모든 조회에서 자동 필터링
-- 삭제 메서드는 `deletedAt = LocalDateTime.now()` 설정 후 저장
+## 8. Redis Pub/Sub (실시간 채팅 / 알림)
 
-## 7. Redis Pub/Sub (실시간 채팅 / 알림)
-
-WebSocket / 알림 메시지는 멀티 인스턴스 지원을 위해 Redis Pub/Sub 으로 브로드캐스트.
+멀티 인스턴스 지원을 위해 Redis Pub/Sub 으로 fan-out.
 
 ```
-[ChatApplicationService]
+[ChatService]
   → publishEvent(ChatMessageEvent)
-    → RedisPublisher.publishChat(...) — AFTER_COMMIT @Async
-      → 모든 인스턴스의 RedisSubscriber.onMessage()
+    → ChatMessageRedisPublisher.publishChat(...)   — AFTER_COMMIT @Async
+      → 모든 인스턴스 RedisSubscriber.onMessage()
         → SimpMessagingTemplate.convertAndSendToUser()
 ```
 
-`global/redis/RedisPublisher` 가 `NotificationDispatchPort` 의 구현체이기도 합니다.
-
-채널 네이밍: `/topic/chatroom/{chatRoomId}`
+`ChatMessageRedisPublisher` (채팅용) 와 `RedisPublisher` (알림용, `NotificationDispatchPort` 구현) 는 **의도적으로 분리**. 합치면 인터페이스 없는 메서드가 JDK 동적 프록시에서 사라져 Spring 부팅이 깨집니다.
