@@ -5,102 +5,231 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Run Commands
 
 ```bash
-# Build entire project
+# Build the project
 ./gradlew build
 
-# Build executable JAR (catchmate-boot module)
-./gradlew :catchmate-boot:bootJar
+# Build executable JAR
+./gradlew bootJar
 
 # Run all tests
 ./gradlew test
-
-# Run tests for a specific module
-./gradlew :catchmate-application:test
 
 # Local development with Docker Compose
 docker-compose up -d
 ```
 
-## Module Architecture
+## Architecture: Hexagonal + DDD (Single Module)
 
-This is an 8-module Gradle project with a layered, domain-driven design. Dependencies flow inward:
+이 프로젝트는 **단일 Gradle 모듈** 안에서 Bounded Context 별로 패키지를 나눈 **Hexagonal Architecture (Ports & Adapters)** 구조입니다.
+
+### 패키지 구조
 
 ```
-catchmate-api → catchmate-orchestration → catchmate-application → catchmate-domain
-                                       ↘ catchmate-authorization
-catchmate-infrastructure → catchmate-domain
-catchmate-boot (assembles all modules)
-catchmate-common (shared by all)
+com.back.catchmate
+├── {context}/                  # e.g. board, chat, enroll, user, auth, oauth,
+│                               #      notification, inquiry, report, admin,
+│                               #      bookmark, club, game, notice
+│   ├── domain/
+│   │   ├── model/              # Aggregate, Entity, Value Object
+│   │   ├── service/            # Domain Service (도메인 규칙 응집)
+│   │   ├── event/              # Domain Event
+│   │   ├── enums/              # 도메인 enum
+│   │   └── dto/                # 도메인 내부에서 쓰는 값 객체 (e.g. SearchCondition)
+│   ├── application/
+│   │   ├── port/
+│   │   │   ├── in/             # ⭐ UseCase 인터페이스 (Input Port)
+│   │   │   └── out/            # Repository, 외부 서비스 인터페이스 (Output Port)
+│   │   ├── service/            # UseCase 구현체 (XxxApplicationService) + 얇은 도메인 Service
+│   │   ├── event/              # Application 레이어 이벤트 리스너 (소비)
+│   │   └── dto/                # Command / Response DTO
+│   └── adapter/
+│       ├── in/
+│       │   ├── web/            # REST Controller + Request/Response DTO
+│       │   └── websocket/      # STOMP / WebSocket 진입점
+│       └── out/
+│           ├── persistence/    # JPA Entity + Repository 구현체 (QueryDSL 포함)
+│           └── external/       # FCM, S3, OAuth Client 등 외부 시스템 어댑터
+├── global/                     # Cross-cutting 인프라
+│   ├── config/                 # Spring 설정 (Security, WebSocket, Async, JPA…)
+│   ├── authorization/          # AOP 권한 체크 (CheckXxxPermission)
+│   ├── redis/                  # Redis Pub/Sub publisher/subscriber 인프라
+│   ├── idempotency/            # 멱등성 처리
+│   ├── scheduler/              # 스케줄러 (NotificationScheduler 등)
+│   └── error/                  # 전역 예외 핸들러
+└── common/                     # 모든 컨텍스트가 참조하는 공통 코드
+    ├── error/                  # ErrorCode, BaseException, ErrorResponse
+    ├── page/                   # 페이지네이션 모델
+    └── orchestration/          # 페이지 응답 등 공통 DTO
 ```
 
-| Module | Role |
-|---|---|
-| `catchmate-api` | REST controllers, request/response DTOs, OpenAPI annotations |
-| `catchmate-orchestration` | Facade/Orchestrator services that coordinate across domains; also contains command objects |
-| `catchmate-authorization` | AOP aspects + annotations (`@CheckEnrollHostPermission`, etc.) for permission enforcement |
-| `catchmate-application` | Use-case services, domain event listeners |
-| `catchmate-domain` | JPA entities, repository interfaces, domain business logic |
-| `catchmate-infrastructure` | Repository implementations (QueryDSL), JPA config, Redis, Firebase, S3, async config |
-| `catchmate-common` | Enums (AlarmType, MessageType, OutboxStatus), ErrorCode, ErrorResponse, BaseException |
-| `catchmate-boot` | Spring Boot entry point (`CatchmateApplication`), resource files, profiles |
+### 의존성 방향
 
-## Key Patterns
+화살표는 “알아도 되는 방향”입니다. **반대 방향으로는 절대 의존하지 않습니다.**
 
-### Orchestrator Facade
-Controllers call Orchestrators (in `catchmate-orchestration`), never application services directly. Orchestrators coordinate multiple services, build response DTOs, and publish domain events.
+```
+                ┌────────────────────────────────────────────┐
+                │  adapter/in/web (Controller)               │
+                │  adapter/in/websocket                      │
+                └──────────────┬─────────────────────────────┘
+                               │ depends on
+                               ▼
+                ┌────────────────────────────────────────────┐
+                │  application/port/in (UseCase 인터페이스)   │  ← Controller는 오직 이것만 안다
+                └──────────────┬─────────────────────────────┘
+                               │ implemented by
+                               ▼
+                ┌────────────────────────────────────────────┐
+                │  application/service (ApplicationService)  │
+                │   - UseCase 구현                            │
+                │   - 트랜잭션 경계                            │
+                │   - 도메인 Service들을 조합                  │
+                │   - ApplicationEventPublisher 발행          │
+                └──────┬──────────────────────┬──────────────┘
+                       │ uses                 │ uses
+                       ▼                      ▼
+        ┌──────────────────────┐   ┌────────────────────────┐
+        │ domain/model         │   │ application/port/out   │
+        │ domain/service       │   │ (Repository / external │
+        └──────────────────────┘   │  Port)                 │
+                                   └───────────┬────────────┘
+                                               │ implemented by
+                                               ▼
+                                   ┌────────────────────────┐
+                                   │ adapter/out/persistence│
+                                   │ adapter/out/external   │
+                                   └────────────────────────┘
+```
 
-### AOP Permission Checks
-Method-level annotations intercept calls before business logic runs. To add a new permission check, create an annotation in `catchmate-authorization` and a corresponding `@Aspect` class.
+규칙:
 
-### Transactional Outbox for Notifications
-Reliable FCM delivery uses two event listener phases:
-1. `@EventListener` (default, before commit) — saves `Notification` + `NotificationOutbox` in the same transaction
-2. `@TransactionalEventListener(AFTER_COMMIT)` (async) — sends FCM immediately after commit
-3. A scheduler retries `PENDING`/`FAILED` outbox records
+- **Controller → UseCase**: Controller는 항상 `application.port.in.XxxUseCase`에만 의존합니다. `XxxApplicationService` 같은 구현체를 직접 import 하지 않습니다.
+- **ApplicationService → Output Port**: 영속성·외부 시스템 호출은 `application.port.out.*` 인터페이스를 통해서만 합니다. 구현체(`XxxRepositoryImpl`, `FcmNotificationSender` 등)는 `adapter.out.*`에 있고, Spring DI 가 알아서 주입합니다.
+- **Domain 순수성**: `domain/*` 패키지에는 Spring · JPA · 인프라 의존성을 넣지 않습니다. JPA `@Entity`는 `adapter.out.persistence.entity`에 두고, 도메인 모델로 `toModel()` / `from()` 변환합니다.
+- **컨텍스트 간 호출**: 다른 컨텍스트의 기능이 필요하면 그 컨텍스트의 **UseCase** 또는 도메인 Service만 호출합니다. 다른 컨텍스트의 Repository / Adapter를 직접 호출하지 않습니다.
 
-**이 이중 단계 패턴은 의도된 설계입니다. 하나의 리스너로 합치거나 단순화하지 마세요.**
+## 핵심 패턴
 
-### Domain Events
-`ApplicationEventPublisher` decouples cross-cutting concerns. Events (e.g., `EnrollNotificationEvent`) are published by orchestrators and consumed by listeners in `catchmate-application`.
+### UseCase + ApplicationService
 
-### Async Processing
-`AsyncConfig` configures a `ThreadPoolTaskExecutor` (10 core / 50 max / 100 queue, `CallerRunsPolicy`). Annotate methods with `@Async` to run on this pool.
+```java
+// application/port/in/BoardUseCase.java
+public interface BoardUseCase {
+    BoardCreateResponse createBoard(Long userId, BoardCreateCommand command);
+    BoardDetailResponse getBoard(Long userId, Long boardId);
+    void deleteBoard(Long userId, Long boardId);
+}
+
+// application/service/BoardApplicationService.java
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class BoardApplicationService implements BoardUseCase {
+    private final BoardService boardService;        // 같은 컨텍스트의 도메인 Service
+    private final UserUseCase userUseCase;          // 다른 컨텍스트는 UseCase 통해
+    private final ApplicationEventPublisher publisher;
+
+    @Override
+    @Transactional
+    public BoardCreateResponse createBoard(Long userId, BoardCreateCommand command) {
+        User user = userUseCase.getUser(userId);
+        Board board = boardService.createBoard(Board.createBoard(user, command));
+        publisher.publishEvent(BoardCreatedEvent.of(board));
+        return BoardCreateResponse.from(board);
+    }
+}
+
+// adapter/in/web/controller/BoardController.java
+@RestController
+@RequestMapping("/boards")
+@RequiredArgsConstructor
+public class BoardController {
+    private final BoardUseCase boardUseCase;        // ⭐ 인터페이스에만 의존
+
+    @PostMapping
+    public ResponseEntity<BoardCreateResponse> createBoard(
+            @AuthUser Long userId,
+            @RequestBody @Valid BoardCreateRequest request) {
+        return ResponseEntity.ok(boardUseCase.createBoard(userId, request.toCommand()));
+    }
+}
+```
+
+### Output Port (Repository) DIP
+
+```java
+// application/port/out/BoardRepository.java
+public interface BoardRepository {
+    Optional<Board> findById(Long id);
+    Board save(Board board);
+}
+
+// adapter/out/persistence/repository/BoardRepositoryImpl.java
+@Repository
+@RequiredArgsConstructor
+public class BoardRepositoryImpl implements BoardRepository {
+    private final JpaBoardRepository jpaBoardRepository;
+    private final QueryDslBoardRepository queryDslBoardRepository;
+
+    @Override
+    public Optional<Board> findById(Long id) {
+        return jpaBoardRepository.findById(id).map(BoardEntity::toModel);
+    }
+}
+```
+
+### Transactional Outbox (알림)
+
+FCM 발송 신뢰성을 위한 **이중 단계 이벤트 리스너** 패턴. **단순화하지 마세요.**
+
+1. `@EventListener` (커밋 전, 동기): `Notification` + `NotificationOutbox` 저장
+2. `@TransactionalEventListener(AFTER_COMMIT)` (커밋 후, 비동기): 즉시 FCM 발송 시도
+3. `NotificationScheduler` (60초마다): `PENDING` / `FAILED` Outbox 재시도
+
+알림 채널 분리:
+- `NotificationDispatchPort` → 실시간 STOMP 전송 (Redis Pub/Sub fan-out)
+- `OfflineFallbackPort` → 오프라인 사용자에게 FCM 전송 (CompositeNotificationDispatcher)
+
+### AOP 권한 체크
+
+`global/authorization/` 의 어노테이션 + Aspect 가 메서드 진입 전에 권한을 확인합니다. Controller 메서드에 `@CheckBoardPermission` 등을 붙입니다.
 
 ### Soft Delete
-모든 엔티티는 `deletedAt` 컬럼으로 소프트 삭제합니다. `@SQLRestriction("deleted_at IS NULL")`이 자동 필터를 적용합니다. 물리 삭제 쿼리를 작성하지 마세요.
 
-### Entity ↔ Domain Model 분리
-- JPA Entity는 `catchmate-infrastructure`의 `/persistence/{domain}/entity/` 에 위치
-- Domain 모델은 `catchmate-domain`에 위치
-- 변환: `Entity.toModel()` (Entity → Domain), `Entity.from(domain)` (Domain → Entity)
-- 변환 로직은 반드시 Entity 클래스 내부에 작성
+모든 엔티티는 `deletedAt` 컬럼으로 소프트 삭제합니다. `@SQLRestriction("deleted_at IS NULL")` 으로 자동 필터링됩니다. **물리 삭제 쿼리를 작성하지 마세요.**
+
+### Entity ↔ Domain 모델 변환
+
+- JPA Entity: `adapter/out/persistence/entity/`
+- Domain 모델: `domain/model/`
+- 변환: `Entity.toModel()`, `Entity.from(domain)`
+- 변환 로직은 반드시 **Entity 클래스 내부**에 작성
 
 ## Configuration Profiles
 
-| Profile | File | Usage |
+| Profile | 파일 | 용도 |
 |---|---|---|
-| `local` | `application-local.yml` | Hardcoded DB/Redis/S3/JWT for local dev |
-| `dev` | `application-dev.yml` | Reads from environment variables (used in CI/CD) |
+| `local` | `application-local.yml` | 로컬 개발용 하드코딩 값 |
+| `dev` | `application-dev.yml` | CI/CD 환경변수 주입 |
 
-Active profile is set in `catchmate-boot/src/main/resources/application.yml`.
+활성 프로파일은 `src/main/resources/application.yml`.
 
-Secrets for `dev` are injected via GitHub Secrets → `deploy.yml` generates `application-dev.yml` and `firebase-adminsdk.json` at deploy time.
+`dev` 시크릿은 GitHub Secrets → `deploy.yml`에서 `application-dev.yml` / `firebase-adminsdk.json` 생성.
 
 ## Technology Stack
 
-- **Java 17**, Spring Boot 3.4.2, Jakarta EE
-- **ORM:** Spring Data JPA + QueryDSL 5.0 (Jakarta variant) for complex queries
-- **DB:** MySQL on AWS RDS (HikariCP, max 50 connections)
-- **Cache:** Redis with Lettuce (Spring Data Redis)
-- **Push:** Firebase Admin SDK 9.3.0 (FCM)
-- **Storage:** AWS SDK v2 (S3)
-- **Auth:** JWT (jjwt 0.11.5) + Spring Security
-- **WebSocket:** Spring Stomp + Redis Pub/Sub (멀티 인스턴스 지원)
-- **Docs:** springdoc-openapi 2.8.5 (Swagger UI)
+- **Java 21**, Spring Boot 3.4.2, Jakarta EE
+- **ORM**: Spring Data JPA + QueryDSL 5.0 (Jakarta)
+- **DB**: MySQL on AWS RDS (HikariCP)
+- **Cache**: Redis (Lettuce / Spring Data Redis)
+- **Push**: Firebase Admin SDK 9.3 (FCM)
+- **Storage**: AWS SDK v2 (S3)
+- **Auth**: JWT (jjwt 0.11.5) + Spring Security
+- **WebSocket**: Spring STOMP + Redis Pub/Sub
+- **Docs**: springdoc-openapi 2.8.5
 
 ## Deployment
 
-Blue/Green deployment via Nginx on a single EC2 instance. CI/CD (`deploy.yml`) builds and pushes a Docker image on every push to `main`, then SSHes into EC2 to run `deploy.sh`.
+EC2 단일 인스턴스에서 Nginx Blue/Green. `.github/workflows/deploy.yml` 이 `main` 푸시 시 Docker 이미지를 빌드/푸시하고 SSH 로 `deploy.sh` 실행.
 
 ---
 
@@ -108,50 +237,50 @@ Blue/Green deployment via Nginx on a single EC2 instance. CI/CD (`deploy.yml`) b
 
 ### 예외 처리
 - **`catch (Exception ignored) {}` 절대 금지.** 예상된 null 케이스는 `Optional`로 처리합니다.
-- 모든 비즈니스 예외는 `BaseException(ErrorCode.XXX)`를 사용합니다.
-- 새 에러 케이스가 필요하면 `ErrorCode` enum에 추가합니다.
+- 모든 비즈니스 예외는 `BaseException(ErrorCode.XXX)` 사용.
+- 새 에러 케이스는 `ErrorCode` enum에 추가.
 
 ### 트랜잭션
-- Orchestrator 클래스 레벨에 `@Transactional(readOnly = true)` 기본 설정.
+- `ApplicationService` 클래스 레벨 기본값: `@Transactional(readOnly = true)`.
 - 쓰기 메서드만 `@Transactional`로 오버라이드.
-- `Propagation.REQUIRES_NEW`는 **반드시 별도 Bean**에서 호출 (같은 클래스 내 호출 시 프록시가 무시됨).
+- `Propagation.REQUIRES_NEW`는 **반드시 별도 Bean**에서 호출 (같은 클래스 내 호출 시 프록시 무시).
 
 ### 하드코딩 금지
-- Magic number, 딜레이 값, 재시도 횟수 등은 `application.yml`에 정의하고 `@Value`로 주입합니다.
+- Magic number, 딜레이, 재시도 횟수 등은 `application.yml` + `@Value`로 주입.
 
 ### 도메인 모델 순수성
-- Domain 모델(`catchmate-domain`)에 Spring/Infrastructure 의존성을 넣지 않습니다.
-- 알람 설정 같은 `Character Y/N` 필드는 도메인 모델에서 boolean 메서드(`isEnrollAlarmEnabled()`)로 래핑합니다.
-- 서비스/리스너에서 직접 `!= 'Y'` 비교를 작성하지 않습니다.
+- `domain/*` 에 Spring / Infrastructure 의존성을 넣지 않습니다.
+- `char Y/N` 같은 표현은 boolean 메서드(`isEnrollAlarmEnabled()`)로 래핑.
 
 ### 변경하지 말아야 할 패턴
-- `BoardOrchestrator`의 여러 의존성: 의도된 크로스 도메인 조율
-- 얇은 Service 레이어: Port/Adapter 패턴에서 올바른 역할
-- 이중 단계 이벤트 리스너: Transactional Outbox 올바른 구현
+- **얇은 도메인 Service** (`BoardService`, `UserService` 등): Aggregate 단위 영속성 어댑터/도메인 Service 역할. ApplicationService 와 혼동해서 삭제하지 마세요.
+- **이중 단계 이벤트 리스너**: Transactional Outbox의 올바른 구현.
 
 ---
 
 ## 새 기능 추가 가이드
 
-### API 엔드포인트 추가 순서
-1. `catchmate-domain` — 도메인 모델, Repository 인터페이스 수정
-2. `catchmate-common` — 필요한 Enum, ErrorCode 추가
-3. `catchmate-application` — Service 메서드 추가
-4. `catchmate-infrastructure` — JPA Entity, QueryDSL 구현체 수정
-5. `catchmate-orchestration` — Command/Response DTO, Orchestrator 메서드 추가
-6. `catchmate-api` — Controller, Request DTO 추가
+### API 엔드포인트 추가
+1. `{ctx}/domain/model` — Aggregate 변경 / 새 모델
+2. `common/error/ErrorCode` — 새 에러 케이스
+3. `{ctx}/application/port/out` — 새 Output Port (Repository 메서드 추가 등)
+4. `{ctx}/adapter/out/persistence` — JPA Entity, Repository 구현체
+5. `{ctx}/application/dto` — Command / Response DTO
+6. `{ctx}/application/port/in/{Ctx}UseCase` — UseCase 인터페이스에 메서드 추가
+7. `{ctx}/application/service/{Ctx}ApplicationService` — 구현 + 트랜잭션
+8. `{ctx}/adapter/in/web/controller` — Controller, Request DTO
 
-### 알림 타입 추가 순서
-1. `AlarmType` enum 추가 (`catchmate-common`)
-2. `NotificationTemplate` enum에 메시지 템플릿 추가 (`catchmate-domain`)
-3. 이벤트 클래스 생성 (`catchmate-application`)
-4. 이벤트 리스너 생성 — 이중 단계(@EventListener + @TransactionalEventListener) 패턴 준수
-5. Orchestrator에서 `applicationEventPublisher.publishEvent(...)` 호출
+### 알림 타입 추가
+1. `notification/domain/enums/AlarmType` 에 enum 추가
+2. `notification/domain/model/NotificationTemplate` 에 템플릿 추가
+3. `{ctx}/application/event/Xxx{Notification}Event` 생성
+4. `{ctx}/application/event/Xxx{Notification}EventListener` 생성 — **이중 단계 패턴 준수**
+5. 해당 컨텍스트 ApplicationService 에서 `applicationEventPublisher.publishEvent(...)`
 
-### 권한 체크 추가 순서
-1. `catchmate-authorization`에 어노테이션 생성
-2. `DomainFinder` 구현체 생성
-3. `DataPermissionAspect`가 자동으로 처리함
+### 권한 체크 추가
+1. `global/authorization/annotation` 에 새 어노테이션
+2. `global/authorization/finder` 에 `DomainFinder` 구현체
+3. `DataPermissionAspect` 의 `@Before` 절에 어노테이션 추가
 4. Controller 메서드에 어노테이션 적용
 
 ---
@@ -160,13 +289,13 @@ Blue/Green deployment via Nginx on a single EC2 instance. CI/CD (`deploy.yml`) b
 
 | 목적 | 경로 |
 |---|---|
-| 에러 코드 | `catchmate-common/.../common/exception/ErrorCode.java` |
-| 전역 예외 핸들러 | `catchmate-api/.../global/error/GlobalExceptionHandler.java` |
-| JWT 인증 필터 | `catchmate-api/.../global/config/security/JwtAuthenticationFilter.java` |
-| 비동기 설정 | `catchmate-infrastructure/.../config/AsyncConfig.java` |
-| FCM 발신 | `catchmate-infrastructure/.../notification/sender/FcmNotificationSender.java` |
-| 알림 스케줄러 | `catchmate-api/.../global/scheduler/NotificationScheduler.java` |
-| Outbox 상태 관리 | `catchmate-application/.../notification/service/NotificationOutboxUpdater.java` |
-| 알림 템플릿 | `catchmate-domain/.../notification/model/NotificationTemplate.java` |
-| Redis Pub/Sub | `catchmate-infrastructure/.../redis/` |
-| WebSocket 설정 | `catchmate-api/.../global/config/WebSocketConfig.java` |
+| 에러 코드 | `common/error/ErrorCode.java` |
+| 전역 예외 핸들러 | `global/error/GlobalExceptionHandler.java` |
+| JWT 인증 필터 | `global/config/security/JwtAuthenticationFilter.java` |
+| 비동기 설정 | `global/config/infrastructure/AsyncConfig.java` |
+| FCM 발신 | `notification/adapter/out/sender/FcmNotificationSender.java` |
+| 알림 스케줄러 | `global/scheduler/NotificationScheduler.java` |
+| Outbox 상태 관리 | `notification/application/service/NotificationOutboxUpdater.java` |
+| 알림 템플릿 | `notification/domain/model/NotificationTemplate.java` |
+| Redis Pub/Sub | `global/redis/` |
+| WebSocket 설정 | `global/config/WebSocketConfig.java` |
