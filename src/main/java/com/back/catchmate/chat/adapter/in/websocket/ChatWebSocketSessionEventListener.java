@@ -1,7 +1,7 @@
 package com.back.catchmate.chat.adapter.in.websocket;
 
-import com.back.catchmate.chat.application.service.ChatOrchestrator;
-import com.back.catchmate.user.application.service.UserOnlineStatusOrchestrator;
+import com.back.catchmate.chat.application.port.in.ChatUseCase;
+import com.back.catchmate.user.application.port.in.UserOnlineStatusUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -20,8 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @RequiredArgsConstructor
 public class ChatWebSocketSessionEventListener {
-    private final ChatOrchestrator chatOrchestrator;
-    private final UserOnlineStatusOrchestrator userOnlineStatusOrchestrator;
+    private final ChatUseCase chatOrchestrator;
+    private final UserOnlineStatusUseCase userOnlineStatusOrchestrator;
 
     /**
      * WebSocket 연결 성공

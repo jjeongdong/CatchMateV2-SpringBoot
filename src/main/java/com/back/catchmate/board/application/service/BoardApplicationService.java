@@ -1,5 +1,7 @@
 package com.back.catchmate.board.application.service;
 
+
+import com.back.catchmate.board.application.port.in.BoardUseCase;
 import com.back.catchmate.board.application.service.BoardService;
 import com.back.catchmate.bookmark.application.service.BookmarkService;
 import com.back.catchmate.chat.application.service.ChatRoomMemberService;
@@ -51,7 +53,7 @@ import java.util.Set;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class BoardOrchestrator {
+public class BoardApplicationService implements BoardUseCase {
     private final ClubService clubService;
     private final GameService gameService;
     private final UserService userService;

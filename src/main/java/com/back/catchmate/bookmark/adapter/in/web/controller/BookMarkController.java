@@ -2,7 +2,7 @@ package com.back.catchmate.bookmark.adapter.in.web.controller;
 
 import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.board.application.dto.response.BoardResponse;
-import com.back.catchmate.bookmark.application.service.BookmarkOrchestrator;
+import com.back.catchmate.bookmark.application.port.in.BookmarkUseCase;
 import com.back.catchmate.bookmark.application.dto.response.BookmarkUpdateResponse;
 import com.back.catchmate.common.orchestration.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/bookmarks")
 @RequiredArgsConstructor
 public class BookMarkController {
-    private final BookmarkOrchestrator bookmarkOrchestrator;
+    private final BookmarkUseCase bookmarkOrchestrator;
 
     @PostMapping("/{boardId}")
     @Operation(summary = "찜 등록/취소 API", description = "게시글을 찜하거나 찜을 취소합니다.")

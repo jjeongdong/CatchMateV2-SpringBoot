@@ -1,6 +1,6 @@
 package com.back.catchmate.global.config.security;
 
-import com.back.catchmate.auth.application.service.AuthOrchestrator;
+import com.back.catchmate.auth.application.port.in.AuthUseCase;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +22,7 @@ import java.util.Collections;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final AuthOrchestrator authOrchestrator;
+    private final AuthUseCase authOrchestrator;
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
 

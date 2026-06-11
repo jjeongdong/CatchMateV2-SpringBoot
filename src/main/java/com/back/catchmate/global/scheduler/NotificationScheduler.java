@@ -1,6 +1,6 @@
 package com.back.catchmate.global.scheduler;
 
-import com.back.catchmate.notification.application.service.NotificationOrchestrator;
+import com.back.catchmate.notification.application.port.in.NotificationUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class NotificationScheduler {
-    private final NotificationOrchestrator notificationOrchestrator;
+    private final NotificationUseCase notificationOrchestrator;
 
     @Scheduled(fixedDelayString = "${notification.outbox.scheduler-delay-ms:60000}")
     public void processPendingPush() {

@@ -6,7 +6,7 @@ import com.back.catchmate.global.authorization.annotation.CheckEnrollApplicantPe
 import com.back.catchmate.global.authorization.annotation.CheckEnrollHostPermission;
 import com.back.catchmate.global.authorization.annotation.PermissionId;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.enroll.application.service.EnrollOrchestrator;
+import com.back.catchmate.enroll.application.port.in.EnrollUseCase;
 import com.back.catchmate.enroll.application.dto.response.EnrollAcceptResponse;
 import com.back.catchmate.enroll.application.dto.response.EnrollApplicantResponse;
 import com.back.catchmate.enroll.application.dto.response.EnrollCancelResponse;
@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 public class EnrollController {
-    private final EnrollOrchestrator enrollOrchestrator;
+    private final EnrollUseCase enrollOrchestrator;
 
     @PostMapping("/api/boards/{boardId}/enrolls")
     @Operation(summary = "직관 신청 등록", description = "게시글에 대해 직관 신청을 합니다.")

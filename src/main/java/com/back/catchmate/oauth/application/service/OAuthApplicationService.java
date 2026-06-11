@@ -1,5 +1,7 @@
 package com.back.catchmate.oauth.application.service;
 
+
+import com.back.catchmate.oauth.application.port.in.OAuthUseCase;
 import com.back.catchmate.auth.application.service.AuthService;
 import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.auth.domain.model.AuthToken;
@@ -25,7 +27,7 @@ import java.util.UUID;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class OAuthOrchestrator {
+public class OAuthApplicationService implements OAuthUseCase {
     private final OAuthClientRegistry oauthClientRegistry;
     private final AuthService authService;
     private final UserService userService;

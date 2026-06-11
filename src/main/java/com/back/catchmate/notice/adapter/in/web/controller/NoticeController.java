@@ -1,7 +1,7 @@
 package com.back.catchmate.notice.adapter.in.web.controller;
 
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.notice.application.service.NoticeOrchestrator;
+import com.back.catchmate.notice.application.port.in.NoticeUseCase;
 import com.back.catchmate.notice.application.dto.response.NoticeDetailResponse;
 import com.back.catchmate.notice.application.dto.response.NoticeResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/notices")
 @RequiredArgsConstructor
 public class NoticeController {
-    private final NoticeOrchestrator noticeOrchestrator;
+    private final NoticeUseCase noticeOrchestrator;
 
     @GetMapping("/{noticeId}")
     @Operation(summary = "공지사항 상세 조회", description = "특정 공지사항의 상세 내용을 조회합니다.")

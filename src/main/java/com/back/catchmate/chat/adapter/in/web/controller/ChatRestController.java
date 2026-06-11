@@ -2,7 +2,7 @@ package com.back.catchmate.chat.adapter.in.web.controller;
 
 import com.back.catchmate.chat.adapter.in.web.dto.request.ChatNotificationUpdateRequest;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
-import com.back.catchmate.chat.application.service.ChatOrchestrator;
+import com.back.catchmate.chat.application.port.in.ChatUseCase;
 import com.back.catchmate.chat.application.dto.response.ChatMessageResponse;
 import com.back.catchmate.chat.application.dto.response.ChatRoomMemberResponse;
 import com.back.catchmate.chat.application.dto.response.ChatRoomResponse;
@@ -33,7 +33,7 @@ import java.util.List;
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
 public class ChatRestController {
-    private final ChatOrchestrator chatOrchestrator;
+    private final ChatUseCase chatOrchestrator;
 
     @GetMapping("/rooms")
     @Operation(summary = "내가 속한 채팅방 목록 조회 (페이징)", description = "현재 사용자가 참여 중인 모든 채팅방을 조회합니다. 각 채팅방의 마지막 메시지도 함께 반환됩니다.")

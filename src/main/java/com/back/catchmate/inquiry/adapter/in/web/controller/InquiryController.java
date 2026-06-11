@@ -5,7 +5,7 @@ import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.global.authorization.annotation.CheckInquiryPermission;
 import com.back.catchmate.global.authorization.annotation.PermissionId;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.inquiry.application.service.InquiryOrchestrator;
+import com.back.catchmate.inquiry.application.port.in.InquiryUseCase;
 import com.back.catchmate.inquiry.application.dto.response.InquiryCreateResponse;
 import com.back.catchmate.inquiry.application.dto.response.InquiryDetailResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/inquiries")
 @RequiredArgsConstructor
 public class InquiryController {
-    private final InquiryOrchestrator inquiryOrchestrator;
+    private final InquiryUseCase inquiryOrchestrator;
 
     @PostMapping
     @Operation(summary = "문의 등록", description = "새로운 1:1 문의를 등록합니다.")

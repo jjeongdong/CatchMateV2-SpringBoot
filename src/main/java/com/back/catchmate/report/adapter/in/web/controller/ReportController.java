@@ -2,7 +2,7 @@ package com.back.catchmate.report.adapter.in.web.controller;
 
 import com.back.catchmate.report.adapter.in.web.dto.request.ReportCreateRequest;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
-import com.back.catchmate.report.application.service.ReportOrchestrator;
+import com.back.catchmate.report.application.port.in.ReportUseCase;
 import com.back.catchmate.report.application.dto.response.ReportCreateResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
 public class ReportController {
-    private final ReportOrchestrator reportOrchestrator;
+    private final ReportUseCase reportOrchestrator;
 
     @PostMapping
     @Operation(summary = "유저 신고", description = "특정 유저를 신고합니다.")

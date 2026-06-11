@@ -4,7 +4,7 @@ import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.global.authorization.annotation.CheckNotificationPermission;
 import com.back.catchmate.global.authorization.annotation.PermissionId;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.notification.application.service.NotificationOrchestrator;
+import com.back.catchmate.notification.application.port.in.NotificationUseCase;
 import com.back.catchmate.notification.application.dto.response.NotificationResponse;
 import com.back.catchmate.notification.application.dto.response.UnreadNotificationResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
-    private final NotificationOrchestrator notificationOrchestrator;
+    private final NotificationUseCase notificationOrchestrator;
 
     @CheckNotificationPermission
     @Operation(summary = "알림 상세 조회", description = "알림을 상세 조회하고 읽음 상태로 변경합니다.")

@@ -4,7 +4,7 @@ import com.back.catchmate.admin.adapter.in.web.dto.request.InquiryAnswerRequest;
 import com.back.catchmate.admin.adapter.in.web.dto.request.NoticeCreateRequest;
 import com.back.catchmate.admin.adapter.in.web.dto.request.NoticeUpdateRequest;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
-import com.back.catchmate.admin.application.service.AdminOrchestrator;
+import com.back.catchmate.admin.application.port.in.AdminUseCase;
 import com.back.catchmate.admin.application.dto.response.AdminBoardDetailWithEnrollResponse;
 import com.back.catchmate.admin.application.dto.response.AdminBoardResponse;
 import com.back.catchmate.admin.application.dto.response.AdminDashboardResponse;
@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
 public class AdminController {
-    private final AdminOrchestrator adminOrchestrator;
+    private final AdminUseCase adminOrchestrator;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/notices")

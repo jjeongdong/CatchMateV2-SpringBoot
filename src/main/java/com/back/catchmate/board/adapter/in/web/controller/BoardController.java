@@ -5,7 +5,7 @@ import com.back.catchmate.board.adapter.in.web.dto.request.BoardUpdateRequest;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.global.authorization.annotation.CheckBoardPermission;
 import com.back.catchmate.global.authorization.annotation.PermissionId;
-import com.back.catchmate.board.application.service.BoardOrchestrator;
+import com.back.catchmate.board.application.port.in.BoardUseCase;
 import com.back.catchmate.board.application.dto.response.BoardCreateResponse;
 import com.back.catchmate.board.application.dto.response.BoardDetailResponse;
 import com.back.catchmate.board.application.dto.response.BoardLiftUpResponse;
@@ -41,7 +41,7 @@ import java.util.List;
 @RequestMapping("/api/boards")
 @RequiredArgsConstructor
 public class BoardController {
-    private final BoardOrchestrator boardOrchestrator;
+    private final BoardUseCase boardOrchestrator;
 
     @PostMapping
     @Operation(summary = "게시글 생성/임시저장 API", description = "게시글을 생성하거나 임시저장합니다.")

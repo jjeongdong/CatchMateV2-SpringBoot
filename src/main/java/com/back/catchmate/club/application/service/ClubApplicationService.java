@@ -1,5 +1,7 @@
 package com.back.catchmate.club.application.service;
 
+
+import com.back.catchmate.club.application.port.in.ClubUseCase;
 import com.back.catchmate.club.application.dto.response.ClubResponse;
 import com.back.catchmate.club.application.service.ClubService;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +13,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ClubOrchestrator {
+public class ClubApplicationService implements ClubUseCase {
     private final ClubService clubService;
 
     public List<ClubResponse> getClubList() {

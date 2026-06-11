@@ -1,5 +1,7 @@
 package com.back.catchmate.notification.application.service;
 
+
+import com.back.catchmate.notification.application.port.in.NotificationUseCase;
 import com.back.catchmate.enroll.application.service.EnrollService;
 import com.back.catchmate.notification.application.service.NotificationRetryService;
 import com.back.catchmate.notification.application.service.NotificationService;
@@ -21,7 +23,7 @@ import java.util.Map;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class NotificationOrchestrator {
+public class NotificationApplicationService implements NotificationUseCase {
     private final NotificationService notificationService;
     private final NotificationRetryService notificationRetryService;
     private final EnrollService enrollService;

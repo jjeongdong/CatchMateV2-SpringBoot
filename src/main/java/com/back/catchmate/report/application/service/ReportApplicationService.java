@@ -1,5 +1,7 @@
 package com.back.catchmate.report.application.service;
 
+
+import com.back.catchmate.report.application.port.in.ReportUseCase;
 import com.back.catchmate.report.application.service.ReportService;
 import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.report.domain.model.Report;
@@ -13,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class ReportOrchestrator {
+public class ReportApplicationService implements ReportUseCase {
     private final UserService userService;
     private final ReportService reportService;
 

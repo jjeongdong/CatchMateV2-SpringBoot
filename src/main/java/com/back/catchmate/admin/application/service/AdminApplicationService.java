@@ -1,5 +1,7 @@
 package com.back.catchmate.admin.application.service;
 
+
+import com.back.catchmate.admin.application.port.in.AdminUseCase;
 import com.back.catchmate.admin.application.event.AdminInquiryAnswerNotificationEvent;
 import com.back.catchmate.admin.application.event.AdminNoticeCreateNotificationEvent;
 import com.back.catchmate.board.application.service.BoardService;
@@ -49,7 +51,7 @@ import java.util.stream.Collectors;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class AdminOrchestrator {
+public class AdminApplicationService implements AdminUseCase {
     private final UserService userService;
     private final BoardService boardService;
     private final EnrollService enrollService;

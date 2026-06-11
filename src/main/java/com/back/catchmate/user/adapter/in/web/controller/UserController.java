@@ -5,7 +5,7 @@ import com.back.catchmate.user.adapter.in.web.dto.request.UserProfileUpdateReque
 import com.back.catchmate.user.adapter.in.web.dto.request.UserRegisterRequest;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.global.config.security.CookieFactory;
-import com.back.catchmate.user.application.service.UserOrchestrator;
+import com.back.catchmate.user.application.port.in.UserUseCase;
 import com.back.catchmate.user.application.dto.command.UploadFile;
 import com.back.catchmate.user.application.dto.response.UserAlarmSettingsResponse;
 import com.back.catchmate.user.application.dto.response.UserAlarmUpdateResponse;
@@ -40,7 +40,7 @@ import java.io.IOException;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-    private final UserOrchestrator userOrchestrator;
+    private final UserUseCase userOrchestrator;
     private final CookieFactory cookieFactory;
 
     @PostMapping("/additional-info")

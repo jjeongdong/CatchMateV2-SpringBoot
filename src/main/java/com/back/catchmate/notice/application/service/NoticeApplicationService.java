@@ -1,5 +1,7 @@
 package com.back.catchmate.notice.application.service;
 
+
+import com.back.catchmate.notice.application.port.in.NoticeUseCase;
 import com.back.catchmate.notice.application.service.NoticeService;
 import com.back.catchmate.common.page.DomainPage;
 import com.back.catchmate.common.page.DomainPageable;
@@ -17,7 +19,7 @@ import java.util.stream.Collectors;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class NoticeOrchestrator {
+public class NoticeApplicationService implements NoticeUseCase {
     private final NoticeService noticeService;
 
     public NoticeDetailResponse getNotice(Long noticeId) {

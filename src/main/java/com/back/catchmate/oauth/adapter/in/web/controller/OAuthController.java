@@ -4,7 +4,7 @@ import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.global.config.security.CookieFactory;
 import com.back.catchmate.global.config.security.OAuthFrontendProperties;
-import com.back.catchmate.oauth.application.service.OAuthOrchestrator;
+import com.back.catchmate.oauth.application.port.in.OAuthUseCase;
 import com.back.catchmate.oauth.application.dto.command.OAuthCallbackCommand;
 import com.back.catchmate.oauth.application.dto.response.AuthorizeRedirect;
 import com.back.catchmate.oauth.application.dto.response.OAuthCallbackResult;
@@ -34,7 +34,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 @RequestMapping("/api/oauth")
 public class OAuthController {
-    private final OAuthOrchestrator oauthOrchestrator;
+    private final OAuthUseCase oauthOrchestrator;
     private final CookieFactory cookieFactory;
     private final OAuthFrontendProperties frontendProperties;
 

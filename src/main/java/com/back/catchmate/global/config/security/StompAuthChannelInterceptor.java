@@ -1,7 +1,7 @@
 package com.back.catchmate.global.config.security;
 
-import com.back.catchmate.auth.application.service.AuthOrchestrator;
-import com.back.catchmate.chat.application.service.ChatOrchestrator;
+import com.back.catchmate.auth.application.port.in.AuthUseCase;
+import com.back.catchmate.chat.application.port.in.ChatUseCase;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,8 @@ import java.util.Collections;
 @Component
 @RequiredArgsConstructor
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
-    private final AuthOrchestrator authOrchestrator;
-    private final ChatOrchestrator chatOrchestrator;
+    private final AuthUseCase authOrchestrator;
+    private final ChatUseCase chatOrchestrator;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {

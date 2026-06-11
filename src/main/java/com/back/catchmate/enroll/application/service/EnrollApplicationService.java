@@ -1,5 +1,7 @@
 package com.back.catchmate.enroll.application.service;
 
+
+import com.back.catchmate.enroll.application.port.in.EnrollUseCase;
 import com.back.catchmate.board.application.service.BoardService;
 import com.back.catchmate.bookmark.application.service.BookmarkService;
 import com.back.catchmate.chat.application.service.ChatRoomMemberService;
@@ -48,7 +50,7 @@ import java.util.stream.Collectors;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class EnrollOrchestrator {
+public class EnrollApplicationService implements EnrollUseCase {
     private final ChatRoomService chatRoomService;
     private final UserService userService;
     private final BoardService boardService;

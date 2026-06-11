@@ -3,7 +3,7 @@ package com.back.catchmate.auth.adapter.in.web.controller;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.global.config.security.CookieFactory;
-import com.back.catchmate.auth.application.service.AuthOrchestrator;
+import com.back.catchmate.auth.application.port.in.AuthUseCase;
 import com.back.catchmate.auth.application.dto.response.AuthReissueResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class AuthController {
-    private final AuthOrchestrator authOrchestrator;
+    private final AuthUseCase authOrchestrator;
     private final CookieFactory cookieFactory;
 
     @PostMapping("/reissue")

@@ -6,7 +6,7 @@ import com.back.catchmate.chat.adapter.in.web.dto.request.ChatRoomEnterRequest;
 import com.back.catchmate.chat.adapter.in.web.dto.request.ChatRoomLeaveRequest;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.chat.application.service.ChatOrchestrator;
+import com.back.catchmate.chat.application.port.in.ChatUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -19,7 +19,7 @@ import java.security.Principal;
 @Controller
 @RequiredArgsConstructor
 public class ChatController {
-    private final ChatOrchestrator chatOrchestrator;
+    private final ChatUseCase chatOrchestrator;
 
     @MessageMapping("/chat/message")
     public void sendMessage(@Payload ChatMessageRequest request, Principal principal) {

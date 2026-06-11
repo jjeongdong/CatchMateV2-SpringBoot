@@ -2,7 +2,7 @@ package com.back.catchmate.user.adapter.in.web.controller;
 
 import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.user.application.service.UserBlockOrchestrator;
+import com.back.catchmate.user.application.port.in.UserBlockUseCase;
 import com.back.catchmate.user.application.dto.response.BlockActionResponse;
 import com.back.catchmate.user.application.dto.response.BlockedUserResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/users/blocks")
 @RequiredArgsConstructor
 public class BlockController {
-    private final UserBlockOrchestrator userBlockOrchestrator;
+    private final UserBlockUseCase userBlockOrchestrator;
 
     @PostMapping("/{targetUserId}")
     @Operation(summary = "유저 차단", description = "특정 유저를 차단합니다.")

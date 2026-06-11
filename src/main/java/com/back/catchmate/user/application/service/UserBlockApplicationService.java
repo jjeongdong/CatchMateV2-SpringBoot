@@ -1,5 +1,7 @@
 package com.back.catchmate.user.application.service;
 
+
+import com.back.catchmate.user.application.port.in.UserBlockUseCase;
 import com.back.catchmate.common.orchestration.PagedResponse;
 import com.back.catchmate.user.application.dto.response.BlockActionResponse;
 import com.back.catchmate.user.application.dto.response.BlockedUserResponse;
@@ -20,7 +22,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class UserBlockOrchestrator {
+public class UserBlockApplicationService implements UserBlockUseCase {
     private final UserService userService;
     private final BlockService blockService;
     private final EnrollService enrollService;

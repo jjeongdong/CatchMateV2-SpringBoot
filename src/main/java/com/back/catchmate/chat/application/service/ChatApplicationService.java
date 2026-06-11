@@ -1,5 +1,7 @@
 package com.back.catchmate.chat.application.service;
 
+
+import com.back.catchmate.chat.application.port.in.ChatUseCase;
 import com.back.catchmate.chat.application.dto.ChatMessageListDto;
 import com.back.catchmate.chat.application.event.ChatMessageEvent;
 import com.back.catchmate.chat.application.event.ChatNotificationEvent;
@@ -33,7 +35,7 @@ import java.util.Optional;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class ChatOrchestrator {
+public class ChatApplicationService implements ChatUseCase {
     private final ChatMessageService chatMessageService;
     private final ChatRoomService chatRoomService;
     private final ChatRoomMemberService chatRoomMemberService;

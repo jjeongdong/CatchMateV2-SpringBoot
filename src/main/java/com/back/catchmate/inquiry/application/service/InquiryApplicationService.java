@@ -1,5 +1,7 @@
 package com.back.catchmate.inquiry.application.service;
 
+
+import com.back.catchmate.inquiry.application.port.in.InquiryUseCase;
 import com.back.catchmate.inquiry.application.service.InquiryService;
 import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.common.page.DomainPage;
@@ -19,7 +21,7 @@ import java.util.List;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class InquiryOrchestrator {
+public class InquiryApplicationService implements InquiryUseCase {
     private final InquiryService inquiryService;
     private final UserService userService;
 

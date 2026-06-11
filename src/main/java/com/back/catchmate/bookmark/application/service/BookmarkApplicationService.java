@@ -1,5 +1,7 @@
 package com.back.catchmate.bookmark.application.service;
 
+
+import com.back.catchmate.bookmark.application.port.in.BookmarkUseCase;
 import com.back.catchmate.board.application.service.BoardService;
 import com.back.catchmate.bookmark.application.service.BookmarkService;
 import com.back.catchmate.user.application.service.UserService;
@@ -21,7 +23,7 @@ import java.util.Optional;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class BookmarkOrchestrator {
+public class BookmarkApplicationService implements BookmarkUseCase {
     private final UserService userService;
     private final BoardService boardService;
     private final BookmarkService bookmarkService;

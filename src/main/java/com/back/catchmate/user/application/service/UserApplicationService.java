@@ -1,5 +1,7 @@
 package com.back.catchmate.user.application.service;
 
+
+import com.back.catchmate.user.application.port.in.UserUseCase;
 import com.back.catchmate.auth.application.service.AuthService;
 import com.back.catchmate.club.application.service.ClubService;
 import com.back.catchmate.user.application.service.UserService;
@@ -28,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class UserOrchestrator {
+public class UserApplicationService implements UserUseCase {
     private final AuthService authService;
     private final ClubService clubService;
     private final UserService userService;
