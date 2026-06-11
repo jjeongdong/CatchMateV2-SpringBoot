@@ -1,16 +1,12 @@
 package com.back.catchmate.global.redis;
 
-import com.back.catchmate.chat.application.event.ChatMessageEvent;
 import com.back.catchmate.notification.application.event.NotificationEvent;
 import com.back.catchmate.notification.application.port.out.NotificationDispatchPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.Map;
 
@@ -19,18 +15,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RedisPublisher implements NotificationDispatchPort {
     private final RedisTemplate<String, Object> redisTemplate;
-    private final ChannelTopic chatTopic;
     private final ChannelTopic notificationTopic;
-
-    @Async("taskExecutor")
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void publishChat(ChatMessageEvent event) {
-        try {
-            redisTemplate.convertAndSend(chatTopic.getTopic(), event);
-        } catch (Exception e) {
-            log.error("Redis Pub/Sub 장애: 채팅 메시지 전송 실패", e);
-        }
-    }
 
     @Override
     public void dispatch(Long userId, Map<String, String> payload) {
