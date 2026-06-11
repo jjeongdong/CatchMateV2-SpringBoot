@@ -11,17 +11,20 @@ import com.back.catchmate.board.application.dto.response.BoardResponse;
 import com.back.catchmate.board.application.dto.response.BoardTempDetailResponse;
 import com.back.catchmate.board.application.dto.response.BoardUpdateResponse;
 import com.back.catchmate.board.application.port.in.BoardUseCase;
+import com.back.catchmate.board.application.port.out.BlockFetchPort;
 import com.back.catchmate.board.application.port.out.BoardRepository;
+import com.back.catchmate.board.application.port.out.BookmarkFetchPort;
+import com.back.catchmate.board.application.port.out.ChatRoomFetchPort;
+import com.back.catchmate.board.application.port.out.ClubFetchPort;
+import com.back.catchmate.board.application.port.out.EnrollFetchPort;
+import com.back.catchmate.board.application.port.out.GameFetchPort;
+import com.back.catchmate.board.application.port.out.UserFetchPort;
 import com.back.catchmate.board.domain.dto.BoardSearchCondition;
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.board.domain.model.BoardButtonStatus;
 import com.back.catchmate.board.domain.model.PreferredAgeRange;
-import com.back.catchmate.bookmark.application.service.BookmarkService;
 import com.back.catchmate.chat.application.event.ChatRoomMemberJoinedEvent;
-import com.back.catchmate.chat.application.service.ChatRoomMemberService;
-import com.back.catchmate.chat.application.service.ChatRoomService;
 import com.back.catchmate.chat.domain.model.ChatRoom;
-import com.back.catchmate.club.application.service.ClubService;
 import com.back.catchmate.club.domain.model.Club;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
@@ -30,51 +33,49 @@ import com.back.catchmate.common.orchestration.PagedResponse;
 import com.back.catchmate.common.page.CursorPage;
 import com.back.catchmate.common.page.DomainPage;
 import com.back.catchmate.common.page.DomainPageable;
-import com.back.catchmate.enroll.application.service.EnrollService;
 import com.back.catchmate.enroll.domain.model.Enroll;
 import com.back.catchmate.game.domain.model.Game;
-import com.back.catchmate.game.domain.service.GameService;
-import com.back.catchmate.user.application.service.BlockService;
-import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.user.domain.model.User;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Component
+@Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class BoardService implements BoardUseCase {
 
-    private final ClubService clubService;
-    private final GameService gameService;
-    private final UserService userService;
-    private final BlockService blockService;
-    private final EnrollService enrollService;
-    private final BookmarkService bookmarkService;
-    private final ChatRoomService chatRoomService;
-    private final ChatRoomMemberService chatRoomMemberService;
+    private final BoardRepository boardRepository;
+
+    // Cross-context: depend only on board's own output ports
+    private final UserFetchPort userFetchPort;
+    private final ClubFetchPort clubFetchPort;
+    private final GameFetchPort gameFetchPort;
+    private final BlockFetchPort blockFetchPort;
+    private final EnrollFetchPort enrollFetchPort;
+    private final BookmarkFetchPort bookmarkFetchPort;
+    private final ChatRoomFetchPort chatRoomFetchPort;
+
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    @Override
     @Transactional
     public BoardCreateResponse createBoard(Long userId, BoardCreateCommand command) {
-        // 기존 임시저장 글 삭제
         Optional<Board> oldDraft = findTempBoard(userId);
         oldDraft.ifPresent(this::deleteBoardHard);
 
-        User user = userService.getUser(userId);
+        User user = userFetchPort.getUser(userId);
         Club cheerClub = getCheerClub(command.getCheerClubId());
         Game game = getGame(command.getGameCreateCommand());
 
-        // 도메인 객체 생성
         Board board = Board.createBoard(
                 command.getTitle(),
                 command.getContent(),
@@ -87,39 +88,40 @@ public class BoardService implements BoardUseCase {
                 command.isCompleted()
         );
 
-        Board savedBoard = createBoard(board);
+        Board savedBoard = createBoardEntity(board);
 
-        // 채팅방 생성 및 멤버 추가
         if (command.isCompleted()) {
-            ChatRoom chatRoom = chatRoomService.getOrCreateChatRoom(savedBoard);
-            chatRoomMemberService.addMember(chatRoom, user);
+            ChatRoom chatRoom = chatRoomFetchPort.getOrCreateChatRoom(savedBoard);
+            chatRoomFetchPort.addMember(chatRoom, user);
             applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), user));
         }
 
         return BoardCreateResponse.of(savedBoard.getId());
     }
 
+    @Override
     public BoardDetailResponse getBoard(Long userId, Long boardId) {
-        User user = userService.getUser(userId);
-        Board board = getBoard(boardId);
-        boolean isBookMarked = bookmarkService.isBookmarked(userId, boardId);
+        User user = userFetchPort.getUser(userId);
+        Board board = getBoardEntity(boardId);
+        boolean isBookMarked = bookmarkFetchPort.isBookmarked(userId, boardId);
 
-        Optional<Enroll> myEnroll = enrollService.findEnrollByUserAndBoard(user, board);
+        Optional<Enroll> myEnroll = enrollFetchPort.findEnrollByUserAndBoard(user, board);
         BoardButtonStatus buttonStatus = BoardButtonStatus.resolve(user, board, myEnroll);
         Long myEnrollId = myEnroll.map(Enroll::getId).orElse(null);
 
         Long chatRoomId = board.isCompleted()
-                ? chatRoomService.getOrCreateChatRoom(board).getId()
+                ? chatRoomFetchPort.getOrCreateChatRoom(board).getId()
                 : null;
 
         return BoardDetailResponse.from(board, isBookMarked, buttonStatus, myEnrollId, chatRoomId);
     }
 
+    @Override
     public CursorPagedResponse<BoardResponse> getBoardList(Long userId, LocalDate gameDate, Integer maxPerson,
                                                            List<Long> preferredTeamIdList,
                                                            LocalDateTime lastLiftUpDate, Long lastBoardId, int size) {
-        User user = userService.getUser(userId);
-        List<Long> blockedUserIds = blockService.getBlockedUserIds(user);
+        User user = userFetchPort.getUser(userId);
+        List<Long> blockedUserIds = blockFetchPort.getBlockedUserIds(user);
 
         BoardSearchCondition condition = BoardSearchCondition.ofCursor(
                 userId,
@@ -131,14 +133,14 @@ public class BoardService implements BoardUseCase {
                 lastBoardId
         );
 
-        CursorPage<Board> boardPage = getBoardListWithCursor(condition, size);
+        CursorPage<Board> boardPage = boardRepository.findAllByConditionWithCursor(condition, size);
 
         List<Long> boardIds = boardPage.getContent().stream()
                 .map(Board::getId)
                 .toList();
 
         Set<Long> myBookmarkedBoardIds = new HashSet<>(
-                bookmarkService.findBookmarkedBoardIds(user, boardIds)
+                bookmarkFetchPort.findBookmarkedBoardIds(user, boardIds)
         );
 
         List<BoardResponse> boardResponses = boardPage.getContent().stream()
@@ -148,23 +150,24 @@ public class BoardService implements BoardUseCase {
         return new CursorPagedResponse<>(boardPage, boardResponses);
     }
 
+    @Override
     public PagedResponse<BoardResponse> getBoardListByUserId(Long targetUserId, Long loginUserId, int page, int size) {
-        User targetUser = userService.getUser(targetUserId);
-        User loginUser = userService.getUser(loginUserId);
+        User targetUser = userFetchPort.getUser(targetUserId);
+        User loginUser = userFetchPort.getUser(loginUserId);
 
-        if (blockService.isUserBlocked(targetUser, loginUser)) {
+        if (blockFetchPort.isUserBlocked(targetUser, loginUser)) {
             throw new BaseException(ErrorCode.BLOCKED_USER_BOARD);
         }
 
         DomainPageable domainPageable = DomainPageable.of(page, size);
-        DomainPage<Board> boardPage = getBoardListByUserId(targetUserId, domainPageable);
+        DomainPage<Board> boardPage = boardRepository.findAllByUserId(targetUserId, domainPageable);
 
         List<Long> boardIds = boardPage.getContent().stream()
                 .map(Board::getId)
                 .toList();
 
         Set<Long> myBookmarkedBoardIds = new HashSet<>(
-                bookmarkService.findBookmarkedBoardIds(loginUser, boardIds)
+                bookmarkFetchPort.findBookmarkedBoardIds(loginUser, boardIds)
         );
 
         List<BoardResponse> responses = boardPage.getContent().stream()
@@ -174,15 +177,17 @@ public class BoardService implements BoardUseCase {
         return new PagedResponse<>(boardPage, responses);
     }
 
+    @Override
     public BoardTempDetailResponse getTempBoard(Long userId) {
         Optional<Board> tempBoard = findTempBoard(userId);
         return tempBoard.map(BoardTempDetailResponse::from).orElse(null);
     }
 
+    @Override
     @Transactional
     public BoardUpdateResponse updateBoard(Long userId, Long boardId, BoardUpdateCommand command) {
-        Board board = getBoard(boardId);
-        User user = userService.getUser(userId);
+        Board board = getBoardEntity(boardId);
+        User user = userFetchPort.getUser(userId);
 
         boolean wasCompleted = board.isCompleted();
         Club cheerClub = getCheerClub(command.getCheerClubId());
@@ -199,24 +204,25 @@ public class BoardService implements BoardUseCase {
                 command.isCompleted()
         );
 
-        updateBoard(board);
+        boardRepository.save(board);
 
         if (!wasCompleted && command.isCompleted()) {
-            ChatRoom chatRoom = chatRoomService.getOrCreateChatRoom(board);
-            chatRoomMemberService.addMember(chatRoom, user);
+            ChatRoom chatRoom = chatRoomFetchPort.getOrCreateChatRoom(board);
+            chatRoomFetchPort.addMember(chatRoom, user);
             applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), user));
         }
 
         return BoardUpdateResponse.of(board.getId());
     }
 
+    @Override
     @Transactional
     public BoardLiftUpResponse updateLiftUpDate(Long userId, Long boardId) {
-        Board board = getBoard(boardId);
+        Board board = getBoardEntity(boardId);
 
         if (board.canLiftUp()) {
             board.updateLiftUpDate(LocalDateTime.now());
-            updateBoard(board);
+            boardRepository.save(board);
             return BoardLiftUpResponse.of(true, null);
         }
 
@@ -224,18 +230,67 @@ public class BoardService implements BoardUseCase {
         return BoardLiftUpResponse.fromRemainingMinutes(false, remainingMinutes);
     }
 
+    @Override
     @Transactional
     public void deleteBoard(Long userId, Long boardId) {
-        Board board = getBoard(boardId);
+        Board board = getBoardEntity(boardId);
         board.delete();
-
-        updateBoard(board);
+        boardRepository.save(board);
     }
 
-    // --- Private Helper Methods ---
+    // --- Internal / cross-context exposed helpers on own aggregate ---
+    public Board createBoardEntity(Board board) {
+        return boardRepository.save(board);
+    }
+
+    public Board getBoardEntity(Long boardId) {
+        return boardRepository.findById(boardId)
+                .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
+    }
+
+    // Kept for cross-context backward compatibility until their Phase B is done.
+    public Board getBoard(Long boardId) {
+        return getBoardEntity(boardId);
+    }
+
+    public Board getBoardWithLock(Long boardId) {
+        return boardRepository.findByIdWithLock(boardId)
+                .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
+    }
+
+    public Board getCompletedBoard(Long boardId) {
+        return boardRepository.findCompletedById(boardId)
+                .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
+    }
+
+    public Optional<Board> findTempBoard(Long userId) {
+        return boardRepository.findTempBoardByUserId(userId);
+    }
+
+    public DomainPage<Board> getBoardListByUserId(Long userId, DomainPageable pageable) {
+        return boardRepository.findAllByUserId(userId, pageable);
+    }
+
+    public DomainPage<Board> getBoardList(DomainPageable pageable) {
+        return boardRepository.findAll(pageable);
+    }
+
+    public long getTotalBoardCount() {
+        return boardRepository.count();
+    }
+
+    public void updateBoard(Board board) {
+        boardRepository.save(board);
+    }
+
+    public void deleteBoardHard(Board board) {
+        boardRepository.delete(board);
+    }
+
+    // --- Cross-context game resolution ---
     private Club getCheerClub(Long clubId) {
         if (clubId == null) return null;
-        return clubService.getClub(clubId);
+        return clubFetchPort.getClub(clubId);
     }
 
     private Game getGame(GameCreateCommand command) {
@@ -259,69 +314,14 @@ public class BoardService implements BoardUseCase {
     }
 
     private Game fetchGame(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {
-        Club homeClub = clubService.getClub(homeClubId);
-        Club awayClub = clubService.getClub(awayClubId);
-        return gameService.findOrCreateGame(homeClub, awayClub, gameStartDate, location);
+        Club homeClub = clubFetchPort.getClub(homeClubId);
+        Club awayClub = clubFetchPort.getClub(awayClubId);
+        return gameFetchPort.findOrCreateGame(homeClub, awayClub, gameStartDate, location);
     }
 
     private Game createPartialGame(LocalDateTime gameStartDate, String location, Long homeClubId, Long awayClubId) {
-        Club homeClub = homeClubId != null ? clubService.getClub(homeClubId) : null;
-        Club awayClub = awayClubId != null ? clubService.getClub(awayClubId) : null;
-        return gameService.savePartialGame(gameStartDate, location, homeClub, awayClub);
-    }
-
-
-
-    private final BoardRepository boardRepository;
-
-    public Board createBoard(Board board) {
-        return boardRepository.save(board);
-    }
-
-    public Board getBoard(Long boardId) {
-        return boardRepository.findById(boardId)
-                .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
-    }
-
-    public Board getBoardWithLock(Long boardId) {
-        return boardRepository.findByIdWithLock(boardId)
-                .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
-    }
-
-    public Board getCompletedBoard(Long boardId) {
-        return boardRepository.findCompletedById(boardId)
-                .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
-    }
-
-    public Optional<Board> findTempBoard(Long userId) {
-        return boardRepository.findTempBoardByUserId(userId);
-    }
-
-    public DomainPage<Board> getBoardList(DomainPageable pageable) {
-        return boardRepository.findAll(pageable);
-    }
-
-    public DomainPage<Board> getBoardList(BoardSearchCondition condition, DomainPageable pageable) {
-        return boardRepository.findAllByCondition(condition, pageable);
-    }
-
-    public CursorPage<Board> getBoardListWithCursor(BoardSearchCondition condition, int size) {
-        return boardRepository.findAllByConditionWithCursor(condition, size);
-    }
-
-    public DomainPage<Board> getBoardListByUserId(Long userId, DomainPageable pageable) {
-        return boardRepository.findAllByUserId(userId, pageable);
-    }
-
-    public long getTotalBoardCount() {
-        return boardRepository.count();
-    }
-
-    public void updateBoard(Board board) {
-        boardRepository.save(board);
-    }
-
-    public void deleteBoardHard(Board board) {
-        boardRepository.delete(board);
+        Club homeClub = homeClubId != null ? clubFetchPort.getClub(homeClubId) : null;
+        Club awayClub = awayClubId != null ? clubFetchPort.getClub(awayClubId) : null;
+        return gameFetchPort.savePartialGame(gameStartDate, location, homeClub, awayClub);
     }
 }
