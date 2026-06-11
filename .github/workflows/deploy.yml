@@ -29,16 +29,16 @@ jobs:
 
       - name: Create application.yml
         run: |
-          mkdir -p ./catchmate-boot/src/main/resources
-          cat << 'EOF' > ./catchmate-boot/src/main/resources/application-dev.yml
+          mkdir -p ./src/main/resources
+          cat << 'EOF' > ./src/main/resources/application-dev.yml
           ${{ secrets.APPLICATION_YML }}
           EOF
         shell: bash
 
       - name: Create Firebase Config Directory
         run: |
-          mkdir -p ./catchmate-boot/src/main/resources
-          cat << 'EOF' | base64 --decode > ./catchmate-boot/src/main/resources/firebase-adminsdk.json
+          mkdir -p ./src/main/resources
+          cat << 'EOF' | base64 --decode > ./src/main/resources/firebase-adminsdk.json
           ${{ secrets.FIREBASE_SERVICE_KEY }}
           EOF
         shell: bash
