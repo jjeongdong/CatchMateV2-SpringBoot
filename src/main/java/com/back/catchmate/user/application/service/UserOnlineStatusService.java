@@ -1,6 +1,9 @@
 package com.back.catchmate.user.application.service;
 
 
+
+
+
 import com.back.catchmate.user.application.port.in.UserOnlineStatusUseCase;
 import com.back.catchmate.user.application.port.out.UserOnlineStatusPort;
 import lombok.RequiredArgsConstructor;

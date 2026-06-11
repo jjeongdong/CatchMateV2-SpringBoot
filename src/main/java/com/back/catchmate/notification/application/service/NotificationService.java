@@ -1,11 +1,12 @@
 package com.back.catchmate.notification.application.service;
 
+import com.back.catchmate.notification.application.port.out.EnrollFetchPort;
+
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.orchestration.PagedResponse;
 import com.back.catchmate.common.page.DomainPage;
 import com.back.catchmate.common.page.DomainPageable;
-import com.back.catchmate.enroll.application.service.EnrollService;
 import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import com.back.catchmate.notification.application.dto.response.NotificationResponse;
 import com.back.catchmate.notification.application.dto.response.UnreadNotificationResponse;
@@ -25,9 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class NotificationService implements NotificationUseCase {
+    private final EnrollFetchPort enrollFetchPort;
 
     private final NotificationRetryService notificationRetryService;
-    private final EnrollService enrollService;
 
     @Transactional
     public NotificationResponse getNotification(Long userId, Long notificationId) {
@@ -36,7 +37,7 @@ public class NotificationService implements NotificationUseCase {
 
         AcceptStatus acceptStatus = null;
         if (notification.getType() == AlarmType.ENROLL && notification.getTargetId() != null) {
-            acceptStatus = enrollService.findAcceptStatusById(notification.getTargetId())
+            acceptStatus = enrollFetchPort.findAcceptStatusById(notification.getTargetId())
                     .orElse(null);
         }
 
@@ -56,7 +57,7 @@ public class NotificationService implements NotificationUseCase {
                 .map(Notification::getTargetId)
                 .toList();
 
-        Map<Long, AcceptStatus> enrollStatusMap = enrollService.getAcceptStatusMapByIds(enrollIds);
+        Map<Long, AcceptStatus> enrollStatusMap = enrollFetchPort.getAcceptStatusMapByIds(enrollIds);
 
         // 3. DTO 변환
         List<NotificationResponse> responses = notificationPage.getContent().stream()

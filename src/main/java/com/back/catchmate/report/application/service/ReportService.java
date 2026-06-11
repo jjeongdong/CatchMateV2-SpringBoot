@@ -1,5 +1,7 @@
 package com.back.catchmate.report.application.service;
 
+import com.back.catchmate.report.application.port.out.UserFetchPort;
+
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.page.DomainPage;
@@ -10,7 +12,6 @@ import com.back.catchmate.report.application.port.in.ReportUseCase;
 import com.back.catchmate.report.application.port.out.ReportRepository;
 import com.back.catchmate.report.domain.enums.ReportReason;
 import com.back.catchmate.report.domain.model.Report;
-import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,13 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ReportService implements ReportUseCase {
-
-    private final UserService userService;
+    private final UserFetchPort userFetchPort;
 
     @Transactional
     public ReportCreateResponse createReport(Long reporterId, ReportCreateCommand command) {
-        User reporter = userService.getUser(reporterId);
-        User reportedUser = userService.getUser(command.getReportedUserId());
+        User reporter = userFetchPort.getUser(reporterId);
+        User reportedUser = userFetchPort.getUser(command.getReportedUserId());
 
         Report report = createReport(
                 reporter,

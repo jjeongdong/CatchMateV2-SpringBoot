@@ -1,15 +1,21 @@
 package com.back.catchmate.admin.application.service;
 
+import com.back.catchmate.admin.application.port.out.NoticeFetchPort;
+
+import com.back.catchmate.admin.application.port.out.UserFetchPort;
+
+import com.back.catchmate.admin.application.port.out.InquiryFetchPort;
+
+import com.back.catchmate.admin.application.port.out.BoardFetchPort;
+
+import com.back.catchmate.admin.application.port.out.EnrollFetchPort;
+
+import com.back.catchmate.admin.application.port.out.ReportFetchPort;
+
 
 import com.back.catchmate.admin.application.port.in.AdminUseCase;
 import com.back.catchmate.admin.application.event.AdminInquiryAnswerNotificationEvent;
 import com.back.catchmate.admin.application.event.AdminNoticeCreateNotificationEvent;
-import com.back.catchmate.board.application.service.BoardService;
-import com.back.catchmate.enroll.application.service.EnrollService;
-import com.back.catchmate.inquiry.application.service.InquiryService;
-import com.back.catchmate.notice.application.service.NoticeService;
-import com.back.catchmate.report.application.service.ReportService;
-import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.common.page.DomainPage;
 import com.back.catchmate.common.page.DomainPageable;
@@ -52,20 +58,20 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AdminService implements AdminUseCase {
-    private final UserService userService;
-    private final BoardService boardService;
-    private final EnrollService enrollService;
-    private final NoticeService noticeService;
-    private final ReportService reportService;
-    private final InquiryService inquiryService;
+    private final NoticeFetchPort noticeFetchPort;
+    private final UserFetchPort userFetchPort;
+    private final InquiryFetchPort inquiryFetchPort;
+    private final BoardFetchPort boardFetchPort;
+    private final EnrollFetchPort enrollFetchPort;
+    private final ReportFetchPort reportFetchPort;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public NoticeCreateResponse createNotice(Long userId, NoticeCreateCommand command) {
-        User writer = userService.getUser(userId);
-        Notice savedNotice = noticeService.createNotice(writer, command.getTitle(), command.getContent());
+        User writer = userFetchPort.getUser(userId);
+        Notice savedNotice = noticeFetchPort.createNotice(writer, command.getTitle(), command.getContent());
 
-        List<User> recipients = userService.getEventAlarmEnabledUsers();
+        List<User> recipients = userFetchPort.getEventAlarmEnabledUsers();
         applicationEventPublisher.publishEvent(AdminNoticeCreateNotificationEvent.of(savedNotice, recipients));
 
         return NoticeCreateResponse.from(savedNotice);
@@ -73,10 +79,10 @@ public class AdminService implements AdminUseCase {
 
     @Transactional
     public InquiryAnswerResponse createInquiryAnswer(InquiryAnswerCommand command) {
-        Inquiry inquiry = inquiryService.getInquiryEntity(command.getInquiryId());
+        Inquiry inquiry = inquiryFetchPort.getInquiryEntity(command.getInquiryId());
 
         inquiry.registerAnswer(command.getContent());
-        Inquiry updatedInquiry = inquiryService.updateInquiry(inquiry);
+        Inquiry updatedInquiry = inquiryFetchPort.updateInquiry(inquiry);
 
         applicationEventPublisher.publishEvent(AdminInquiryAnswerNotificationEvent.of(
                 updatedInquiry.getUser(),
@@ -88,29 +94,29 @@ public class AdminService implements AdminUseCase {
 
     public AdminDashboardResponse getDashboardStats() {
         return AdminDashboardResponse.of(
-                userService.getTotalUserCount(),
+                userFetchPort.getTotalUserCount(),
                 AdminDashboardResponse.GenderRatio.of(
-                        userService.getUserCountByGender('M'),
-                        userService.getUserCountByGender('F')
+                        userFetchPort.getUserCountByGender('M'),
+                        userFetchPort.getUserCountByGender('F')
                 ),
-                boardService.getTotalBoardCount(),
-                userService.getUserCountByClub(),
-                userService.getUserCountByWatchStyle(),
-                reportService.getTotalReportCount(),
-                reportService.getPendingReportCount(),
-                inquiryService.getTotalInquiryCount(),
-                inquiryService.getWaitingInquiryCount()
+                boardFetchPort.getTotalBoardCount(),
+                userFetchPort.getUserCountByClub(),
+                userFetchPort.getUserCountByWatchStyle(),
+                reportFetchPort.getTotalReportCount(),
+                reportFetchPort.getPendingReportCount(),
+                inquiryFetchPort.getTotalInquiryCount(),
+                inquiryFetchPort.getWaitingInquiryCount()
         );
     }
 
     public AdminUserDetailResponse getUser(Long userId) {
-        User user = userService.getUser(userId);
+        User user = userFetchPort.getUser(userId);
         return AdminUserDetailResponse.from(user);
     }
 
     public PagedResponse<AdminUserResponse> getUserList(String clubName, int page, int size) {
         DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<User> userPage = userService.getUsersByClub(clubName, domainPageable);
+        DomainPage<User> userPage = userFetchPort.getUsersByClub(clubName, domainPageable);
 
         List<AdminUserResponse> responses = userPage.getContent().stream()
                 .map(AdminUserResponse::from)
@@ -120,8 +126,8 @@ public class AdminService implements AdminUseCase {
     }
 
     public AdminBoardDetailWithEnrollResponse getBoardWithEnrollList(Long boardId) {
-        Board board = boardService.getCompletedBoard(boardId);
-        List<Enroll> enrolls = enrollService.getEnrollListByBoardIds(Collections.singletonList(boardId));
+        Board board = boardFetchPort.getCompletedBoard(boardId);
+        List<Enroll> enrolls = enrollFetchPort.getEnrollListByBoardIds(Collections.singletonList(boardId));
         
         List<AdminEnrollmentResponse> enrollmentInfos = enrolls.stream()
                 .map(AdminEnrollmentResponse::from)
@@ -132,7 +138,7 @@ public class AdminService implements AdminUseCase {
 
     public PagedResponse<AdminBoardResponse> getBoardListByUserId(Long userId, int page, int size) {
         DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Board> boardPage = boardService.getBoardListByUserId(userId, domainPageable);
+        DomainPage<Board> boardPage = boardFetchPort.getBoardListByUserId(userId, domainPageable);
 
         List<AdminBoardResponse> responses = boardPage.getContent().stream()
                 .map(AdminBoardResponse::from)
@@ -143,7 +149,7 @@ public class AdminService implements AdminUseCase {
 
     public PagedResponse<AdminBoardResponse> getBoardList(int page, int size) {
         DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Board> boardPage = boardService.getBoardList(domainPageable);
+        DomainPage<Board> boardPage = boardFetchPort.getBoardList(domainPageable);
 
         List<AdminBoardResponse> responses = boardPage.getContent().stream()
                 .map(AdminBoardResponse::from)
@@ -153,13 +159,13 @@ public class AdminService implements AdminUseCase {
     }
 
     public AdminReportDetailResponse getReport(Long reportId) {
-        Report report = reportService.getReport(reportId);
+        Report report = reportFetchPort.getReport(reportId);
         return AdminReportDetailResponse.from(report);
     }
 
     public PagedResponse<AdminReportResponse> getReportList(int page, int size) {
         DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Report> reportPage = reportService.getReportList(domainPageable);
+        DomainPage<Report> reportPage = reportFetchPort.getReportList(domainPageable);
 
         List<AdminReportResponse> responses = reportPage.getContent().stream()
                 .map(AdminReportResponse::from)
@@ -169,13 +175,13 @@ public class AdminService implements AdminUseCase {
     }
 
     public AdminInquiryDetailResponse getInquiry(Long inquiryId) {
-        Inquiry inquiry = inquiryService.getInquiryEntity(inquiryId);
+        Inquiry inquiry = inquiryFetchPort.getInquiryEntity(inquiryId);
         return AdminInquiryDetailResponse.from(inquiry);
     }
 
     public PagedResponse<AdminInquiryResponse> getInquiryList(int page, int size) {
         DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Inquiry> inquiryPage = inquiryService.getInquiryList(domainPageable);
+        DomainPage<Inquiry> inquiryPage = inquiryFetchPort.getInquiryList(domainPageable);
 
         List<AdminInquiryResponse> responses = inquiryPage.getContent().stream()
                 .map(AdminInquiryResponse::from)
@@ -185,13 +191,13 @@ public class AdminService implements AdminUseCase {
     }
 
     public AdminNoticeDetailResponse getNotice(Long noticeId) {
-        Notice notice = noticeService.getNoticeEntity(noticeId);
+        Notice notice = noticeFetchPort.getNoticeEntity(noticeId);
         return AdminNoticeDetailResponse.from(notice);
     }
 
     public PagedResponse<AdminNoticeResponse> getNoticeList(int page, int size) {
         DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Notice> noticePage = noticeService.getNoticeList(domainPageable);
+        DomainPage<Notice> noticePage = noticeFetchPort.getNoticeList(domainPageable);
 
         List<AdminNoticeResponse> responses = noticePage.getContent().stream()
                 .map(AdminNoticeResponse::from)
@@ -203,31 +209,31 @@ public class AdminService implements AdminUseCase {
     @Transactional
     public ReportActionResponse updateReportProcess(Long reportId) {
         // 1. 필요한 도메인 객체 조회 (Orchestration)
-        Report report = reportService.getReport(reportId);
+        Report report = reportFetchPort.getReport(reportId);
         User reportedUser = report.getReportedUser();
 
         // 2. 도메인 로직 실행
         reportedUser.markAsReported();
-        userService.updateUser(reportedUser);
+        userFetchPort.updateUser(reportedUser);
 
         report.process();
-        reportService.updateReport(report);
+        reportFetchPort.updateReport(report);
 
         return ReportActionResponse.of(report.getId(), reportedUser.getId());
     }
 
     @Transactional
     public NoticeDetailResponse updateNotice(Long noticeId, NoticeUpdateCommand command) {
-        Notice notice = noticeService.getNoticeEntity(noticeId);
+        Notice notice = noticeFetchPort.getNoticeEntity(noticeId);
         notice.updateNotice(command.getTitle(), command.getContent());
-        Notice updatedNotice = noticeService.updateNotice(notice);
+        Notice updatedNotice = noticeFetchPort.updateNotice(notice);
         return NoticeDetailResponse.from(updatedNotice);
     }
 
     @Transactional
     public NoticeActionResponse deleteNotice(Long noticeId) {
-        Notice notice = noticeService.getNoticeEntity(noticeId);
-        noticeService.deleteNotice(notice);
+        Notice notice = noticeFetchPort.getNoticeEntity(noticeId);
+        noticeFetchPort.deleteNotice(notice);
         return NoticeActionResponse.of(noticeId, "공지사항이 삭제되었습니다.");
     }
 }

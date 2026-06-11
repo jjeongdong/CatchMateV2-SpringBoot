@@ -1,5 +1,7 @@
 package com.back.catchmate.inquiry.application.service;
 
+import com.back.catchmate.inquiry.application.port.out.UserFetchPort;
+
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.orchestration.PagedResponse;
@@ -13,7 +15,6 @@ import com.back.catchmate.inquiry.application.port.out.InquiryRepository;
 import com.back.catchmate.inquiry.domain.enums.InquiryType;
 import com.back.catchmate.inquiry.domain.model.Inquiry;
 import com.back.catchmate.inquiry.domain.model.InquiryStatus;
-import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.user.domain.model.User;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -25,12 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class InquiryService implements InquiryUseCase {
-
-    private final UserService userService;
+    private final UserFetchPort userFetchPort;
 
     @Transactional
     public InquiryCreateResponse createInquiry(Long userId, InquiryCreateCommand command) {
-        User user = userService.getUser(userId);
+        User user = userFetchPort.getUser(userId);
 
         Inquiry inquiry = registerInquiry(
                 user,

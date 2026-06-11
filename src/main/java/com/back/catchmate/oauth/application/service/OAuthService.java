@@ -1,9 +1,11 @@
 package com.back.catchmate.oauth.application.service;
 
+import com.back.catchmate.oauth.application.port.out.AuthFetchPort;
+
+import com.back.catchmate.oauth.application.port.out.UserFetchPort;
+
 
 import com.back.catchmate.oauth.application.port.in.OAuthUseCase;
-import com.back.catchmate.auth.application.service.AuthService;
-import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.auth.domain.model.AuthToken;
 import com.back.catchmate.auth.application.port.out.TokenProvider;
 import com.back.catchmate.oauth.domain.model.OAuthUserInfo;
@@ -28,9 +30,9 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class OAuthService implements OAuthUseCase {
+    private final AuthFetchPort authFetchPort;
+    private final UserFetchPort userFetchPort;
     private final OAuthClientRegistry oauthClientRegistry;
-    private final AuthService authService;
-    private final UserService userService;
     private final TokenProvider tokenProvider;
 
     public AuthorizeRedirect buildAuthorizeRedirect(Provider provider) {
@@ -47,9 +49,9 @@ public class OAuthService implements OAuthUseCase {
         OAuthClient client = oauthClientRegistry.get(command.getProvider());
         OAuthUserInfo userInfo = client.exchange(command.getCode());
 
-        Optional<User> userOptional = userService.findByProviderId(userInfo.getProviderIdWithProvider());
+        Optional<User> userOptional = userFetchPort.findByProviderId(userInfo.getProviderIdWithProvider());
         if (userOptional.isPresent()) {
-            AuthToken token = authService.createToken(userOptional.get());
+            AuthToken token = authFetchPort.createToken(userOptional.get());
             return new OAuthCallbackResult.Existing(token.getAccessToken(), token.getRefreshToken());
         }
 

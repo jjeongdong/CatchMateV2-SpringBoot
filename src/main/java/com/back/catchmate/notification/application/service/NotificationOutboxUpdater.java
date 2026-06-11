@@ -1,5 +1,7 @@
 package com.back.catchmate.notification.application.service;
 
+import com.back.catchmate.notification.application.port.out.EnrollFetchPort;
+
 import com.back.catchmate.notification.domain.model.NotificationOutbox;
 import com.back.catchmate.notification.application.port.out.NotificationOutboxRepository;
 import io.micrometer.core.instrument.MeterRegistry;

@@ -1,7 +1,10 @@
 package com.back.catchmate.bookmark.application.service;
 
+import com.back.catchmate.bookmark.application.port.out.UserFetchPort;
+
+import com.back.catchmate.bookmark.application.port.out.BoardFetchPort;
+
 import com.back.catchmate.board.application.dto.response.BoardResponse;
-import com.back.catchmate.board.application.service.BoardService;
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.bookmark.application.dto.response.BookmarkUpdateResponse;
 import com.back.catchmate.bookmark.application.port.in.BookmarkUseCase;
@@ -10,7 +13,6 @@ import com.back.catchmate.bookmark.domain.model.Bookmark;
 import com.back.catchmate.common.orchestration.PagedResponse;
 import com.back.catchmate.common.page.DomainPage;
 import com.back.catchmate.common.page.DomainPageable;
-import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.user.domain.model.User;
 import java.util.List;
 import java.util.Optional;
@@ -23,14 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class BookmarkService implements BookmarkUseCase {
-
-    private final UserService userService;
-    private final BoardService boardService;
+    private final UserFetchPort userFetchPort;
+    private final BoardFetchPort boardFetchPort;
 
     @Transactional
     public BookmarkUpdateResponse updateBookmark(Long userId, Long boardId) {
-        User user = userService.getUser(userId);
-        Board board = boardService.getBoard(boardId);
+        User user = userFetchPort.getUser(userId);
+        Board board = boardFetchPort.getBoard(boardId);
 
         Optional<Bookmark> bookmarkOptional = findByUserAndBoard(user, board);
 
@@ -48,7 +49,7 @@ public class BookmarkService implements BookmarkUseCase {
     }
 
     public PagedResponse<BoardResponse> getBookmarkedBoards(Long userId, int page, int size) {
-        User user = userService.getUser(userId);
+        User user = userFetchPort.getUser(userId);
         DomainPageable pageable = DomainPageable.of(page, size);
         
         DomainPage<Bookmark> bookmarkPage = findAllByUser(user, pageable);

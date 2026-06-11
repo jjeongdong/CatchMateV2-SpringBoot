@@ -1,11 +1,14 @@
 package com.back.catchmate.user.application.service;
 
+
+
+import com.back.catchmate.user.application.port.out.EnrollFetchPort;
+
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.orchestration.PagedResponse;
 import com.back.catchmate.common.page.DomainPage;
 import com.back.catchmate.common.page.DomainPageable;
-import com.back.catchmate.enroll.application.service.EnrollService;
 import com.back.catchmate.enroll.domain.model.Enroll;
 import com.back.catchmate.user.application.dto.response.BlockActionResponse;
 import com.back.catchmate.user.application.dto.response.BlockedUserResponse;
@@ -24,9 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class BlockService implements UserBlockUseCase {
+    private final EnrollFetchPort enrollFetchPort;
 
     private final UserService userService;
-    private final EnrollService enrollService;
 
     @Transactional
     public BlockActionResponse createBlock(Long blockerId, Long blockedId) {
@@ -40,9 +43,9 @@ public class BlockService implements UserBlockUseCase {
     }
 
     private void terminateAcceptedMatches(Long blockerId, Long boardOwnerId) {
-        List<Enroll> matches = enrollService.getAcceptedEnrollsBetween(blockerId, boardOwnerId);
+        List<Enroll> matches = enrollFetchPort.getAcceptedEnrollsBetween(blockerId, boardOwnerId);
         for (Enroll enroll : matches) {
-            enrollService.deleteEnroll(enroll);
+            enrollFetchPort.deleteEnroll(enroll);
         }
     }
 

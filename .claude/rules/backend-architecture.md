@@ -159,6 +159,10 @@ public class BoardRepositoryImpl implements BoardRepository {
 9. `{ctx}/adapter/in/web/controller/` — Controller, Request DTO
 10. `global/authorization/` — 권한 어노테이션 (필요 시)
 
-## 8. 점진적 마이그레이션 안내
+## 8. Cross-context 의존성은 모두 Fetch Port
 
-현재 **`board` 컨텍스트만 Fetch Port 패턴이 완전히 적용**되어 있습니다. 다른 컨텍스트들은 아직 cross-context Service를 직접 주입합니다. 새 기능을 추가하거나 리팩토링할 때는 board를 템플릿 삼아 점진적으로 Fetch Port를 도입하세요.
+모든 컨텍스트가 Fetch Port 패턴을 사용합니다. Service 파일에 다른 컨텍스트의 `XxxService` 를 `import` 하면 잘못된 신호입니다. 새 cross-context 호출이 필요하면:
+
+1. 자기 `application/port/out/{Source}FetchPort.java` 에 인터페이스 정의
+2. 자기 `adapter/out/external/{OwnCtx}{Source}FetchAdapter.java` 에 어댑터 추가
+3. Service 가 Port 만 주입

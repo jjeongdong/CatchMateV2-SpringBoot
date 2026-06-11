@@ -145,7 +145,7 @@ public class BoardUserFetchAdapter implements UserFetchPort {
 - 나중에 user를 별도 서비스로 분리해도 Adapter 만 HTTP 클라이언트로 바꾸면 끝.
 - 테스트 시 Fetch Port 만 Mock 하면 됩니다.
 
-**참고**: 현재 `board` 컨텍스트만 이 패턴이 도입됐고, 나머지 컨텍스트는 점진적으로 도입 예정입니다. 새 코드 작성 / 리팩토링 시 board를 템플릿으로 삼으세요.
+모든 컨텍스트에 이 패턴이 적용되어 있습니다. cross-context 호출이 필요하면 자기 `application/port/out/` 에 `XxxFetchPort` 인터페이스를 정의하고 `adapter/out/external/` 에 어댑터를 만드세요. **절대 다른 컨텍스트의 `Service` 를 직접 주입하지 않습니다.**
 
 #### 4. Output Port DIP (Repository)
 

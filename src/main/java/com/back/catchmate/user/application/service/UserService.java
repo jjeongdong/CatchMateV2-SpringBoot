@@ -1,9 +1,12 @@
 package com.back.catchmate.user.application.service;
 
+import com.back.catchmate.user.application.port.out.AuthFetchPort;
+
+import com.back.catchmate.user.application.port.out.ClubFetchPort;
+
+
 import com.back.catchmate.auth.application.port.out.TokenProvider;
-import com.back.catchmate.auth.application.service.AuthService;
 import com.back.catchmate.auth.domain.model.AuthToken;
-import com.back.catchmate.club.application.service.ClubService;
 import com.back.catchmate.club.domain.model.Club;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
@@ -38,16 +41,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserService implements UserUseCase {
-
-    private final AuthService authService;
-    private final ClubService clubService;
+    private final AuthFetchPort authFetchPort;
+    private final ClubFetchPort clubFetchPort;
     private final TokenProvider tokenProvider;
     private final ImageUploaderPort profileImageUploader;
 
     @Transactional
     public UserSignupResult createUser(UserRegisterCommand command) {
         SignupTokenClaims claims = tokenProvider.parseSignupToken(command.getSignupToken());
-        Club club = clubService.getClub(command.getFavoriteClubId());
+        Club club = clubFetchPort.getClub(command.getFavoriteClubId());
 
         User user = User.createUser(
                 claims.getProvider(),
@@ -63,7 +65,7 @@ public class UserService implements UserUseCase {
         );
         User savedUser = createUser(user);
 
-        AuthToken token = authService.createToken(savedUser);
+        AuthToken token = authFetchPort.createToken(savedUser);
         UserRegisterResponse response = UserRegisterResponse.of(
                 savedUser.getId(),
                 token.getAccessToken(),
@@ -93,7 +95,7 @@ public class UserService implements UserUseCase {
 
         Club club = null;
         if (command.hasFavoriteClubChange()) {
-            club = clubService.getClub(command.getFavoriteClubId());
+            club = clubFetchPort.getClub(command.getFavoriteClubId());
         }
 
         String profileImageUrl = null;

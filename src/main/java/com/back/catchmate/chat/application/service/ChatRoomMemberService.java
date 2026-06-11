@@ -1,5 +1,7 @@
 package com.back.catchmate.chat.application.service;
 
+import com.back.catchmate.chat.application.port.out.UserFetchPort;
+
 import com.back.catchmate.chat.domain.model.ChatRoom;
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
 import com.back.catchmate.chat.application.port.out.ChatRoomMemberRepository;

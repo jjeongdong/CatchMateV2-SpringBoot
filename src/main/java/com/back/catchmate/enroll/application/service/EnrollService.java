@@ -1,12 +1,16 @@
 package com.back.catchmate.enroll.application.service;
 
+import com.back.catchmate.enroll.application.port.out.UserFetchPort;
+
+import com.back.catchmate.enroll.application.port.out.BookmarkFetchPort;
+
+import com.back.catchmate.enroll.application.port.out.BoardFetchPort;
+
+import com.back.catchmate.enroll.application.port.out.ChatFetchPort;
+
 import com.back.catchmate.board.application.dto.response.BoardResponse;
-import com.back.catchmate.board.application.service.BoardService;
 import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.bookmark.application.service.BookmarkService;
 import com.back.catchmate.chat.application.event.ChatRoomMemberJoinedEvent;
-import com.back.catchmate.chat.application.service.ChatRoomMemberService;
-import com.back.catchmate.chat.application.service.ChatRoomService;
 import com.back.catchmate.chat.domain.model.ChatRoom;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
@@ -31,7 +35,6 @@ import com.back.catchmate.enroll.application.port.out.EnrollRepository;
 import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import com.back.catchmate.enroll.domain.model.Enroll;
 import com.back.catchmate.notification.domain.model.NotificationTemplate;
-import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.user.domain.model.User;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,12 +54,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class EnrollService implements EnrollUseCase {
-
-    private final ChatRoomService chatRoomService;
-    private final UserService userService;
-    private final BoardService boardService;
-    private final BookmarkService bookmarkService;
-    private final ChatRoomMemberService chatRoomMemberService;
+    private final UserFetchPort userFetchPort;
+    private final BookmarkFetchPort bookmarkFetchPort;
+    private final BoardFetchPort boardFetchPort;
+    private final ChatFetchPort chatFetchPort;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final IdempotencyPort idempotencyPort;
 
@@ -65,8 +66,8 @@ public class EnrollService implements EnrollUseCase {
 
     @Transactional
     public EnrollCreateResponse createEnroll(EnrollCreateCommand command) {
-        User applicant = userService.getUser(command.getUserId());
-        Board board = boardService.getCompletedBoard(command.getBoardId());
+        User applicant = userFetchPort.getUser(command.getUserId());
+        Board board = boardFetchPort.getCompletedBoard(command.getBoardId());
 
         if (applicant.getId().equals(board.getUser().getId())) {
             throw new BaseException(ErrorCode.ENROLL_BAD_REQUEST);
@@ -120,7 +121,7 @@ public class EnrollService implements EnrollUseCase {
     }
 
     public PagedResponse<EnrollApplicantResponse> getEnrollReceiveListByBoardId(Long userId, Long boardId, int page, int size) {
-        Board board = boardService.getBoard(boardId);
+        Board board = boardFetchPort.getBoard(boardId);
         if (!board.getUser().getId().equals(userId)) {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }
@@ -165,19 +166,19 @@ public class EnrollService implements EnrollUseCase {
         }
 
         Enroll enroll = getEnroll(enrollId);
-        Board board = boardService.getBoardWithLock(enroll.getBoard().getId());
+        Board board = boardFetchPort.getBoardWithLock(enroll.getBoard().getId());
 
         // 비즈니스 로직
         board.increaseCurrentPerson();
         enroll.accept();
 
         // 게시글 현재 인원수 증가, 신청 수락에 대한 정보 변경 사항 저장
-        boardService.updateBoard(board);
+        boardFetchPort.updateBoard(board);
         updateEnroll(enroll);
 
         // 채팅방 처리
-        ChatRoom chatRoom = chatRoomService.getOrCreateChatRoom(board);
-        chatRoomMemberService.addMember(chatRoom, enroll.getUser());
+        ChatRoom chatRoom = chatFetchPort.getOrCreateChatRoom(board);
+        chatFetchPort.addMember(chatRoom, enroll.getUser());
         applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), enroll.getUser()));
 
         // FCM 알림 발송
@@ -196,7 +197,7 @@ public class EnrollService implements EnrollUseCase {
     @Transactional
     public EnrollRejectResponse updateEnrollReject(Long userId, Long enrollId) {
         Enroll enroll = getEnroll(enrollId);
-        Board board = boardService.getBoardWithLock(enroll.getBoard().getId());
+        Board board = boardFetchPort.getBoardWithLock(enroll.getBoard().getId());
 
         // 비즈니스 로직
         enroll.reject();
@@ -244,7 +245,7 @@ public class EnrollService implements EnrollUseCase {
     private Map<Long, Boolean> getBookmarkStatusMap(Long userId, List<Enroll> enrolls) {
         Map<Long, Boolean> map = new HashMap<>();
         for (Enroll enroll : enrolls) {
-            boolean isBookMarked = bookmarkService.isBookmarked(userId, enroll.getBoard().getId());
+            boolean isBookMarked = bookmarkFetchPort.isBookmarked(userId, enroll.getBoard().getId());
             map.put(enroll.getBoard().getId(), isBookMarked);
         }
         return map;

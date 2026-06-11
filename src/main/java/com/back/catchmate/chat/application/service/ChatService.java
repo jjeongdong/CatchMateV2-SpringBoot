@@ -1,5 +1,7 @@
 package com.back.catchmate.chat.application.service;
 
+import com.back.catchmate.chat.application.port.out.UserFetchPort;
+
 
 import com.back.catchmate.chat.application.port.in.ChatUseCase;
 import com.back.catchmate.chat.application.dto.ChatMessageListDto;
@@ -8,7 +10,6 @@ import com.back.catchmate.chat.application.event.ChatNotificationEvent;
 import com.back.catchmate.chat.application.service.ChatMessageService;
 import com.back.catchmate.chat.application.service.ChatRoomMemberService;
 import com.back.catchmate.chat.application.service.ChatRoomService;
-import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
 import com.back.catchmate.chat.domain.model.ChatRoom;
@@ -36,16 +37,16 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ChatService implements ChatUseCase {
+    private final UserFetchPort userFetchPort;
     private final ChatMessageService chatMessageService;
     private final ChatRoomService chatRoomService;
     private final ChatRoomMemberService chatRoomMemberService;
-    private final UserService userService;
     private final ImageUploaderPort imageUploaderPort;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public void sendMessage(Long senderId, ChatMessageCommand command) {
-        User sender = userService.getUser(senderId);
+        User sender = userFetchPort.getUser(senderId);
 
         ChatMessage savedMessage = chatMessageService.saveMessage(
                 command.getChatRoomId(),
@@ -81,7 +82,7 @@ public class ChatService implements ChatUseCase {
 
     @Transactional
     public void leaveChatRoom(Long userId, Long chatRoomId) {
-        User user = userService.getUser(userId);
+        User user = userFetchPort.getUser(userId);
         ChatMessage savedMessage = chatRoomService.leaveChatRoom(chatRoomId, user);
         applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
     }

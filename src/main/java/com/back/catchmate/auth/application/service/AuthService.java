@@ -1,5 +1,7 @@
 package com.back.catchmate.auth.application.service;
 
+import com.back.catchmate.auth.application.port.out.UserFetchPort;
+
 import com.back.catchmate.auth.application.dto.response.AuthReissueResponse;
 import com.back.catchmate.auth.application.port.in.AuthUseCase;
 import com.back.catchmate.auth.application.port.out.RefreshTokenRepository;
@@ -7,7 +9,6 @@ import com.back.catchmate.auth.application.port.out.TokenProvider;
 import com.back.catchmate.auth.domain.model.AuthToken;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,8 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AuthService implements AuthUseCase {
-
-    private final UserService userService;
+    private final UserFetchPort userFetchPort;
 
     public Long getUserId(String token) {
         return getUserIdFromToken(token);
@@ -34,7 +34,7 @@ public class AuthService implements AuthUseCase {
         Long userId = getUserIdFromRefreshToken(refreshToken);
         validateRefreshTokenExistence(refreshToken);
 
-        User user = userService.getUser(userId);
+        User user = userFetchPort.getUser(userId);
         String newAccessToken = createAccessToken(user);
         return AuthReissueResponse.of(newAccessToken);
     }
@@ -42,10 +42,10 @@ public class AuthService implements AuthUseCase {
     @Transactional
     public void deleteToken(String refreshToken) {
         Long userId = getUserIdFromRefreshToken(refreshToken);
-        User user = userService.getUser(userId);
+        User user = userFetchPort.getUser(userId);
 
         user.deleteFcmToken();
-        userService.updateUser(user);
+        userFetchPort.updateUser(user);
 
         revokeRefreshToken(refreshToken);
     }
