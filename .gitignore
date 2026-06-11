@@ -39,4 +39,9 @@ out/
 /catchmate-boot/src/main/resources/application-dev.yml
 /catchmate-boot/src/main/resources/firebase-adminsdk.json
 /docker-compose.yml
-.mcp.json
+
+### macOS ###
+.DS_Store
+
+### Claude Code ###
+.claude/settings.local.json

@@ -28,6 +28,9 @@ public class NotificationRetryService {
     @Value("${notification.outbox.max-retry-count:5}")
     private int maxRetryCount;
 
+    @Value("${notification.outbox.batch-size:50}")
+    private int batchSize;
+
     @Transactional
     public void saveOutbox(Long recipientId, String recipientAddress, NotificationChannel channel, String title, String body, Map<String, String> data) {
         try {
@@ -41,15 +44,15 @@ public class NotificationRetryService {
     }
 
     public void sendPendingOutboxImmediately(Long recipientId) {
-        List<NotificationOutbox> pendingOutboxes = outboxRepository.findAllPendingByRecipientId(recipientId);
-        for (NotificationOutbox outbox : pendingOutboxes) {
+        List<NotificationOutbox> claimedOutboxes = outboxUpdater.claimPendingByRecipientId(recipientId);
+        for (NotificationOutbox outbox : claimedOutboxes) {
             processIndividualNotification(outbox);
         }
     }
 
     public void processPendingNotifications() {
         // 1. 데이터 선점 (트랜잭션 내에서 처리하여 다른 서버가 못 가져가게 함)
-        List<NotificationOutbox> claimList = outboxUpdater.claimPendingNotifications(maxRetryCount);
+        List<NotificationOutbox> claimList = outboxUpdater.claimPendingNotifications(maxRetryCount, batchSize);
 
         if (claimList.isEmpty()) return;
         
@@ -68,9 +71,9 @@ public class NotificationRetryService {
             // 3. 성공 처리 (SUCCESS로 업데이트)
             outboxUpdater.updateStatusSuccess(outbox);
         } catch (Exception e) {
-            log.warn("알림 발송 실패 (ID: {}) - 재시도 카운트 증가", outbox.getId());
+            log.warn("알림 발송 실패 (ID: {}) - 재시도 카운트 증가. 사유: {}", outbox.getId(), e.getMessage());
             // 4. 실패 처리 (재시도 횟수 초과 시 FAILED, 아니면 다시 PENDING으로 돌려보낼지 결정)
-            outboxUpdater.updateStatusFailure(outbox, maxRetryCount);
+            outboxUpdater.updateStatusFailure(outbox, maxRetryCount, e.getMessage());
         }
     }
 }

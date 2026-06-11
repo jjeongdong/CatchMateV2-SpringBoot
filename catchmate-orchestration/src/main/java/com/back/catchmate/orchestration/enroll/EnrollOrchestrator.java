@@ -4,7 +4,6 @@ import com.back.catchmate.application.board.service.BoardService;
 import com.back.catchmate.application.bookmark.service.BookmarkService;
 import com.back.catchmate.application.chat.service.ChatRoomMemberService;
 import com.back.catchmate.application.chat.service.ChatRoomService;
-import com.back.catchmate.application.chat.service.ChatService;
 import com.back.catchmate.application.enroll.event.EnrollNotificationEvent;
 import com.back.catchmate.application.enroll.service.EnrollService;
 import com.back.catchmate.application.user.service.UserService;
@@ -16,6 +15,7 @@ import com.back.catchmate.domain.enroll.model.AcceptStatus;
 import com.back.catchmate.domain.enroll.model.Enroll;
 import com.back.catchmate.domain.notification.model.NotificationTemplate;
 import com.back.catchmate.domain.user.model.User;
+import com.back.catchmate.application.chat.event.ChatRoomMemberJoinedEvent;
 import com.back.catchmate.orchestration.board.dto.response.BoardResponse;
 import com.back.catchmate.orchestration.common.PagedResponse;
 import com.back.catchmate.orchestration.enroll.dto.command.EnrollCreateCommand;
@@ -49,7 +49,6 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class EnrollOrchestrator {
-    private final ChatService chatService;
     private final ChatRoomService chatRoomService;
     private final UserService userService;
     private final BoardService boardService;
@@ -177,6 +176,7 @@ public class EnrollOrchestrator {
         // 채팅방 처리
         ChatRoom chatRoom = chatRoomService.getOrCreateChatRoom(board);
         chatRoomMemberService.addMember(chatRoom, enroll.getUser());
+        applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), enroll.getUser()));
 
         // FCM 알림 발송
         applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(
@@ -216,12 +216,25 @@ public class EnrollOrchestrator {
     @Transactional
     public EnrollCancelResponse deleteEnroll(Long userId, Long enrollId) {
         Enroll enroll = enrollService.getEnroll(enrollId);
+        User applicant = enroll.getUser();
+        Board board = enroll.getBoard();
 
-        if (!enroll.getUser().getId().equals(userId)) {
+        if (!applicant.getId().equals(userId)) {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }
 
         enrollService.deleteEnroll(enroll);
+
+        // 게시글 작성자에게 신청 취소 알림 발송 (FCM + WebSocket)
+        applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(
+                NotificationTemplate.ENROLL_CANCEL,
+                board.getUser(),
+                applicant,
+                board,
+                "ENROLL_CANCEL",
+                enrollId
+        ));
+
         return EnrollCancelResponse.of(enrollId);
     }
 

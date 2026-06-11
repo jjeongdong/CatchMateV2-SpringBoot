@@ -60,7 +60,41 @@ public class InquiryRepositoryImpl implements InquiryRepository {
     }
 
     @Override
+    public DomainPage<Inquiry> findAllByUserId(Long userId, DomainPageable pageable) {
+        List<InquiryEntity> entities = jpaQueryFactory
+                .selectFrom(inquiryEntity)
+                .join(inquiryEntity.user, userEntity).fetchJoin()
+                .where(inquiryEntity.user.id.eq(userId))
+                .offset(pageable.getOffset())
+                .limit(pageable.getSize())
+                .orderBy(inquiryEntity.createdAt.desc())
+                .fetch();
+
+        Long totalCount = jpaQueryFactory
+                .select(inquiryEntity.count())
+                .from(inquiryEntity)
+                .where(inquiryEntity.user.id.eq(userId))
+                .fetchOne();
+
+        List<Inquiry> inquiries = entities.stream()
+                .map(InquiryEntity::toModel)
+                .toList();
+
+        return new DomainPage<>(
+                inquiries,
+                pageable.getPage(),
+                pageable.getSize(),
+                totalCount != null ? totalCount : 0L
+        );
+    }
+
+    @Override
     public long count() {
         return jpaInquiryRepository.count();
+    }
+
+    @Override
+    public long countByStatus(com.back.catchmate.domain.inquiry.model.InquiryStatus status) {
+        return jpaInquiryRepository.countByStatus(status);
     }
 }

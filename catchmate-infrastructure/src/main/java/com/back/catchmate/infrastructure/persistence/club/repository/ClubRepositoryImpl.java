@@ -16,13 +16,13 @@ public class ClubRepositoryImpl implements ClubRepository {
 
     @Override
     public Optional<Club> findById(Long id) {
-        return jpaClubRepository.findById(id).map(ClubEntity::toModel);
+        return jpaClubRepository.findById(id).map(ClubEntity::toDomain);
     }
 
     @Override
     public List<Club> findAll() {
         return jpaClubRepository.findAll().stream()
-                .map(ClubEntity::toModel)
+                .map(ClubEntity::toDomain)
                 .toList();
     }
 }

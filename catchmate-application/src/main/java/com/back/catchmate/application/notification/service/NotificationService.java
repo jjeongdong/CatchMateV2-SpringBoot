@@ -46,4 +46,8 @@ public class NotificationService {
     public boolean hasUnreadNotifications(Long userId) {
         return notificationRepository.hasUnreadNotifications(userId);
     }
+
+    public int markAllRead(Long userId) {
+        return notificationRepository.markAllRead(userId);
+    }
 }

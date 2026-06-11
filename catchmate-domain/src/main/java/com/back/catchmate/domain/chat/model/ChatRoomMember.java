@@ -20,6 +20,7 @@ public class ChatRoomMember {
     private Long lastReadSequence;
     private LocalDateTime joinedAt;
     private LocalDateTime leftAt;
+    private LocalDateTime readOnlyAt;
     private boolean isNotificationOn;
 
     /**
@@ -71,5 +72,25 @@ public class ChatRoomMember {
      */
     public void updateNotificationSetting(boolean isOn) {
         this.isNotificationOn = isOn;
+    }
+
+    /**
+     * 차단 등으로 인해 읽기 전용 상태로 전환
+     */
+    public void markAsReadOnly() {
+        if (this.readOnlyAt == null) {
+            this.readOnlyAt = LocalDateTime.now();
+        }
+    }
+
+    /**
+     * 새 매칭 등으로 읽기 전용 상태 해제
+     */
+    public void clearReadOnly() {
+        this.readOnlyAt = null;
+    }
+
+    public boolean isReadOnly() {
+        return this.readOnlyAt != null;
     }
 }

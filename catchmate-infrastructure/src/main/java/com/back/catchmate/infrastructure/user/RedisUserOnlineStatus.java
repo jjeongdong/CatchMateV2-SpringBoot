@@ -6,11 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-
 /**
  * Redis 기반 사용자 온라인/오프라인 상태 추적 서비스
  * 고가용성(HA) 확보: Redis 장애 발생 시 시스템 전체로 장애가 전파되지 않도록 예외를 잡고 안전한 기본값을 반환합니다.
+ *
+ * 온라인 키는 TTL 없이 세팅되며, WebSocket Disconnect 이벤트에서만 제거됩니다.
+ * 비정상 종료로 Disconnect 이벤트가 누락되어 stale 상태가 남아있을 위험이 있으나
+ * 일반적인 흐름에서는 Spring 의 SessionDisconnectEvent 가 발생합니다.
  */
 @Slf4j
 @Service
@@ -20,13 +22,12 @@ public class RedisUserOnlineStatus implements UserOnlineStatusPort {
 
     private static final String ONLINE_USER_KEY_PREFIX = "user:online:";
     private static final String USER_ROOM_FOCUS_KEY_PREFIX = "user:focus:";
-    private static final Duration ONLINE_EXPIRE_TIME = Duration.ofMinutes(5);
 
     @Override
     public void setUserOnline(Long userId) {
         try {
             String key = ONLINE_USER_KEY_PREFIX + userId;
-            redisTemplate.opsForValue().set(key, "true", ONLINE_EXPIRE_TIME);
+            redisTemplate.opsForValue().set(key, "true");
             log.debug("User {} is now ONLINE", userId);
         } catch (Exception e) {
             log.error("Redis 장애: 사용자 {} 온라인 상태 설정 실패 - {}", userId, e.getMessage());
@@ -61,7 +62,7 @@ public class RedisUserOnlineStatus implements UserOnlineStatusPort {
     public void setUserFocusRoom(Long userId, Long roomId) {
         try {
             String key = USER_ROOM_FOCUS_KEY_PREFIX + userId;
-            redisTemplate.opsForValue().set(key, roomId.toString(), ONLINE_EXPIRE_TIME);
+            redisTemplate.opsForValue().set(key, roomId.toString());
         } catch (Exception e) {
             log.error("Redis 장애: 사용자 {} 포커스 방({}) 설정 실패 - {}", userId, roomId, e.getMessage());
         }

@@ -1,5 +1,6 @@
 package com.back.catchmate.domain.auth.port;
 
+import com.back.catchmate.domain.oauth.model.SignupTokenClaims;
 import com.back.catchmate.domain.user.model.Authority;
 
 public interface TokenProvider {
@@ -12,4 +13,10 @@ public interface TokenProvider {
     String getUserRole(String token);
 
     Long getRefreshTokenExpirationTime();
+
+    String createSignupToken(SignupTokenClaims claims);
+
+    SignupTokenClaims parseSignupToken(String signupToken);
+
+    Long getSignupTokenExpirationTime();
 }

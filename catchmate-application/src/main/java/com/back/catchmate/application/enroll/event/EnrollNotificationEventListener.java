@@ -1,6 +1,6 @@
 package com.back.catchmate.application.enroll.event;
 
-import com.back.catchmate.application.notification.event.NotificationEvent;
+import com.back.catchmate.application.notification.port.NotificationDispatchPort;
 import com.back.catchmate.application.notification.service.NotificationRetryService;
 import com.back.catchmate.application.notification.service.NotificationService;
 import com.back.catchmate.domain.notification.model.Notification;
@@ -10,7 +10,6 @@ import com.back.catchmate.notifications.enums.NotificationChannel;
 import com.back.catchmate.user.enums.AlarmType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -26,7 +25,7 @@ public class EnrollNotificationEventListener {
     private final NotificationService notificationService;
     private final NotificationRetryService notificationRetryService;
     private final UserOnlineStatusPort userOnlineStatusPort;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final NotificationDispatchPort notificationDispatchPort;
 
     /**
      * 메인 트랜잭션 내에서 실행되어 알림 엔티티와 아웃박스 데이터를 저장함
@@ -43,6 +42,8 @@ public class EnrollNotificationEventListener {
                 event.referenceId()
         );
         notificationService.createNotification(notification);
+
+        if (!event.pushEnabled()) return;
 
         // 2. 푸시 발송을 위한 아웃박스 저장
         User recipient = event.recipient();
@@ -69,11 +70,12 @@ public class EnrollNotificationEventListener {
         if (!recipient.isEnrollAlarmEnabled()) return;
 
         Map<String, String> payload = createNotificationData(event);
-        boolean isOnline = userOnlineStatusPort.isUserOnline(recipient.getId());
 
-        if (isOnline) {
-            sendWebSocketNotification(recipient.getId(), payload);
-        } else {
+        // WebSocket 은 항상 시도 — 구독자가 있으면 전달되고, 없으면 silently drop 됨
+        notificationDispatchPort.dispatch(recipient.getId(), payload);
+
+        // 오프라인이고 push 가 활성화된 케이스는 FCM 으로 보강 발송
+        if (event.pushEnabled() && !userOnlineStatusPort.isUserOnline(recipient.getId())) {
             notificationRetryService.sendPendingOutboxImmediately(recipient.getId());
         }
     }
@@ -85,13 +87,5 @@ public class EnrollNotificationEventListener {
                 "title", event.title(),
                 "body", event.body()
         );
-    }
-
-    private void sendWebSocketNotification(Long userId, Map<String, String> payload) {
-        try {
-            applicationEventPublisher.publishEvent(NotificationEvent.of(userId, payload));
-        } catch (Exception e) {
-            log.warn("WebSocket notification failed. userId: {}", userId, e);
-        }
     }
 }

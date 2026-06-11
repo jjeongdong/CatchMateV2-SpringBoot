@@ -45,6 +45,18 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public List<User> findAllEventAlarmEnabled() {
+        return jpaQueryFactory
+                .selectFrom(userEntity)
+                .join(userEntity.club, clubEntity).fetchJoin()
+                .where(userEntity.eventAlarm.eq('Y'))
+                .fetch()
+                .stream()
+                .map(UserEntity::toModel)
+                .toList();
+    }
+
+    @Override
     public DomainPage<User> findAllByClubName(String clubName, DomainPageable pageable) {
         List<UserEntity> entities = jpaQueryFactory
                 .selectFrom(userEntity)

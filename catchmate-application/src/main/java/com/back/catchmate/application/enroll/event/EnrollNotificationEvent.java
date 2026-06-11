@@ -11,7 +11,8 @@ public record EnrollNotificationEvent(
         String title,
         String body,
         String type,
-        Long referenceId
+        Long referenceId,
+        boolean pushEnabled
 ) {
     public static EnrollNotificationEvent of(
             NotificationTemplate template,
@@ -31,13 +32,14 @@ public record EnrollNotificationEvent(
             String type,
             Long referenceId
     ) {
-        String title = (template == NotificationTemplate.ENROLL_REQUEST)
+        String title = (template == NotificationTemplate.ENROLL_REQUEST || template == NotificationTemplate.ENROLL_CANCEL)
                 ? template.formatTitle(sender.getNickName())
                 : template.getTitle();
         String body = template.formatBody(board.getTitle());
+        boolean pushEnabled = template != NotificationTemplate.ENROLL_CANCEL;
 
         return new EnrollNotificationEvent(
-                recipient, sender, board, title, body, type, referenceId
+                recipient, sender, board, title, body, type, referenceId, pushEnabled
         );
     }
 }

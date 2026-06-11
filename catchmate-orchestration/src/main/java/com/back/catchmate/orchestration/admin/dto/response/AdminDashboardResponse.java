@@ -16,7 +16,9 @@ public class AdminDashboardResponse {
     private Map<String, Long> userCountByClub; // 구단명 : 인원수
     private Map<String, Long> userCountByWatchStyle; // 응원스타일 : 인원수
     private long totalReportCount;
+    private long pendingReportCount;
     private long totalInquiryCount;
+    private long waitingInquiryCount;
 
     @Getter
     @Builder
@@ -39,7 +41,9 @@ public class AdminDashboardResponse {
                                             Map<String, Long> userCountByClub,
                                             Map<String, Long> userCountByWatchStyle,
                                             long totalReportCount,
-                                            long totalInquiryCount) {
+                                            long pendingReportCount,
+                                            long totalInquiryCount,
+                                            long waitingInquiryCount) {
         return AdminDashboardResponse.builder()
                 .totalUserCount(totalUserCount)
                 .genderRatio(genderRatio)
@@ -47,7 +51,9 @@ public class AdminDashboardResponse {
                 .userCountByClub(userCountByClub)
                 .userCountByWatchStyle(userCountByWatchStyle)
                 .totalReportCount(totalReportCount)
+                .pendingReportCount(pendingReportCount)
                 .totalInquiryCount(totalInquiryCount)
+                .waitingInquiryCount(waitingInquiryCount)
                 .build();
     }
 }

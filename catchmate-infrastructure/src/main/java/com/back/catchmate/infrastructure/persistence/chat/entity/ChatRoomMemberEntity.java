@@ -34,6 +34,9 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
     @Column(name = "left_at")
     private LocalDateTime leftAt;
 
+    @Column(name = "read_only_at")
+    private LocalDateTime readOnlyAt;
+
     @Column(name = "last_read_sequence", nullable = false)
     private Long lastReadSequence;
 
@@ -47,6 +50,7 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
                 .user(UserEntity.from(member.getUser()))
                 .joinedAt(member.getJoinedAt())
                 .leftAt(member.getLeftAt())
+                .readOnlyAt(member.getReadOnlyAt())
                 .lastReadSequence(member.getLastReadSequence())
                 .isNotificationOn(member.isNotificationOn())
                 .build();
@@ -59,6 +63,7 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
                 .user(this.user.toModel())
                 .joinedAt(this.joinedAt)
                 .leftAt(this.leftAt)
+                .readOnlyAt(this.readOnlyAt)
                 .lastReadSequence(this.lastReadSequence)
                 .isNotificationOn(this.isNotificationOn)
                 .build();

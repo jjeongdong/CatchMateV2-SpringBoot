@@ -16,4 +16,6 @@ public interface NotificationRepository {
     void delete(Notification notification);
 
     boolean hasUnreadNotifications(Long userId);
+
+    int markAllRead(Long userId);
 }

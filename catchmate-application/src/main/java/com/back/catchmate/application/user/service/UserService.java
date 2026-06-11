@@ -9,6 +9,7 @@ import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -33,6 +34,10 @@ public class UserService {
 
     public Optional<User> findByProviderId(String providerIdWithProvider) {
         return userRepository.findByProviderId(providerIdWithProvider);
+    }
+
+    public List<User> getEventAlarmEnabledUsers() {
+        return userRepository.findAllEventAlarmEnabled();
     }
 
     public DomainPage<User> getUsersByClub(String clubName, DomainPageable pageable) {

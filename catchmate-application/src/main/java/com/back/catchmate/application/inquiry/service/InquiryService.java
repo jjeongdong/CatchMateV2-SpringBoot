@@ -3,6 +3,7 @@ package com.back.catchmate.application.inquiry.service;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.inquiry.model.Inquiry;
+import com.back.catchmate.domain.inquiry.model.InquiryStatus;
 import com.back.catchmate.domain.inquiry.repository.InquiryRepository;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.error.ErrorCode;
@@ -30,8 +31,16 @@ public class InquiryService {
         return inquiryRepository.findAll(pageable);
     }
 
+    public DomainPage<Inquiry> getInquiryListByUser(Long userId, DomainPageable pageable) {
+        return inquiryRepository.findAllByUserId(userId, pageable);
+    }
+
     public long getTotalInquiryCount() {
         return inquiryRepository.count();
+    }
+
+    public long getWaitingInquiryCount() {
+        return inquiryRepository.countByStatus(InquiryStatus.WAITING);
     }
 
     public Inquiry updateInquiry(Inquiry inquiry) {

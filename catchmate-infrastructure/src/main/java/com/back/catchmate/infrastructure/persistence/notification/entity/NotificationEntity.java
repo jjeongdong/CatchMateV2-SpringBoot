@@ -20,6 +20,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import com.back.catchmate.user.enums.AlarmType;
 
 @Entity
@@ -39,10 +41,12 @@ public class NotificationEntity extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
+    @NotFound(action = NotFoundAction.IGNORE)
     private UserEntity sender;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id")
+    @NotFound(action = NotFoundAction.IGNORE)
     private BoardEntity board;
 
     @Column(nullable = false)
@@ -63,7 +67,7 @@ public class NotificationEntity extends BaseTimeEntity {
                 .id(notification.getId())
                 .user(UserEntity.from(notification.getUser()))
                 .sender(notification.getSender() != null ? UserEntity.from(notification.getSender()) : null)
-                .board(notification.getBoard() != null ? BoardEntity.from(notification.getBoard()) : null)
+                .board(notification.getBoard() != null ? BoardEntity.fromDomain(notification.getBoard()) : null)
                 .title(notification.getTitle())
                 .type(notification.getType())
                 .read(notification.isRead())
@@ -76,7 +80,7 @@ public class NotificationEntity extends BaseTimeEntity {
                 .id(this.id)
                 .user(this.user.toModel())
                 .sender(this.sender != null ? this.sender.toModel() : null)
-                .board(this.board != null ? this.board.toModel() : null)
+                .board(this.board != null ? this.board.toDomain() : null)
                 .title(this.title)
                 .type(this.type)
                 .read(this.read)

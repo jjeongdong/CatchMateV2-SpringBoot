@@ -17,6 +17,7 @@ public class NotificationOutbox {
     private String payload;
     private int retryCount;
     private OutboxStatus status;
+    private String errorMessage;
 
     public static NotificationOutbox create(Long recipientId, String recipientAddress, NotificationChannel channel, String title, String body, String payload) {
         return NotificationOutbox.builder()
@@ -28,11 +29,16 @@ public class NotificationOutbox {
                 .payload(payload)
                 .retryCount(0)
                 .status(OutboxStatus.PENDING)
+                .errorMessage(null)
                 .build();
     }
 
     public void incrementRetryCount() {
         this.retryCount++;
+    }
+
+    public void recordError(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 
     public void startProcessing() {

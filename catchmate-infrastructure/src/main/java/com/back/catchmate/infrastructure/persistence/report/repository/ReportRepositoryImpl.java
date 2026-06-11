@@ -68,4 +68,9 @@ public class ReportRepositoryImpl implements ReportRepository {
     public long count() {
         return jpaReportRepository.count();
     }
+
+    @Override
+    public long countByCompleted(boolean completed) {
+        return jpaReportRepository.countByCompleted(completed);
+    }
 }

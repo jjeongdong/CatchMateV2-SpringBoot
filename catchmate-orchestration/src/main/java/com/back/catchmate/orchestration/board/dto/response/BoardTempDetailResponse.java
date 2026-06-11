@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @Builder
 @AllArgsConstructor
@@ -16,7 +18,7 @@ public class BoardTempDetailResponse {
     private String content;
     private int maxPerson;
     private String preferredGender;
-    private String preferredAgeRange;
+    private List<String> preferredAgeRange;
 
     private ClubResponse cheerClub;
     private GameResponse game;
@@ -33,7 +35,7 @@ public class BoardTempDetailResponse {
                 .content(board.getContent())
                 .maxPerson(board.getMaxPerson())
                 .preferredGender(board.getPreferredGender())
-                .preferredAgeRange(board.getPreferredAgeRange())
+                .preferredAgeRange(board.getPreferredAgeRange().asList())
                 .cheerClub(board.getCheerClub() != null ? ClubResponse.from(board.getCheerClub()) : null)
                 .game(board.getGame() != null ? GameResponse.from(board.getGame()) : null)
                 .user(board.getUser() != null ? UserResponse.from(board.getUser()) : null)

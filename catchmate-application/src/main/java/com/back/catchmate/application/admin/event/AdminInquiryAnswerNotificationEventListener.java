@@ -1,5 +1,6 @@
 package com.back.catchmate.application.admin.event;
 
+import com.back.catchmate.application.notification.port.NotificationDispatchPort;
 import com.back.catchmate.application.notification.service.NotificationRetryService;
 import com.back.catchmate.application.notification.service.NotificationService;
 import com.back.catchmate.domain.inquiry.model.Inquiry;
@@ -23,6 +24,7 @@ import java.util.Map;
 public class AdminInquiryAnswerNotificationEventListener {
     private final NotificationService notificationService;
     private final NotificationRetryService notificationRetryService;
+    private final NotificationDispatchPort notificationDispatchPort;
 
     /**
      * 관리자 답변 알림을 아웃박스 패턴으로 저장합니다.
@@ -69,8 +71,21 @@ public class AdminInquiryAnswerNotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleInquiryNotification(AdminInquiryAnswerNotificationEvent event) {
         User recipient = event.recipient();
-        if (recipient.isEventAlarmEnabled()) {
-            notificationRetryService.sendPendingOutboxImmediately(recipient.getId());
+        if (!recipient.isEventAlarmEnabled()) {
+            return;
         }
+
+        Inquiry inquiry = event.inquiry();
+        notificationDispatchPort.dispatch(
+                recipient.getId(),
+                Map.of(
+                        "type", event.type(),
+                        "inquiryId", inquiry.getId().toString(),
+                        "title", event.title(),
+                        "body", event.body()
+                )
+        );
+
+        notificationRetryService.sendPendingOutboxImmediately(recipient.getId());
     }
 }

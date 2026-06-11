@@ -3,14 +3,14 @@ package com.back.catchmate.orchestration.user;
 import com.back.catchmate.orchestration.common.PagedResponse;
 import com.back.catchmate.orchestration.user.dto.response.BlockActionResponse;
 import com.back.catchmate.orchestration.user.dto.response.BlockedUserResponse;
+import com.back.catchmate.application.enroll.service.EnrollService;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
+import com.back.catchmate.domain.enroll.model.Enroll;
 import com.back.catchmate.domain.user.model.Block;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.application.user.service.BlockService;
 import com.back.catchmate.application.user.service.UserService;
-import com.back.catchmate.error.ErrorCode;
-import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,19 +23,24 @@ import java.util.List;
 public class UserBlockOrchestrator {
     private final UserService userService;
     private final BlockService blockService;
+    private final EnrollService enrollService;
 
     @Transactional
     public BlockActionResponse createBlock(Long blockerId, Long blockedId) {
         User blocker = userService.getUser(blockerId);
         User blocked = userService.getUser(blockedId);
 
-        // 자기 자신 차단 방지
-        if (blockerId.equals(blockedId)) {
-            throw new BaseException(ErrorCode.SELF_BLOCK_FAILED);
-        }
-
         blockService.createBlock(blocker, blocked);
+        terminateAcceptedMatches(blockerId, blockedId);
+
         return BlockActionResponse.of(blockedId, "유저를 차단했습니다.");
+    }
+
+    private void terminateAcceptedMatches(Long blockerId, Long boardOwnerId) {
+        List<Enroll> matches = enrollService.getAcceptedEnrollsBetween(blockerId, boardOwnerId);
+        for (Enroll enroll : matches) {
+            enrollService.deleteEnroll(enroll);
+        }
     }
 
     @Transactional(readOnly = true)

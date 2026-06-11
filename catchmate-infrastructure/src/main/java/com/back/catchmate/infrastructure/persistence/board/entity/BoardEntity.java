@@ -1,6 +1,9 @@
 package com.back.catchmate.infrastructure.persistence.board.entity;
 
 import com.back.catchmate.domain.board.model.Board;
+import com.back.catchmate.domain.board.model.PreferredAgeRange;
+import com.back.catchmate.domain.club.model.Club;
+import com.back.catchmate.domain.game.model.Game;
 import com.back.catchmate.infrastructure.global.BaseTimeEntity;
 import com.back.catchmate.infrastructure.persistence.club.entity.ClubEntity;
 import com.back.catchmate.infrastructure.persistence.game.entity.GameEntity;
@@ -76,7 +79,7 @@ public class BoardEntity extends BaseTimeEntity {
 
     private LocalDateTime deletedAt;
 
-    public static BoardEntity from(Board board) {
+    public static BoardEntity fromDomain(Board board) {
         return BoardEntity.builder()
                 .id(board.getId())
                 .title(board.getTitle())
@@ -84,17 +87,17 @@ public class BoardEntity extends BaseTimeEntity {
                 .maxPerson(board.getMaxPerson())
                 .currentPerson(board.getCurrentPerson())
                 .user(UserEntity.from(board.getUser()))
-                .cheerClub(ClubEntity.from(board.getCheerClub()))
-                .game(GameEntity.from(board.getGame()))
+                .cheerClub(ClubEntity.fromDomain(board.getCheerClub()))
+                .game(GameEntity.fromDomain(board.getGame()))
                 .preferredGender(board.getPreferredGender())
-                .preferredAgeRange(board.getPreferredAgeRange())
+                .preferredAgeRange(board.getPreferredAgeRange().asStored())
                 .completed(board.isCompleted())
                 .liftUpDate(board.getLiftUpDate())
                 .deletedAt(board.getDeletedAt())
                 .build();
     }
 
-    public Board toModel() {
+    public Board toDomain() {
         return Board.builder()
                 .id(this.id)
                 .title(this.title)
@@ -102,13 +105,21 @@ public class BoardEntity extends BaseTimeEntity {
                 .maxPerson(this.maxPerson)
                 .currentPerson(this.currentPerson)
                 .user(this.user.toModel())
-                .cheerClub(this.cheerClub != null ? this.cheerClub.toModel() : null)
-                .game(this.game != null ? this.game.toModel() : null)
+                .cheerClub(toCheerClubModel())
+                .game(toGameModel())
                 .preferredGender(this.preferredGender)
-                .preferredAgeRange(this.preferredAgeRange)
+                .preferredAgeRange(PreferredAgeRange.fromStored(this.preferredAgeRange))
                 .completed(this.completed)
                 .createdAt(this.getCreatedAt())
                 .liftUpDate(this.liftUpDate)
                 .build();
+    }
+
+    private Club toCheerClubModel() {
+        return this.cheerClub != null ? this.cheerClub.toDomain() : null;
+    }
+
+    private Game toGameModel() {
+        return this.game != null ? this.game.toDomain() : null;
     }
 }

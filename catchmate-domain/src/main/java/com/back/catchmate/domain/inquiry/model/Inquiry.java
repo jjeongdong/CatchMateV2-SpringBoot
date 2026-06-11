@@ -2,6 +2,8 @@ package com.back.catchmate.domain.inquiry.model;
 
 import com.back.catchmate.domain.common.permission.ResourceOwnership;
 import com.back.catchmate.domain.user.model.User;
+import com.back.catchmate.error.ErrorCode;
+import com.back.catchmate.error.exception.BaseException;
 import com.back.catchmate.inquiry.enums.InquiryType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -35,6 +37,9 @@ public class Inquiry implements ResourceOwnership {
     }
 
     public void registerAnswer(String answer) {
+        if (this.status == InquiryStatus.ANSWERED) {
+            throw new BaseException(ErrorCode.INQUIRY_ALREADY_ANSWERED);
+        }
         this.answer = answer;
         this.status = InquiryStatus.ANSWERED;
     }

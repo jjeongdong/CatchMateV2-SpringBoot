@@ -6,7 +6,6 @@ import com.back.catchmate.application.notification.service.NotificationService;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
 import com.back.catchmate.domain.enroll.model.AcceptStatus;
-import com.back.catchmate.domain.enroll.model.Enroll;
 import com.back.catchmate.domain.notification.model.Notification;
 import com.back.catchmate.orchestration.common.PagedResponse;
 import com.back.catchmate.orchestration.notification.dto.response.NotificationResponse;
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Component
 @Transactional(readOnly = true)
@@ -35,8 +33,7 @@ public class NotificationOrchestrator {
 
         AcceptStatus acceptStatus = null;
         if (notification.getType() == AlarmType.ENROLL && notification.getTargetId() != null) {
-            acceptStatus = enrollService.findEnrollById(notification.getTargetId())
-                    .map(Enroll::getAcceptStatus)
+            acceptStatus = enrollService.findAcceptStatusById(notification.getTargetId())
                     .orElse(null);
         }
 
@@ -56,8 +53,7 @@ public class NotificationOrchestrator {
                 .map(Notification::getTargetId)
                 .toList();
 
-        Map<Long, AcceptStatus> enrollStatusMap = enrollService.getEnrollListByIds(enrollIds).stream()
-                .collect(Collectors.toMap(Enroll::getId, Enroll::getAcceptStatus));
+        Map<Long, AcceptStatus> enrollStatusMap = enrollService.getAcceptStatusMapByIds(enrollIds);
 
         // 3. DTO 변환
         List<NotificationResponse> responses = notificationPage.getContent().stream()
@@ -80,6 +76,11 @@ public class NotificationOrchestrator {
     public UnreadNotificationResponse hasUnreadNotifications(Long userId) {
         boolean hasUnread = notificationService.hasUnreadNotifications(userId);
         return UnreadNotificationResponse.of(hasUnread);
+    }
+
+    @Transactional
+    public int readAllNotifications(Long userId) {
+        return notificationService.markAllRead(userId);
     }
 
     public void processPendingNotifications() {

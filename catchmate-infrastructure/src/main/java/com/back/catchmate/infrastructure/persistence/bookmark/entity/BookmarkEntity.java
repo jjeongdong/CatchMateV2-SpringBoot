@@ -46,7 +46,7 @@ public class BookmarkEntity extends BaseTimeEntity {
         return BookmarkEntity.builder()
                 .id(bookmark.getId())
                 .user(UserEntity.from(bookmark.getUser()))
-                .board(BoardEntity.from(bookmark.getBoard()))
+                .board(BoardEntity.fromDomain(bookmark.getBoard()))
                 .build();
     }
 
@@ -54,7 +54,7 @@ public class BookmarkEntity extends BaseTimeEntity {
         return Bookmark.builder()
                 .id(id)
                 .user(user.toModel())
-                .board(board.toModel())
+                .board(board.toDomain())
                 .createdAt(getCreatedAt())
                 .build();
     }

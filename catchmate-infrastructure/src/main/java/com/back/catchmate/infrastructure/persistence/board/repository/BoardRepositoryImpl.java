@@ -24,19 +24,19 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class BoardRepositoryImpl implements BoardRepository {
     private final JpaBoardRepository jpaBoardRepository;
-    private final QueryDSLBoardRepository queryDSLBoardRepository;
+    private final QueryDslBoardRepository queryDslBoardRepository;
     private final EntityManager entityManager;
 
     @Override
     public Board save(Board board) {
-        BoardEntity entity = BoardEntity.from(board);
-        return jpaBoardRepository.save(entity).toModel();
+        BoardEntity entity = BoardEntity.fromDomain(board);
+        return jpaBoardRepository.save(entity).toDomain();
     }
 
     @Override
     public Optional<Board> findById(Long id) {
         return jpaBoardRepository.findById(id)
-                .map(BoardEntity::toModel);
+                .map(BoardEntity::toDomain);
     }
 
     @Override
@@ -44,20 +44,20 @@ public class BoardRepositoryImpl implements BoardRepository {
         return jpaBoardRepository.findByIdWithPessimisticLock(id)
                 .map(entity -> {
                     entityManager.refresh(entity);
-                    return entity.toModel();
+                    return entity.toDomain();
                 });
     }
 
     @Override
     public Optional<Board> findCompletedById(Long id) {
         return jpaBoardRepository.findByIdAndCompletedTrue(id)
-                .map(BoardEntity::toModel);
+                .map(BoardEntity::toDomain);
     }
 
     @Override
     public Optional<Board> findTempBoardByUserId(Long userId) {
         return jpaBoardRepository.findFirstByUserIdAndCompletedFalse(userId)
-                .map(BoardEntity::toModel);
+                .map(BoardEntity::toDomain);
     }
 
     @Override
@@ -67,7 +67,7 @@ public class BoardRepositoryImpl implements BoardRepository {
         Page<BoardEntity> entityPage = jpaBoardRepository.findAllByCompletedTrue(pageable);
 
         List<Board> domains = entityPage.getContent().stream()
-                .map(BoardEntity::toModel)
+                .map(BoardEntity::toDomain)
                 .toList();
 
         return new DomainPage<>(
@@ -82,10 +82,10 @@ public class BoardRepositoryImpl implements BoardRepository {
     public DomainPage<Board> findAllByCondition(BoardSearchCondition condition, DomainPageable domainPageable) {
         Pageable pageable = PageRequest.of(domainPageable.getPage(), domainPageable.getSize());
 
-        Page<BoardEntity> entityPage = queryDSLBoardRepository.findAllByCondition(condition, pageable);
+        Page<BoardEntity> entityPage = queryDslBoardRepository.findAllByCondition(condition, pageable);
 
         List<Board> domains = entityPage.getContent().stream()
-                .map(BoardEntity::toModel)
+                .map(BoardEntity::toDomain)
                 .toList();
 
         return new DomainPage<>(
@@ -99,7 +99,7 @@ public class BoardRepositoryImpl implements BoardRepository {
     @Override
     public CursorPage<Board> findAllByConditionWithCursor(BoardSearchCondition condition, int size) {
         List<BoardEntity> entities =
-                queryDSLBoardRepository.findAllByConditionWithCursor(condition, size + 1);
+                queryDslBoardRepository.findAllByConditionWithCursor(condition, size + 1);
 
         boolean hasNext = entities.size() > size;
         if (hasNext) {
@@ -108,7 +108,7 @@ public class BoardRepositoryImpl implements BoardRepository {
         }
 
         List<Board> domains = entities.stream()
-                .map(BoardEntity::toModel)
+                .map(BoardEntity::toDomain)
                 .toList();
 
         Long nextCursorId = null;
@@ -133,7 +133,7 @@ public class BoardRepositoryImpl implements BoardRepository {
         Page<BoardEntity> entityPage = jpaBoardRepository.findAllByUserId(userId, pageable);
 
         List<Board> domains = entityPage.getContent().stream()
-                .map(BoardEntity::toModel)
+                .map(BoardEntity::toDomain)
                 .toList();
 
         return new DomainPage<>(
@@ -151,7 +151,7 @@ public class BoardRepositoryImpl implements BoardRepository {
 
     @Override
     public void delete(Board board) {
-        BoardEntity entity = BoardEntity.from(board);
+        BoardEntity entity = BoardEntity.fromDomain(board);
         jpaBoardRepository.delete(entity);
     }
 }

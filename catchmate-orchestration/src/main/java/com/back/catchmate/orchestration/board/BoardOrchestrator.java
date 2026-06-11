@@ -11,6 +11,7 @@ import com.back.catchmate.application.user.service.UserService;
 import com.back.catchmate.domain.board.dto.BoardSearchCondition;
 import com.back.catchmate.domain.board.model.Board;
 import com.back.catchmate.domain.board.model.BoardButtonStatus;
+import com.back.catchmate.domain.board.model.PreferredAgeRange;
 import com.back.catchmate.domain.chat.model.ChatRoom;
 import com.back.catchmate.domain.club.model.Club;
 import com.back.catchmate.domain.common.page.CursorPage;
@@ -21,6 +22,7 @@ import com.back.catchmate.domain.game.model.Game;
 import com.back.catchmate.domain.game.service.GameService;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.error.ErrorCode;
+import com.back.catchmate.application.chat.event.ChatRoomMemberJoinedEvent;
 import com.back.catchmate.error.exception.BaseException;
 import com.back.catchmate.orchestration.board.dto.command.BoardCreateCommand;
 import com.back.catchmate.orchestration.board.dto.command.BoardUpdateCommand;
@@ -35,6 +37,7 @@ import com.back.catchmate.orchestration.board.dto.response.BoardUpdateResponse;
 import com.back.catchmate.orchestration.common.CursorPagedResponse;
 import com.back.catchmate.orchestration.common.PagedResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +61,7 @@ public class BoardOrchestrator {
     private final BookmarkService bookmarkService;
     private final ChatRoomService chatRoomService;
     private final ChatRoomMemberService chatRoomMemberService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public BoardCreateResponse createBoard(Long userId, BoardCreateCommand command) {
@@ -78,7 +82,7 @@ public class BoardOrchestrator {
                 cheerClub,
                 game,
                 command.getPreferredGender(),
-                command.getPreferredAgeRange(),
+                PreferredAgeRange.of(command.getPreferredAgeRange()),
                 command.isCompleted()
         );
 
@@ -88,6 +92,7 @@ public class BoardOrchestrator {
         if (command.isCompleted()) {
             ChatRoom chatRoom = chatRoomService.getOrCreateChatRoom(savedBoard);
             chatRoomMemberService.addMember(chatRoom, user);
+            applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), user));
         }
 
         return BoardCreateResponse.of(savedBoard.getId());
@@ -142,32 +147,6 @@ public class BoardOrchestrator {
         return new CursorPagedResponse<>(boardPage, boardResponses);
     }
 
-    public PagedResponse<BoardResponse> getBoardListWithOffset(Long userId, int page, int size) {
-        User user = userService.getUser(userId);
-        List<Long> blockedUserIds = blockService.getBlockedUserIds(user);
-
-        BoardSearchCondition condition = BoardSearchCondition.of(
-                userId, null, null, null, blockedUserIds
-        );
-
-        DomainPageable domainPageable = DomainPageable.of(page, size);
-        DomainPage<Board> boardPage = boardService.getBoardList(condition, domainPageable);
-
-        List<Long> boardIds = boardPage.getContent().stream()
-                .map(Board::getId)
-                .toList();
-
-        Set<Long> myBookmarkedBoardIds = new HashSet<>(
-                bookmarkService.findBookmarkedBoardIds(user, boardIds)
-        );
-
-        List<BoardResponse> boardResponses = boardPage.getContent().stream()
-                .map(board -> BoardResponse.from(board, myBookmarkedBoardIds.contains(board.getId())))
-                .toList();
-
-        return new PagedResponse<>(boardPage, boardResponses);
-    }
-
     public PagedResponse<BoardResponse> getBoardListByUserId(Long targetUserId, Long loginUserId, int page, int size) {
         User targetUser = userService.getUser(targetUserId);
         User loginUser = userService.getUser(loginUserId);
@@ -215,7 +194,7 @@ public class BoardOrchestrator {
                 cheerClub,
                 game,
                 command.getPreferredGender(),
-                command.getPreferredAgeRange(),
+                PreferredAgeRange.of(command.getPreferredAgeRange()),
                 command.isCompleted()
         );
 
@@ -224,6 +203,7 @@ public class BoardOrchestrator {
         if (!wasCompleted && command.isCompleted()) {
             ChatRoom chatRoom = chatRoomService.getOrCreateChatRoom(board);
             chatRoomMemberService.addMember(chatRoom, user);
+            applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), user));
         }
 
         return BoardUpdateResponse.of(board.getId());

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -64,8 +65,20 @@ public class EnrollService {
         return enrollRepository.findAllByIds(ids);
     }
 
+    public Map<Long, AcceptStatus> getAcceptStatusMapByIds(List<Long> ids) {
+        return enrollRepository.findAcceptStatusMapByIds(ids);
+    }
+
+    public Optional<AcceptStatus> findAcceptStatusById(Long id) {
+        return enrollRepository.findAcceptStatusById(id);
+    }
+
     public long getEnrollPendingCountByBoardWriter(Long userId) {
         return enrollRepository.countByBoardWriterAndStatus(userId, AcceptStatus.PENDING);
+    }
+
+    public List<Enroll> getAcceptedEnrollsBetween(Long applicantId, Long boardOwnerId) {
+        return enrollRepository.findAllByApplicantAndBoardOwnerAndStatus(applicantId, boardOwnerId, AcceptStatus.ACCEPTED);
     }
 
     public void updateEnroll(Enroll enroll) {

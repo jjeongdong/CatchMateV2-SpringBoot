@@ -1,13 +1,12 @@
 package com.back.catchmate.application.chat.event;
 
-import com.back.catchmate.application.notification.event.NotificationEvent;
+import com.back.catchmate.application.notification.port.NotificationDispatchPort;
 import com.back.catchmate.application.notification.service.NotificationRetryService;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.domain.user.port.UserOnlineStatusPort;
 import com.back.catchmate.notifications.enums.NotificationChannel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,7 @@ import java.util.Map;
 public class ChatNotificationEventListener {
     private final NotificationRetryService notificationRetryService;
     private final UserOnlineStatusPort userOnlineStatusPort;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final NotificationDispatchPort notificationDispatchPort;
 
     /**
      * 메인 트랜잭션 내에서 실행되어 아웃박스에 저장함
@@ -63,15 +62,15 @@ public class ChatNotificationEventListener {
         for (User recipient : event.recipients()) {
             if (!recipient.isChatAlarmEnabled()) continue;
 
-            boolean isOnline = userOnlineStatusPort.isUserOnline(recipient.getId());
+            // 해당 채팅방을 보고 있는 사용자는 채팅방 브로드캐스트로 이미 메시지를 받음 → 별도 알림 스킵
             Long focusRoomId = userOnlineStatusPort.getUserFocusRoom(recipient.getId());
+            if (messageRoomId.equals(focusRoomId)) continue;
 
-            if (isOnline) {
-                if (!messageRoomId.equals(focusRoomId)) {
-                    sendWebSocketNotification(recipient.getId(), payload);
-                }
-            } else {
-                // 커밋 후 즉시 FCM 발송 시도
+            // WebSocket 은 항상 시도 — 구독자가 있으면 전달되고, 없으면 silently drop 됨
+            notificationDispatchPort.dispatch(recipient.getId(), payload);
+
+            // 오프라인이면 FCM 으로 보강 발송
+            if (!userOnlineStatusPort.isUserOnline(recipient.getId())) {
                 notificationRetryService.sendPendingOutboxImmediately(recipient.getId());
             }
         }
@@ -85,13 +84,5 @@ public class ChatNotificationEventListener {
                 "senderNickname", event.chatMessage().getSender().getNickName(),
                 "content", event.chatMessage().getContent()
         );
-    }
-
-    private void sendWebSocketNotification(Long userId, Map<String, String> payload) {
-        try {
-            applicationEventPublisher.publishEvent(NotificationEvent.of(userId, payload));
-        } catch (Exception e) {
-            log.warn("WebSocket notification failed. userId: {}", userId, e);
-        }
     }
 }

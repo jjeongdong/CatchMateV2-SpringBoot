@@ -25,7 +25,7 @@ public class RedisSubscriber {
             ChatMessageEvent chatMessage = objectMapper.readValue(messageJson, ChatMessageEvent.class);
 
             // 2. WebSocket을 통해 해당 채팅방(/sub/chat/room/{id}) 구독자들에게 전송
-            // 이 코드는 모든 서버에서 실행되므로, 
+            // 이 코드는 모든 서버에서 실행되므로,
             // 현재 서버에 접속해 있는 해당 방의 유저들에게만 메시지가 전달됨.
             messagingTemplate.convertAndSend("/sub/chat/room/" + chatMessage.roomId(), chatMessage);
 
@@ -40,11 +40,9 @@ public class RedisSubscriber {
      * RedisConfig에서 매핑한 메서드 이름과 일치해야 함 ("onNotification")
      */
     public void onNotification(String messageJson) {
-        log.info("Redis에서 수신한 원본 메시지: {}", messageJson);
         try {
             NotificationEvent event = objectMapper.readValue(messageJson, NotificationEvent.class);
 
-            // WebSocket 전송
             messagingTemplate.convertAndSendToUser(
                     String.valueOf(event.userId()),
                     "/queue/notifications",

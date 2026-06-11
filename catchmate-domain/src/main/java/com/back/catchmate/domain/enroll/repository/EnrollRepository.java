@@ -8,6 +8,7 @@ import com.back.catchmate.domain.enroll.model.Enroll;
 import com.back.catchmate.domain.user.model.User;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface EnrollRepository {
@@ -29,7 +30,13 @@ public interface EnrollRepository {
 
     List<Enroll> findAllByIds(List<Long> ids);
 
+    Map<Long, AcceptStatus> findAcceptStatusMapByIds(List<Long> ids);
+
+    Optional<AcceptStatus> findAcceptStatusById(Long id);
+
     long countByBoardWriterAndStatus(Long userId, AcceptStatus status);
+
+    List<Enroll> findAllByApplicantAndBoardOwnerAndStatus(Long applicantId, Long ownerId, AcceptStatus status);
 
     void delete(Enroll enroll);
 }

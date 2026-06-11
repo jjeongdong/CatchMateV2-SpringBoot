@@ -11,12 +11,14 @@ public enum NotificationTemplate {
     ENROLL_REQUEST("%s님이 참여 신청을 보냈습니다", "'%s' 모임에 새로운 참여 신청이 도착했습니다."),
     ENROLL_ACCEPT("신청 수락 완료", "축하합니다! '%s' 모임 참여가 수락되었습니다. 채팅방을 확인해보세요."),
     ENROLL_REJECT("신청 거절 안내", "아쉽지만 '%s' 모임 참여 신청이 거절되었습니다."),
+    ENROLL_CANCEL("%s님이 참여 신청을 취소했습니다", "'%s' 모임의 참여 신청이 취소되었습니다."),
 
     // [채팅 관련]
     CHAT_NEW_MESSAGE("%s", "%s"), // 채팅은 발신자 닉네임이 제목, 메시지가 내용이 됨
 
     // [문의/공지 관련]
-    INQUIRY_ANSWER("1:1 문의 답변 완료", "작성하신 1:1 문의에 답변이 등록되었습니다.");
+    INQUIRY_ANSWER("1:1 문의 답변 완료", "작성하신 1:1 문의에 답변이 등록되었습니다."),
+    NOTICE_CREATED("새 공지사항", "%s");
 
     private final String title;
     private final String bodyTemplate;

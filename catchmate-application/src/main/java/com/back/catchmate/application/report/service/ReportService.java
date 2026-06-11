@@ -47,6 +47,10 @@ public class ReportService {
         return reportRepository.count();
     }
 
+    public long getPendingReportCount() {
+        return reportRepository.countByCompleted(false);
+    }
+
     public void updateReport(Report report) {
         reportRepository.save(report);
     }

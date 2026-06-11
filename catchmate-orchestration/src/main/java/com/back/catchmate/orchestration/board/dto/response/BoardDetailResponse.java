@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -20,7 +21,7 @@ public class BoardDetailResponse {
     private int currentPerson;
     private int maxPerson;
     private String preferredGender;
-    private String preferredAgeRange;
+    private List<String> preferredAgeRange;
     private LocalDateTime liftUpDate;
     private boolean bookMarked;
 
@@ -40,7 +41,7 @@ public class BoardDetailResponse {
                 .currentPerson(board.getCurrentPerson())
                 .maxPerson(board.getMaxPerson())
                 .preferredGender(board.getPreferredGender())
-                .preferredAgeRange(board.getPreferredAgeRange())
+                .preferredAgeRange(board.getPreferredAgeRange().asList())
                 .liftUpDate(board.getLiftUpDate())
                 .bookMarked(bookMarked)
                 .buttonStatus(buttonStatus.name())

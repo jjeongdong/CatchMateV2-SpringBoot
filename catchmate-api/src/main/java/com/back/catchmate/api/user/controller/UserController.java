@@ -1,8 +1,10 @@
 package com.back.catchmate.api.user.controller;
 
+import com.back.catchmate.api.user.dto.request.UserFcmTokenUpdateRequest;
 import com.back.catchmate.api.user.dto.request.UserProfileUpdateRequest;
 import com.back.catchmate.api.user.dto.request.UserRegisterRequest;
 import com.back.catchmate.authorization.annotation.AuthUser;
+import com.back.catchmate.global.config.security.CookieFactory;
 import com.back.catchmate.orchestration.user.UserOrchestrator;
 import com.back.catchmate.orchestration.user.dto.command.UploadFile;
 import com.back.catchmate.orchestration.user.dto.response.UserAlarmSettingsResponse;
@@ -10,23 +12,26 @@ import com.back.catchmate.orchestration.user.dto.response.UserAlarmUpdateRespons
 import com.back.catchmate.orchestration.user.dto.response.UserNicknameCheckResponse;
 import com.back.catchmate.orchestration.user.dto.response.UserRegisterResponse;
 import com.back.catchmate.orchestration.user.dto.response.UserResponse;
+import com.back.catchmate.orchestration.user.dto.response.UserSignupResult;
 import com.back.catchmate.orchestration.user.dto.response.UserUpdateResponse;
+import com.back.catchmate.user.enums.AlarmType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import com.back.catchmate.user.enums.AlarmType;
 
 import java.io.IOException;
 
@@ -36,11 +41,15 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class UserController {
     private final UserOrchestrator userOrchestrator;
+    private final CookieFactory cookieFactory;
 
     @PostMapping("/additional-info")
-    @Operation(summary = "추가 정보 입력 API", description = "최초 로그인시, 추가 정보를 입력하는 API 입니다.")
+    @Operation(summary = "추가 정보 입력 API", description = "OAuth 후 발급된 signupToken으로 회원가입을 완료합니다.")
     public ResponseEntity<UserRegisterResponse> createUser(@Valid @RequestBody UserRegisterRequest request) {
-        return ResponseEntity.ok(userOrchestrator.createUser(request.toCommand()));
+        UserSignupResult result = userOrchestrator.createUser(request.toCommand());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieFactory.refresh(result.refreshToken()).toString())
+                .body(result.response());
     }
 
     @GetMapping("/profile")
@@ -93,5 +102,13 @@ public class UserController {
     @Operation(summary = "알림 설정 조회 API", description = "알림 설정 페이지에서 유저의 알람 설정 상태를 조회하는 API 입니다.")
     public ResponseEntity<UserAlarmSettingsResponse> getUserAlarmSettings(@AuthUser Long userId) {
         return ResponseEntity.ok(userOrchestrator.getUserAlarmSettings(userId));
+    }
+
+    @PutMapping("/me/fcm-token")
+    @Operation(summary = "FCM 토큰 등록/갱신 API", description = "웹 푸시 사용을 위한 FCM 토큰을 등록 또는 갱신합니다.")
+    public ResponseEntity<Void> updateFcmToken(@AuthUser Long userId,
+                                               @Valid @RequestBody UserFcmTokenUpdateRequest request) {
+        userOrchestrator.updateUserFcmToken(userId, request.toCommand());
+        return ResponseEntity.noContent().build();
     }
 }

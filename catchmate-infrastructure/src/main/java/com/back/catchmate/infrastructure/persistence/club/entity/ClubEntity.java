@@ -34,7 +34,7 @@ public class ClubEntity {
     @Column(nullable = false)
     private String region;
 
-    public static ClubEntity from(Club club) {
+    public static ClubEntity fromDomain(Club club) {
         if (club == null) {
             return null;
         }
@@ -47,7 +47,7 @@ public class ClubEntity {
                 .build();
     }
 
-    public Club toModel() {
+    public Club toDomain() {
         return Club.builder()
                 .id(id)
                 .name(name)

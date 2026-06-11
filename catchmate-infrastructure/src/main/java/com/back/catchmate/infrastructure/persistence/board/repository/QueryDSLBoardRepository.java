@@ -23,7 +23,7 @@ import static com.back.catchmate.infrastructure.persistence.user.entity.QUserEnt
 
 @Repository
 @RequiredArgsConstructor
-public class QueryDSLBoardRepository {
+public class QueryDslBoardRepository {
     private final JPAQueryFactory jpaQueryFactory;
 
     public Page<BoardEntity> findAllByCondition(BoardSearchCondition condition, Pageable pageable) {

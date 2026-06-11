@@ -57,4 +57,15 @@ public class NotificationController {
     ) {
         return notificationOrchestrator.hasUnreadNotifications(userId);
     }
+
+    @Operation(summary = "내 알림 전체 읽음 처리", description = "로그인한 사용자의 읽지 않은 알림을 모두 읽음 처리합니다.")
+    @PostMapping("/read-all")
+    public ReadAllNotificationsResponse readAllNotifications(
+            @Parameter(hidden = true) @AuthUser Long userId
+    ) {
+        int updated = notificationOrchestrator.readAllNotifications(userId);
+        return new ReadAllNotificationsResponse(updated);
+    }
+
+    public record ReadAllNotificationsResponse(int updatedCount) {}
 }

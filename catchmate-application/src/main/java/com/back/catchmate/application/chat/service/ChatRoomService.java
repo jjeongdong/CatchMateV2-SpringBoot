@@ -1,14 +1,25 @@
 package com.back.catchmate.application.chat.service;
 
+import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.domain.board.model.Board;
+import com.back.catchmate.domain.chat.model.ChatMessage;
 import com.back.catchmate.domain.chat.model.ChatRoom;
+import com.back.catchmate.domain.chat.model.ChatRoomMember;
+import com.back.catchmate.domain.chat.port.ChatHistoryCachePort;
+import com.back.catchmate.domain.chat.port.ChatMessageBufferPort;
+import com.back.catchmate.domain.chat.port.ChatSequencePort;
+import com.back.catchmate.domain.chat.repository.ChatRoomMemberRepository;
 import com.back.catchmate.domain.chat.repository.ChatRoomRepository;
 import com.back.catchmate.domain.common.page.DomainPage;
 import com.back.catchmate.domain.common.page.DomainPageable;
+import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.error.ErrorCode;
 import com.back.catchmate.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +28,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
-    private final ChatRoomMemberService chatRoomMemberService;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final ChatSequencePort chatSequencePort;
+    private final ChatHistoryCachePort chatHistoryCachePort;
+    private final ChatMessageBufferPort chatMessageBufferPort;
 
     public ChatRoom getChatRoom(Long chatRoomId) {
         return chatRoomRepository.findById(chatRoomId)
@@ -60,8 +74,116 @@ public class ChatRoomService {
         return chatRoomRepository.findAllByUserId(userId);
     }
 
-    // 특정 채팅방에 사용자가 참여중인지 확인
-    public boolean isUserParticipant(Long userId, Long chatRoomId) {
-        return chatRoomMemberService.isActiveMember(chatRoomId, userId);
+    public ChatMessage enterChatRoom(Long chatRoomId, User user) {
+        Long sequence = chatSequencePort.getCurrentSequence(chatRoomId);
+
+        String enterMessage = user.getNickName() + "님이 입장하셨습니다.";
+        ChatMessage chatMessage = ChatMessage.createMessage(
+                ChatRoom.builder().id(chatRoomId).build(),
+                user,
+                enterMessage,
+                MessageType.SYSTEM,
+                sequence
+        );
+
+        chatMessageBufferPort.buffer(chatMessage);
+        chatHistoryCachePort.evictLatestPage(chatRoomId);
+        return chatMessage;
+    }
+
+    @CacheEvict(value = "chatRoomMemberAuth", key = "#chatRoomId + '_' + #user.id", cacheManager = "redisCacheManager")
+    @Transactional
+    public ChatMessage leaveChatRoom(Long chatRoomId, User user) {
+        Long sequence = chatSequencePort.getCurrentSequence(chatRoomId);
+
+        ChatRoomMember chatRoomMember = chatRoomMemberRepository
+                .findByChatRoomIdAndUserId(chatRoomId, user.getId())
+                .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
+
+        chatRoomMember.leave();
+        chatRoomMemberRepository.save(chatRoomMember);
+
+        String leaveMessage = user.getNickName() + "님이 퇴장하셨습니다.";
+        ChatMessage chatMessage = ChatMessage.createMessage(
+                ChatRoom.builder().id(chatRoomId).build(),
+                user,
+                leaveMessage,
+                MessageType.SYSTEM,
+                sequence
+        );
+
+        chatMessageBufferPort.buffer(chatMessage);
+        chatHistoryCachePort.evictLatestPage(chatRoomId);
+        return chatMessage;
+    }
+
+    @Cacheable(
+            value = "chatRoomMemberAuth",
+            key = "#roomId + '_' + #userId",
+            cacheManager = "redisCacheManager"
+    )
+    public boolean validateUserInChatRoom(Long userId, Long roomId) {
+        boolean isMember = chatRoomMemberRepository
+                .findByChatRoomIdAndUserId(roomId, userId)
+                .filter(ChatRoomMember::isActive)
+                .isPresent();
+
+        if (!isMember) {
+            throw new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND);
+        }
+
+        return true;
+    }
+
+    public void updateChatRoomImage(Long chatRoomId, Long userId, String imageUrl) {
+        // 1. 해당 채팅방의 멤버인지 권한 검증
+        validateUserInChatRoom(userId, chatRoomId);
+
+        // 2. 채팅방 조회 및 이미지 업데이트
+        ChatRoom chatRoom = getChatRoom(chatRoomId);
+        chatRoom.updateImageUrl(imageUrl);
+
+        // 3. 저장
+        chatRoomRepository.save(chatRoom);
+    }
+
+    @CacheEvict(value = "chatRoomMemberAuth", key = "#chatRoomId + '_' + #targetUserId", cacheManager = "redisCacheManager")
+    @Transactional
+    public ChatMessage kickChatRoomMember(Long chatRoomId, Long hostId, Long targetUserId) {
+        ChatRoom chatRoom = getChatRoom(chatRoomId);
+        Long sequence = chatSequencePort.getCurrentSequence(chatRoomId);
+
+        // 1. 방장 권한 검증 (게시글 작성자가 방장이라고 가정)
+        if (!chatRoom.getBoard().getUser().getId().equals(hostId)) {
+            throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
+        }
+
+        // 2. 본인 스스로를 내보낼 수 없음 (자진 퇴장 API 사용 권장)
+        if (hostId.equals(targetUserId)) {
+            throw new BaseException(ErrorCode.BAD_REQUEST);
+        }
+
+        // 3. 내보낼 대상자가 현재 방에 참여 중인지 확인
+        ChatRoomMember targetMember = chatRoomMemberRepository
+                .findByChatRoomIdAndUserId(chatRoomId, targetUserId)
+                .filter(ChatRoomMember::isActive)
+                .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
+
+        // 4. 대상자 퇴장 처리 (leftAt 시간 업데이트)
+        targetMember.leave();
+        chatRoomMemberRepository.save(targetMember);
+
+        String kickMessage = targetMember.getUser().getNickName() + "님이 내보내졌습니다.";
+        ChatMessage chatMessage = ChatMessage.createMessage(
+                ChatRoom.builder().id(chatRoomId).build(),
+                targetMember.getUser(),
+                kickMessage,
+                MessageType.SYSTEM,
+                sequence
+        );
+
+        chatMessageBufferPort.buffer(chatMessage);
+        chatHistoryCachePort.evictLatestPage(chatRoomId);
+        return chatMessage;
     }
 }

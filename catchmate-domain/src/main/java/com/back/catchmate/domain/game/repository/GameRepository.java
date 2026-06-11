@@ -8,5 +8,6 @@ import java.util.Optional;
 
 public interface GameRepository {
     Game save(Game game);
+
     Optional<Game> findByHomeClubAndAwayClubAndGameStartDate(Club homeClub, Club awayClub, LocalDateTime gameStartDate);
 }

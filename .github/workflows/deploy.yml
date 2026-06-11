@@ -13,11 +13,11 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v3
 
-      # 2. 자바 17 세팅
-      - name: Set up JDK 17
+      # 2. 자바 21 세팅
+      - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       # 3. Docker Hub 로그인

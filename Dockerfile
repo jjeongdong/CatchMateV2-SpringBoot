@@ -1,5 +1,5 @@
 # 1) Build Stage
-FROM eclipse-temurin:17-jdk-jammy AS builder
+FROM eclipse-temurin:21-jdk-jammy AS builder
 WORKDIR /app
 
 # Gradle Wrapper / settings / root build
@@ -15,7 +15,6 @@ COPY catchmate-application/build.gradle     catchmate-application/
 COPY catchmate-orchestration/build.gradle   catchmate-orchestration/
 COPY catchmate-api/build.gradle             catchmate-api/
 COPY catchmate-authorization/build.gradle   catchmate-authorization/
-COPY catchmate-mcp/build.gradle             catchmate-mcp/
 COPY catchmate-boot/build.gradle            catchmate-boot/
 
 RUN chmod +x ./gradlew
@@ -29,7 +28,7 @@ RUN ./gradlew :catchmate-boot:bootJar -x test --no-daemon
 
 
 # 2) Run Stage
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 COPY --from=builder /app/catchmate-boot/build/libs/*.jar app.jar

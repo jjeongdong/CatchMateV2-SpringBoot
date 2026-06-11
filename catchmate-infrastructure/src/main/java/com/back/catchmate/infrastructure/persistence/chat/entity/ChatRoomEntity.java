@@ -17,6 +17,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
@@ -36,6 +38,7 @@ public class ChatRoomEntity extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private BoardEntity board;
 
     @Column(name = "last_message_sequence", nullable = false)
@@ -49,7 +52,7 @@ public class ChatRoomEntity extends BaseTimeEntity {
     public static ChatRoomEntity from(ChatRoom chatRoom) {
         return ChatRoomEntity.builder()
                 .id(chatRoom.getId())
-                .board(BoardEntity.from(chatRoom.getBoard()))
+                .board(BoardEntity.fromDomain(chatRoom.getBoard()))
                 .lastMessageSequence(chatRoom.getLastMessageSequence())
                 .chatRoomImageUrl(chatRoom.getChatRoomImageUrl())
                 .deletedAt(chatRoom.getDeletedAt())
@@ -59,7 +62,7 @@ public class ChatRoomEntity extends BaseTimeEntity {
     public ChatRoom toModel() {
         return ChatRoom.builder()
                 .id(this.id)
-                .board(this.board.toModel())
+                .board(this.board != null ? this.board.toDomain() : null)
                 .lastMessageSequence(this.lastMessageSequence)
                 .chatRoomImageUrl(this.chatRoomImageUrl)
                 .createdAt(this.getCreatedAt())

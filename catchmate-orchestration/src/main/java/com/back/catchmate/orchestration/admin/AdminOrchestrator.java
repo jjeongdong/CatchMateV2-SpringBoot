@@ -1,6 +1,7 @@
 package com.back.catchmate.orchestration.admin;
 
 import com.back.catchmate.application.admin.event.AdminInquiryAnswerNotificationEvent;
+import com.back.catchmate.application.admin.event.AdminNoticeCreateNotificationEvent;
 import com.back.catchmate.application.board.service.BoardService;
 import com.back.catchmate.application.enroll.service.EnrollService;
 import com.back.catchmate.application.inquiry.service.InquiryService;
@@ -61,6 +62,10 @@ public class AdminOrchestrator {
     public NoticeCreateResponse createNotice(Long userId, NoticeCreateCommand command) {
         User writer = userService.getUser(userId);
         Notice savedNotice = noticeService.createNotice(writer, command.getTitle(), command.getContent());
+
+        List<User> recipients = userService.getEventAlarmEnabledUsers();
+        applicationEventPublisher.publishEvent(AdminNoticeCreateNotificationEvent.of(savedNotice, recipients));
+
         return NoticeCreateResponse.from(savedNotice);
     }
 
@@ -90,7 +95,9 @@ public class AdminOrchestrator {
                 userService.getUserCountByClub(),
                 userService.getUserCountByWatchStyle(),
                 reportService.getTotalReportCount(),
-                inquiryService.getTotalInquiryCount()
+                reportService.getPendingReportCount(),
+                inquiryService.getTotalInquiryCount(),
+                inquiryService.getWaitingInquiryCount()
         );
     }
 

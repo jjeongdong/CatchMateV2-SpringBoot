@@ -18,7 +18,7 @@ import static com.back.catchmate.infrastructure.persistence.user.entity.QUserEnt
 
 @Component
 @RequiredArgsConstructor
-public class QueryDSLChatMessageRepository {
+public class QueryDslChatMessageRepository {
     private final JPAQueryFactory jpaQueryFactory;
 
     public List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size) {

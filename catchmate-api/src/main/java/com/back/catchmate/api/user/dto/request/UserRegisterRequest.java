@@ -1,14 +1,12 @@
 package com.back.catchmate.api.user.dto.request;
 
 import com.back.catchmate.orchestration.user.dto.command.UserRegisterCommand;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import com.back.catchmate.user.enums.Provider;
 
 import java.time.LocalDate;
 
@@ -16,21 +14,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserRegisterRequest {
-    @Email(message = "email 형식이 올바르지 않습니다.")
-    @NotBlank(message = "email은 필수 값입니다.")
-    private String email;
-
-    @NotBlank(message = "providerId는 필수 값입니다.")
-    private String providerId;
-
-    @NotNull(message = "provider는 필수 값입니다.")
-    private Provider provider;
-
-    @NotBlank(message = "profileImageUrl은 필수 값입니다.")
-    private String profileImageUrl;
-
-    @NotBlank(message = "fcmToken은 필수 값입니다.")
-    private String fcmToken;
+    @NotBlank(message = "signupToken은 필수 값입니다.")
+    private String signupToken;
 
     @NotNull(message = "gender는 필수 값입니다.")
     private Character gender;
@@ -47,15 +32,9 @@ public class UserRegisterRequest {
 
     private String watchStyle;
 
-    private static final String SEPARATOR = "@";
-
     public UserRegisterCommand toCommand() {
         return UserRegisterCommand.builder()
-                .provider(provider)
-                .providerIdWithProvider(providerId + SEPARATOR + provider)
-                .email(email)
-                .profileImageUrl(profileImageUrl)
-                .fcmToken(fcmToken)
+                .signupToken(signupToken)
                 .gender(gender)
                 .nickName(nickName)
                 .birthDate(birthDate)

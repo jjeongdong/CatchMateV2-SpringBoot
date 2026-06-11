@@ -17,8 +17,18 @@ public class NotificationOutboxUpdater {
     private final MeterRegistry meterRegistry;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public List<NotificationOutbox> claimPendingNotifications(int maxRetryCount) {
-        List<NotificationOutbox> pendingList = outboxRepository.findAllPending(maxRetryCount);
+    public List<NotificationOutbox> claimPendingNotifications(int maxRetryCount, int batchSize) {
+        List<NotificationOutbox> pendingList = outboxRepository.findAllPending(maxRetryCount, batchSize);
+        for (NotificationOutbox outbox : pendingList) {
+            outbox.startProcessing();
+            outboxRepository.save(outbox);
+        }
+        return pendingList;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public List<NotificationOutbox> claimPendingByRecipientId(Long recipientId) {
+        List<NotificationOutbox> pendingList = outboxRepository.findAllPendingByRecipientId(recipientId);
         for (NotificationOutbox outbox : pendingList) {
             outbox.startProcessing();
             outboxRepository.save(outbox);
@@ -33,8 +43,9 @@ public class NotificationOutboxUpdater {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void updateStatusFailure(NotificationOutbox outbox, int maxRetryCount) {
+    public void updateStatusFailure(NotificationOutbox outbox, int maxRetryCount, String errorMessage) {
         outbox.incrementRetryCount();
+        outbox.recordError(errorMessage);
         if (outbox.getRetryCount() >= maxRetryCount) {
             outbox.fail();
             meterRegistry.counter("notification.outbox.failure", "type", "max_retry_exceeded").increment();

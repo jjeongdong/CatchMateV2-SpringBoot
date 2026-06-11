@@ -1,16 +1,16 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.4.2' // 사용 중인 버전 확인
+    id 'org.springframework.boot' version '3.4.2'
     id 'io.spring.dependency-management' version '1.1.4'
 }
 
-bootJar { enabled = false } // 루트는 실행 파일 안 만듦
+bootJar { enabled = false }
 jar { enabled = false }
 
 allprojects {
     group = 'com.back'
     version = '0.0.1-SNAPSHOT'
-    sourceCompatibility = '17'
+    sourceCompatibility = '21'
 
     repositories {
         mavenCentral()

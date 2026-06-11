@@ -27,17 +27,6 @@ public class AuthService {
         return AuthToken.createToken(accessToken, refreshToken);
     }
 
-    public AuthToken createToken(User user, String fcmToken) {
-        user.updateFcmToken(fcmToken);
-
-        // 토큰 발급
-        String accessToken = tokenProvider.createAccessToken(user.getId(), user.getAuthority());
-        String refreshToken = tokenProvider.createRefreshToken(user.getId(), user.getAuthority());
-
-        refreshTokenRepository.save(refreshToken, user.getId(), tokenProvider.getRefreshTokenExpirationTime());
-        return AuthToken.createToken(accessToken, refreshToken);
-    }
-
     public String createAccessToken(User user) {
         return tokenProvider.createAccessToken(user.getId(), user.getAuthority());
     }

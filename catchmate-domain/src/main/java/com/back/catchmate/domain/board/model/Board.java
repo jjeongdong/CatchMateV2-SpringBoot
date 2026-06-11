@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -31,7 +30,7 @@ public class Board implements ResourceOwnership {
     private Club cheerClub;
     private Game game;
     private String preferredGender;
-    private String preferredAgeRange;
+    private PreferredAgeRange preferredAgeRange;
     private boolean completed;
     private LocalDateTime createdAt;
     private LocalDateTime liftUpDate;
@@ -40,11 +39,7 @@ public class Board implements ResourceOwnership {
     // 게시글 생성 메서드
     public static Board createBoard(String title, String content, int maxPerson, User user,
                                     Club cheerClub, Game game, String preferredGender,
-                                    List<String> preferredAgeRangeList, boolean completed) {
-
-        String preferredAgeRange = preferredAgeRangeList != null
-                ? String.join(",", preferredAgeRangeList)
-                : "";
+                                    PreferredAgeRange preferredAgeRange, boolean completed) {
 
         Board board = Board.builder()
                 .title(title)
@@ -55,7 +50,7 @@ public class Board implements ResourceOwnership {
                 .cheerClub(cheerClub)
                 .game(game)
                 .preferredGender(preferredGender)
-                .preferredAgeRange(preferredAgeRange)
+                .preferredAgeRange(preferredAgeRange != null ? preferredAgeRange : PreferredAgeRange.empty())
                 .completed(completed)
                 .createdAt(LocalDateTime.now())
                 .liftUpDate(LocalDateTime.now())
@@ -68,14 +63,12 @@ public class Board implements ResourceOwnership {
     // 게시글 수정 메서드
     public void updateBoard(String title, String content, int maxPerson,
                             Club cheerClub, Game game, String preferredGender,
-                            List<String> preferredAgeRangeList, boolean completed) {
+                            PreferredAgeRange preferredAgeRange, boolean completed) {
 
-        String preferredAgeRange = preferredAgeRangeList != null
-                ? String.join(",", preferredAgeRangeList)
-                : "";
+        PreferredAgeRange normalized = preferredAgeRange != null ? preferredAgeRange : PreferredAgeRange.empty();
 
         // 1. 핵심 데이터(인원, 경기, 모집 조건 등)가 변경되었는지 확인
-        if (isCriticalFieldChanged(maxPerson, cheerClub, game, preferredGender, preferredAgeRange, completed)) {
+        if (isCriticalFieldChanged(maxPerson, cheerClub, game, preferredGender, normalized, completed)) {
             // 핵심 데이터가 변경되었다면 신청자가 없을 때(1명일 때)만 허용
             validateUpdatable();
         }
@@ -87,7 +80,7 @@ public class Board implements ResourceOwnership {
         this.cheerClub = cheerClub;
         this.game = game;
         this.preferredGender = preferredGender;
-        this.preferredAgeRange = preferredAgeRange;
+        this.preferredAgeRange = normalized;
         this.completed = completed;
 
         validateForPublish();
@@ -95,7 +88,7 @@ public class Board implements ResourceOwnership {
 
     // 핵심 조건 변경 여부를 체크하는 내부 메서드 추가
     private boolean isCriticalFieldChanged(int newMaxPerson, Club newCheerClub, Game newGame,
-                                           String newPreferredGender, String newPreferredAgeRange, boolean newCompleted) {
+                                           String newPreferredGender, PreferredAgeRange newPreferredAgeRange, boolean newCompleted) {
 
         if (this.maxPerson != newMaxPerson) return true;
         if (this.completed != newCompleted) return true;

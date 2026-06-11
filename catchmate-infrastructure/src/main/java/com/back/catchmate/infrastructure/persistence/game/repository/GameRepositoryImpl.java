@@ -17,8 +17,8 @@ public class GameRepositoryImpl implements GameRepository {
 
     @Override
     public Game save(Game game) {
-        GameEntity entity = GameEntity.from(game);
-        return jpaGameRepository.save(entity).toModel();
+        GameEntity entity = GameEntity.fromDomain(game);
+        return jpaGameRepository.save(entity).toDomain();
     }
 
     @Override
@@ -27,6 +27,6 @@ public class GameRepositoryImpl implements GameRepository {
                 homeClub.getId(),
                 awayClub.getId(),
                 gameStartDate
-        ).map(GameEntity::toModel);
+        ).map(GameEntity::toDomain);
     }
 }

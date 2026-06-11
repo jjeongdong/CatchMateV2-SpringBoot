@@ -46,7 +46,7 @@ public class GameEntity extends BaseTimeEntity {
     @Column
     private String location;
 
-    public static GameEntity from(Game game) {
+    public static GameEntity fromDomain(Game game) {
         if (game == null) {
             return null;
         }
@@ -55,18 +55,18 @@ public class GameEntity extends BaseTimeEntity {
                 .id(game.getId())
                 .gameStartDate(game.getGameStartDate())
                 .location(game.getLocation())
-                .homeClub(ClubEntity.from(game.getHomeClub()))
-                .awayClub(ClubEntity.from(game.getAwayClub()))
+                .homeClub(ClubEntity.fromDomain(game.getHomeClub()))
+                .awayClub(ClubEntity.fromDomain(game.getAwayClub()))
                 .build();
     }
 
-    public Game toModel() {
+    public Game toDomain() {
         return Game.builder()
                 .id(this.id)
                 .gameStartDate(this.gameStartDate)
                 .location(this.location)
-                .homeClub(this.homeClub != null ? this.homeClub.toModel() : null)
-                .awayClub(this.awayClub != null ? this.awayClub.toModel() : null)
+                .homeClub(this.homeClub != null ? this.homeClub.toDomain() : null)
+                .awayClub(this.awayClub != null ? this.awayClub.toDomain() : null)
                 .build();
     }
 }

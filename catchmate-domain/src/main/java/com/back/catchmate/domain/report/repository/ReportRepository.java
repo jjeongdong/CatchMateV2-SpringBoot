@@ -14,4 +14,6 @@ public interface ReportRepository {
     DomainPage<Report> findAll(DomainPageable pageable);
 
     long count();
+
+    long countByCompleted(boolean completed);
 }

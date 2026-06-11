@@ -3,7 +3,9 @@ package com.back.catchmate.orchestration.chat;
 import com.back.catchmate.application.chat.dto.ChatMessageListDto;
 import com.back.catchmate.application.chat.event.ChatMessageEvent;
 import com.back.catchmate.application.chat.event.ChatNotificationEvent;
-import com.back.catchmate.application.chat.service.ChatService;
+import com.back.catchmate.application.chat.service.ChatMessageService;
+import com.back.catchmate.application.chat.service.ChatRoomMemberService;
+import com.back.catchmate.application.chat.service.ChatRoomService;
 import com.back.catchmate.application.user.service.UserService;
 import com.back.catchmate.chat.enums.MessageType;
 import com.back.catchmate.domain.chat.model.ChatMessage;
@@ -32,7 +34,9 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ChatOrchestrator {
-    private final ChatService chatService;
+    private final ChatMessageService chatMessageService;
+    private final ChatRoomService chatRoomService;
+    private final ChatRoomMemberService chatRoomMemberService;
     private final UserService userService;
     private final ImageUploaderPort imageUploaderPort;
     private final ApplicationEventPublisher applicationEventPublisher;
@@ -41,7 +45,7 @@ public class ChatOrchestrator {
     public void sendMessage(Long senderId, ChatMessageCommand command) {
         User sender = userService.getUser(senderId);
 
-        ChatMessage savedMessage = chatService.saveMessage(
+        ChatMessage savedMessage = chatMessageService.saveMessage(
                 command.getChatRoomId(),
                 sender,
                 command.getContent(),
@@ -53,9 +57,9 @@ public class ChatOrchestrator {
 
         // 채팅방 멤버 중 발신자를 제외한 모든 사용자에게 알림 이벤트 발행
         // FCM 알림은 별도의 이벤트 리스너에서 처리
-        List<User> recipients = chatService.getChatRoomMembers(savedMessage.getChatRoom().getId())
+        List<User> recipients = chatRoomMemberService.getChatRoomMembers(savedMessage.getChatRoom().getId())
                 .stream()
-                .filter(user -> !user.getId().equals(senderId))
+                .filter(member -> !member.getUser().getId().equals(senderId))
                 .filter(ChatRoomMember::isNotificationOn)
                 .map(ChatRoomMember::getUser)
                 .toList();
@@ -69,28 +73,27 @@ public class ChatOrchestrator {
 
     @Transactional
     public void enterChatRoom(Long userId, Long chatRoomId) {
-        User user = userService.getUser(userId);
-        ChatMessage savedMessage = chatService.enterChatRoom(chatRoomId, user);
-        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
+        // 기존의 enterChatRoom 로직을 비워둠 (시스템 메시지는 멤버 추가 시 자동 발송되므로)
+        // 만약 '채팅방 입장' 시점에 필요한 다른 처리가 있다면 여기에 추가
     }
 
     @Transactional
     public void leaveChatRoom(Long userId, Long chatRoomId) {
         User user = userService.getUser(userId);
-        ChatMessage savedMessage = chatService.leaveChatRoom(chatRoomId, user);
+        ChatMessage savedMessage = chatRoomService.leaveChatRoom(chatRoomId, user);
         applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
     }
 
     public PagedResponse<ChatRoomResponse> getMyChatRooms(Long userId, int page, int size) {
         DomainPageable pageable = new DomainPageable(page, size);
-        DomainPage<ChatRoom> chatRoomPage = chatService.getMyChatRooms(userId, pageable);
+        DomainPage<ChatRoom> chatRoomPage = chatRoomService.findAllByUserId(userId, pageable);
 
         List<Long> chatRoomIds = chatRoomPage.getContent().stream()
                 .map(ChatRoom::getId)
                 .toList();
 
-        Map<Long, ChatMessage> lastMessageMap = chatService.getLastMessagesByChatRoomIds(chatRoomIds);
-        Map<Long, ChatRoomMember> memberMap = chatService.getChatRoomMembersByChatRoomIds(chatRoomIds, userId);
+        Map<Long, ChatMessage> lastMessageMap = chatMessageService.getLastMessagesByChatRoomIds(chatRoomIds);
+        Map<Long, ChatRoomMember> memberMap = chatRoomMemberService.getChatRoomMembersByChatRoomIds(chatRoomIds, userId);
 
         List<ChatRoomResponse> responses = chatRoomPage.getContent().stream()
                 .map(chatRoom -> {
@@ -104,8 +107,9 @@ public class ChatOrchestrator {
                             ? member.calculateUnreadCount(chatRoom.getLastMessageSequence())
                             : 0;
                     boolean isNotificationOn = member != null && member.isNotificationOn();
+                    boolean readOnly = member != null && member.isReadOnly();
 
-                    return ChatRoomResponse.from(chatRoom, lastMessage, unreadCount, isNotificationOn);
+                    return ChatRoomResponse.from(chatRoom, lastMessage, unreadCount, isNotificationOn, readOnly);
                 })
                 .toList();
 
@@ -113,13 +117,13 @@ public class ChatOrchestrator {
     }
 
     public void readChatRoom(Long userId, Long chatRoomId) {
-        chatService.markAsRead(chatRoomId, userId);
+        chatMessageService.markAsRead(chatRoomId, userId);
     }
 
     public List<ChatMessageResponse> getChatHistory(Long userId, Long roomId, Long lastMessageId, int size) {
-        chatService.validateUserInChatRoom(userId, roomId);
+        chatRoomService.validateUserInChatRoom(userId, roomId);
 
-        ChatMessageListDto cacheDtoList = chatService.getChatHistory(roomId, lastMessageId, size);
+        ChatMessageListDto cacheDtoList = chatMessageService.getChatHistory(roomId, lastMessageId, size);
 
         return cacheDtoList.getMessages().stream()
                 .map(dto -> ChatMessageResponse.builder()
@@ -138,10 +142,10 @@ public class ChatOrchestrator {
 
     public List<ChatMessageResponse> syncMessages(Long userId, Long roomId, Long lastMessageId, int size) {
         // 1. 해당 채팅방의 멤버인지 권한 검증
-        chatService.validateUserInChatRoom(userId, roomId);
+        chatRoomService.validateUserInChatRoom(userId, roomId);
 
         // 2. 누락된 동기화 메시지 조회
-        List<ChatMessage> syncMessages = chatService.getSyncMessages(roomId, lastMessageId, size);
+        List<ChatMessage> syncMessages = chatMessageService.getSyncMessages(roomId, lastMessageId, size);
 
         // 3. 응답 DTO로 변환하여 반환
         return syncMessages.stream()
@@ -150,17 +154,17 @@ public class ChatOrchestrator {
     }
 
     public ChatMessageResponse getLastMessage(Long chatRoomId) {
-        return chatService.getLastMessage(chatRoomId)
+        return chatMessageService.getLastMessage(chatRoomId)
                 .map(ChatMessageResponse::from)
                 .orElse(null);
     }
 
     public boolean canAccessChatRoom(Long userId, Long chatRoomId) {
-        return chatService.validateUserInChatRoom(userId, chatRoomId);
+        return chatRoomService.validateUserInChatRoom(userId, chatRoomId);
     }
 
     public List<ChatRoomMemberResponse> getChatRoomMembers(Long chatRoomId) {
-        List<ChatRoomMember> activeMembers = chatService.getChatRoomMembers(chatRoomId);
+        List<ChatRoomMember> activeMembers = chatRoomMemberService.getChatRoomMembers(chatRoomId);
 
         return activeMembers.stream()
                 .map(ChatRoomMemberResponse::from)
@@ -169,7 +173,7 @@ public class ChatOrchestrator {
 
     @Transactional
     public void updateNotificationSetting(Long userId, Long roomId, boolean isOn) {
-        chatService.updateNotificationSetting(roomId, userId, isOn);
+        chatRoomMemberService.updateNotificationSetting(roomId, userId, isOn);
     }
 
     @Transactional
@@ -186,19 +190,24 @@ public class ChatOrchestrator {
             );
         }
 
-        // 2. ChatService를 호출하여 획득한 URL을 DB에 반영 (이전 답변의 로직 재사용)
-        chatService.updateChatRoomImage(roomId, userId, imageUrl);
+        // 2. ChatRoomService를 호출하여 획득한 URL을 DB에 반영
+        chatRoomService.updateChatRoomImage(roomId, userId, imageUrl);
     }
 
     @Transactional
     public void flushReadSequences() {
-        chatService.flushReadSequences();
+        chatMessageService.flushReadSequences();
+    }
+
+    @Transactional
+    public void flushMessages() {
+        chatMessageService.flushMessages();
     }
 
     @Transactional
     public void kickChatRoomMember(Long hostId, Long chatRoomId, Long targetUserId) {
         // 1. 서비스 비즈니스 로직 수행
-        ChatMessage savedMessage = chatService.kickChatRoomMember(chatRoomId, hostId, targetUserId);
+        ChatMessage savedMessage = chatRoomService.kickChatRoomMember(chatRoomId, hostId, targetUserId);
 
         // 2. 방에 남아있는 사람들에게 강퇴 시스템 메시지를 소켓으로 실시간 전송
         applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));

@@ -72,6 +72,7 @@ public enum ErrorCode {
     USER_CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자가 해당 채팅방에 참여하지 않았습니다."),
     CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 채팅 메시지입니다."),
     CHATROOM_REENTRY_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "이미 퇴장한 채팅방에는 다시 입장할 수 없습니다."),
+    CHATROOM_READ_ONLY(HttpStatus.FORBIDDEN, "차단으로 인해 읽기 전용 상태인 채팅방입니다."),
 
     // 파일
     FILE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "파일 업로드를 실패했습니다."),
@@ -87,6 +88,7 @@ public enum ErrorCode {
 
     // 문의
     INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 문의입니다."),
+    INQUIRY_ALREADY_ANSWERED(HttpStatus.CONFLICT, "이미 답변이 등록된 문의는 수정할 수 없습니다."),
 
     // 신고
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 신고입니다."),
@@ -98,6 +100,13 @@ public enum ErrorCode {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "클라이언트 에러입니다"),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 에러입니다."),
+
+    // OAuth
+    OAUTH_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, "OAuth 공급자 통신 중 오류가 발생했습니다."),
+    OAUTH_STATE_MISMATCH(HttpStatus.BAD_REQUEST, "OAuth state 검증에 실패했습니다."),
+    UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "지원하지 않는 OAuth 공급자입니다."),
+    INVALID_SIGNUP_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 회원가입 토큰입니다."),
+    MISSING_REFRESH_COOKIE(HttpStatus.UNAUTHORIZED, "Refresh Token 쿠키가 존재하지 않습니다."),
 
     // 공지글
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 공지입니다.");

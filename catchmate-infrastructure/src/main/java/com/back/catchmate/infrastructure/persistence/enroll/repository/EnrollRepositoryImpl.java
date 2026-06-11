@@ -16,7 +16,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -125,6 +127,21 @@ public class EnrollRepositoryImpl implements EnrollRepository {
     }
 
     @Override
+    public Map<Long, AcceptStatus> findAcceptStatusMapByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return Collections.emptyMap();
+        Map<Long, AcceptStatus> result = new HashMap<>();
+        for (Object[] row : jpaEnrollRepository.findIdAndAcceptStatusByIdIn(ids)) {
+            result.put((Long) row[0], (AcceptStatus) row[1]);
+        }
+        return result;
+    }
+
+    @Override
+    public Optional<AcceptStatus> findAcceptStatusById(Long id) {
+        return jpaEnrollRepository.findAcceptStatusById(id);
+    }
+
+    @Override
     public Optional<Enroll> findByIdWithFetch(Long id) {
         return jpaEnrollRepository.findByIdWithFetch(id)
                 .map(EnrollEntity::toModel);
@@ -133,6 +150,14 @@ public class EnrollRepositoryImpl implements EnrollRepository {
     @Override
     public long countByBoardWriterAndStatus(Long userId, AcceptStatus status) {
         return jpaEnrollRepository.countByBoardUserIdAndAcceptStatus(userId, status);
+    }
+
+    @Override
+    public List<Enroll> findAllByApplicantAndBoardOwnerAndStatus(Long applicantId, Long ownerId, AcceptStatus status) {
+        return jpaEnrollRepository.findAllByApplicantIdAndBoardOwnerIdAndStatus(applicantId, ownerId, status)
+                .stream()
+                .map(EnrollEntity::toModel)
+                .toList();
     }
 
     @Override

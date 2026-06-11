@@ -15,7 +15,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     private final JpaChatMessageRepository jpaChatMessageRepository;
-    private final QueryDSLChatMessageRepository querydslChatMessageRepository;
+    private final QueryDslChatMessageRepository queryDslChatMessageRepository;
+    private final JdbcChatMessageBatchWriter jdbcChatMessageBatchWriter;
 
     @Override
     public ChatMessage save(ChatMessage chatMessage) {
@@ -37,17 +38,22 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
 
     @Override
     public Map<Long, ChatMessage> findLastTextMessagesByChatRoomIds(List<Long> chatRoomIds) {
-        return querydslChatMessageRepository.findLastTextMessagesByChatRoomIds(chatRoomIds);
+        return queryDslChatMessageRepository.findLastTextMessagesByChatRoomIds(chatRoomIds);
     }
 
     @Override
     public List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size) {
-        return querydslChatMessageRepository.findChatHistory(roomId, lastMessageId, size);
+        return queryDslChatMessageRepository.findChatHistory(roomId, lastMessageId, size);
     }
 
     @Override
     public List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size) {
-        return querydslChatMessageRepository.findSyncMessages(roomId, lastMessageId, size);
+        return queryDslChatMessageRepository.findSyncMessages(roomId, lastMessageId, size);
+    }
+
+    @Override
+    public void saveAll(List<ChatMessage> chatMessages) {
+        jdbcChatMessageBatchWriter.batchInsert(chatMessages);
     }
 
     @Override

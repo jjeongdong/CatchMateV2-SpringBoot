@@ -1,6 +1,16 @@
 package com.back.catchmate.orchestration.user;
 
+import com.back.catchmate.application.auth.service.AuthService;
+import com.back.catchmate.application.club.service.ClubService;
+import com.back.catchmate.application.user.service.UserService;
+import com.back.catchmate.domain.auth.model.AuthToken;
+import com.back.catchmate.domain.auth.port.TokenProvider;
+import com.back.catchmate.domain.club.model.Club;
+import com.back.catchmate.domain.oauth.model.SignupTokenClaims;
+import com.back.catchmate.domain.user.model.User;
+import com.back.catchmate.domain.user.port.ImageUploaderPort;
 import com.back.catchmate.orchestration.user.dto.command.UploadFile;
+import com.back.catchmate.orchestration.user.dto.command.UserFcmTokenUpdateCommand;
 import com.back.catchmate.orchestration.user.dto.command.UserProfileUpdateCommand;
 import com.back.catchmate.orchestration.user.dto.command.UserRegisterCommand;
 import com.back.catchmate.orchestration.user.dto.response.UserAlarmSettingsResponse;
@@ -8,18 +18,12 @@ import com.back.catchmate.orchestration.user.dto.response.UserAlarmUpdateRespons
 import com.back.catchmate.orchestration.user.dto.response.UserNicknameCheckResponse;
 import com.back.catchmate.orchestration.user.dto.response.UserRegisterResponse;
 import com.back.catchmate.orchestration.user.dto.response.UserResponse;
+import com.back.catchmate.orchestration.user.dto.response.UserSignupResult;
 import com.back.catchmate.orchestration.user.dto.response.UserUpdateResponse;
-import com.back.catchmate.domain.auth.model.AuthToken;
-import com.back.catchmate.application.auth.service.AuthService;
-import com.back.catchmate.domain.club.model.Club;
-import com.back.catchmate.application.club.service.ClubService;
-import com.back.catchmate.domain.user.model.User;
-import com.back.catchmate.domain.user.port.ImageUploaderPort;
-import com.back.catchmate.application.user.service.UserService;
+import com.back.catchmate.user.enums.AlarmType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import com.back.catchmate.user.enums.AlarmType;
 
 @Component
 @Transactional(readOnly = true)
@@ -28,30 +32,35 @@ public class UserOrchestrator {
     private final AuthService authService;
     private final ClubService clubService;
     private final UserService userService;
+    private final TokenProvider tokenProvider;
     private final ImageUploaderPort profileImageUploader;
 
     @Transactional
-    public UserRegisterResponse createUser(UserRegisterCommand command) {
-        System.out.println("command.getProviderIdWithProvider() = " + command.getProviderIdWithProvider());
+    public UserSignupResult createUser(UserRegisterCommand command) {
+        SignupTokenClaims claims = tokenProvider.parseSignupToken(command.getSignupToken());
         Club club = clubService.getClub(command.getFavoriteClubId());
 
         User user = User.createUser(
-                command.getProvider(),
-                command.getProviderIdWithProvider(),
-                command.getEmail(),
+                claims.getProvider(),
+                claims.getProviderIdWithProvider(),
+                claims.getEmail(),
                 command.getNickName(),
                 command.getGender(),
                 command.getBirthDate(),
                 club,
-                command.getProfileImageUrl(),
-                command.getFcmToken(),
+                claims.getProfileImageUrl(),
+                null,
                 command.getWatchStyle()
         );
         User savedUser = userService.createUser(user);
 
         AuthToken token = authService.createToken(savedUser);
-
-        return UserRegisterResponse.of(savedUser.getId(), token.getAccessToken(), token.getRefreshToken(), savedUser.getCreatedAt());
+        UserRegisterResponse response = UserRegisterResponse.of(
+                savedUser.getId(),
+                token.getAccessToken(),
+                savedUser.getCreatedAt()
+        );
+        return new UserSignupResult(response, token.getRefreshToken());
     }
 
     public UserResponse getUserProfile(Long userId) {
@@ -106,5 +115,12 @@ public class UserOrchestrator {
     public UserAlarmSettingsResponse getUserAlarmSettings(Long userId) {
         User user = userService.getUser(userId);
         return UserAlarmSettingsResponse.from(user);
+    }
+
+    @Transactional
+    public void updateUserFcmToken(Long userId, UserFcmTokenUpdateCommand command) {
+        User user = userService.getUser(userId);
+        user.updateFcmToken(command.getFcmToken());
+        userService.updateUser(user);
     }
 }

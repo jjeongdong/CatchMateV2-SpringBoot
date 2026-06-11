@@ -43,6 +43,9 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private OutboxStatus status;
 
+    @Column(columnDefinition = "TEXT")
+    private String errorMessage;
+
     // Domain -> Entity 변환
     public static NotificationOutboxEntity from(NotificationOutbox domain) {
         return NotificationOutboxEntity.builder()
@@ -55,6 +58,7 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
                 .payload(domain.getPayload())
                 .retryCount(domain.getRetryCount())
                 .status(domain.getStatus())
+                .errorMessage(domain.getErrorMessage())
                 .build();
     }
 
@@ -70,6 +74,7 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
                 .payload(this.payload)
                 .retryCount(this.retryCount)
                 .status(this.status)
+                .errorMessage(this.errorMessage)
                 .build();
     }
 }

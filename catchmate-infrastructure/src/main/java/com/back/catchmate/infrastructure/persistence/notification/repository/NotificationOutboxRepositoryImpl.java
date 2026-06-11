@@ -5,6 +5,7 @@ import com.back.catchmate.domain.notification.repository.NotificationOutboxRepos
 import com.back.catchmate.infrastructure.persistence.notification.entity.NotificationOutboxEntity;
 import com.back.catchmate.notifications.enums.OutboxStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,8 +23,8 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
     }
 
     @Override
-    public List<NotificationOutbox> findAllPending(int maxRetryCount) {
-        return jpaRepository.findAllForProcessing(OutboxStatus.PENDING, maxRetryCount).stream()
+    public List<NotificationOutbox> findAllPending(int maxRetryCount, int batchSize) {
+        return jpaRepository.findAllForProcessing(OutboxStatus.PENDING, maxRetryCount, Pageable.ofSize(batchSize)).stream()
                 .map(NotificationOutboxEntity::toModel)
                 .toList();
     }
@@ -31,7 +32,7 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
 
     @Override
     public List<NotificationOutbox> findAllPendingByRecipientId(Long recipientId) {
-        return jpaRepository.findAllByRecipientIdAndStatus(recipientId, OutboxStatus.PENDING).stream()
+        return jpaRepository.findAllByRecipientIdAndStatusForProcessing(recipientId, OutboxStatus.PENDING).stream()
                 .map(NotificationOutboxEntity::toModel)
                 .toList();
     }

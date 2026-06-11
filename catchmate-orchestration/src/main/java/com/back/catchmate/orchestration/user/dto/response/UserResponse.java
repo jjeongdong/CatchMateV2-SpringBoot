@@ -1,5 +1,6 @@
 package com.back.catchmate.orchestration.user.dto.response;
 
+import com.back.catchmate.domain.user.model.Authority;
 import com.back.catchmate.domain.user.model.User;
 import com.back.catchmate.orchestration.club.dto.response.ClubResponse;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public class UserResponse {
     private String watchStyle;
 
     private ClubResponse club;
+    private Authority authority;
 
     public static UserResponse from(User user) {
         return UserResponse.builder()
@@ -33,6 +35,7 @@ public class UserResponse {
                 .club(ClubResponse.from(user.getClub()))
                 .birthDate(user.getBirthDate())
                 .watchStyle(user.getWatchStyle())
+                .authority(user.getAuthority())
                 .build();
     }
 }

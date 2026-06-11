@@ -63,4 +63,22 @@ public interface JpaEnrollRepository extends JpaRepository<EnrollEntity, Long> {
     );
 
     long countByBoardUserIdAndAcceptStatus(Long userId, AcceptStatus acceptStatus);
+
+    @Query("SELECT e FROM EnrollEntity e " +
+            "JOIN FETCH e.board b " +
+            "JOIN FETCH b.user " +
+            "WHERE e.user.id = :applicantId " +
+            "AND b.user.id = :ownerId " +
+            "AND e.acceptStatus = :status")
+    List<EnrollEntity> findAllByApplicantIdAndBoardOwnerIdAndStatus(
+            @Param("applicantId") Long applicantId,
+            @Param("ownerId") Long ownerId,
+            @Param("status") AcceptStatus status
+    );
+
+    @Query("SELECT e.id, e.acceptStatus FROM EnrollEntity e WHERE e.id IN :ids")
+    List<Object[]> findIdAndAcceptStatusByIdIn(@Param("ids") List<Long> ids);
+
+    @Query("SELECT e.acceptStatus FROM EnrollEntity e WHERE e.id = :id")
+    Optional<AcceptStatus> findAcceptStatusById(@Param("id") Long id);
 }

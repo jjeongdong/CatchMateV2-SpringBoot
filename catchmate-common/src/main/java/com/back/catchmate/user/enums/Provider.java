@@ -1,5 +1,7 @@
 package com.back.catchmate.user.enums;
 
+import com.back.catchmate.error.ErrorCode;
+import com.back.catchmate.error.exception.BaseException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -7,18 +9,15 @@ import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 public enum Provider {
-    GOOGLE("google"),
-    NAVER("naver"),
-    KAKAO("kakao"),
-    APPLE("apple");
+    KAKAO("kakao");
 
     @Getter
     private final String provider;
 
     public static Provider of(String provider) {
         return Stream.of(Provider.values())
-                .filter(p -> p.getProvider().equals(provider))
+                .filter(p -> p.getProvider().equalsIgnoreCase(provider))
                 .findFirst()
-                .orElseThrow(IllegalArgumentException::new);
+                .orElseThrow(() -> new BaseException(ErrorCode.UNSUPPORTED_OAUTH_PROVIDER));
     }
 }
