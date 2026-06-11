@@ -133,7 +133,37 @@ private int maxRetryCount;
 public void processPendingPush() { ... }
 ```
 
-## 7. import 방향성 체크리스트
+## 7. Service 필드 순서 (반드시 통일)
+
+`{Ctx}Service` 의 `private final` 필드는 항상 아래 그룹 순으로 선언하고, 그룹 안에서는 **타입 이름 알파벳순**으로 정렬합니다. 그룹 사이는 빈 줄 한 줄.
+
+```java
+public class BoardService implements BoardUseCase {
+
+    // 1. own Repository
+    private final BoardRepository boardRepository;
+
+    // 2. own 다른 output port (XxxPort, 예: TokenProvider, ImageUploaderPort)
+    private final TokenProvider tokenProvider;
+
+    // 3. 같은 컨텍스트 협력 Service (multi-aggregate 컨텍스트만 해당)
+    private final ChatRoomService chatRoomService;
+
+    // 4. Cross-context Fetch Port (알파벳순)
+    private final BlockFetchPort blockFetchPort;
+    private final BookmarkFetchPort bookmarkFetchPort;
+    private final ChatRoomFetchPort chatRoomFetchPort;
+    private final ClubFetchPort clubFetchPort;
+    private final EnrollFetchPort enrollFetchPort;
+    private final GameFetchPort gameFetchPort;
+    private final UserFetchPort userFetchPort;
+
+    // 5. Spring / Lombok infra (ApplicationEventPublisher, ObjectMapper)
+    private final ApplicationEventPublisher applicationEventPublisher;
+}
+```
+
+## 8. import 방향성 체크리스트
 
 | 작성 중인 파일 | import 가능 | import 금지 |
 |:---|:---|:---|

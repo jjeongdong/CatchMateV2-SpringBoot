@@ -4,7 +4,6 @@ import com.back.catchmate.user.application.port.out.AuthFetchPort;
 
 import com.back.catchmate.user.application.port.out.ClubFetchPort;
 
-
 import com.back.catchmate.auth.application.port.out.TokenProvider;
 import com.back.catchmate.auth.domain.model.AuthToken;
 import com.back.catchmate.club.domain.model.Club;
@@ -41,10 +40,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserService implements UserUseCase {
+
+    private final UserRepository userRepository;
+
+    private final ImageUploaderPort profileImageUploader;
+
     private final AuthFetchPort authFetchPort;
     private final ClubFetchPort clubFetchPort;
+
     private final TokenProvider tokenProvider;
-    private final ImageUploaderPort profileImageUploader;
 
     @Transactional
     public UserSignupResult createUser(UserRegisterCommand command) {
@@ -134,9 +138,6 @@ public class UserService implements UserUseCase {
         user.updateFcmToken(command.getFcmToken());
         updateUser(user);
     }
-
-
-    private final UserRepository userRepository;
 
     public User createUser(User user) {
         Optional<User> existingUser = userRepository.findByProviderId(user.getProviderId());

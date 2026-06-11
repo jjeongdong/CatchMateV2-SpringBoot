@@ -22,10 +22,14 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class NotificationRetryService {
+
     private final NotificationOutboxRepository outboxRepository;
+
     private final OfflineFallbackPort offlineFallbackPort;
-    private final NotificationOutboxUpdater outboxUpdater;
+
     private final ObjectMapper objectMapper;
+
+    private final NotificationOutboxUpdater outboxUpdater;
 
     @Value("${notification.outbox.max-retry-count:5}")
     private int maxRetryCount;

@@ -1,9 +1,5 @@
 package com.back.catchmate.user.application.service;
 
-
-
-
-
 import com.back.catchmate.user.application.port.in.UserOnlineStatusUseCase;
 import com.back.catchmate.user.application.port.out.UserOnlineStatusPort;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserOnlineStatusService implements UserOnlineStatusUseCase {
+
     private final UserOnlineStatusPort userOnlineStatusPort;
 
     public void setUserOnline(Long userId) {

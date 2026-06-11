@@ -34,14 +34,16 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class ChatMessageService {
-    private final ChatRoomRepository chatRoomRepository;
+
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
-    private final ChatSequencePort chatSequencePort;
+    private final ChatRoomRepository chatRoomRepository;
+
     private final ChatHistoryCachePort chatHistoryCachePort;
     private final ChatMessageBufferPort chatMessageBufferPort;
-    private final ReadSequenceBufferPort readSequenceBufferPort;
     private final ChatRoomSequenceBufferPort chatRoomSequenceBufferPort;
+    private final ChatSequencePort chatSequencePort;
+    private final ReadSequenceBufferPort readSequenceBufferPort;
 
     public ChatMessage saveMessage(Long chatRoomId, User sender, String content, MessageType messageType) {
         if (messageType == MessageType.TEXT) {

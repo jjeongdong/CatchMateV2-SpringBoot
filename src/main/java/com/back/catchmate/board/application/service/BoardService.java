@@ -55,14 +55,13 @@ public class BoardService implements BoardUseCase {
 
     private final BoardRepository boardRepository;
 
-    // Cross-context: depend only on board's own output ports
-    private final UserFetchPort userFetchPort;
-    private final ClubFetchPort clubFetchPort;
-    private final GameFetchPort gameFetchPort;
     private final BlockFetchPort blockFetchPort;
-    private final EnrollFetchPort enrollFetchPort;
     private final BookmarkFetchPort bookmarkFetchPort;
     private final ChatRoomFetchPort chatRoomFetchPort;
+    private final ClubFetchPort clubFetchPort;
+    private final EnrollFetchPort enrollFetchPort;
+    private final GameFetchPort gameFetchPort;
+    private final UserFetchPort userFetchPort;
 
     private final ApplicationEventPublisher applicationEventPublisher;
 

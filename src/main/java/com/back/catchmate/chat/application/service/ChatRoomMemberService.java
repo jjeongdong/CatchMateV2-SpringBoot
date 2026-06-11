@@ -18,6 +18,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class ChatRoomMemberService {
+
     private final ChatRoomMemberRepository chatRoomMemberRepository;
 
     /**

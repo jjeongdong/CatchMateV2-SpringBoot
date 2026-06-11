@@ -22,6 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ReportService implements ReportUseCase {
+
+    private final ReportRepository reportRepository;
+
     private final UserFetchPort userFetchPort;
 
     @Transactional
@@ -38,9 +41,6 @@ public class ReportService implements ReportUseCase {
 
         return ReportCreateResponse.from(report);
     }
-
-
-    private final ReportRepository reportRepository;
 
     public Report createReport(User reporter, User reportedUser, ReportReason reason, String description) {
         // 1. 비즈니스 로직 검증: 본인 신고 불가

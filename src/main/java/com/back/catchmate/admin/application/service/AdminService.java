@@ -12,7 +12,6 @@ import com.back.catchmate.admin.application.port.out.EnrollFetchPort;
 
 import com.back.catchmate.admin.application.port.out.ReportFetchPort;
 
-
 import com.back.catchmate.admin.application.port.in.AdminUseCase;
 import com.back.catchmate.admin.application.event.AdminInquiryAnswerNotificationEvent;
 import com.back.catchmate.admin.application.event.AdminNoticeCreateNotificationEvent;
@@ -58,12 +57,14 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AdminService implements AdminUseCase {
-    private final NoticeFetchPort noticeFetchPort;
-    private final UserFetchPort userFetchPort;
-    private final InquiryFetchPort inquiryFetchPort;
+
     private final BoardFetchPort boardFetchPort;
     private final EnrollFetchPort enrollFetchPort;
+    private final InquiryFetchPort inquiryFetchPort;
+    private final NoticeFetchPort noticeFetchPort;
     private final ReportFetchPort reportFetchPort;
+    private final UserFetchPort userFetchPort;
+
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional

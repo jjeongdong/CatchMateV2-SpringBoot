@@ -25,8 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class BookmarkService implements BookmarkUseCase {
-    private final UserFetchPort userFetchPort;
+
+    private final BookmarkRepository bookmarkRepository;
+
     private final BoardFetchPort boardFetchPort;
+    private final UserFetchPort userFetchPort;
 
     @Transactional
     public BookmarkUpdateResponse updateBookmark(Long userId, Long boardId) {
@@ -60,9 +63,6 @@ public class BookmarkService implements BookmarkUseCase {
 
         return new PagedResponse<>(bookmarkPage, boardResponses);
     }
-
-
-    private final BookmarkRepository bookmarkRepository;
 
     public void createBookmark(Bookmark bookmark) {
         bookmarkRepository.save(bookmark);

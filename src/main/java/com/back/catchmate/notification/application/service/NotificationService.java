@@ -26,9 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class NotificationService implements NotificationUseCase {
-    private final EnrollFetchPort enrollFetchPort;
+
+    private final NotificationRepository notificationRepository;
 
     private final NotificationRetryService notificationRetryService;
+
+    private final EnrollFetchPort enrollFetchPort;
 
     @Transactional
     public NotificationResponse getNotification(Long userId, Long notificationId) {
@@ -90,9 +93,6 @@ public class NotificationService implements NotificationUseCase {
     public void processPendingNotifications() {
         notificationRetryService.processPendingNotifications();
     }
-
-
-    private final NotificationRepository notificationRepository;
 
     public void createNotification(Notification notification) {
         notificationRepository.save(notification);

@@ -2,7 +2,6 @@ package com.back.catchmate.chat.application.service;
 
 import com.back.catchmate.chat.application.port.out.UserFetchPort;
 
-
 import com.back.catchmate.chat.application.port.in.ChatUseCase;
 import com.back.catchmate.chat.application.dto.ChatMessageListDto;
 import com.back.catchmate.chat.application.event.ChatMessageEvent;
@@ -37,11 +36,15 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ChatService implements ChatUseCase {
-    private final UserFetchPort userFetchPort;
-    private final ChatMessageService chatMessageService;
-    private final ChatRoomService chatRoomService;
-    private final ChatRoomMemberService chatRoomMemberService;
+
     private final ImageUploaderPort imageUploaderPort;
+
+    private final ChatMessageService chatMessageService;
+    private final ChatRoomMemberService chatRoomMemberService;
+    private final ChatRoomService chatRoomService;
+
+    private final UserFetchPort userFetchPort;
+
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional

@@ -54,12 +54,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class EnrollService implements EnrollUseCase {
-    private final UserFetchPort userFetchPort;
-    private final BookmarkFetchPort bookmarkFetchPort;
-    private final BoardFetchPort boardFetchPort;
-    private final ChatFetchPort chatFetchPort;
-    private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final EnrollRepository enrollRepository;
+
     private final IdempotencyPort idempotencyPort;
+
+    private final BoardFetchPort boardFetchPort;
+    private final BookmarkFetchPort bookmarkFetchPort;
+    private final ChatFetchPort chatFetchPort;
+    private final UserFetchPort userFetchPort;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Value("${enroll.idempotency.ttl-seconds:10}")
     private long idempotencyTtlSeconds;
@@ -267,9 +272,6 @@ public class EnrollService implements EnrollUseCase {
 
         return EnrollReceiveResponse.of(boardResponse, enrollList);
     }
-
-
-    private final EnrollRepository enrollRepository;
 
     public Enroll createEnroll(User user, Board board, String description) {
         validateDuplicateEnroll(user, board);

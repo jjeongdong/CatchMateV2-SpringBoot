@@ -29,11 +29,13 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class ChatRoomService {
-    private final ChatRoomRepository chatRoomRepository;
+
     private final ChatRoomMemberRepository chatRoomMemberRepository;
-    private final ChatSequencePort chatSequencePort;
+    private final ChatRoomRepository chatRoomRepository;
+
     private final ChatHistoryCachePort chatHistoryCachePort;
     private final ChatMessageBufferPort chatMessageBufferPort;
+    private final ChatSequencePort chatSequencePort;
 
     public ChatRoom getChatRoom(Long chatRoomId) {
         return chatRoomRepository.findById(chatRoomId)

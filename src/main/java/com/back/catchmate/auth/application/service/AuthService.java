@@ -19,7 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AuthService implements AuthUseCase {
+
+    private final RefreshTokenRepository refreshTokenRepository;
+
     private final UserFetchPort userFetchPort;
+
+    private final TokenProvider tokenProvider;
 
     public Long getUserId(String token) {
         return getUserIdFromToken(token);
@@ -49,10 +54,6 @@ public class AuthService implements AuthUseCase {
 
         revokeRefreshToken(refreshToken);
     }
-
-
-    private final TokenProvider tokenProvider;
-    private final RefreshTokenRepository refreshTokenRepository;
 
     public AuthToken createToken(User user) {
         String accessToken = createAccessToken(user);

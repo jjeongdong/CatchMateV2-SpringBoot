@@ -1,7 +1,5 @@
 package com.back.catchmate.user.application.service;
 
-
-
 import com.back.catchmate.user.application.port.out.EnrollFetchPort;
 
 import com.back.catchmate.common.error.ErrorCode;
@@ -27,9 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class BlockService implements UserBlockUseCase {
-    private final EnrollFetchPort enrollFetchPort;
+
+    private final BlockRepository blockRepository;
 
     private final UserService userService;
+
+    private final EnrollFetchPort enrollFetchPort;
 
     @Transactional
     public BlockActionResponse createBlock(Long blockerId, Long blockedId) {
@@ -70,9 +71,6 @@ public class BlockService implements UserBlockUseCase {
         deleteBlock(blocker, blocked);
         return BlockActionResponse.of(blockedId, "차단을 해제했습니다.");
     }
-
-
-    private final BlockRepository blockRepository;
 
     public void createBlock(User blocker, User blocked) {
         // 이미 차단했는지 확인

@@ -1,6 +1,5 @@
 package com.back.catchmate.notification.application.service;
 
-
 import com.back.catchmate.notification.domain.model.NotificationOutbox;
 import com.back.catchmate.notification.application.port.out.OfflineFallbackPort;
 import com.back.catchmate.notification.application.port.out.NotificationSenderPort;
@@ -18,8 +17,10 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class CompositeNotificationDispatcher implements OfflineFallbackPort {
-    private final List<NotificationSenderPort> senders;
+
     private final ObjectMapper objectMapper;
+
+    private final List<NotificationSenderPort> senders;
 
     @Override
     public void dispatchIfOffline(Long userId, NotificationOutbox outbox) {

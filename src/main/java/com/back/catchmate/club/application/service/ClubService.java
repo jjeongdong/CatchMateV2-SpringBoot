@@ -17,15 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ClubService implements ClubUseCase {
 
+    private final ClubRepository clubRepository;
 
     public List<ClubResponse> getClubList() {
         return getAllClubs().stream()
                 .map(ClubResponse::from)
                 .toList();
     }
-
-
-    private final ClubRepository clubRepository;
 
     public Club getClub(Long clubId) {
         if (clubId == null) {

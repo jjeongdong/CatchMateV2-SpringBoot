@@ -26,6 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class InquiryService implements InquiryUseCase {
+
+    private final InquiryRepository inquiryRepository;
+
     private final UserFetchPort userFetchPort;
 
     @Transactional
@@ -56,9 +59,6 @@ public class InquiryService implements InquiryUseCase {
 
         return new PagedResponse<>(inquiryPage, responses);
     }
-
-
-    private final InquiryRepository inquiryRepository;
 
     public Inquiry registerInquiry(User user, InquiryType type, String content) {
         Inquiry inquiry = Inquiry.createInquiry(user, type, content);

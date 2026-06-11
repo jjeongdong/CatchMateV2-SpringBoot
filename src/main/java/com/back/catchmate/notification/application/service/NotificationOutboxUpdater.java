@@ -15,7 +15,9 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class NotificationOutboxUpdater {
+
     private final NotificationOutboxRepository outboxRepository;
+
     private final MeterRegistry meterRegistry;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

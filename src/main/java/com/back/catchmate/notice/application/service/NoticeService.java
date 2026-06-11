@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NoticeService implements NoticeUseCase {
 
+    private final NoticeRepository noticeRepository;
 
     public NoticeDetailResponse getNotice(Long noticeId) {
         Notice notice = getNoticeEntity(noticeId);
@@ -39,9 +40,6 @@ public class NoticeService implements NoticeUseCase {
 
         return new PagedResponse<>(noticePage, responses);
     }
-
-
-    private final NoticeRepository noticeRepository;
 
     public Notice createNotice(User writer, String title, String content) {
         Notice notice = Notice.createNotice(writer, title, content);

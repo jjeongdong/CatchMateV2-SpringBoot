@@ -4,7 +4,6 @@ import com.back.catchmate.oauth.application.port.out.AuthFetchPort;
 
 import com.back.catchmate.oauth.application.port.out.UserFetchPort;
 
-
 import com.back.catchmate.oauth.application.port.in.OAuthUseCase;
 import com.back.catchmate.auth.domain.model.AuthToken;
 import com.back.catchmate.auth.application.port.out.TokenProvider;
@@ -30,8 +29,10 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class OAuthService implements OAuthUseCase {
+
     private final AuthFetchPort authFetchPort;
     private final UserFetchPort userFetchPort;
+
     private final OAuthClientRegistry oauthClientRegistry;
     private final TokenProvider tokenProvider;
 
