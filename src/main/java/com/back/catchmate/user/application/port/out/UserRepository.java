@@ -1,0 +1,31 @@
+package com.back.catchmate.user.application.port.out;
+
+import com.back.catchmate.common.page.DomainPage;
+import com.back.catchmate.common.page.DomainPageable;
+import com.back.catchmate.user.domain.model.User;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+public interface UserRepository {
+    User save(User user);
+
+    Optional<User> findByProviderId(String providerId);
+
+    Optional<User> findById(Long id);
+
+    List<User> findAllEventAlarmEnabled();
+
+    DomainPage<User> findAllByClubName(String clubName, DomainPageable pageable);
+
+    Map<String, Long> countUsersByClub();
+
+    Map<String, Long> countUsersByWatchStyle();
+
+    boolean existsByNickName(String nickName);
+
+    long count();
+
+    long countByGender(Character gender);
+}

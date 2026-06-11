@@ -1,0 +1,72 @@
+package com.back.catchmate.chat.adapter.out.persistence.entity;
+
+import com.back.catchmate.chat.domain.model.ChatRoom;
+import com.back.catchmate.global.infrastructure.BaseTimeEntity;
+import com.back.catchmate.board.adapter.out.persistence.entity.BoardEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Getter
+@Builder
+@Table(name = "chat_rooms")
+@SQLRestriction("deleted_at IS NULL")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+public class ChatRoomEntity extends BaseTimeEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "chat_room_id")
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "board_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    private BoardEntity board;
+
+    @Column(name = "last_message_sequence", nullable = false)
+    private Long lastMessageSequence;
+
+    @Column(name = "chat_room_image_url")
+    private String chatRoomImageUrl;
+
+    private LocalDateTime deletedAt;
+
+    public static ChatRoomEntity from(ChatRoom chatRoom) {
+        return ChatRoomEntity.builder()
+                .id(chatRoom.getId())
+                .board(BoardEntity.fromDomain(chatRoom.getBoard()))
+                .lastMessageSequence(chatRoom.getLastMessageSequence())
+                .chatRoomImageUrl(chatRoom.getChatRoomImageUrl())
+                .deletedAt(chatRoom.getDeletedAt())
+                .build();
+    }
+
+    public ChatRoom toModel() {
+        return ChatRoom.builder()
+                .id(this.id)
+                .board(this.board != null ? this.board.toDomain() : null)
+                .lastMessageSequence(this.lastMessageSequence)
+                .chatRoomImageUrl(this.chatRoomImageUrl)
+                .createdAt(this.getCreatedAt())
+                .deletedAt(this.deletedAt)
+                .build();
+    }
+}

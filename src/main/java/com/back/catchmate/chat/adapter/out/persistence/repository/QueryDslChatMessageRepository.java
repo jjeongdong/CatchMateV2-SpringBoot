@@ -1,0 +1,108 @@
+package com.back.catchmate.chat.adapter.out.persistence.repository;
+
+import com.back.catchmate.chat.domain.enums.MessageType;
+import com.back.catchmate.chat.domain.model.ChatMessage;
+import com.back.catchmate.chat.adapter.out.persistence.entity.ChatMessageEntity;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.back.catchmate.chat.adapter.out.persistence.entity.QChatMessageEntity.chatMessageEntity;
+import static com.back.catchmate.user.adapter.out.persistence.entity.QUserEntity.userEntity;
+
+@Component
+@RequiredArgsConstructor
+public class QueryDslChatMessageRepository {
+    private final JPAQueryFactory jpaQueryFactory;
+
+    public List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size) {
+        List<Long> messageIds = jpaQueryFactory
+                .select(chatMessageEntity.id)
+                .from(chatMessageEntity)
+                .where(
+                        chatMessageEntity.chatRoom.id.eq(roomId),
+                        lastMessageId != null ? chatMessageEntity.id.lt(lastMessageId) : null
+                )
+                .orderBy(chatMessageEntity.id.desc())
+                .limit(size)
+                .fetch();
+
+        if (messageIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<ChatMessageEntity> entities = jpaQueryFactory
+                .selectFrom(chatMessageEntity)
+                .join(chatMessageEntity.sender, userEntity).fetchJoin()
+                .where(chatMessageEntity.id.in(messageIds))
+                .orderBy(chatMessageEntity.id.asc())
+                .fetch();
+
+        return entities.stream()
+                .map(ChatMessageEntity::toModel)
+                .toList();
+    }
+
+    public List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size) {
+        return jpaQueryFactory
+                .selectFrom(chatMessageEntity)
+                .join(chatMessageEntity.sender, userEntity).fetchJoin()
+                .where(
+                        chatMessageEntity.chatRoom.id.eq(roomId),
+                        gtMessageId(lastMessageId)
+                )
+                .orderBy(chatMessageEntity.id.asc())
+                .limit(size)
+                .fetch()
+                .stream()
+                .map(ChatMessageEntity::toModel)
+                .toList();
+    }
+
+    public Map<Long, ChatMessage> findLastTextMessagesByChatRoomIds(List<Long> chatRoomIds) {
+        if (chatRoomIds.isEmpty()) {
+            return Map.of();
+        }
+
+        // 각 채팅방별 마지막 TEXT 메시지 ID를 서브쿼리로 조회
+        List<Long> messageIds = jpaQueryFactory
+                .select(chatMessageEntity.id.max())
+                .from(chatMessageEntity)
+                .where(
+                        chatMessageEntity.chatRoom.id.in(chatRoomIds),
+                        chatMessageEntity.messageType.eq(MessageType.TEXT)
+                )
+                .groupBy(chatMessageEntity.chatRoom.id)
+                .fetch();
+
+        if (messageIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<ChatMessageEntity> entities = jpaQueryFactory
+                .selectFrom(chatMessageEntity)
+                .join(chatMessageEntity.sender, userEntity).fetchJoin()
+                .where(chatMessageEntity.id.in(messageIds))
+                .fetch();
+
+        return entities.stream()
+                .map(ChatMessageEntity::toModel)
+                .collect(Collectors.toMap(
+                        msg -> msg.getChatRoom().getId(),
+                        msg -> msg
+                ));
+    }
+
+    private BooleanExpression gtMessageId(Long lastMessageId) {
+        if (lastMessageId == null) {
+            return null;
+        }
+        return chatMessageEntity.id.gt(lastMessageId);
+    }
+}

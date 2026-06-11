@@ -1,6 +1,6 @@
 package com.back.catchmate.global.config.security;
 
-import com.back.catchmate.orchestration.auth.AuthOrchestrator;
+import com.back.catchmate.auth.application.service.AuthOrchestrator;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

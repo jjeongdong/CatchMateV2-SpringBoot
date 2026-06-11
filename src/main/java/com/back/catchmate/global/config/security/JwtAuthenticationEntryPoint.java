@@ -1,8 +1,8 @@
 package com.back.catchmate.global.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.back.catchmate.error.ErrorCode;
-import com.back.catchmate.error.ErrorResponse;
+import com.back.catchmate.common.error.ErrorCode;
+import com.back.catchmate.common.error.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

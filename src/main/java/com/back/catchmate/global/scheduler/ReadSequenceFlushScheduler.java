@@ -1,6 +1,6 @@
 package com.back.catchmate.global.scheduler;
 
-import com.back.catchmate.orchestration.chat.ChatOrchestrator;
+import com.back.catchmate.chat.application.service.ChatOrchestrator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

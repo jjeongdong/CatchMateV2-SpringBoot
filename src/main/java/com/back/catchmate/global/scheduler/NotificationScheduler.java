@@ -1,6 +1,6 @@
 package com.back.catchmate.global.scheduler;
 
-import com.back.catchmate.orchestration.notification.NotificationOrchestrator;
+import com.back.catchmate.notification.application.service.NotificationOrchestrator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

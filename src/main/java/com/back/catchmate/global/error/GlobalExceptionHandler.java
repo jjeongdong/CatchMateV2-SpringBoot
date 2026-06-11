@@ -1,8 +1,8 @@
 package com.back.catchmate.global.error;
 
-import com.back.catchmate.error.ErrorCode;
-import com.back.catchmate.error.ErrorResponse;
-import com.back.catchmate.error.exception.BaseException;
+import com.back.catchmate.common.error.ErrorCode;
+import com.back.catchmate.common.error.ErrorResponse;
+import com.back.catchmate.common.error.exception.BaseException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
