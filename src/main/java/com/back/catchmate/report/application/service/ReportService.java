@@ -1,19 +1,45 @@
 package com.back.catchmate.report.application.service;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
-import com.back.catchmate.report.domain.model.Report;
-import com.back.catchmate.report.application.port.out.ReportRepository;
-import com.back.catchmate.user.domain.model.User;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.back.catchmate.common.page.DomainPage;
+import com.back.catchmate.common.page.DomainPageable;
+import com.back.catchmate.report.application.dto.command.ReportCreateCommand;
+import com.back.catchmate.report.application.dto.response.ReportCreateResponse;
+import com.back.catchmate.report.application.port.in.ReportUseCase;
+import com.back.catchmate.report.application.port.out.ReportRepository;
 import com.back.catchmate.report.domain.enums.ReportReason;
+import com.back.catchmate.report.domain.model.Report;
+import com.back.catchmate.user.application.service.UserService;
+import com.back.catchmate.user.domain.model.User;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class ReportService {
+public class ReportService implements ReportUseCase {
+
+    private final UserService userService;
+
+    @Transactional
+    public ReportCreateResponse createReport(Long reporterId, ReportCreateCommand command) {
+        User reporter = userService.getUser(reporterId);
+        User reportedUser = userService.getUser(command.getReportedUserId());
+
+        Report report = createReport(
+                reporter,
+                reportedUser,
+                command.getReason(),
+                command.getDescription()
+        );
+
+        return ReportCreateResponse.from(report);
+    }
+
+
     private final ReportRepository reportRepository;
 
     public Report createReport(User reporter, User reportedUser, ReportReason reason, String description) {
@@ -54,5 +80,4 @@ public class ReportService {
     public void updateReport(Report report) {
         reportRepository.save(report);
     }
-
 }

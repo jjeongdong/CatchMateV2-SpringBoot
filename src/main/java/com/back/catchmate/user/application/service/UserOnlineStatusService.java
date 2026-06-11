@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class UserOnlineStatusApplicationService implements UserOnlineStatusUseCase {
+public class UserOnlineStatusService implements UserOnlineStatusUseCase {
     private final UserOnlineStatusPort userOnlineStatusPort;
 
     public void setUserOnline(Long userId) {

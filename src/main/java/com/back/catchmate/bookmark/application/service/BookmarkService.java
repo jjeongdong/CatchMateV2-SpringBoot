@@ -1,20 +1,66 @@
 package com.back.catchmate.bookmark.application.service;
 
+import com.back.catchmate.board.application.dto.response.BoardResponse;
+import com.back.catchmate.board.application.service.BoardService;
 import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.bookmark.domain.model.Bookmark;
+import com.back.catchmate.bookmark.application.dto.response.BookmarkUpdateResponse;
+import com.back.catchmate.bookmark.application.port.in.BookmarkUseCase;
 import com.back.catchmate.bookmark.application.port.out.BookmarkRepository;
+import com.back.catchmate.bookmark.domain.model.Bookmark;
+import com.back.catchmate.common.orchestration.PagedResponse;
 import com.back.catchmate.common.page.DomainPage;
 import com.back.catchmate.common.page.DomainPageable;
+import com.back.catchmate.user.application.service.UserService;
 import com.back.catchmate.user.domain.model.User;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class BookmarkService {
+public class BookmarkService implements BookmarkUseCase {
+
+    private final UserService userService;
+    private final BoardService boardService;
+
+    @Transactional
+    public BookmarkUpdateResponse updateBookmark(Long userId, Long boardId) {
+        User user = userService.getUser(userId);
+        Board board = boardService.getBoard(boardId);
+
+        Optional<Bookmark> bookmarkOptional = findByUserAndBoard(user, board);
+
+        if (bookmarkOptional.isPresent()) {
+            deleteBookmark(bookmarkOptional.get());
+            return new BookmarkUpdateResponse(boardId,false);
+        } else {
+            Bookmark bookmark = Bookmark.builder()
+                    .user(user)
+                    .board(board)
+                    .build();
+            createBookmark(bookmark);
+            return new BookmarkUpdateResponse(boardId,true);
+        }
+    }
+
+    public PagedResponse<BoardResponse> getBookmarkedBoards(Long userId, int page, int size) {
+        User user = userService.getUser(userId);
+        DomainPageable pageable = DomainPageable.of(page, size);
+        
+        DomainPage<Bookmark> bookmarkPage = findAllByUser(user, pageable);
+
+        List<BoardResponse> boardResponses = bookmarkPage.getContent().stream()
+                .map(bookmark -> BoardResponse.from(bookmark.getBoard(), true))
+                .toList();
+
+        return new PagedResponse<>(bookmarkPage, boardResponses);
+    }
+
+
     private final BookmarkRepository bookmarkRepository;
 
     public void createBookmark(Bookmark bookmark) {

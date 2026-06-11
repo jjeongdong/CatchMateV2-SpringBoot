@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class AdminApplicationService implements AdminUseCase {
+public class AdminService implements AdminUseCase {
     private final UserService userService;
     private final BoardService boardService;
     private final EnrollService enrollService;
@@ -73,7 +73,7 @@ public class AdminApplicationService implements AdminUseCase {
 
     @Transactional
     public InquiryAnswerResponse createInquiryAnswer(InquiryAnswerCommand command) {
-        Inquiry inquiry = inquiryService.getInquiry(command.getInquiryId());
+        Inquiry inquiry = inquiryService.getInquiryEntity(command.getInquiryId());
 
         inquiry.registerAnswer(command.getContent());
         Inquiry updatedInquiry = inquiryService.updateInquiry(inquiry);
@@ -169,7 +169,7 @@ public class AdminApplicationService implements AdminUseCase {
     }
 
     public AdminInquiryDetailResponse getInquiry(Long inquiryId) {
-        Inquiry inquiry = inquiryService.getInquiry(inquiryId);
+        Inquiry inquiry = inquiryService.getInquiryEntity(inquiryId);
         return AdminInquiryDetailResponse.from(inquiry);
     }
 
@@ -185,7 +185,7 @@ public class AdminApplicationService implements AdminUseCase {
     }
 
     public AdminNoticeDetailResponse getNotice(Long noticeId) {
-        Notice notice = noticeService.getNotice(noticeId);
+        Notice notice = noticeService.getNoticeEntity(noticeId);
         return AdminNoticeDetailResponse.from(notice);
     }
 
@@ -218,7 +218,7 @@ public class AdminApplicationService implements AdminUseCase {
 
     @Transactional
     public NoticeDetailResponse updateNotice(Long noticeId, NoticeUpdateCommand command) {
-        Notice notice = noticeService.getNotice(noticeId);
+        Notice notice = noticeService.getNoticeEntity(noticeId);
         notice.updateNotice(command.getTitle(), command.getContent());
         Notice updatedNotice = noticeService.updateNotice(notice);
         return NoticeDetailResponse.from(updatedNotice);
@@ -226,7 +226,7 @@ public class AdminApplicationService implements AdminUseCase {
 
     @Transactional
     public NoticeActionResponse deleteNotice(Long noticeId) {
-        Notice notice = noticeService.getNotice(noticeId);
+        Notice notice = noticeService.getNoticeEntity(noticeId);
         noticeService.deleteNotice(notice);
         return NoticeActionResponse.of(noticeId, "공지사항이 삭제되었습니다.");
     }

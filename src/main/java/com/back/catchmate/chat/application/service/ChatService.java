@@ -35,7 +35,7 @@ import java.util.Optional;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class ChatApplicationService implements ChatUseCase {
+public class ChatService implements ChatUseCase {
     private final ChatMessageService chatMessageService;
     private final ChatRoomService chatRoomService;
     private final ChatRoomMemberService chatRoomMemberService;

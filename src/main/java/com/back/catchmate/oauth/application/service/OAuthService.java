@@ -27,7 +27,7 @@ import java.util.UUID;
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class OAuthApplicationService implements OAuthUseCase {
+public class OAuthService implements OAuthUseCase {
     private final OAuthClientRegistry oauthClientRegistry;
     private final AuthService authService;
     private final UserService userService;

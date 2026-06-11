@@ -13,6 +13,6 @@ public class InquiryPermissionFinder implements DomainFinder<Inquiry> {
 
     @Override
     public Inquiry searchById(Long inquiryId) {
-        return inquiryService.getInquiry(inquiryId);
+        return inquiryService.getInquiryEntity(inquiryId);
     }
 }

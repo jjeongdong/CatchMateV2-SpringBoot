@@ -1,17 +1,56 @@
 package com.back.catchmate.auth.application.service;
 
-import com.back.catchmate.auth.domain.model.AuthToken;
-import com.back.catchmate.auth.application.port.out.TokenProvider;
+import com.back.catchmate.auth.application.dto.response.AuthReissueResponse;
+import com.back.catchmate.auth.application.port.in.AuthUseCase;
 import com.back.catchmate.auth.application.port.out.RefreshTokenRepository;
-import com.back.catchmate.user.domain.model.User;
+import com.back.catchmate.auth.application.port.out.TokenProvider;
+import com.back.catchmate.auth.domain.model.AuthToken;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
+import com.back.catchmate.user.application.service.UserService;
+import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class AuthService {
+public class AuthService implements AuthUseCase {
+
+    private final UserService userService;
+
+    public Long getUserId(String token) {
+        return getUserIdFromToken(token);
+    }
+
+    public String getUserRole(String token) {
+        return getUserRoleFromToken(token);
+    }
+
+    @Transactional
+    public AuthReissueResponse updateToken(String refreshToken) {
+        Long userId = getUserIdFromRefreshToken(refreshToken);
+        validateRefreshTokenExistence(refreshToken);
+
+        User user = userService.getUser(userId);
+        String newAccessToken = createAccessToken(user);
+        return AuthReissueResponse.of(newAccessToken);
+    }
+
+    @Transactional
+    public void deleteToken(String refreshToken) {
+        Long userId = getUserIdFromRefreshToken(refreshToken);
+        User user = userService.getUser(userId);
+
+        user.deleteFcmToken();
+        userService.updateUser(user);
+
+        revokeRefreshToken(refreshToken);
+    }
+
+
     private final TokenProvider tokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
 
@@ -52,7 +91,7 @@ public class AuthService {
                 .orElseThrow(() -> new BaseException(ErrorCode.INVALID_REFRESH_TOKEN));
     }
 
-    public void deleteToken(String refreshToken) {
+    public void revokeRefreshToken(String refreshToken) {
         refreshTokenRepository.deleteById(refreshToken);
     }
 }
