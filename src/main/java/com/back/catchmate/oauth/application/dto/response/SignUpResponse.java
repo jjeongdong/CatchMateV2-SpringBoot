@@ -1,4 +1,4 @@
-package com.back.catchmate.user.application.dto.response;
+package com.back.catchmate.oauth.application.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,13 +9,13 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @AllArgsConstructor
-public class UserRegisterResponse {
+public class SignUpResponse {
     private Long userId;
     private String accessToken;
     private LocalDateTime createdAt;
 
-    public static UserRegisterResponse of(Long userId, String accessToken, LocalDateTime createdAt) {
-        return UserRegisterResponse.builder()
+    public static SignUpResponse of(Long userId, String accessToken, LocalDateTime createdAt) {
+        return SignUpResponse.builder()
                 .userId(userId)
                 .accessToken(accessToken)
                 .createdAt(createdAt)

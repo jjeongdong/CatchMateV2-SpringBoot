@@ -1,6 +1,6 @@
-package com.back.catchmate.user.adapter.in.web.dto.request;
+package com.back.catchmate.oauth.adapter.in.web.dto.request;
 
-import com.back.catchmate.user.application.dto.command.UserRegisterCommand;
+import com.back.catchmate.oauth.application.dto.command.SignUpCommand;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserRegisterRequest {
+public class SignUpRequest {
     @NotBlank(message = "signupToken은 필수 값입니다.")
     private String signupToken;
 
@@ -32,8 +32,8 @@ public class UserRegisterRequest {
 
     private String watchStyle;
 
-    public UserRegisterCommand toCommand() {
-        return UserRegisterCommand.builder()
+    public SignUpCommand toCommand() {
+        return SignUpCommand.builder()
                 .signupToken(signupToken)
                 .gender(gender)
                 .nickName(nickName)

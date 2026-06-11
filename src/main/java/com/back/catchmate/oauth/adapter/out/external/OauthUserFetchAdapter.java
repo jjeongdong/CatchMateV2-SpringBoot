@@ -16,4 +16,9 @@ public class OauthUserFetchAdapter implements UserFetchPort {
     public Optional<User> findByProviderId(String providerIdWithProvider) {
         return userService.findByProviderId(providerIdWithProvider);
     }
+
+    @Override
+    public User createUser(User user) {
+        return userService.createUser(user);
+    }
 }

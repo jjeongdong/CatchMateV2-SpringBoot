@@ -1,29 +1,20 @@
 package com.back.catchmate.user.application.service;
 
-import com.back.catchmate.user.application.port.out.AuthFetchPort;
-
-import com.back.catchmate.user.application.port.out.ClubFetchPort;
-
-import com.back.catchmate.auth.application.port.out.TokenProvider;
-import com.back.catchmate.auth.domain.model.AuthToken;
 import com.back.catchmate.club.domain.model.Club;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.page.DomainPage;
 import com.back.catchmate.common.page.DomainPageable;
-import com.back.catchmate.oauth.domain.model.SignupTokenClaims;
 import com.back.catchmate.user.application.dto.command.UploadFile;
 import com.back.catchmate.user.application.dto.command.UserFcmTokenUpdateCommand;
 import com.back.catchmate.user.application.dto.command.UserProfileUpdateCommand;
-import com.back.catchmate.user.application.dto.command.UserRegisterCommand;
 import com.back.catchmate.user.application.dto.response.UserAlarmSettingsResponse;
 import com.back.catchmate.user.application.dto.response.UserAlarmUpdateResponse;
 import com.back.catchmate.user.application.dto.response.UserNicknameCheckResponse;
-import com.back.catchmate.user.application.dto.response.UserRegisterResponse;
 import com.back.catchmate.user.application.dto.response.UserResponse;
-import com.back.catchmate.user.application.dto.response.UserSignupResult;
 import com.back.catchmate.user.application.dto.response.UserUpdateResponse;
 import com.back.catchmate.user.application.port.in.UserUseCase;
+import com.back.catchmate.user.application.port.out.ClubFetchPort;
 import com.back.catchmate.user.application.port.out.ImageUploaderPort;
 import com.back.catchmate.user.application.port.out.UserRepository;
 import com.back.catchmate.user.domain.enums.AlarmType;
@@ -32,11 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
+@Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserService implements UserUseCase {
@@ -45,38 +35,7 @@ public class UserService implements UserUseCase {
 
     private final ImageUploaderPort profileImageUploader;
 
-    private final AuthFetchPort authFetchPort;
     private final ClubFetchPort clubFetchPort;
-
-    private final TokenProvider tokenProvider;
-
-    @Transactional
-    public UserSignupResult createUser(UserRegisterCommand command) {
-        SignupTokenClaims claims = tokenProvider.parseSignupToken(command.getSignupToken());
-        Club club = clubFetchPort.getClub(command.getFavoriteClubId());
-
-        User user = User.createUser(
-                claims.getProvider(),
-                claims.getProviderIdWithProvider(),
-                claims.getEmail(),
-                command.getNickName(),
-                command.getGender(),
-                command.getBirthDate(),
-                club,
-                claims.getProfileImageUrl(),
-                null,
-                command.getWatchStyle()
-        );
-        User savedUser = createUser(user);
-
-        AuthToken token = authFetchPort.createToken(savedUser);
-        UserRegisterResponse response = UserRegisterResponse.of(
-                savedUser.getId(),
-                token.getAccessToken(),
-                savedUser.getCreatedAt()
-        );
-        return new UserSignupResult(response, token.getRefreshToken());
-    }
 
     public UserResponse getUserProfile(Long userId) {
         User user = getUser(userId);

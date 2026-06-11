@@ -4,14 +4,18 @@ import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.global.config.security.CookieFactory;
 import com.back.catchmate.global.config.security.OAuthFrontendProperties;
-import com.back.catchmate.oauth.application.port.in.OAuthUseCase;
+import com.back.catchmate.oauth.adapter.in.web.dto.request.SignUpRequest;
 import com.back.catchmate.oauth.application.dto.command.OAuthCallbackCommand;
 import com.back.catchmate.oauth.application.dto.response.AuthorizeRedirect;
 import com.back.catchmate.oauth.application.dto.response.OAuthCallbackResult;
+import com.back.catchmate.oauth.application.dto.response.SignUpResponse;
+import com.back.catchmate.oauth.application.dto.response.SignUpResult;
+import com.back.catchmate.oauth.application.port.in.OAuthUseCase;
 import com.back.catchmate.user.domain.enums.Provider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -20,6 +24,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +43,15 @@ public class OAuthController {
     private final OAuthUseCase oauthOrchestrator;
     private final CookieFactory cookieFactory;
     private final OAuthFrontendProperties frontendProperties;
+
+    @PostMapping("/signup")
+    @Operation(summary = "회원가입 완료", description = "OAuth 콜백 단계에서 발급된 signupToken으로 회원가입을 완료하고 JWT를 발급합니다.")
+    public ResponseEntity<SignUpResponse> signUp(@Valid @RequestBody SignUpRequest request) {
+        SignUpResult result = oauthOrchestrator.signUp(request.toCommand());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieFactory.refresh(result.refreshToken()).toString())
+                .body(result.response());
+    }
 
     @GetMapping("/authorize/{provider}")
     @Operation(summary = "OAuth 로그인 시작", description = "지정된 provider의 인증 화면으로 redirect 합니다.")

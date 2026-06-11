@@ -1,4 +1,4 @@
-package com.back.catchmate.user.application.dto.command;
+package com.back.catchmate.oauth.application.dto.command;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @Getter
 @Builder
 @AllArgsConstructor
-public class UserRegisterCommand {
+public class SignUpCommand {
     private String signupToken;
     private Character gender;
     private String nickName;

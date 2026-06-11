@@ -2,29 +2,23 @@ package com.back.catchmate.user.adapter.in.web.controller;
 
 import com.back.catchmate.user.adapter.in.web.dto.request.UserFcmTokenUpdateRequest;
 import com.back.catchmate.user.adapter.in.web.dto.request.UserProfileUpdateRequest;
-import com.back.catchmate.user.adapter.in.web.dto.request.UserRegisterRequest;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
-import com.back.catchmate.global.config.security.CookieFactory;
 import com.back.catchmate.user.application.port.in.UserUseCase;
 import com.back.catchmate.user.application.dto.command.UploadFile;
 import com.back.catchmate.user.application.dto.response.UserAlarmSettingsResponse;
 import com.back.catchmate.user.application.dto.response.UserAlarmUpdateResponse;
 import com.back.catchmate.user.application.dto.response.UserNicknameCheckResponse;
-import com.back.catchmate.user.application.dto.response.UserRegisterResponse;
 import com.back.catchmate.user.application.dto.response.UserResponse;
-import com.back.catchmate.user.application.dto.response.UserSignupResult;
 import com.back.catchmate.user.application.dto.response.UserUpdateResponse;
 import com.back.catchmate.user.domain.enums.AlarmType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,16 +35,6 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class UserController {
     private final UserUseCase userOrchestrator;
-    private final CookieFactory cookieFactory;
-
-    @PostMapping("/additional-info")
-    @Operation(summary = "추가 정보 입력 API", description = "OAuth 후 발급된 signupToken으로 회원가입을 완료합니다.")
-    public ResponseEntity<UserRegisterResponse> createUser(@Valid @RequestBody UserRegisterRequest request) {
-        UserSignupResult result = userOrchestrator.createUser(request.toCommand());
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookieFactory.refresh(result.refreshToken()).toString())
-                .body(result.response());
-    }
 
     @GetMapping("/profile")
     @Operation(summary = "나의 정보 조회 API", description = "마이페이지에서 나의 모든 정보를 조회하는 API 입니다.")
