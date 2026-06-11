@@ -1,7 +1,9 @@
 package com.back.catchmate.inquiry.adapter.out.persistence.repository;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.inquiry.domain.model.Inquiry;
 import com.back.catchmate.inquiry.application.port.out.InquiryRepository;
 import com.back.catchmate.inquiry.adapter.out.persistence.entity.InquiryEntity;
@@ -33,12 +35,12 @@ public class InquiryRepositoryImpl implements InquiryRepository {
     }
 
     @Override
-    public DomainPage<Inquiry> findAll(DomainPageable pageable) {
+    public Page<Inquiry> findAll(Pageable pageable) {
         List<InquiryEntity> entities = jpaQueryFactory
                 .selectFrom(inquiryEntity)
                 .join(inquiryEntity.user, userEntity).fetchJoin()
                 .offset(pageable.getOffset())
-                .limit(pageable.getSize())
+                .limit(pageable.getPageSize())
                 .orderBy(inquiryEntity.createdAt.desc())
                 .fetch();
 
@@ -51,22 +53,17 @@ public class InquiryRepositoryImpl implements InquiryRepository {
                 .map(InquiryEntity::toModel)
                 .toList();
 
-        return new DomainPage<>(
-                inquiries,
-                pageable.getPage(),
-                pageable.getSize(),
-                totalCount != null ? totalCount : 0L
-        );
+        return new PageImpl<>(inquiries, pageable, totalCount != null ? totalCount : 0L);
     }
 
     @Override
-    public DomainPage<Inquiry> findAllByUserId(Long userId, DomainPageable pageable) {
+    public Page<Inquiry> findAllByUserId(Long userId, Pageable pageable) {
         List<InquiryEntity> entities = jpaQueryFactory
                 .selectFrom(inquiryEntity)
                 .join(inquiryEntity.user, userEntity).fetchJoin()
                 .where(inquiryEntity.user.id.eq(userId))
                 .offset(pageable.getOffset())
-                .limit(pageable.getSize())
+                .limit(pageable.getPageSize())
                 .orderBy(inquiryEntity.createdAt.desc())
                 .fetch();
 
@@ -80,12 +77,7 @@ public class InquiryRepositoryImpl implements InquiryRepository {
                 .map(InquiryEntity::toModel)
                 .toList();
 
-        return new DomainPage<>(
-                inquiries,
-                pageable.getPage(),
-                pageable.getSize(),
-                totalCount != null ? totalCount : 0L
-        );
+        return new PageImpl<>(inquiries, pageable, totalCount != null ? totalCount : 0L);
     }
 
     @Override

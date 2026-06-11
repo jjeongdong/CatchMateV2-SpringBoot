@@ -1,17 +1,16 @@
 package com.back.catchmate.enroll.adapter.out.persistence.repository;
 
 import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import com.back.catchmate.enroll.domain.model.Enroll;
 import com.back.catchmate.enroll.application.port.out.EnrollRepository;
 import com.back.catchmate.user.domain.model.User;
 import com.back.catchmate.enroll.adapter.out.persistence.entity.EnrollEntity;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
@@ -46,10 +45,10 @@ public class EnrollRepositoryImpl implements EnrollRepository {
     }
 
     @Override
-    public DomainPage<Enroll> findAllByUserId(Long userId, DomainPageable domainPageable) {
+    public Page<Enroll> findAllByUserId(Long userId, Pageable domainPageable) {
         Pageable pageable = PageRequest.of(
-                domainPageable.getPage(),
-                domainPageable.getSize(),
+                domainPageable.getPageNumber(),
+                domainPageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
@@ -59,19 +58,14 @@ public class EnrollRepositoryImpl implements EnrollRepository {
                 .map(EnrollEntity::toModel)
                 .toList();
 
-        return new DomainPage<>(
-                domains,
-                entityPage.getNumber(),
-                entityPage.getSize(),
-                entityPage.getTotalElements()
-        );
+        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
     }
 
     @Override
-    public DomainPage<Enroll> findAllByBoardIdAndStatus(Long boardId, AcceptStatus status, DomainPageable domainPageable) {
+    public Page<Enroll> findAllByBoardIdAndStatus(Long boardId, AcceptStatus status, Pageable domainPageable) {
         Pageable pageable = PageRequest.of(
-                domainPageable.getPage(),
-                domainPageable.getSize(),
+                domainPageable.getPageNumber(),
+                domainPageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
@@ -81,31 +75,21 @@ public class EnrollRepositoryImpl implements EnrollRepository {
                 .map(EnrollEntity::toModel)
                 .collect(Collectors.toList());
 
-        return new DomainPage<>(
-                domains,
-                entityPage.getNumber(),
-                entityPage.getSize(),
-                entityPage.getTotalElements()
-        );
+        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
     }
 
     @Override
-    public DomainPage<Long> findBoardIdsWithPendingEnrolls(Long userId, DomainPageable pageable) {
+    public Page<Long> findBoardIdsWithPendingEnrolls(Long userId, Pageable pageable) {
         PageRequest springPageable = PageRequest.of(
-                pageable.getPage(),
-                pageable.getSize()
+                pageable.getPageNumber(),
+                pageable.getPageSize()
         );
 
         Page<Long> idPage = jpaEnrollRepository.findDistinctBoardIdsByUserIdAndStatus(
                 userId, AcceptStatus.PENDING, springPageable
         );
 
-        return new DomainPage<>(
-                idPage.getContent(),
-                idPage.getNumber(),
-                idPage.getSize(),
-                idPage.getTotalElements()
-        );
+        return new PageImpl<>(idPage.getContent(), pageable, idPage.getTotalElements());
     }
 
     @Override

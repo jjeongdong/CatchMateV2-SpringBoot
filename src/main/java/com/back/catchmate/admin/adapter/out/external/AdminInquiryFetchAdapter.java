@@ -1,8 +1,9 @@
 package com.back.catchmate.admin.adapter.out.external;
 
 import com.back.catchmate.admin.application.port.out.InquiryFetchPort;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.inquiry.application.service.InquiryService;
 import com.back.catchmate.inquiry.domain.model.Inquiry;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class AdminInquiryFetchAdapter implements InquiryFetchPort {
     }
 
     @Override
-    public DomainPage<Inquiry> getInquiryList(DomainPageable pageable) {
+    public Page<Inquiry> getInquiryList(Pageable pageable) {
         return inquiryService.getInquiryList(pageable);
     }
 

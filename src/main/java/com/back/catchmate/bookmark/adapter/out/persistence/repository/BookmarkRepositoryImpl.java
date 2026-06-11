@@ -2,13 +2,12 @@ package com.back.catchmate.bookmark.adapter.out.persistence.repository;
 
 import com.back.catchmate.bookmark.domain.model.Bookmark;
 import com.back.catchmate.bookmark.application.port.out.BookmarkRepository;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
-import com.back.catchmate.bookmark.adapter.out.persistence.entity.BookmarkEntity;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import com.back.catchmate.bookmark.adapter.out.persistence.entity.BookmarkEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
@@ -33,10 +32,10 @@ public class BookmarkRepositoryImpl implements BookmarkRepository {
     }
 
     @Override
-    public DomainPage<Bookmark> findAllByUserId(Long userId, DomainPageable domainPageable) {
+    public Page<Bookmark> findAllByUserId(Long userId, Pageable domainPageable) {
         Pageable pageable = PageRequest.of(
-                domainPageable.getPage(),
-                domainPageable.getSize(),
+                domainPageable.getPageNumber(),
+                domainPageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
@@ -46,12 +45,7 @@ public class BookmarkRepositoryImpl implements BookmarkRepository {
                 .map(BookmarkEntity::toModel)
                 .toList();
 
-        return new DomainPage<>(
-                domains,
-                entityPage.getNumber(),
-                entityPage.getSize(),
-                entityPage.getTotalElements()
-        );
+        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
     }
 
     @Override

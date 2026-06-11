@@ -2,8 +2,9 @@ package com.back.catchmate.admin.adapter.out.external;
 
 import com.back.catchmate.admin.application.port.out.NoticeFetchPort;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.notice.application.dto.response.NoticeResponse;
 import com.back.catchmate.notice.application.service.NoticeService;
 import com.back.catchmate.notice.domain.model.Notice;
@@ -37,7 +38,7 @@ public class AdminNoticeFetchAdapter implements NoticeFetchPort {
     }
 
     @Override
-    public DomainPage<Notice> getNoticeList(DomainPageable pageable) {
+    public Page<Notice> getNoticeList(Pageable pageable) {
         return noticeService.getNoticeList(pageable);
     }
 

@@ -1,8 +1,9 @@
 package com.back.catchmate.chat.application.port.out;
 
 import com.back.catchmate.chat.domain.model.ChatRoom;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,7 +17,7 @@ public interface ChatRoomRepository {
 
     Optional<Long> findLastMessageSequenceById(Long id);
 
-    DomainPage<ChatRoom> findAllByUserId(Long userId, DomainPageable pageable);
+    Page<ChatRoom> findAllByUserId(Long userId, Pageable pageable);
 
     List<ChatRoom> findAllByUserId(Long userId);
 

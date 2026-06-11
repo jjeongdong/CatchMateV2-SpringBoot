@@ -1,8 +1,9 @@
 package com.back.catchmate.admin.adapter.out.external;
 
 import com.back.catchmate.admin.application.port.out.ReportFetchPort;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.report.application.service.ReportService;
 import com.back.catchmate.report.domain.model.Report;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ public class AdminReportFetchAdapter implements ReportFetchPort {
     }
 
     @Override
-    public DomainPage<Report> getReportList(DomainPageable pageable) {
+    public Page<Report> getReportList(Pageable pageable) {
         return reportService.getReportList(pageable);
     }
 

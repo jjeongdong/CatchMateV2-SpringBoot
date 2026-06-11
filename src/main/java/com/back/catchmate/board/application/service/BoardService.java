@@ -31,8 +31,9 @@ import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.orchestration.CursorPagedResponse;
 import com.back.catchmate.common.orchestration.PagedResponse;
 import com.back.catchmate.common.page.CursorPage;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.enroll.domain.model.Enroll;
 import com.back.catchmate.game.domain.model.Game;
 import com.back.catchmate.user.domain.model.User;
@@ -158,8 +159,8 @@ public class BoardService implements BoardUseCase {
             throw new BaseException(ErrorCode.BLOCKED_USER_BOARD);
         }
 
-        DomainPageable domainPageable = DomainPageable.of(page, size);
-        DomainPage<Board> boardPage = boardRepository.findAllByUserId(targetUserId, domainPageable);
+        Pageable domainPageable = PageRequest.of(page, size);
+        Page<Board> boardPage = boardRepository.findAllByUserId(targetUserId, domainPageable);
 
         List<Long> boardIds = boardPage.getContent().stream()
                 .map(Board::getId)
@@ -266,11 +267,11 @@ public class BoardService implements BoardUseCase {
         return boardRepository.findTempBoardByUserId(userId);
     }
 
-    public DomainPage<Board> getBoardListByUserId(Long userId, DomainPageable pageable) {
+    public Page<Board> getBoardListByUserId(Long userId, Pageable pageable) {
         return boardRepository.findAllByUserId(userId, pageable);
     }
 
-    public DomainPage<Board> getBoardList(DomainPageable pageable) {
+    public Page<Board> getBoardList(Pageable pageable) {
         return boardRepository.findAll(pageable);
     }
 

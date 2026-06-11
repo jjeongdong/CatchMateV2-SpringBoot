@@ -4,14 +4,13 @@ import com.back.catchmate.board.domain.dto.BoardSearchCondition;
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.board.application.port.out.BoardRepository;
 import com.back.catchmate.common.page.CursorPage;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.board.adapter.out.persistence.entity.BoardEntity;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
@@ -61,8 +60,8 @@ public class BoardRepositoryImpl implements BoardRepository {
     }
 
     @Override
-    public DomainPage<Board> findAll(DomainPageable domainPageable) {
-        Pageable pageable = PageRequest.of(domainPageable.getPage(), domainPageable.getSize());
+    public Page<Board> findAll(Pageable domainPageable) {
+        Pageable pageable = PageRequest.of(domainPageable.getPageNumber(), domainPageable.getPageSize());
 
         Page<BoardEntity> entityPage = jpaBoardRepository.findAllByCompletedTrue(pageable);
 
@@ -70,17 +69,12 @@ public class BoardRepositoryImpl implements BoardRepository {
                 .map(BoardEntity::toDomain)
                 .toList();
 
-        return new DomainPage<>(
-                domains,
-                entityPage.getNumber(),
-                entityPage.getSize(),
-                entityPage.getTotalElements()
-        );
+        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
     }
 
     @Override
-    public DomainPage<Board> findAllByCondition(BoardSearchCondition condition, DomainPageable domainPageable) {
-        Pageable pageable = PageRequest.of(domainPageable.getPage(), domainPageable.getSize());
+    public Page<Board> findAllByCondition(BoardSearchCondition condition, Pageable domainPageable) {
+        Pageable pageable = PageRequest.of(domainPageable.getPageNumber(), domainPageable.getPageSize());
 
         Page<BoardEntity> entityPage = queryDslBoardRepository.findAllByCondition(condition, pageable);
 
@@ -88,12 +82,7 @@ public class BoardRepositoryImpl implements BoardRepository {
                 .map(BoardEntity::toDomain)
                 .toList();
 
-        return new DomainPage<>(
-                domains,
-                entityPage.getNumber(),
-                entityPage.getSize(),
-                entityPage.getTotalElements()
-        );
+        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
     }
 
     @Override
@@ -123,10 +112,10 @@ public class BoardRepositoryImpl implements BoardRepository {
     }
 
     @Override
-    public DomainPage<Board> findAllByUserId(Long userId, DomainPageable domainPageable) {
+    public Page<Board> findAllByUserId(Long userId, Pageable domainPageable) {
         Pageable pageable = PageRequest.of(
-                domainPageable.getPage(),
-                domainPageable.getSize(),
+                domainPageable.getPageNumber(),
+                domainPageable.getPageSize(),
                 Sort.by("liftUpDate").descending()
         );
 
@@ -136,12 +125,7 @@ public class BoardRepositoryImpl implements BoardRepository {
                 .map(BoardEntity::toDomain)
                 .toList();
 
-        return new DomainPage<>(
-                domains,
-                entityPage.getNumber(),
-                entityPage.getSize(),
-                entityPage.getTotalElements()
-        );
+        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
     }
 
     @Override

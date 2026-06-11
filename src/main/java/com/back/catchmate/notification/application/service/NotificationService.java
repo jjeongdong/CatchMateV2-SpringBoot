@@ -5,8 +5,9 @@ import com.back.catchmate.notification.application.port.out.EnrollFetchPort;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import com.back.catchmate.notification.application.dto.response.NotificationResponse;
 import com.back.catchmate.notification.application.dto.response.UnreadNotificationResponse;
@@ -49,10 +50,10 @@ public class NotificationService implements NotificationUseCase {
     }
 
     public PagedResponse<NotificationResponse> getNotificationList(Long userId, int page, int size) {
-        DomainPageable domainPageable = DomainPageable.of(page, size);
+        Pageable domainPageable = PageRequest.of(page, size);
 
         // 1. 서비스 호출
-        DomainPage<Notification> notificationPage = getNotificationList(userId, domainPageable);
+        Page<Notification> notificationPage = getNotificationList(userId, domainPageable);
 
         // 2. 신청 상태 정보 일괄 조회 (N+1 방지)
         List<Long> enrollIds = notificationPage.getContent().stream()
@@ -111,7 +112,7 @@ public class NotificationService implements NotificationUseCase {
         return notification;
     }
 
-    public DomainPage<Notification> getNotificationList(Long userId, DomainPageable pageable) {
+    public Page<Notification> getNotificationList(Long userId, Pageable pageable) {
         return notificationRepository.findAllByUserId(userId, pageable);
     }
 

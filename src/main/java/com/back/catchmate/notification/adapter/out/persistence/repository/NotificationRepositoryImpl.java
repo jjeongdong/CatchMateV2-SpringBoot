@@ -1,14 +1,13 @@
 package com.back.catchmate.notification.adapter.out.persistence.repository;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.notification.domain.model.Notification;
 import com.back.catchmate.notification.application.port.out.NotificationRepository;
 import com.back.catchmate.notification.adapter.out.persistence.entity.NotificationEntity;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,10 +34,10 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     }
 
     @Override
-    public DomainPage<Notification> findAllByUserId(Long userId, DomainPageable domainPageable) {
+    public Page<Notification> findAllByUserId(Long userId, Pageable domainPageable) {
         Pageable pageable = PageRequest.of(
-                domainPageable.getPage(),
-                domainPageable.getSize(),
+                domainPageable.getPageNumber(),
+                domainPageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
@@ -48,12 +47,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                 .map(NotificationEntity::toModel)
                 .toList();
 
-        return new DomainPage<>(
-                domains,
-                entityPage.getNumber(),
-                entityPage.getSize(),
-                entityPage.getTotalElements()
-        );
+        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
     }
 
     @Override

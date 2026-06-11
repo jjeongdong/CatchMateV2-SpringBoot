@@ -1,7 +1,8 @@
 package com.back.catchmate.notification.application.port.out;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.notification.domain.model.Notification;
 
 import java.util.Optional;
@@ -11,7 +12,7 @@ public interface NotificationRepository {
 
     Optional<Notification> findById(Long id);
 
-    DomainPage<Notification> findAllByUserId(Long userId, DomainPageable pageable);
+    Page<Notification> findAllByUserId(Long userId, Pageable pageable);
 
     void delete(Notification notification);
 

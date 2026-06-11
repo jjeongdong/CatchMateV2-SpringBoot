@@ -1,16 +1,15 @@
 package com.back.catchmate.user.adapter.out.persistence.repository;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.user.domain.model.Block;
 import com.back.catchmate.user.domain.model.User;
 import com.back.catchmate.user.application.port.out.BlockRepository;
 import com.back.catchmate.user.adapter.out.persistence.entity.BlockEntity;
 import com.back.catchmate.user.adapter.out.persistence.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
@@ -35,10 +34,10 @@ public class BlockRepositoryImpl implements BlockRepository {
     }
 
     @Override
-    public DomainPage<Block> findAllByBlockerId(Long blockerId, DomainPageable domainPageable) {
+    public Page<Block> findAllByBlockerId(Long blockerId, Pageable domainPageable) {
         Pageable pageable = PageRequest.of(
-                domainPageable.getPage(),
-                domainPageable.getSize(),
+                domainPageable.getPageNumber(),
+                domainPageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "createdAt") // 최신 차단순
         );
 
@@ -48,12 +47,7 @@ public class BlockRepositoryImpl implements BlockRepository {
                 .map(BlockEntity::toModel)
                 .toList();
 
-        return new DomainPage<>(
-                domains,
-                entityPage.getNumber(),
-                entityPage.getSize(),
-                entityPage.getTotalElements()
-        );
+        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
     }
 
     @Override

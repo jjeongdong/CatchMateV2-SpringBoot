@@ -4,8 +4,9 @@ import com.back.catchmate.board.application.dto.response.BoardResponse;
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.common.orchestration.CursorPagedResponse;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,9 +15,9 @@ public interface BoardFetchPort {
     CursorPagedResponse<BoardResponse> getBoardList(Long userId, LocalDate gameDate, Integer maxPerson,
                                                            List<Long> preferredTeamIdList,
                                                            LocalDateTime lastLiftUpDate, Long lastBoardId, int size);
-    DomainPage<Board> getBoardList(DomainPageable pageable);
+    Page<Board> getBoardList(Pageable pageable);
     PagedResponse<BoardResponse> getBoardListByUserId(Long targetUserId, Long loginUserId, int page, int size);
-    DomainPage<Board> getBoardListByUserId(Long userId, DomainPageable pageable);
+    Page<Board> getBoardListByUserId(Long userId, Pageable pageable);
     Board getCompletedBoard(Long boardId);
     long getTotalBoardCount();
 }

@@ -1,7 +1,8 @@
 package com.back.catchmate.inquiry.application.port.out;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.inquiry.domain.model.Inquiry;
 import com.back.catchmate.inquiry.domain.model.InquiryStatus;
 
@@ -12,9 +13,9 @@ public interface InquiryRepository {
 
     Optional<Inquiry> findById(Long inquiryId);
 
-    DomainPage<Inquiry> findAll(DomainPageable pageable);
+    Page<Inquiry> findAll(Pageable pageable);
 
-    DomainPage<Inquiry> findAllByUserId(Long userId, DomainPageable pageable);
+    Page<Inquiry> findAllByUserId(Long userId, Pageable pageable);
 
     long count();
 

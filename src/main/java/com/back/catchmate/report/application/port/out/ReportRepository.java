@@ -1,7 +1,8 @@
 package com.back.catchmate.report.application.port.out;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.report.domain.model.Report;
 
 import java.util.Optional;
@@ -11,7 +12,7 @@ public interface ReportRepository {
 
     Optional<Report> findById(Long id);
 
-    DomainPage<Report> findAll(DomainPageable pageable);
+    Page<Report> findAll(Pageable pageable);
 
     long count();
 

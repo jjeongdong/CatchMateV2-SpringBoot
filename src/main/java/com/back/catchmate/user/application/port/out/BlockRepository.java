@@ -1,7 +1,8 @@
 package com.back.catchmate.user.application.port.out;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.user.domain.model.Block;
 import com.back.catchmate.user.domain.model.User;
 
@@ -13,7 +14,7 @@ public interface BlockRepository {
 
     Optional<Block> findByBlockerAndBlocked(User blocker, User blocked);
 
-    DomainPage<Block> findAllByBlockerId(Long blockerId, DomainPageable pageable);
+    Page<Block> findAllByBlockerId(Long blockerId, Pageable pageable);
 
     List<Long> findAllBlockedUserIdsByBlocker(User user);
 

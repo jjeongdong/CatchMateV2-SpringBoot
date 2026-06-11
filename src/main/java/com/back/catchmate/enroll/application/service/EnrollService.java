@@ -16,8 +16,9 @@ import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.idempotency.IdempotencyPort;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.enroll.application.dto.command.EnrollCreateCommand;
 import com.back.catchmate.enroll.application.dto.response.EnrollAcceptResponse;
 import com.back.catchmate.enroll.application.dto.response.EnrollApplicantResponse;
@@ -112,7 +113,7 @@ public class EnrollService implements EnrollUseCase {
     }
 
     public PagedResponse<EnrollRequestResponse> getEnrollRequestList(Long userId, int page, int size) {
-        DomainPage<Enroll> enrollPage = getEnrollListByUserId(userId, DomainPageable.of(page, size));
+        Page<Enroll> enrollPage = getEnrollListByUserId(userId, PageRequest.of(page, size));
         Map<Long, Boolean> bookmarkMap = getBookmarkStatusMap(userId, enrollPage.getContent());
 
         List<EnrollRequestResponse> responses = enrollPage.getContent().stream()
@@ -131,7 +132,7 @@ public class EnrollService implements EnrollUseCase {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }
 
-        DomainPage<Enroll> enrollPage = getEnrollListByBoardIdAndStatus(boardId, AcceptStatus.PENDING, DomainPageable.of(page, size));
+        Page<Enroll> enrollPage = getEnrollListByBoardIdAndStatus(boardId, AcceptStatus.PENDING, PageRequest.of(page, size));
 
         List<EnrollApplicantResponse> responses = enrollPage.getContent().stream()
                 .map(EnrollApplicantResponse::from)
@@ -141,7 +142,7 @@ public class EnrollService implements EnrollUseCase {
     }
 
     public PagedResponse<EnrollReceiveResponse> getEnrollReceiveList(Long userId, int page, int size) {
-        DomainPage<Long> boardIdPage = getBoardIdsWithPendingEnrolls(userId, DomainPageable.of(page, size));
+        Page<Long> boardIdPage = getBoardIdsWithPendingEnrolls(userId, PageRequest.of(page, size));
         List<Long> boardIds = boardIdPage.getContent();
 
         if (boardIds.isEmpty()) {
@@ -297,15 +298,15 @@ public class EnrollService implements EnrollUseCase {
         return enrollRepository.findByUserAndBoard(user, board);
     }
 
-    public DomainPage<Enroll> getEnrollListByUserId(Long userId, DomainPageable pageable) {
+    public Page<Enroll> getEnrollListByUserId(Long userId, Pageable pageable) {
         return enrollRepository.findAllByUserId(userId, pageable);
     }
 
-    public DomainPage<Enroll> getEnrollListByBoardIdAndStatus(Long boardId, AcceptStatus acceptStatus, DomainPageable pageable) {
+    public Page<Enroll> getEnrollListByBoardIdAndStatus(Long boardId, AcceptStatus acceptStatus, Pageable pageable) {
         return enrollRepository.findAllByBoardIdAndStatus(boardId, acceptStatus, pageable);
     }
 
-    public DomainPage<Long> getBoardIdsWithPendingEnrolls(Long userId, DomainPageable pageable) {
+    public Page<Long> getBoardIdsWithPendingEnrolls(Long userId, Pageable pageable) {
         return enrollRepository.findBoardIdsWithPendingEnrolls(userId, pageable);
     }
 

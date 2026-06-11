@@ -5,8 +5,9 @@ import com.back.catchmate.user.application.port.out.EnrollFetchPort;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.enroll.domain.model.Enroll;
 import com.back.catchmate.user.application.dto.response.BlockActionResponse;
 import com.back.catchmate.user.application.dto.response.BlockedUserResponse;
@@ -52,9 +53,9 @@ public class BlockService implements UserBlockUseCase {
 
     @Transactional(readOnly = true)
     public PagedResponse<BlockedUserResponse> getBlockList(Long userId, int page, int size) {
-        DomainPageable domainPageable = DomainPageable.of(page, size);
+        Pageable domainPageable = PageRequest.of(page, size);
 
-        DomainPage<Block> blockPage = getBlockList(userId, domainPageable);
+        Page<Block> blockPage = getBlockList(userId, domainPageable);
 
         List<BlockedUserResponse> responses = blockPage.getContent().stream()
                 .map(BlockedUserResponse::from)
@@ -82,7 +83,7 @@ public class BlockService implements UserBlockUseCase {
         blockRepository.save(block);
     }
 
-    public DomainPage<Block> getBlockList(Long blockerId, DomainPageable pageable) {
+    public Page<Block> getBlockList(Long blockerId, Pageable pageable) {
         return blockRepository.findAllByBlockerId(blockerId, pageable);
     }
 

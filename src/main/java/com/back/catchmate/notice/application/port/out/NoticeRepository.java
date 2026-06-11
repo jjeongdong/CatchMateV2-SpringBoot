@@ -1,7 +1,8 @@
 package com.back.catchmate.notice.application.port.out;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.notice.domain.model.Notice;
 
 import java.util.Optional;
@@ -11,7 +12,7 @@ public interface NoticeRepository {
 
     Optional<Notice> findById(Long id);
 
-    DomainPage<Notice> findAll(DomainPageable pageable);
+    Page<Notice> findAll(Pageable pageable);
 
     void delete(Notice notice);
 }

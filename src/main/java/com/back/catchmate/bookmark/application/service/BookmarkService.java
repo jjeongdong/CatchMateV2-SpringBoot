@@ -11,8 +11,9 @@ import com.back.catchmate.bookmark.application.port.in.BookmarkUseCase;
 import com.back.catchmate.bookmark.application.port.out.BookmarkRepository;
 import com.back.catchmate.bookmark.domain.model.Bookmark;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.user.domain.model.User;
 import java.util.List;
 import java.util.Optional;
@@ -53,9 +54,9 @@ public class BookmarkService implements BookmarkUseCase {
 
     public PagedResponse<BoardResponse> getBookmarkedBoards(Long userId, int page, int size) {
         User user = userFetchPort.getUser(userId);
-        DomainPageable pageable = DomainPageable.of(page, size);
+        Pageable pageable = PageRequest.of(page, size);
         
-        DomainPage<Bookmark> bookmarkPage = findAllByUser(user, pageable);
+        Page<Bookmark> bookmarkPage = findAllByUser(user, pageable);
 
         List<BoardResponse> boardResponses = bookmarkPage.getContent().stream()
                 .map(bookmark -> BoardResponse.from(bookmark.getBoard(), true))
@@ -76,7 +77,7 @@ public class BookmarkService implements BookmarkUseCase {
         return bookmarkRepository.findByUserIdAndBoardId(user.getId(), board.getId());
     }
 
-    public DomainPage<Bookmark> findAllByUser(User user, DomainPageable pageable) {
+    public Page<Bookmark> findAllByUser(User user, Pageable pageable) {
         return bookmarkRepository.findAllByUserId(user.getId(), pageable);
     }
 

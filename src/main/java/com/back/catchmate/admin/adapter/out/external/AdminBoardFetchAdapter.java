@@ -6,8 +6,9 @@ import com.back.catchmate.board.application.service.BoardService;
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.common.orchestration.CursorPagedResponse;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,7 +28,7 @@ public class AdminBoardFetchAdapter implements BoardFetchPort {
     }
 
     @Override
-    public DomainPage<Board> getBoardList(DomainPageable pageable) {
+    public Page<Board> getBoardList(Pageable pageable) {
         return boardService.getBoardList(pageable);
     }
 
@@ -37,7 +38,7 @@ public class AdminBoardFetchAdapter implements BoardFetchPort {
     }
 
     @Override
-    public DomainPage<Board> getBoardListByUserId(Long userId, DomainPageable pageable) {
+    public Page<Board> getBoardListByUserId(Long userId, Pageable pageable) {
         return boardService.getBoardListByUserId(userId, pageable);
     }
 

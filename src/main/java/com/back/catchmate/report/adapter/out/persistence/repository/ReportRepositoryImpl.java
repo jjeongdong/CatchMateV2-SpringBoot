@@ -1,7 +1,9 @@
 package com.back.catchmate.report.adapter.out.persistence.repository;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.report.domain.model.Report;
 import com.back.catchmate.report.application.port.out.ReportRepository;
 import com.back.catchmate.report.adapter.out.persistence.entity.ReportEntity;
@@ -34,7 +36,7 @@ public class ReportRepositoryImpl implements ReportRepository {
     }
 
     @Override
-    public DomainPage<Report> findAll(DomainPageable pageable) {
+    public Page<Report> findAll(Pageable pageable) {
         QUserEntity reporter = new QUserEntity("reporter");
         QUserEntity reportedUser = new QUserEntity("reportedUser");
 
@@ -43,7 +45,7 @@ public class ReportRepositoryImpl implements ReportRepository {
                 .join(reportEntity.reporter, reporter).fetchJoin()      // 신고자 정보
                 .join(reportEntity.reportedUser, reportedUser).fetchJoin() // 대상자 정보
                 .offset(pageable.getOffset())
-                .limit(pageable.getSize())
+                .limit(pageable.getPageSize())
                 .orderBy(reportEntity.createdAt.desc())
                 .fetch();
 
@@ -56,12 +58,7 @@ public class ReportRepositoryImpl implements ReportRepository {
                 .map(ReportEntity::toModel)
                 .toList();
 
-        return new DomainPage<>(
-                reports,
-                pageable.getPage(),
-                pageable.getSize(),
-                totalCount != null ? totalCount : 0L
-        );
+        return new PageImpl<>(reports, pageable, totalCount != null ? totalCount : 0L);
     }
 
     @Override

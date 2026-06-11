@@ -16,8 +16,9 @@ import com.back.catchmate.admin.application.port.in.AdminUseCase;
 import com.back.catchmate.admin.application.event.AdminInquiryAnswerNotificationEvent;
 import com.back.catchmate.admin.application.event.AdminNoticeCreateNotificationEvent;
 import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.enroll.domain.model.Enroll;
 import com.back.catchmate.inquiry.domain.model.Inquiry;
 import com.back.catchmate.notice.domain.model.Notice;
@@ -116,8 +117,8 @@ public class AdminService implements AdminUseCase {
     }
 
     public PagedResponse<AdminUserResponse> getUserList(String clubName, int page, int size) {
-        DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<User> userPage = userFetchPort.getUsersByClub(clubName, domainPageable);
+        Pageable domainPageable = PageRequest.of(page, size);
+        Page<User> userPage = userFetchPort.getUsersByClub(clubName, domainPageable);
 
         List<AdminUserResponse> responses = userPage.getContent().stream()
                 .map(AdminUserResponse::from)
@@ -138,8 +139,8 @@ public class AdminService implements AdminUseCase {
     }
 
     public PagedResponse<AdminBoardResponse> getBoardListByUserId(Long userId, int page, int size) {
-        DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Board> boardPage = boardFetchPort.getBoardListByUserId(userId, domainPageable);
+        Pageable domainPageable = PageRequest.of(page, size);
+        Page<Board> boardPage = boardFetchPort.getBoardListByUserId(userId, domainPageable);
 
         List<AdminBoardResponse> responses = boardPage.getContent().stream()
                 .map(AdminBoardResponse::from)
@@ -149,8 +150,8 @@ public class AdminService implements AdminUseCase {
     }
 
     public PagedResponse<AdminBoardResponse> getBoardList(int page, int size) {
-        DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Board> boardPage = boardFetchPort.getBoardList(domainPageable);
+        Pageable domainPageable = PageRequest.of(page, size);
+        Page<Board> boardPage = boardFetchPort.getBoardList(domainPageable);
 
         List<AdminBoardResponse> responses = boardPage.getContent().stream()
                 .map(AdminBoardResponse::from)
@@ -165,8 +166,8 @@ public class AdminService implements AdminUseCase {
     }
 
     public PagedResponse<AdminReportResponse> getReportList(int page, int size) {
-        DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Report> reportPage = reportFetchPort.getReportList(domainPageable);
+        Pageable domainPageable = PageRequest.of(page, size);
+        Page<Report> reportPage = reportFetchPort.getReportList(domainPageable);
 
         List<AdminReportResponse> responses = reportPage.getContent().stream()
                 .map(AdminReportResponse::from)
@@ -181,8 +182,8 @@ public class AdminService implements AdminUseCase {
     }
 
     public PagedResponse<AdminInquiryResponse> getInquiryList(int page, int size) {
-        DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Inquiry> inquiryPage = inquiryFetchPort.getInquiryList(domainPageable);
+        Pageable domainPageable = PageRequest.of(page, size);
+        Page<Inquiry> inquiryPage = inquiryFetchPort.getInquiryList(domainPageable);
 
         List<AdminInquiryResponse> responses = inquiryPage.getContent().stream()
                 .map(AdminInquiryResponse::from)
@@ -197,8 +198,8 @@ public class AdminService implements AdminUseCase {
     }
 
     public PagedResponse<AdminNoticeResponse> getNoticeList(int page, int size) {
-        DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Notice> noticePage = noticeFetchPort.getNoticeList(domainPageable);
+        Pageable domainPageable = PageRequest.of(page, size);
+        Page<Notice> noticePage = noticeFetchPort.getNoticeList(domainPageable);
 
         List<AdminNoticeResponse> responses = noticePage.getContent().stream()
                 .map(AdminNoticeResponse::from)

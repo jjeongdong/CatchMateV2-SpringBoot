@@ -1,7 +1,9 @@
 package com.back.catchmate.user.adapter.out.persistence.repository;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.user.domain.model.User;
 import com.back.catchmate.user.application.port.out.UserRepository;
 import com.back.catchmate.user.adapter.out.persistence.entity.UserEntity;
@@ -57,13 +59,13 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public DomainPage<User> findAllByClubName(String clubName, DomainPageable pageable) {
+    public Page<User> findAllByClubName(String clubName, Pageable pageable) {
         List<UserEntity> entities = jpaQueryFactory
                 .selectFrom(userEntity)
                 .join(userEntity.club, clubEntity).fetchJoin()
                 .where(clubNameEq(clubName))
                 .offset(pageable.getOffset())
-                .limit(pageable.getSize())
+                .limit(pageable.getPageSize())
                 .orderBy(userEntity.createdAt.desc())
                 .fetch();
 
@@ -78,12 +80,7 @@ public class UserRepositoryImpl implements UserRepository {
                 .map(UserEntity::toModel)
                 .toList();
 
-        return new DomainPage<>(
-                users,
-                pageable.getPage(),
-                pageable.getSize(),
-                totalCount != null ? totalCount : 0L
-        );
+        return new PageImpl<>(users, pageable, totalCount != null ? totalCount : 0L);
     }
 
     @Override

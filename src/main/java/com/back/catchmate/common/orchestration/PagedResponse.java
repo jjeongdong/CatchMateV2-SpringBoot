@@ -1,6 +1,6 @@
 package com.back.catchmate.common.orchestration;
 
-import com.back.catchmate.common.page.DomainPage;
+import org.springframework.data.domain.Page;
 import lombok.Getter;
 import java.util.List;
 
@@ -12,11 +12,11 @@ public class PagedResponse<T> {
     private final long totalElements;
     private final boolean hasNext;
 
-    public PagedResponse(DomainPage<?> domainPage, List<T> content) {
+    public PagedResponse(Page<?> page, List<T> content) {
         this.content = content;
-        this.pageNumber = domainPage.getPageNumber();
-        this.totalPages = domainPage.getTotalPages();
-        this.totalElements = domainPage.getTotalElements();
-        this.hasNext = domainPage.isHasNext();
+        this.pageNumber = page.getNumber();
+        this.totalPages = page.getTotalPages();
+        this.totalElements = page.getTotalElements();
+        this.hasNext = page.hasNext();
     }
 }

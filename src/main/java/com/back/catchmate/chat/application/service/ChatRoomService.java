@@ -12,8 +12,9 @@ import com.back.catchmate.chat.application.port.out.ChatMessageBufferPort;
 import com.back.catchmate.chat.application.port.out.ChatSequencePort;
 import com.back.catchmate.chat.application.port.out.ChatRoomMemberRepository;
 import com.back.catchmate.chat.application.port.out.ChatRoomRepository;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.user.domain.model.User;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
@@ -68,7 +69,7 @@ public class ChatRoomService {
 
     // 사용자 기준으로 참가중인 채팅방 리스트 조회 (페이징)
     // ChatRoomMember 테이블을 통해 활성 멤버의 채팅방만 조회
-    public DomainPage<ChatRoom> findAllByUserId(Long userId, DomainPageable pageable) {
+    public Page<ChatRoom> findAllByUserId(Long userId, Pageable pageable) {
         return chatRoomRepository.findAllByUserId(userId, pageable);
     }
 

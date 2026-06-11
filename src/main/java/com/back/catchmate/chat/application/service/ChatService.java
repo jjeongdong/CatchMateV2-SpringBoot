@@ -13,8 +13,9 @@ import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
 import com.back.catchmate.chat.domain.model.ChatRoom;
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.user.domain.model.User;
 import com.back.catchmate.user.application.port.out.ImageUploaderPort;
 import com.back.catchmate.chat.application.dto.command.ChatMessageCommand;
@@ -91,8 +92,8 @@ public class ChatService implements ChatUseCase {
     }
 
     public PagedResponse<ChatRoomResponse> getMyChatRooms(Long userId, int page, int size) {
-        DomainPageable pageable = new DomainPageable(page, size);
-        DomainPage<ChatRoom> chatRoomPage = chatRoomService.findAllByUserId(userId, pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ChatRoom> chatRoomPage = chatRoomService.findAllByUserId(userId, pageable);
 
         List<Long> chatRoomIds = chatRoomPage.getContent().stream()
                 .map(ChatRoom::getId)

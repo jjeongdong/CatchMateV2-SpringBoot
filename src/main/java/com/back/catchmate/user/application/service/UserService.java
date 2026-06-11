@@ -3,8 +3,9 @@ package com.back.catchmate.user.application.service;
 import com.back.catchmate.club.domain.model.Club;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.user.application.dto.command.UploadFile;
 import com.back.catchmate.user.application.dto.command.UserFcmTokenUpdateCommand;
 import com.back.catchmate.user.application.dto.command.UserProfileUpdateCommand;
@@ -120,7 +121,7 @@ public class UserService implements UserUseCase {
         return userRepository.findAllEventAlarmEnabled();
     }
 
-    public DomainPage<User> getUsersByClub(String clubName, DomainPageable pageable) {
+    public Page<User> getUsersByClub(String clubName, Pageable pageable) {
         return userRepository.findAllByClubName(clubName, pageable);
     }
 

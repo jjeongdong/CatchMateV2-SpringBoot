@@ -3,8 +3,9 @@ package com.back.catchmate.notice.application.service;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.notice.application.dto.response.NoticeDetailResponse;
 import com.back.catchmate.notice.application.dto.response.NoticeResponse;
 import com.back.catchmate.notice.application.port.in.NoticeUseCase;
@@ -31,8 +32,8 @@ public class NoticeService implements NoticeUseCase {
     }
 
     public PagedResponse<NoticeResponse> getNoticeList(int page, int size) {
-        DomainPageable domainPageable = new DomainPageable(page, size);
-        DomainPage<Notice> noticePage = getNoticeList(domainPageable);
+        Pageable domainPageable = PageRequest.of(page, size);
+        Page<Notice> noticePage = getNoticeList(domainPageable);
 
         List<NoticeResponse> responses = noticePage.getContent().stream()
                 .map(NoticeResponse::from)
@@ -51,7 +52,7 @@ public class NoticeService implements NoticeUseCase {
                 .orElseThrow(() -> new BaseException(ErrorCode.NOTICE_NOT_FOUND));
     }
 
-    public DomainPage<Notice> getNoticeList(DomainPageable pageable) {
+    public Page<Notice> getNoticeList(Pageable pageable) {
         return noticeRepository.findAll(pageable);
     }
 

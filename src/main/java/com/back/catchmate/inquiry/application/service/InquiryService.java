@@ -5,8 +5,9 @@ import com.back.catchmate.inquiry.application.port.out.UserFetchPort;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.orchestration.PagedResponse;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.inquiry.application.dto.command.InquiryCreateCommand;
 import com.back.catchmate.inquiry.application.dto.response.InquiryCreateResponse;
 import com.back.catchmate.inquiry.application.dto.response.InquiryDetailResponse;
@@ -50,8 +51,8 @@ public class InquiryService implements InquiryUseCase {
     }
 
     public PagedResponse<InquiryDetailResponse> getInquiryListByUser(Long userId, int page, int size) {
-        DomainPageable pageable = DomainPageable.of(page, size);
-        DomainPage<Inquiry> inquiryPage = getInquiryListByUser(userId, pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Inquiry> inquiryPage = getInquiryListByUser(userId, pageable);
 
         List<InquiryDetailResponse> responses = inquiryPage.getContent().stream()
                 .map(InquiryDetailResponse::from)
@@ -70,11 +71,11 @@ public class InquiryService implements InquiryUseCase {
                 .orElseThrow(() -> new BaseException(ErrorCode.INQUIRY_NOT_FOUND));
     }
 
-    public DomainPage<Inquiry> getInquiryList(DomainPageable pageable) {
+    public Page<Inquiry> getInquiryList(Pageable pageable) {
         return inquiryRepository.findAll(pageable);
     }
 
-    public DomainPage<Inquiry> getInquiryListByUser(Long userId, DomainPageable pageable) {
+    public Page<Inquiry> getInquiryListByUser(Long userId, Pageable pageable) {
         return inquiryRepository.findAllByUserId(userId, pageable);
     }
 

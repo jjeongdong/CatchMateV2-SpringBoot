@@ -1,14 +1,13 @@
 package com.back.catchmate.notice.adapter.out.persistence.repository;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.notice.domain.model.Notice;
 import com.back.catchmate.notice.application.port.out.NoticeRepository;
 import com.back.catchmate.notice.adapter.out.persistence.entity.NoticeEntity;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
@@ -33,10 +32,10 @@ public class NoticeRepositoryImpl implements NoticeRepository {
     }
 
     @Override
-    public DomainPage<Notice> findAll(DomainPageable domainPageable) {
+    public Page<Notice> findAll(Pageable domainPageable) {
         Pageable pageable = PageRequest.of(
-                domainPageable.getPage(),
-                domainPageable.getSize(),
+                domainPageable.getPageNumber(),
+                domainPageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
@@ -47,12 +46,7 @@ public class NoticeRepositoryImpl implements NoticeRepository {
                 .map(NoticeEntity::toModel)
                 .toList();
 
-        return new DomainPage<>(
-                domains,
-                entityPage.getNumber(),
-                entityPage.getSize(),
-                entityPage.getTotalElements()
-        );
+        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
     }
 
     @Override

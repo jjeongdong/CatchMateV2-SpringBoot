@@ -3,8 +3,9 @@ package com.back.catchmate.board.application.port.out;
 import com.back.catchmate.board.domain.dto.BoardSearchCondition;
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.common.page.CursorPage;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
 
@@ -22,13 +23,13 @@ public interface BoardRepository {
 
     Optional<Board> findTempBoardByUserId(Long userId);
 
-    DomainPage<Board> findAll(DomainPageable pageable);
+    Page<Board> findAll(Pageable pageable);
 
-    DomainPage<Board> findAllByCondition(BoardSearchCondition condition, DomainPageable pageable);
+    Page<Board> findAllByCondition(BoardSearchCondition condition, Pageable pageable);
 
     CursorPage<Board> findAllByConditionWithCursor(BoardSearchCondition condition, int size);
 
-    DomainPage<Board> findAllByUserId(Long userId, DomainPageable pageable);
+    Page<Board> findAllByUserId(Long userId, Pageable pageable);
 
     long count();
 

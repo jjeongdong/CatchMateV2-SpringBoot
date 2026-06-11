@@ -2,13 +2,12 @@ package com.back.catchmate.chat.adapter.out.persistence.repository;
 
 import com.back.catchmate.chat.domain.model.ChatRoom;
 import com.back.catchmate.chat.application.port.out.ChatRoomRepository;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
-import com.back.catchmate.chat.adapter.out.persistence.entity.ChatRoomEntity;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import com.back.catchmate.chat.adapter.out.persistence.entity.ChatRoomEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
@@ -45,10 +44,10 @@ public class ChatRoomRepositoryImpl implements ChatRoomRepository {
     }
 
     @Override
-    public DomainPage<ChatRoom> findAllByUserId(Long userId, DomainPageable domainPageable) {
+    public Page<ChatRoom> findAllByUserId(Long userId, Pageable domainPageable) {
         Pageable pageable = PageRequest.of(
-                domainPageable.getPage(),
-                domainPageable.getSize(),
+                domainPageable.getPageNumber(),
+                domainPageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
@@ -58,12 +57,7 @@ public class ChatRoomRepositoryImpl implements ChatRoomRepository {
                 .map(ChatRoomEntity::toModel)
                 .toList();
 
-        return new DomainPage<>(
-                domains,
-                entityPage.getNumber(),
-                entityPage.getSize(),
-                entityPage.getTotalElements()
-        );
+        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
     }
 
     @Override

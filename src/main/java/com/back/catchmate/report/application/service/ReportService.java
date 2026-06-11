@@ -4,8 +4,9 @@ import com.back.catchmate.report.application.port.out.UserFetchPort;
 
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.report.application.dto.command.ReportCreateCommand;
 import com.back.catchmate.report.application.dto.response.ReportCreateResponse;
 import com.back.catchmate.report.application.port.in.ReportUseCase;
@@ -65,7 +66,7 @@ public class ReportService implements ReportUseCase {
                 .orElseThrow(() -> new BaseException(ErrorCode.REPORT_NOT_FOUND));
     }
 
-    public DomainPage<Report> getReportList(DomainPageable pageable) {
+    public Page<Report> getReportList(Pageable pageable) {
         return reportRepository.findAll(pageable);
     }
 

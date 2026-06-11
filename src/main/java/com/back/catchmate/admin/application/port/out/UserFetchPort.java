@@ -1,7 +1,8 @@
 package com.back.catchmate.admin.application.port.out;
 
-import com.back.catchmate.common.page.DomainPage;
-import com.back.catchmate.common.page.DomainPageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.back.catchmate.user.domain.model.User;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,6 @@ public interface UserFetchPort {
     Map<String, Long> getUserCountByClub();
     long getUserCountByGender(Character gender);
     Map<String, Long> getUserCountByWatchStyle();
-    DomainPage<User> getUsersByClub(String clubName, DomainPageable pageable);
+    Page<User> getUsersByClub(String clubName, Pageable pageable);
     void updateUser(User user);
 }
