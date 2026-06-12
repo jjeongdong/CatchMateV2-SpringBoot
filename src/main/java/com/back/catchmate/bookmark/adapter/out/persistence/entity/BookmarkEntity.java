@@ -45,16 +45,16 @@ public class BookmarkEntity extends BaseTimeEntity {
     public static BookmarkEntity from(Bookmark bookmark) {
         return BookmarkEntity.builder()
                 .id(bookmark.getId())
-                .user(UserEntity.from(bookmark.getUser()))
-                .board(BoardEntity.fromDomain(bookmark.getBoard()))
+                .user(UserEntity.builder().id(bookmark.getUserId()).build())
+                .board(BoardEntity.builder().id(bookmark.getBoardId()).build())
                 .build();
     }
 
     public Bookmark toModel() {
         return Bookmark.builder()
                 .id(id)
-                .user(user.toModel())
-                .board(board.toDomain())
+                .userId(user.getId())
+                .boardId(board.getId())
                 .createdAt(getCreatedAt())
                 .build();
     }

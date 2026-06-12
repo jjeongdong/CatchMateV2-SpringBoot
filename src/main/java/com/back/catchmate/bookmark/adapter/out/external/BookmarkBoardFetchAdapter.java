@@ -7,6 +7,8 @@ import com.back.catchmate.bookmark.application.port.out.BoardFetchPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class BookmarkBoardFetchAdapter implements BoardFetchPort {
@@ -20,5 +22,10 @@ public class BookmarkBoardFetchAdapter implements BoardFetchPort {
     @Override
     public Board getBoard(Long boardId) {
         return boardService.getBoard(boardId);
+    }
+
+    @Override
+    public List<Board> getBoards(List<Long> boardIds) {
+        return boardService.getBoards(boardIds);
     }
 }

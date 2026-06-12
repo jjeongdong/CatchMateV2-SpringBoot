@@ -140,7 +140,7 @@ public class BoardService implements BoardUseCase {
                 .toList();
 
         Set<Long> myBookmarkedBoardIds = new HashSet<>(
-                bookmarkFetchPort.findBookmarkedBoardIds(user, boardIds)
+                bookmarkFetchPort.findBookmarkedBoardIds(user.getId(), boardIds)
         );
 
         List<BoardResponse> boardResponses = boardPage.getContent().stream()
@@ -167,7 +167,7 @@ public class BoardService implements BoardUseCase {
                 .toList();
 
         Set<Long> myBookmarkedBoardIds = new HashSet<>(
-                bookmarkFetchPort.findBookmarkedBoardIds(loginUser, boardIds)
+                bookmarkFetchPort.findBookmarkedBoardIds(loginUser.getId(), boardIds)
         );
 
         List<BoardResponse> responses = boardPage.getContent().stream()
@@ -251,6 +251,10 @@ public class BoardService implements BoardUseCase {
     // Kept for cross-context backward compatibility until their Phase B is done.
     public Board getBoard(Long boardId) {
         return getBoardEntity(boardId);
+    }
+
+    public List<Board> getBoards(List<Long> boardIds) {
+        return boardRepository.findAllByIds(boardIds);
     }
 
     public Board getBoardWithLock(Long boardId) {

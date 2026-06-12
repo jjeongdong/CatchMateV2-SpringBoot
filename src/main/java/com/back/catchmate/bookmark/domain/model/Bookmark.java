@@ -1,7 +1,5 @@
 package com.back.catchmate.bookmark.domain.model;
 
-import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.user.domain.model.User;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,14 +14,14 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Bookmark {
     private Long id;
-    private User user;
-    private Board board;
+    private Long userId;
+    private Long boardId;
     private LocalDateTime createdAt;
 
-    public static Bookmark createBookmark(User user, Board board) {
+    public static Bookmark createBookmark(Long userId, Long boardId) {
         return Bookmark.builder()
-                .user(user)
-                .board(board)
+                .userId(userId)
+                .boardId(boardId)
                 .createdAt(LocalDateTime.now())
                 .build();
     }

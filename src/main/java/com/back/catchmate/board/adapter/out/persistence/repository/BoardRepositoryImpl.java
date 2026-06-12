@@ -39,6 +39,13 @@ public class BoardRepositoryImpl implements BoardRepository {
     }
 
     @Override
+    public List<Board> findAllByIds(List<Long> ids) {
+        return jpaBoardRepository.findAllById(ids).stream()
+                .map(BoardEntity::toDomain)
+                .toList();
+    }
+
+    @Override
     public Optional<Board> findByIdWithLock(Long id) {
         return jpaBoardRepository.findByIdWithPessimisticLock(id)
                 .map(entity -> {

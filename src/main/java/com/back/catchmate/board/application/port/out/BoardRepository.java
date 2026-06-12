@@ -7,12 +7,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface BoardRepository {
     Board save(Board board);
 
     Optional<Board> findById(Long id);
+
+    List<Board> findAllByIds(List<Long> ids);
 
     /**
      * 동시성 제어가 필요한 경우(예: 신청 수락 시 인원 증가) Board를 비관적 락으로 조회합니다.
