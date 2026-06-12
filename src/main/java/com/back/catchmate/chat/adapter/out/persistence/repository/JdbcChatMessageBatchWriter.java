@@ -33,8 +33,8 @@ public class JdbcChatMessageBatchWriter {
                 ChatMessage msg = messages.get(i);
                 Timestamp now = Timestamp.valueOf(msg.getCreatedAt());
 
-                ps.setLong(1, msg.getChatRoom().getId());
-                ps.setLong(2, msg.getSender().getId());
+                ps.setLong(1, msg.getChatRoomId());
+                ps.setLong(2, msg.getSenderId());
                 ps.setString(3, msg.getContent());
                 ps.setString(4, msg.getMessageType().name());
                 ps.setLong(5, msg.getSequence());

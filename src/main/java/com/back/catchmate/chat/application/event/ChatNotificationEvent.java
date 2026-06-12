@@ -12,17 +12,18 @@ import java.util.List;
  */
 public record ChatNotificationEvent(
         ChatMessage chatMessage,
+        User sender,
         List<User> recipients,  // 알림을 받을 사용자들 (발신자 제외 채팅방 멤버)
         String title,
         String body
 ) {
-    public static ChatNotificationEvent of(ChatMessage chatMessage, List<User> recipients) {
-        String senderName = chatMessage.getSender().getNickName();
+    public static ChatNotificationEvent of(ChatMessage chatMessage, User sender, List<User> recipients) {
+        String senderName = sender.getNickName();
         String content = chatMessage.getContent();
 
         String title = NotificationTemplate.CHAT_NEW_MESSAGE.formatTitle(senderName);
         String body = NotificationTemplate.CHAT_NEW_MESSAGE.formatBody(content);
 
-        return new ChatNotificationEvent(chatMessage, recipients, title, body);
+        return new ChatNotificationEvent(chatMessage, sender, recipients, title, body);
     }
 }

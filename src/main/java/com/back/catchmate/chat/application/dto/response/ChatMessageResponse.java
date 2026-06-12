@@ -2,6 +2,8 @@ package com.back.catchmate.chat.application.dto.response;
 
 import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
+import com.back.catchmate.user.domain.model.User;
+
 import java.time.LocalDateTime;
 
 public record ChatMessageResponse(
@@ -14,13 +16,13 @@ public record ChatMessageResponse(
         MessageType messageType,
         LocalDateTime createdAt
 ) {
-    public static ChatMessageResponse from(ChatMessage chatMessage) {
+    public static ChatMessageResponse from(ChatMessage chatMessage, User sender) {
         return new ChatMessageResponse(
                 chatMessage.getId(),
-                chatMessage.getChatRoom().getId(),
-                chatMessage.getSender().getId(),
-                chatMessage.getSender().getNickName(),
-                chatMessage.getSender().getProfileImageUrl(),
+                chatMessage.getChatRoomId(),
+                chatMessage.getSenderId(),
+                sender != null ? sender.getNickName() : null,
+                sender != null ? sender.getProfileImageUrl() : null,
                 chatMessage.getContent(),
                 chatMessage.getMessageType(),
                 chatMessage.getCreatedAt()

@@ -83,8 +83,8 @@ public class ChatRoomService {
 
         String enterMessage = user.getNickName() + "님이 입장하셨습니다.";
         ChatMessage chatMessage = ChatMessage.createMessage(
-                ChatRoom.builder().id(chatRoomId).build(),
-                user,
+                chatRoomId,
+                user.getId(),
                 enterMessage,
                 MessageType.SYSTEM,
                 sequence
@@ -109,8 +109,8 @@ public class ChatRoomService {
 
         String leaveMessage = user.getNickName() + "님이 퇴장하셨습니다.";
         ChatMessage chatMessage = ChatMessage.createMessage(
-                ChatRoom.builder().id(chatRoomId).build(),
-                user,
+                chatRoomId,
+                user.getId(),
                 leaveMessage,
                 MessageType.SYSTEM,
                 sequence
@@ -181,8 +181,8 @@ public class ChatRoomService {
         User targetUser = userFetchPort.getUser(targetMember.getUserId());
         String kickMessage = targetUser.getNickName() + "님이 내보내졌습니다.";
         ChatMessage chatMessage = ChatMessage.createMessage(
-                ChatRoom.builder().id(chatRoomId).build(),
-                targetUser,
+                chatRoomId,
+                targetUser.getId(),
                 kickMessage,
                 MessageType.SYSTEM,
                 sequence

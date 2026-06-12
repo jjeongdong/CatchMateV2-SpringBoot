@@ -1,7 +1,6 @@
 package com.back.catchmate.chat.domain.model;
 
 import com.back.catchmate.chat.domain.enums.MessageType;
-import com.back.catchmate.user.domain.model.User;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,8 +15,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatMessage {
     private Long id;
-    private ChatRoom chatRoom;
-    private User sender;
+    private Long chatRoomId;
+    private Long senderId;
     private String content;
     private Long sequence;
     private MessageType messageType;
@@ -25,10 +24,10 @@ public class ChatMessage {
     private LocalDateTime deletedAt;
 
     // 채팅 메시지 생성 메서드
-    public static ChatMessage createMessage(ChatRoom chatRoom, User sender, String content, MessageType messageType, Long sequence) {
+    public static ChatMessage createMessage(Long chatRoomId, Long senderId, String content, MessageType messageType, Long sequence) {
         return ChatMessage.builder()
-                .chatRoom(chatRoom)
-                .sender(sender)
+                .chatRoomId(chatRoomId)
+                .senderId(senderId)
                 .content(content)
                 .sequence(sequence)
                 .messageType(messageType)

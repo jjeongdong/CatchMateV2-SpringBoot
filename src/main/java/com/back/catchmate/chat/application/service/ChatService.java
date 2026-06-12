@@ -55,17 +55,17 @@ public class ChatService implements ChatUseCase {
 
         ChatMessage savedMessage = chatMessageService.saveMessage(
                 command.chatRoomId(),
-                sender,
+                senderId,
                 command.content(),
                 command.messageType()
         );
 
         // 웹 소켓을 통해 채팅 메시지 이벤트 발행 (채팅방 멤버 전체에게 실시간 전송)
-        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
+        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage, sender));
 
         // 채팅방 멤버 중 발신자를 제외한 모든 사용자에게 알림 이벤트 발행
         // FCM 알림은 별도의 이벤트 리스너에서 처리
-        List<Long> recipientIds = chatRoomMemberService.getChatRoomMembers(savedMessage.getChatRoom().getId())
+        List<Long> recipientIds = chatRoomMemberService.getChatRoomMembers(savedMessage.getChatRoomId())
                 .stream()
                 .filter(member -> !member.getUserId().equals(senderId))
                 .filter(ChatRoomMember::isNotificationOn)
@@ -76,7 +76,7 @@ public class ChatService implements ChatUseCase {
         // 알림을 받을 사용자가 있을 때만 이벤트 발행
         if (!recipients.isEmpty()) {
             // 채팅 메시지 알림 이벤트 발행 (FCM 또는 웹 소켓을 통해 사용자에게 전송)
-            applicationEventPublisher.publishEvent(ChatNotificationEvent.of(savedMessage, recipients));
+            applicationEventPublisher.publishEvent(ChatNotificationEvent.of(savedMessage, sender, recipients));
         }
     }
 
@@ -90,7 +90,7 @@ public class ChatService implements ChatUseCase {
     public void leaveChatRoom(Long userId, Long chatRoomId) {
         User user = userFetchPort.getUser(userId);
         ChatMessage savedMessage = chatRoomService.leaveChatRoom(chatRoomId, user);
-        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
+        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage, user));
     }
 
     public PagedResponse<ChatRoomResponse> getMyChatRooms(Long userId, int page, int size) {
@@ -112,10 +112,12 @@ public class ChatService implements ChatUseCase {
         Map<Long, Board> boardById = boardFetchPort.getBoards(boardIds).stream()
                 .collect(Collectors.toMap(Board::getId, Function.identity()));
 
+        Map<Long, User> lastMessageSenderById = resolveSenders(List.copyOf(lastMessageMap.values()));
+
         List<ChatRoomResponse> responses = chatRoomPage.getContent().stream()
                 .map(chatRoom -> {
                     ChatMessageResponse lastMessage = Optional.ofNullable(lastMessageMap.get(chatRoom.getId()))
-                            .map(ChatMessageResponse::from)
+                            .map(msg -> ChatMessageResponse.from(msg, lastMessageSenderById.get(msg.getSenderId())))
                             .orElse(null);
 
                     ChatRoomMember member = memberMap.get(chatRoom.getId());
@@ -166,15 +168,28 @@ public class ChatService implements ChatUseCase {
         List<ChatMessage> syncMessages = chatMessageService.getSyncMessages(roomId, lastMessageId, size);
 
         // 3. 응답 DTO로 변환하여 반환
+        Map<Long, User> senderById = resolveSenders(syncMessages);
         return syncMessages.stream()
-                .map(ChatMessageResponse::from)
+                .map(msg -> ChatMessageResponse.from(msg, senderById.get(msg.getSenderId())))
                 .toList();
     }
 
     public ChatMessageResponse getLastMessage(Long chatRoomId) {
         return chatMessageService.getLastMessage(chatRoomId)
-                .map(ChatMessageResponse::from)
+                .map(msg -> ChatMessageResponse.from(msg, userFetchPort.getUser(msg.getSenderId())))
                 .orElse(null);
+    }
+
+    private Map<Long, User> resolveSenders(List<ChatMessage> messages) {
+        List<Long> senderIds = messages.stream()
+                .map(ChatMessage::getSenderId)
+                .distinct()
+                .toList();
+        if (senderIds.isEmpty()) {
+            return Map.of();
+        }
+        return userFetchPort.getUsers(senderIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
     }
 
     public boolean canAccessChatRoom(Long userId, Long chatRoomId) {
@@ -231,10 +246,10 @@ public class ChatService implements ChatUseCase {
 
     @Transactional
     public void kickChatRoomMember(Long hostId, Long chatRoomId, Long targetUserId) {
-        // 1. 서비스 비즈니스 로직 수행
         ChatMessage savedMessage = chatRoomService.kickChatRoomMember(chatRoomId, hostId, targetUserId);
 
         // 2. 방에 남아있는 사람들에게 강퇴 시스템 메시지를 소켓으로 실시간 전송
-        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage));
+        User targetUser = userFetchPort.getUser(savedMessage.getSenderId());
+        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage, targetUser));
     }
 }

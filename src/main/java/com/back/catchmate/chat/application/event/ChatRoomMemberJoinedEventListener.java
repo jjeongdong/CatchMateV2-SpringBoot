@@ -20,6 +20,6 @@ public class ChatRoomMemberJoinedEventListener {
     @EventListener
     public void handle(ChatRoomMemberJoinedEvent event) {
         ChatMessage joinMessage = chatRoomService.enterChatRoom(event.chatRoomId(), event.user());
-        applicationEventPublisher.publishEvent(ChatMessageEvent.from(joinMessage));
+        applicationEventPublisher.publishEvent(ChatMessageEvent.from(joinMessage, event.user()));
     }
 }

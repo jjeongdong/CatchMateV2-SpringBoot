@@ -94,7 +94,7 @@ public class QueryDslChatMessageRepository {
         return entities.stream()
                 .map(ChatMessageEntity::toModel)
                 .collect(Collectors.toMap(
-                        msg -> msg.getChatRoom().getId(),
+                        ChatMessage::getChatRoomId,
                         msg -> msg
                 ));
     }

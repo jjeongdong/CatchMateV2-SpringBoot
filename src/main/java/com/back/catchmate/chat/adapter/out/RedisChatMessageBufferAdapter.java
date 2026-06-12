@@ -1,9 +1,8 @@
 package com.back.catchmate.chat.adapter.out;
 
+import com.back.catchmate.chat.application.port.out.ChatMessageBufferPort;
 import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
-import com.back.catchmate.chat.domain.model.ChatRoom;
-import com.back.catchmate.chat.application.port.out.ChatMessageBufferPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +44,7 @@ public class RedisChatMessageBufferAdapter implements ChatMessageBufferPort {
             redisTemplate.opsForList().leftPush(BUFFER_KEY, json);
         } catch (JsonProcessingException e) {
             log.error("채팅 메시지 버퍼링 실패 - roomId: {}, sequence: {}",
-                    chatMessage.getChatRoom().getId(), chatMessage.getSequence(), e);
+                    chatMessage.getChatRoomId(), chatMessage.getSequence(), e);
         }
     }
 
@@ -94,10 +93,8 @@ public class RedisChatMessageBufferAdapter implements ChatMessageBufferPort {
 
     private Map<String, Object> toBufferMap(ChatMessage chatMessage) {
         return Map.of(
-                "chatRoomId", chatMessage.getChatRoom().getId(),
-                "senderId", chatMessage.getSender().getId(),
-                "senderNickName", chatMessage.getSender().getNickName(),
-                "senderProfileImageUrl", chatMessage.getSender().getProfileImageUrl() != null ? chatMessage.getSender().getProfileImageUrl() : "",
+                "chatRoomId", chatMessage.getChatRoomId(),
+                "senderId", chatMessage.getSenderId(),
                 "content", chatMessage.getContent(),
                 "messageType", chatMessage.getMessageType().name(),
                 "sequence", chatMessage.getSequence(),
@@ -111,20 +108,14 @@ public class RedisChatMessageBufferAdapter implements ChatMessageBufferPort {
 
         Long chatRoomId = ((Number) map.get("chatRoomId")).longValue();
         Long senderId = ((Number) map.get("senderId")).longValue();
-        String senderNickName = (String) map.get("senderNickName");
-        String senderProfileImageUrl = (String) map.get("senderProfileImageUrl");
         String content = (String) map.get("content");
         MessageType messageType = MessageType.valueOf((String) map.get("messageType"));
         Long sequence = ((Number) map.get("sequence")).longValue();
         LocalDateTime createdAt = LocalDateTime.parse((String) map.get("createdAt"), FORMATTER);
 
         return ChatMessage.builder()
-                .chatRoom(ChatRoom.builder().id(chatRoomId).build())
-                .sender(com.back.catchmate.user.domain.model.User.builder()
-                        .id(senderId)
-                        .nickName(senderNickName)
-                        .profileImageUrl(senderProfileImageUrl.isEmpty() ? null : senderProfileImageUrl)
-                        .build())
+                .chatRoomId(chatRoomId)
+                .senderId(senderId)
                 .content(content)
                 .messageType(messageType)
                 .sequence(sequence)

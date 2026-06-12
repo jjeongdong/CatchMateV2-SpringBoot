@@ -57,7 +57,7 @@ public class ChatNotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleChatNotification(ChatNotificationEvent event) {
         Map<String, String> payload = createNotificationData(event);
-        Long messageRoomId = event.chatMessage().getChatRoom().getId();
+        Long messageRoomId = event.chatMessage().getChatRoomId();
 
         for (User recipient : event.recipients()) {
             if (!recipient.isChatAlarmEnabled()) continue;
@@ -79,9 +79,9 @@ public class ChatNotificationEventListener {
     private static Map<String, String> createNotificationData(ChatNotificationEvent event) {
         return Map.of(
                 "type", "CHAT",
-                "roomId", event.chatMessage().getChatRoom().getId().toString(),
-                "senderId", event.chatMessage().getSender().getId().toString(),
-                "senderNickname", event.chatMessage().getSender().getNickName(),
+                "roomId", event.chatMessage().getChatRoomId().toString(),
+                "senderId", event.sender().getId().toString(),
+                "senderNickname", event.sender().getNickName(),
                 "content", event.chatMessage().getContent()
         );
     }

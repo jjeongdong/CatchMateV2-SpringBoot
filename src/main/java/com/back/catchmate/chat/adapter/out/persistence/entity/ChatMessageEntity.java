@@ -65,8 +65,8 @@ public class ChatMessageEntity extends BaseTimeEntity {
     public static ChatMessageEntity from(ChatMessage chatMessage) {
         return ChatMessageEntity.builder()
                 .id(chatMessage.getId())
-                .chatRoom(ChatRoomEntity.from(chatMessage.getChatRoom()))
-                .sender(UserEntity.from(chatMessage.getSender()))
+                .chatRoom(ChatRoomEntity.builder().id(chatMessage.getChatRoomId()).build())
+                .sender(UserEntity.builder().id(chatMessage.getSenderId()).build())
                 .content(chatMessage.getContent())
                 .messageType(chatMessage.getMessageType())
                 .sequence(chatMessage.getSequence())
@@ -77,8 +77,8 @@ public class ChatMessageEntity extends BaseTimeEntity {
     public ChatMessage toModel() {
         return ChatMessage.builder()
                 .id(this.id)
-                .chatRoom(this.chatRoom.toModel())
-                .sender(this.sender.toModel())
+                .chatRoomId(this.chatRoom != null ? this.chatRoom.getId() : null)
+                .senderId(this.sender != null ? this.sender.getId() : null)
                 .content(this.content)
                 .messageType(this.messageType)
                 .createdAt(this.getCreatedAt())

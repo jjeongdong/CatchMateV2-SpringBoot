@@ -1,24 +1,22 @@
 package com.back.catchmate.chat.application.service;
 
-import com.back.catchmate.chat.application.port.out.UserFetchPort;
-
 import com.back.catchmate.chat.application.dto.ChatMessageCacheDto;
 import com.back.catchmate.chat.application.dto.ChatMessageListDto;
-import com.back.catchmate.chat.domain.enums.MessageType;
-import com.back.catchmate.chat.domain.model.ChatMessage;
-import com.back.catchmate.chat.domain.model.ChatRoom;
-import com.back.catchmate.chat.domain.model.ChatRoomMember;
 import com.back.catchmate.chat.application.port.out.ChatHistoryCachePort;
 import com.back.catchmate.chat.application.port.out.ChatMessageBufferPort;
-import com.back.catchmate.chat.application.port.out.ChatRoomSequenceBufferPort;
-import com.back.catchmate.chat.application.port.out.ChatSequencePort;
-import com.back.catchmate.chat.application.port.out.ReadSequenceBufferPort;
 import com.back.catchmate.chat.application.port.out.ChatMessageRepository;
 import com.back.catchmate.chat.application.port.out.ChatRoomMemberRepository;
 import com.back.catchmate.chat.application.port.out.ChatRoomRepository;
-import com.back.catchmate.user.domain.model.User;
+import com.back.catchmate.chat.application.port.out.ChatRoomSequenceBufferPort;
+import com.back.catchmate.chat.application.port.out.ChatSequencePort;
+import com.back.catchmate.chat.application.port.out.ReadSequenceBufferPort;
+import com.back.catchmate.chat.application.port.out.UserFetchPort;
+import com.back.catchmate.chat.domain.enums.MessageType;
+import com.back.catchmate.chat.domain.model.ChatMessage;
+import com.back.catchmate.chat.domain.model.ChatRoomMember;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
+import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,6 +27,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -45,10 +45,12 @@ public class ChatMessageService {
     private final ChatSequencePort chatSequencePort;
     private final ReadSequenceBufferPort readSequenceBufferPort;
 
-    public ChatMessage saveMessage(Long chatRoomId, User sender, String content, MessageType messageType) {
+    private final UserFetchPort userFetchPort;
+
+    public ChatMessage saveMessage(Long chatRoomId, Long senderId, String content, MessageType messageType) {
         if (messageType == MessageType.TEXT) {
             ChatRoomMember member = chatRoomMemberRepository
-                    .findByChatRoomIdAndUserId(chatRoomId, sender.getId())
+                    .findByChatRoomIdAndUserId(chatRoomId, senderId)
                     .filter(ChatRoomMember::isActive)
                     .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
 
@@ -61,14 +63,14 @@ public class ChatMessageService {
         if (messageType == MessageType.TEXT) {
             sequence = chatSequencePort.generateSequence(chatRoomId);
             chatRoomSequenceBufferPort.buffer(chatRoomId, sequence);
-            readSequenceBufferPort.buffer(chatRoomId, sender.getId(), sequence);
+            readSequenceBufferPort.buffer(chatRoomId, senderId, sequence);
         } else {
             sequence = chatSequencePort.getCurrentSequence(chatRoomId);
         }
 
         ChatMessage chatMessage = ChatMessage.createMessage(
-                ChatRoom.builder().id(chatRoomId).build(),
-                sender,
+                chatRoomId,
+                senderId,
                 content,
                 messageType,
                 sequence
@@ -133,8 +135,17 @@ public class ChatMessageService {
 
         List<ChatMessage> merged = mergeHistoryMessages(dbMessages, bufferedMessages, lastMessageId, size);
 
+        List<Long> senderIds = merged.stream()
+                .map(ChatMessage::getSenderId)
+                .distinct()
+                .toList();
+        Map<Long, User> senderById = senderIds.isEmpty()
+                ? Map.of()
+                : userFetchPort.getUsers(senderIds).stream()
+                        .collect(Collectors.toMap(User::getId, Function.identity()));
+
         List<ChatMessageCacheDto> chatMessageCacheDtoList = merged.stream()
-                .map(ChatMessageCacheDto::from)
+                .map(msg -> ChatMessageCacheDto.from(msg, senderById.get(msg.getSenderId())))
                 .toList();
 
         return new ChatMessageListDto(chatMessageCacheDtoList);
