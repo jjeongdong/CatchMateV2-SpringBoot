@@ -1,6 +1,7 @@
 package com.back.catchmate.admin.application.dto.response;
 
 import com.back.catchmate.report.domain.model.Report;
+import com.back.catchmate.user.domain.model.User;
 import java.time.LocalDateTime;
 
 public record AdminReportResponse(
@@ -12,11 +13,11 @@ public record AdminReportResponse(
         LocalDateTime createdAt,
         boolean completed
 ) {
-    public static AdminReportResponse from(Report report) {
+    public static AdminReportResponse from(Report report, User reporter) {
         return new AdminReportResponse(
                 report.getId(),
-                report.getReporter().getId(),
-                report.getReporter().getNickName(),
+                reporter.getId(),
+                reporter.getNickName(),
                 report.getReason().name(),
                 report.getDescription(),
                 report.getCreatedAt(),

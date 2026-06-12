@@ -162,15 +162,21 @@ public class AdminService implements AdminUseCase {
 
     public AdminReportDetailResponse getReport(Long reportId) {
         Report report = reportFetchPort.getReport(reportId);
-        return AdminReportDetailResponse.from(report);
+        User reporter = userFetchPort.getUser(report.getReporterId());
+        User reportedUser = userFetchPort.getUser(report.getReportedUserId());
+        return AdminReportDetailResponse.from(report, reporter, reportedUser);
     }
 
     public PagedResponse<AdminReportResponse> getReportList(int page, int size) {
         Pageable domainPageable = PageRequest.of(page, size);
         Page<Report> reportPage = reportFetchPort.getReportList(domainPageable);
 
+        java.util.Map<Long, User> reporterById = userFetchPort.getUsers(
+                reportPage.getContent().stream().map(Report::getReporterId).distinct().toList()
+        ).stream().collect(Collectors.toMap(User::getId, u -> u));
+
         List<AdminReportResponse> responses = reportPage.getContent().stream()
-                .map(AdminReportResponse::from)
+                .map(r -> AdminReportResponse.from(r, reporterById.get(r.getReporterId())))
                 .toList();
 
         return new PagedResponse<>(reportPage, responses);
@@ -220,11 +226,9 @@ public class AdminService implements AdminUseCase {
 
     @Transactional
     public ReportActionResponse updateReportProcess(Long reportId) {
-        // 1. 필요한 도메인 객체 조회 (Orchestration)
         Report report = reportFetchPort.getReport(reportId);
-        User reportedUser = report.getReportedUser();
+        User reportedUser = userFetchPort.getUser(report.getReportedUserId());
 
-        // 2. 도메인 로직 실행
         reportedUser.markAsReported();
         userFetchPort.updateUser(reportedUser);
 

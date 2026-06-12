@@ -51,8 +51,8 @@ public class ReportEntity extends BaseTimeEntity {
     public static ReportEntity from(Report report) {
         return ReportEntity.builder()
                 .id(report.getId())
-                .reporter(UserEntity.from(report.getReporter()))
-                .reportedUser(UserEntity.from(report.getReportedUser()))
+                .reporter(UserEntity.builder().id(report.getReporterId()).build())
+                .reportedUser(UserEntity.builder().id(report.getReportedUserId()).build())
                 .reason(report.getReason())
                 .description(report.getDescription())
                 .completed(report.isCompleted())
@@ -62,8 +62,8 @@ public class ReportEntity extends BaseTimeEntity {
     public Report toModel() {
         return Report.builder()
                 .id(this.id)
-                .reporter(this.reporter.toModel())
-                .reportedUser(this.reportedUser.toModel())
+                .reporterId(this.reporter.getId())
+                .reportedUserId(this.reportedUser.getId())
                 .reason(this.reason)
                 .description(this.description)
                 .createdAt(this.getCreatedAt())
