@@ -121,7 +121,7 @@ public class BoardService implements BoardUseCase {
                                                            List<Long> preferredTeamIdList,
                                                            LocalDateTime lastLiftUpDate, Long lastBoardId, int size) {
         User user = userFetchPort.getUser(userId);
-        List<Long> blockedUserIds = blockFetchPort.getBlockedUserIds(user);
+        List<Long> blockedUserIds = blockFetchPort.getBlockedUserIds(user.getId());
 
         BoardSearchCondition condition = BoardSearchCondition.ofCursor(
                 userId,
@@ -155,7 +155,7 @@ public class BoardService implements BoardUseCase {
         User targetUser = userFetchPort.getUser(targetUserId);
         User loginUser = userFetchPort.getUser(loginUserId);
 
-        if (blockFetchPort.isUserBlocked(targetUser, loginUser)) {
+        if (blockFetchPort.isUserBlocked(targetUser.getId(), loginUser.getId())) {
             throw new BaseException(ErrorCode.BLOCKED_USER_BOARD);
         }
 

@@ -1,15 +1,13 @@
 package com.back.catchmate.user.adapter.out.persistence.repository;
 
+import com.back.catchmate.user.adapter.out.persistence.entity.BlockEntity;
+import com.back.catchmate.user.application.port.out.BlockRepository;
+import com.back.catchmate.user.domain.model.Block;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import com.back.catchmate.user.domain.model.Block;
-import com.back.catchmate.user.domain.model.User;
-import com.back.catchmate.user.application.port.out.BlockRepository;
-import com.back.catchmate.user.adapter.out.persistence.entity.BlockEntity;
-import com.back.catchmate.user.adapter.out.persistence.entity.UserEntity;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
@@ -28,8 +26,8 @@ public class BlockRepositoryImpl implements BlockRepository {
     }
 
     @Override
-    public Optional<Block> findByBlockerAndBlocked(User blocker, User blocked) {
-        return jpaBlockRepository.findByBlockerAndBlocked(UserEntity.from(blocker), UserEntity.from(blocked))
+    public Optional<Block> findByBlockerIdAndBlockedId(Long blockerId, Long blockedId) {
+        return jpaBlockRepository.findByBlockerIdAndBlockedId(blockerId, blockedId)
                 .map(BlockEntity::toModel);
     }
 
@@ -38,7 +36,7 @@ public class BlockRepositoryImpl implements BlockRepository {
         Pageable pageable = PageRequest.of(
                 domainPageable.getPageNumber(),
                 domainPageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "createdAt") // 최신 차단순
+                Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
         Page<BlockEntity> entityPage = jpaBlockRepository.findAllByBlockerId(blockerId, pageable);
@@ -51,13 +49,13 @@ public class BlockRepositoryImpl implements BlockRepository {
     }
 
     @Override
-    public List<Long> findAllBlockedUserIdsByBlocker(User user) {
-        return jpaBlockRepository.findAllBlockedUserIdsByBlocker(user.getId());
+    public List<Long> findAllBlockedUserIdsByBlockerId(Long blockerId) {
+        return jpaBlockRepository.findAllBlockedUserIdsByBlockerId(blockerId);
     }
 
     @Override
-    public boolean existsByBlockerAndBlocked(User blocker, User blocked) {
-        return jpaBlockRepository.existsByBlockerAndBlocked(UserEntity.from(blocker), UserEntity.from(blocked));
+    public boolean existsByBlockerIdAndBlockedId(Long blockerId, Long blockedId) {
+        return jpaBlockRepository.existsByBlockerIdAndBlockedId(blockerId, blockedId);
     }
 
     @Override

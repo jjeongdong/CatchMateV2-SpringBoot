@@ -1,6 +1,8 @@
 package com.back.catchmate.user.application.dto.response;
 
 import com.back.catchmate.user.domain.model.Block;
+import com.back.catchmate.user.domain.model.User;
+
 import java.time.LocalDateTime;
 
 public record BlockedUserResponse(
@@ -10,12 +12,12 @@ public record BlockedUserResponse(
         String profileImageUrl,
         LocalDateTime blockedAt
 ) {
-    public static BlockedUserResponse from(Block block) {
+    public static BlockedUserResponse from(Block block, User blocked) {
         return new BlockedUserResponse(
                 block.getId(),
-                block.getBlocked().getId(),
-                block.getBlocked().getNickName(),
-                block.getBlocked().getProfileImageUrl(),
+                blocked.getId(),
+                blocked.getNickName(),
+                blocked.getProfileImageUrl(),
                 null
         );
     }

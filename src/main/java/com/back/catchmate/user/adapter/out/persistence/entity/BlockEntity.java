@@ -42,16 +42,16 @@ public class BlockEntity extends BaseTimeEntity {
     public static BlockEntity from(Block block) {
         return BlockEntity.builder()
                 .id(block.getId())
-                .blocker(UserEntity.from(block.getBlocker()))
-                .blocked(UserEntity.from(block.getBlocked()))
+                .blocker(UserEntity.builder().id(block.getBlockerId()).build())
+                .blocked(UserEntity.builder().id(block.getBlockedId()).build())
                 .build();
     }
 
     public Block toModel() {
         return Block.builder()
                 .id(this.id)
-                .blocker(this.blocker.toModel())
-                .blocked(this.blocked.toModel())
+                .blockerId(this.blocker.getId())
+                .blockedId(this.blocked.getId())
                 .build();
     }
 }

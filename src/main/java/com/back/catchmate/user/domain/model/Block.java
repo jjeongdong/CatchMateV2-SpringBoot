@@ -16,21 +16,16 @@ import java.util.Objects;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Block {
     private Long id;
-    private User blocker; // 차단한 사람
-    private User blocked; // 차단당한 사람
+    private Long blockerId;
+    private Long blockedId;
 
-    public static Block createBlock(User blocker, User blocked) {
-        validateNotSelfBlock(blocker, blocked);
-
-        return Block.builder()
-                .blocker(blocker)
-                .blocked(blocked)
-                .build();
-    }
-
-    private static void validateNotSelfBlock(User blocker, User blocked) {
-        if (Objects.equals(blocker.getId(), blocked.getId())) {
+    public static Block createBlock(Long blockerId, Long blockedId) {
+        if (Objects.equals(blockerId, blockedId)) {
             throw new BaseException(ErrorCode.SELF_BLOCK_FAILED);
         }
+        return Block.builder()
+                .blockerId(blockerId)
+                .blockedId(blockedId)
+                .build();
     }
 }
