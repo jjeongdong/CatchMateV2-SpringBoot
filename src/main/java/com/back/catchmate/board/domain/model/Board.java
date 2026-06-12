@@ -1,11 +1,8 @@
 package com.back.catchmate.board.domain.model;
 
-import com.back.catchmate.club.domain.model.Club;
-import com.back.catchmate.global.authorization.common.ResourceOwnership;
-import com.back.catchmate.game.domain.model.Game;
-import com.back.catchmate.user.domain.model.User;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
+import com.back.catchmate.global.authorization.common.ResourceOwnership;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,9 +23,9 @@ public class Board implements ResourceOwnership {
     private String content;
     private Integer maxPerson;
     private int currentPerson;
-    private User user;
-    private Club cheerClub;
-    private Game game;
+    private Long userId;
+    private Long cheerClubId;
+    private Long gameId;
     private String preferredGender;
     private PreferredAgeRange preferredAgeRange;
     private boolean completed;
@@ -37,8 +34,9 @@ public class Board implements ResourceOwnership {
     private LocalDateTime deletedAt;
 
     // 게시글 생성 메서드
-    public static Board createBoard(String title, String content, int maxPerson, User user,
-                                    Club cheerClub, Game game, String preferredGender,
+    public static Board createBoard(String title, String content, int maxPerson, Long userId,
+                                    Long cheerClubId, Long gameId, boolean gameComplete,
+                                    String preferredGender,
                                     PreferredAgeRange preferredAgeRange, boolean completed) {
 
         Board board = Board.builder()
@@ -46,9 +44,9 @@ public class Board implements ResourceOwnership {
                 .content(content)
                 .maxPerson(maxPerson)
                 .currentPerson(1)
-                .user(user)
-                .cheerClub(cheerClub)
-                .game(game)
+                .userId(userId)
+                .cheerClubId(cheerClubId)
+                .gameId(gameId)
                 .preferredGender(preferredGender)
                 .preferredAgeRange(preferredAgeRange != null ? preferredAgeRange : PreferredAgeRange.empty())
                 .completed(completed)
@@ -56,19 +54,20 @@ public class Board implements ResourceOwnership {
                 .liftUpDate(LocalDateTime.now())
                 .build();
 
-        board.validateForPublish();
+        board.validateForPublish(gameComplete);
         return board;
     }
 
     // 게시글 수정 메서드
     public void updateBoard(String title, String content, int maxPerson,
-                            Club cheerClub, Game game, String preferredGender,
+                            Long cheerClubId, Long gameId, boolean gameComplete,
+                            String preferredGender,
                             PreferredAgeRange preferredAgeRange, boolean completed) {
 
         PreferredAgeRange normalized = preferredAgeRange != null ? preferredAgeRange : PreferredAgeRange.empty();
 
         // 1. 핵심 데이터(인원, 경기, 모집 조건 등)가 변경되었는지 확인
-        if (isCriticalFieldChanged(maxPerson, cheerClub, game, preferredGender, normalized, completed)) {
+        if (isCriticalFieldChanged(maxPerson, cheerClubId, gameId, preferredGender, normalized, completed)) {
             // 핵심 데이터가 변경되었다면 신청자가 없을 때(1명일 때)만 허용
             validateUpdatable();
         }
@@ -77,33 +76,25 @@ public class Board implements ResourceOwnership {
         this.title = title;
         this.content = content;
         this.maxPerson = maxPerson;
-        this.cheerClub = cheerClub;
-        this.game = game;
+        this.cheerClubId = cheerClubId;
+        this.gameId = gameId;
         this.preferredGender = preferredGender;
         this.preferredAgeRange = normalized;
         this.completed = completed;
 
-        validateForPublish();
+        validateForPublish(gameComplete);
     }
 
     // 핵심 조건 변경 여부를 체크하는 내부 메서드 추가
-    private boolean isCriticalFieldChanged(int newMaxPerson, Club newCheerClub, Game newGame,
+    private boolean isCriticalFieldChanged(int newMaxPerson, Long newCheerClubId, Long newGameId,
                                            String newPreferredGender, PreferredAgeRange newPreferredAgeRange, boolean newCompleted) {
 
         if (this.maxPerson != newMaxPerson) return true;
         if (this.completed != newCompleted) return true;
         if (!Objects.equals(this.preferredGender, newPreferredGender)) return true;
         if (!Objects.equals(this.preferredAgeRange, newPreferredAgeRange)) return true;
-
-        // Club 비교 (ID 기준)
-        Long currentClubId = this.cheerClub != null ? this.cheerClub.getId() : null;
-        Long newClubId = newCheerClub != null ? newCheerClub.getId() : null;
-        if (!Objects.equals(currentClubId, newClubId)) return true;
-
-        // Game 비교 (ID 기준)
-        Long currentGameId = this.game != null ? this.game.getId() : null;
-        Long newGameId = newGame != null ? newGame.getId() : null;
-        if (!Objects.equals(currentGameId, newGameId)) return true;
+        if (!Objects.equals(this.cheerClubId, newCheerClubId)) return true;
+        if (!Objects.equals(this.gameId, newGameId)) return true;
 
         return false;
     }
@@ -143,7 +134,7 @@ public class Board implements ResourceOwnership {
     }
 
     // 발행 검증 로직
-    private void validateForPublish() {
+    private void validateForPublish(boolean gameComplete) {
         if (!this.completed) {
             return;
         }
@@ -157,10 +148,10 @@ public class Board implements ResourceOwnership {
         if (maxPerson == null) {
             throw new BaseException(ErrorCode.BOARD_MAX_PERSON_MISSING);
         }
-        if (cheerClub == null) {
+        if (cheerClubId == null) {
             throw new BaseException(ErrorCode.BOARD_CHEER_CLUB_MISSING);
         }
-        if (game == null || !game.isComplete()) {
+        if (gameId == null || !gameComplete) {
             throw new BaseException(ErrorCode.BOARD_GAME_MISSING);
         }
     }
@@ -182,6 +173,6 @@ public class Board implements ResourceOwnership {
 
     @Override
     public Long getOwnershipId() {
-        return this.user.getId();
+        return this.userId;
     }
 }

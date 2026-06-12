@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface ClubRepository {
     Optional<Club> findById(Long id);
     List<Club> findAll();
+    List<Club> findAllByIds(List<Long> ids);
 }

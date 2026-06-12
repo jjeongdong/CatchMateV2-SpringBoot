@@ -1,8 +1,9 @@
 package com.back.catchmate.enroll.application.dto.response;
 
+import com.back.catchmate.board.application.dto.response.BoardResponse;
 import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import com.back.catchmate.enroll.domain.model.Enroll;
-import com.back.catchmate.board.application.dto.response.BoardResponse;
+
 import java.time.LocalDateTime;
 
 public record EnrollRequestResponse(
@@ -12,13 +13,13 @@ public record EnrollRequestResponse(
         LocalDateTime requestDate,
         BoardResponse boardResponse
 ) {
-    public static EnrollRequestResponse from(Enroll enroll, boolean bookMarked) {
+    public static EnrollRequestResponse from(Enroll enroll, BoardResponse boardResponse) {
         return new EnrollRequestResponse(
                 enroll.getId(),
                 enroll.getAcceptStatus(),
                 enroll.getDescription(),
                 enroll.getRequestedAt(),
-                BoardResponse.from(enroll.getBoard(), bookMarked)
+                boardResponse
         );
     }
 }

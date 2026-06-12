@@ -12,10 +12,12 @@ import com.back.catchmate.admin.application.port.out.EnrollFetchPort;
 
 import com.back.catchmate.admin.application.port.out.ReportFetchPort;
 
-import com.back.catchmate.admin.application.port.in.AdminUseCase;
 import com.back.catchmate.admin.application.event.AdminInquiryAnswerNotificationEvent;
 import com.back.catchmate.admin.application.event.AdminNoticeCreateNotificationEvent;
+import com.back.catchmate.admin.application.port.in.AdminUseCase;
+import com.back.catchmate.admin.application.port.out.GameFetchPort;
 import com.back.catchmate.board.domain.model.Board;
+import com.back.catchmate.game.domain.model.Game;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -61,6 +63,7 @@ public class AdminService implements AdminUseCase {
 
     private final BoardFetchPort boardFetchPort;
     private final EnrollFetchPort enrollFetchPort;
+    private final GameFetchPort gameFetchPort;
     private final InquiryFetchPort inquiryFetchPort;
     private final NoticeFetchPort noticeFetchPort;
     private final ReportFetchPort reportFetchPort;
@@ -130,12 +133,15 @@ public class AdminService implements AdminUseCase {
     public AdminBoardDetailWithEnrollResponse getBoardWithEnrollList(Long boardId) {
         Board board = boardFetchPort.getCompletedBoard(boardId);
         List<Enroll> enrolls = enrollFetchPort.getEnrollListByBoardIds(Collections.singletonList(boardId));
-        
+
         List<AdminEnrollmentResponse> enrollmentInfos = enrolls.stream()
                 .map(AdminEnrollmentResponse::from)
                 .toList();
 
-        return AdminBoardDetailWithEnrollResponse.from(board, enrollmentInfos);
+        User writer = board.getUserId() != null ? userFetchPort.getUser(board.getUserId()) : null;
+        Game game = board.getGameId() != null ? gameFetchPort.getGame(board.getGameId()) : null;
+
+        return AdminBoardDetailWithEnrollResponse.from(board, writer, game, enrollmentInfos);
     }
 
     public PagedResponse<AdminBoardResponse> getBoardListByUserId(Long userId, int page, int size) {

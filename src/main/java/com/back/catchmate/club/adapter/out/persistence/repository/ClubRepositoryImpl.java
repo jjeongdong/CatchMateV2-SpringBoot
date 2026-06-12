@@ -25,4 +25,14 @@ public class ClubRepositoryImpl implements ClubRepository {
                 .map(ClubEntity::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<Club> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return jpaClubRepository.findAllById(ids).stream()
+                .map(ClubEntity::toDomain)
+                .toList();
+    }
 }

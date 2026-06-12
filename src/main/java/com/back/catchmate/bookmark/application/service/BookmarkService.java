@@ -53,9 +53,7 @@ public class BookmarkService implements BookmarkUseCase {
         // Bulk fetch: avoid N+1 by getting all boards in one shot.
         List<Board> boards = boardFetchPort.getBoards(boardIds);
 
-        List<BoardResponse> boardResponses = boards.stream()
-                .map(board -> BoardResponse.from(board, true))
-                .toList();
+        List<BoardResponse> boardResponses = boardFetchPort.buildBoardResponses(boards, id -> true);
 
         return new PagedResponse<>(bookmarkPage, boardResponses);
     }

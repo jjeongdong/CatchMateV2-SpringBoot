@@ -1,5 +1,6 @@
 package com.back.catchmate.chat.application.service;
 
+import com.back.catchmate.board.application.dto.response.BoardResponse;
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.chat.application.dto.ChatMessageListDto;
 import com.back.catchmate.chat.application.dto.command.ChatMessageCommand;
@@ -109,8 +110,9 @@ public class ChatService implements ChatUseCase {
                 .filter(java.util.Objects::nonNull)
                 .distinct()
                 .toList();
-        Map<Long, Board> boardById = boardFetchPort.getBoards(boardIds).stream()
-                .collect(Collectors.toMap(Board::getId, Function.identity()));
+        List<Board> boards = boardIds.isEmpty() ? List.of() : boardFetchPort.getBoards(boardIds);
+        Map<Long, BoardResponse> boardResponseById = boardFetchPort.buildBoardResponses(boards, id -> false).stream()
+                .collect(Collectors.toMap(BoardResponse::boardId, Function.identity()));
 
         Map<Long, User> lastMessageSenderById = resolveSenders(List.copyOf(lastMessageMap.values()));
 
@@ -128,8 +130,8 @@ public class ChatService implements ChatUseCase {
                     boolean isNotificationOn = member != null && member.isNotificationOn();
                     boolean readOnly = member != null && member.isReadOnly();
 
-                    Board board = chatRoom.getBoardId() != null ? boardById.get(chatRoom.getBoardId()) : null;
-                    return ChatRoomResponse.from(chatRoom, board, lastMessage, unreadCount, isNotificationOn, readOnly);
+                    BoardResponse boardResponse = chatRoom.getBoardId() != null ? boardResponseById.get(chatRoom.getBoardId()) : null;
+                    return ChatRoomResponse.from(chatRoom, boardResponse, lastMessage, unreadCount, isNotificationOn, readOnly);
                 })
                 .toList();
 

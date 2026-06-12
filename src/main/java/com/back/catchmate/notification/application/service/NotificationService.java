@@ -1,38 +1,50 @@
 package com.back.catchmate.notification.application.service;
 
-import com.back.catchmate.notification.application.port.out.EnrollFetchPort;
-
+import com.back.catchmate.board.domain.model.Board;
+import com.back.catchmate.club.domain.model.Club;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.response.PagedResponse;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import com.back.catchmate.enroll.domain.model.AcceptStatus;
+import com.back.catchmate.game.domain.model.Game;
 import com.back.catchmate.notification.application.dto.response.NotificationResponse;
 import com.back.catchmate.notification.application.dto.response.UnreadNotificationResponse;
 import com.back.catchmate.notification.application.port.in.NotificationUseCase;
+import com.back.catchmate.notification.application.port.out.ClubFetchPort;
+import com.back.catchmate.notification.application.port.out.EnrollFetchPort;
+import com.back.catchmate.notification.application.port.out.GameFetchPort;
 import com.back.catchmate.notification.application.port.out.NotificationRepository;
-import com.back.catchmate.notification.application.service.NotificationRetryService;
 import com.back.catchmate.notification.domain.model.Notification;
 import com.back.catchmate.user.domain.enums.AlarmType;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class NotificationService implements NotificationUseCase {
 
+    private static final DateTimeFormatter GAME_INFO_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
+
     private final NotificationRepository notificationRepository;
 
     private final NotificationRetryService notificationRetryService;
 
+    private final ClubFetchPort clubFetchPort;
     private final EnrollFetchPort enrollFetchPort;
+    private final GameFetchPort gameFetchPort;
 
     @Transactional
     public NotificationResponse getNotification(Long userId, Long notificationId) {
@@ -45,8 +57,9 @@ public class NotificationService implements NotificationUseCase {
                     .orElse(null);
         }
 
+        String gameInfo = resolveGameInfo(notification.getBoard());
         // 2. DTO 변환 및 반환
-        return NotificationResponse.from(notification, acceptStatus);
+        return NotificationResponse.from(notification, acceptStatus, gameInfo);
     }
 
     public PagedResponse<NotificationResponse> getNotificationList(Long userId, int page, int size) {
@@ -63,13 +76,19 @@ public class NotificationService implements NotificationUseCase {
 
         Map<Long, AcceptStatus> enrollStatusMap = enrollFetchPort.getAcceptStatusMapByIds(enrollIds);
 
-        // 3. DTO 변환
+        // 3. 게임 정보 일괄 조회
+        Map<Long, String> gameInfoByBoardId = resolveGameInfos(notificationPage.getContent());
+
+        // 4. DTO 변환
         List<NotificationResponse> responses = notificationPage.getContent().stream()
                 .map(notification -> {
                     AcceptStatus status = (notification.getType() == AlarmType.ENROLL)
                             ? enrollStatusMap.get(notification.getTargetId())
                             : null;
-                    return NotificationResponse.from(notification, status);
+                    String gameInfo = notification.getBoard() != null
+                            ? gameInfoByBoardId.get(notification.getBoard().getId())
+                            : null;
+                    return NotificationResponse.from(notification, status, gameInfo);
                 })
                 .toList();
 
@@ -108,7 +127,7 @@ public class NotificationService implements NotificationUseCase {
             notification.markAsRead();
             notificationRepository.save(notification);
         }
-        
+
         return notification;
     }
 
@@ -130,5 +149,71 @@ public class NotificationService implements NotificationUseCase {
 
     public int markAllRead(Long userId) {
         return notificationRepository.markAllRead(userId);
+    }
+
+    // --- Helpers ---
+    private String resolveGameInfo(Board board) {
+        if (board == null || board.getGameId() == null) {
+            return null;
+        }
+        Game game = gameFetchPort.getGame(board.getGameId());
+        if (game == null) return null;
+        Club homeClub = game.getHomeClubId() != null ? clubFetchPort.getClub(game.getHomeClubId()) : null;
+        Club awayClub = game.getAwayClubId() != null ? clubFetchPort.getClub(game.getAwayClubId()) : null;
+        return formatGameInfo(game, homeClub, awayClub);
+    }
+
+    private Map<Long, String> resolveGameInfos(List<Notification> notifications) {
+        List<Board> boards = notifications.stream()
+                .map(Notification::getBoard)
+                .filter(Objects::nonNull)
+                .toList();
+
+        List<Long> gameIds = boards.stream()
+                .map(Board::getGameId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (gameIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Game> gameById = gameFetchPort.getGames(gameIds).stream()
+                .collect(Collectors.toMap(Game::getId, Function.identity()));
+
+        List<Long> clubIds = gameById.values().stream()
+                .flatMap(g -> Stream.of(g.getHomeClubId(), g.getAwayClubId()))
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, Club> clubById = clubIds.isEmpty()
+                ? Map.of()
+                : clubFetchPort.getClubs(clubIds).stream()
+                        .collect(Collectors.toMap(Club::getId, Function.identity()));
+
+        return boards.stream()
+                .filter(b -> b.getGameId() != null)
+                .collect(Collectors.toMap(
+                        Board::getId,
+                        b -> {
+                            Game game = gameById.get(b.getGameId());
+                            if (game == null) return "";
+                            Club home = game.getHomeClubId() != null ? clubById.get(game.getHomeClubId()) : null;
+                            Club away = game.getAwayClubId() != null ? clubById.get(game.getAwayClubId()) : null;
+                            return formatGameInfo(game, home, away);
+                        },
+                        (a, b) -> a
+                ));
+    }
+
+    private static String formatGameInfo(Game game, Club homeClub, Club awayClub) {
+        if (game == null || game.getGameStartDate() == null) return null;
+        String home = homeClub != null ? homeClub.getName() : "?";
+        String away = awayClub != null ? awayClub.getName() : "?";
+        return String.format("%s · %s · %s vs %s",
+                game.getGameStartDate().format(GAME_INFO_FORMATTER),
+                game.getLocation() != null ? game.getLocation() : "?",
+                home,
+                away
+        );
     }
 }

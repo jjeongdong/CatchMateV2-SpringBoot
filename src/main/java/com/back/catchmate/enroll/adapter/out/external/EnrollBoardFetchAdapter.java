@@ -2,12 +2,16 @@ package com.back.catchmate.enroll.adapter.out.external;
 
 import com.back.catchmate.board.application.dto.command.BoardUpdateCommand;
 import com.back.catchmate.board.application.dto.response.BoardDetailResponse;
+import com.back.catchmate.board.application.dto.response.BoardResponse;
 import com.back.catchmate.board.application.dto.response.BoardUpdateResponse;
 import com.back.catchmate.board.application.service.BoardService;
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.enroll.application.port.out.BoardFetchPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.function.Predicate;
 
 @Component
 @RequiredArgsConstructor
@@ -42,5 +46,15 @@ public class EnrollBoardFetchAdapter implements BoardFetchPort {
     @Override
     public void updateBoard(Board board) {
         boardService.updateBoard(board);
+    }
+
+    @Override
+    public BoardResponse buildBoardResponse(Board board, boolean bookmarked) {
+        return boardService.buildBoardResponse(board, bookmarked);
+    }
+
+    @Override
+    public List<BoardResponse> buildBoardResponses(List<Board> boards, Predicate<Long> bookmarkedPredicate) {
+        return boardService.buildBoardResponses(boards, bookmarkedPredicate);
     }
 }

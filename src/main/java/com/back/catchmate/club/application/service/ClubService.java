@@ -36,4 +36,8 @@ public class ClubService implements ClubUseCase {
     public List<Club> getAllClubs() {
         return clubRepository.findAll();
     }
+
+    public List<Club> getClubs(List<Long> clubIds) {
+        return clubRepository.findAllByIds(clubIds);
+    }
 }

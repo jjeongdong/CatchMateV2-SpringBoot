@@ -18,7 +18,7 @@ public enum BoardButtonStatus {
     private final String description;
 
     public static BoardButtonStatus resolve(User requestingUser, Board board, Optional<Enroll> enrollOptional) {
-        if (board.getUser().getId().equals(requestingUser.getId())) {
+        if (board.getUserId().equals(requestingUser.getId())) {
             return VIEW_CHAT;
         }
         if (enrollOptional.isEmpty()) {

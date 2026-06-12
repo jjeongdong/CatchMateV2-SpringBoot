@@ -28,26 +28,32 @@ import com.back.catchmate.chat.domain.model.ChatRoom;
 import com.back.catchmate.club.domain.model.Club;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
+import com.back.catchmate.common.response.CursorPage;
 import com.back.catchmate.common.response.CursorPagedResponse;
 import com.back.catchmate.common.response.PagedResponse;
-import com.back.catchmate.common.response.CursorPage;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import com.back.catchmate.enroll.domain.model.Enroll;
 import com.back.catchmate.game.domain.model.Game;
 import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional(readOnly = true)
@@ -73,16 +79,17 @@ public class BoardService implements BoardUseCase {
         oldDraft.ifPresent(this::deleteBoardHard);
 
         User user = userFetchPort.getUser(userId);
-        Club cheerClub = getCheerClub(command.cheerClubId());
-        Game game = getGame(command.gameCreateCommand());
+        Game game = resolveGame(command.gameCreateCommand());
+        Long cheerClubId = command.cheerClubId();
 
         Board board = Board.createBoard(
                 command.title(),
                 command.content(),
                 command.maxPerson(),
-                user,
-                cheerClub,
-                game,
+                user.getId(),
+                cheerClubId,
+                game != null ? game.getId() : null,
+                game != null && game.isComplete(),
                 command.preferredGender(),
                 PreferredAgeRange.of(command.preferredAgeRange()),
                 command.completed()
@@ -113,7 +120,14 @@ public class BoardService implements BoardUseCase {
                 ? chatRoomFetchPort.getOrCreateChatRoom(board.getId()).getId()
                 : null;
 
-        return BoardDetailResponse.from(board, isBookMarked, buttonStatus, myEnrollId, chatRoomId);
+        User boardOwner = userFetchPort.getUser(board.getUserId());
+        Club cheerClub = board.getCheerClubId() != null ? clubFetchPort.getClub(board.getCheerClubId()) : null;
+        Game game = board.getGameId() != null ? gameFetchPort.getGame(board.getGameId()) : null;
+        Club homeClub = game != null && game.getHomeClubId() != null ? clubFetchPort.getClub(game.getHomeClubId()) : null;
+        Club awayClub = game != null && game.getAwayClubId() != null ? clubFetchPort.getClub(game.getAwayClubId()) : null;
+
+        return BoardDetailResponse.from(board, isBookMarked, buttonStatus, myEnrollId, chatRoomId,
+                boardOwner, cheerClub, game, homeClub, awayClub);
     }
 
     @Override
@@ -143,8 +157,10 @@ public class BoardService implements BoardUseCase {
                 bookmarkFetchPort.findBookmarkedBoardIds(user.getId(), boardIds)
         );
 
+        BoardRefs refs = loadRefs(boardPage.getContent());
+
         List<BoardResponse> boardResponses = boardPage.getContent().stream()
-                .map(board -> BoardResponse.from(board, myBookmarkedBoardIds.contains(board.getId())))
+                .map(board -> toBoardResponse(board, myBookmarkedBoardIds.contains(board.getId()), refs))
                 .toList();
 
         return new CursorPagedResponse<>(boardPage, boardResponses);
@@ -170,8 +186,10 @@ public class BoardService implements BoardUseCase {
                 bookmarkFetchPort.findBookmarkedBoardIds(loginUser.getId(), boardIds)
         );
 
+        BoardRefs refs = loadRefs(boardPage.getContent());
+
         List<BoardResponse> responses = boardPage.getContent().stream()
-                .map(board -> BoardResponse.from(board, myBookmarkedBoardIds.contains(board.getId())))
+                .map(board -> toBoardResponse(board, myBookmarkedBoardIds.contains(board.getId()), refs))
                 .toList();
 
         return new PagedResponse<>(boardPage, responses);
@@ -180,7 +198,14 @@ public class BoardService implements BoardUseCase {
     @Override
     public BoardTempDetailResponse getTempBoard(Long userId) {
         Optional<Board> tempBoard = findTempBoard(userId);
-        return tempBoard.map(BoardTempDetailResponse::from).orElse(null);
+        return tempBoard.map(board -> {
+            User owner = board.getUserId() != null ? userFetchPort.getUser(board.getUserId()) : null;
+            Club cheerClub = board.getCheerClubId() != null ? clubFetchPort.getClub(board.getCheerClubId()) : null;
+            Game game = board.getGameId() != null ? gameFetchPort.getGame(board.getGameId()) : null;
+            Club homeClub = game != null && game.getHomeClubId() != null ? clubFetchPort.getClub(game.getHomeClubId()) : null;
+            Club awayClub = game != null && game.getAwayClubId() != null ? clubFetchPort.getClub(game.getAwayClubId()) : null;
+            return BoardTempDetailResponse.from(board, owner, cheerClub, game, homeClub, awayClub);
+        }).orElse(null);
     }
 
     @Override
@@ -190,15 +215,16 @@ public class BoardService implements BoardUseCase {
         User user = userFetchPort.getUser(userId);
 
         boolean wasCompleted = board.isCompleted();
-        Club cheerClub = getCheerClub(command.cheerClubId());
-        Game game = getGame(command.gameUpdateCommand());
+        Game game = resolveGame(command.gameUpdateCommand());
+        Long cheerClubId = command.cheerClubId();
 
         board.updateBoard(
                 command.title(),
                 command.content(),
                 command.maxPerson(),
-                cheerClub,
-                game,
+                cheerClubId,
+                game != null ? game.getId() : null,
+                game != null && game.isComplete(),
                 command.preferredGender(),
                 PreferredAgeRange.of(command.preferredAgeRange()),
                 command.completed()
@@ -292,17 +318,12 @@ public class BoardService implements BoardUseCase {
     }
 
     // --- Cross-context game resolution ---
-    private Club getCheerClub(Long clubId) {
-        if (clubId == null) return null;
-        return clubFetchPort.getClub(clubId);
-    }
-
-    private Game getGame(GameCreateCommand command) {
+    private Game resolveGame(GameCreateCommand command) {
         if (command == null) return null;
         return resolveGame(command.homeClubId(), command.awayClubId(), command.gameStartDate(), command.location());
     }
 
-    private Game getGame(GameUpdateCommand command) {
+    private Game resolveGame(GameUpdateCommand command) {
         if (command == null) return null;
         return resolveGame(command.homeClubId(), command.awayClubId(), command.gameStartDate(), command.location());
     }
@@ -312,20 +333,78 @@ public class BoardService implements BoardUseCase {
             return null;
         }
         if (homeClubId != null && awayClubId != null && gameStartDate != null) {
-            return fetchGame(homeClubId, awayClubId, gameStartDate, location);
+            return gameFetchPort.findOrCreateGame(homeClubId, awayClubId, gameStartDate, location);
         }
-        return createPartialGame(gameStartDate, location, homeClubId, awayClubId);
+        return gameFetchPort.savePartialGame(gameStartDate, location, homeClubId, awayClubId);
     }
 
-    private Game fetchGame(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {
-        Club homeClub = clubFetchPort.getClub(homeClubId);
-        Club awayClub = clubFetchPort.getClub(awayClubId);
-        return gameFetchPort.findOrCreateGame(homeClub, awayClub, gameStartDate, location);
+    // --- Cross-context response builders (used by adapters of other contexts) ---
+    public BoardResponse buildBoardResponse(Board board, boolean bookmarked) {
+        BoardRefs refs = loadRefs(List.of(board));
+        return toBoardResponse(board, bookmarked, refs);
     }
 
-    private Game createPartialGame(LocalDateTime gameStartDate, String location, Long homeClubId, Long awayClubId) {
-        Club homeClub = homeClubId != null ? clubFetchPort.getClub(homeClubId) : null;
-        Club awayClub = awayClubId != null ? clubFetchPort.getClub(awayClubId) : null;
-        return gameFetchPort.savePartialGame(gameStartDate, location, homeClub, awayClub);
+    public List<BoardResponse> buildBoardResponses(List<Board> boards, java.util.function.Predicate<Long> bookmarkedPredicate) {
+        if (boards.isEmpty()) return List.of();
+        BoardRefs refs = loadRefs(boards);
+        return boards.stream()
+                .map(b -> toBoardResponse(b, bookmarkedPredicate.test(b.getId()), refs))
+                .toList();
+    }
+
+    // --- Bulk reference loading for list responses ---
+    private record BoardRefs(
+            Map<Long, User> userById,
+            Map<Long, Club> clubById,
+            Map<Long, Game> gameById
+    ) {}
+
+    private BoardRefs loadRefs(Collection<Board> boards) {
+        List<Long> userIds = boards.stream()
+                .map(Board::getUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        List<Long> gameIds = boards.stream()
+                .map(Board::getGameId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        Map<Long, User> userById = userIds.isEmpty()
+                ? Map.of()
+                : userFetchPort.getUsers(userIds).stream()
+                        .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        Map<Long, Game> gameById = gameIds.isEmpty()
+                ? Map.of()
+                : gameFetchPort.getGames(gameIds).stream()
+                        .collect(Collectors.toMap(Game::getId, Function.identity()));
+
+        List<Long> clubIds = Stream.of(
+                        boards.stream().map(Board::getCheerClubId),
+                        gameById.values().stream().map(Game::getHomeClubId),
+                        gameById.values().stream().map(Game::getAwayClubId)
+                )
+                .flatMap(Function.identity())
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        Map<Long, Club> clubById = clubIds.isEmpty()
+                ? Map.of()
+                : clubFetchPort.getClubs(clubIds).stream()
+                        .collect(Collectors.toMap(Club::getId, Function.identity()));
+
+        return new BoardRefs(userById, clubById, gameById);
+    }
+
+    private BoardResponse toBoardResponse(Board board, boolean bookMarked, BoardRefs refs) {
+        User user = board.getUserId() != null ? refs.userById().get(board.getUserId()) : null;
+        Club cheerClub = board.getCheerClubId() != null ? refs.clubById().get(board.getCheerClubId()) : null;
+        Game game = board.getGameId() != null ? refs.gameById().get(board.getGameId()) : null;
+        Club homeClub = game != null && game.getHomeClubId() != null ? refs.clubById().get(game.getHomeClubId()) : null;
+        Club awayClub = game != null && game.getAwayClubId() != null ? refs.clubById().get(game.getAwayClubId()) : null;
+        return BoardResponse.from(board, bookMarked, user, cheerClub, game, homeClub, awayClub);
     }
 }

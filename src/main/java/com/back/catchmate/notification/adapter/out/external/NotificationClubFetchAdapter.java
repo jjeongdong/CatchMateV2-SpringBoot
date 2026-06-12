@@ -1,8 +1,8 @@
-package com.back.catchmate.board.adapter.out.external;
+package com.back.catchmate.notification.adapter.out.external;
 
-import com.back.catchmate.board.application.port.out.ClubFetchPort;
 import com.back.catchmate.club.application.service.ClubService;
 import com.back.catchmate.club.domain.model.Club;
+import com.back.catchmate.notification.application.port.out.ClubFetchPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -10,7 +10,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class BoardClubFetchAdapter implements ClubFetchPort {
+public class NotificationClubFetchAdapter implements ClubFetchPort {
     private final ClubService clubService;
 
     @Override

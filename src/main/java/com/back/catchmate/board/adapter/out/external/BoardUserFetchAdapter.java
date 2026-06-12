@@ -6,6 +6,8 @@ import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class BoardUserFetchAdapter implements UserFetchPort {
@@ -14,5 +16,10 @@ public class BoardUserFetchAdapter implements UserFetchPort {
     @Override
     public User getUser(Long userId) {
         return userService.getUser(userId);
+    }
+
+    @Override
+    public List<User> getUsers(List<Long> userIds) {
+        return userService.getUsers(userIds);
     }
 }

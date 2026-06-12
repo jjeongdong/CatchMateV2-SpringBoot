@@ -2,11 +2,9 @@ package com.back.catchmate.board.adapter.out.persistence.entity;
 
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.board.domain.model.PreferredAgeRange;
-import com.back.catchmate.club.domain.model.Club;
-import com.back.catchmate.game.domain.model.Game;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
 import com.back.catchmate.club.adapter.out.persistence.entity.ClubEntity;
 import com.back.catchmate.game.adapter.out.persistence.entity.GameEntity;
+import com.back.catchmate.global.infrastructure.BaseTimeEntity;
 import com.back.catchmate.user.adapter.out.persistence.entity.UserEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -86,9 +84,9 @@ public class BoardEntity extends BaseTimeEntity {
                 .content(board.getContent())
                 .maxPerson(board.getMaxPerson())
                 .currentPerson(board.getCurrentPerson())
-                .user(UserEntity.from(board.getUser()))
-                .cheerClub(ClubEntity.fromDomain(board.getCheerClub()))
-                .game(GameEntity.fromDomain(board.getGame()))
+                .user(UserEntity.builder().id(board.getUserId()).build())
+                .cheerClub(board.getCheerClubId() != null ? ClubEntity.builder().id(board.getCheerClubId()).build() : null)
+                .game(board.getGameId() != null ? GameEntity.builder().id(board.getGameId()).build() : null)
                 .preferredGender(board.getPreferredGender())
                 .preferredAgeRange(board.getPreferredAgeRange().asStored())
                 .completed(board.isCompleted())
@@ -104,22 +102,14 @@ public class BoardEntity extends BaseTimeEntity {
                 .content(this.content)
                 .maxPerson(this.maxPerson)
                 .currentPerson(this.currentPerson)
-                .user(this.user.toModel())
-                .cheerClub(toCheerClubModel())
-                .game(toGameModel())
+                .userId(this.user != null ? this.user.getId() : null)
+                .cheerClubId(this.cheerClub != null ? this.cheerClub.getId() : null)
+                .gameId(this.game != null ? this.game.getId() : null)
                 .preferredGender(this.preferredGender)
                 .preferredAgeRange(PreferredAgeRange.fromStored(this.preferredAgeRange))
                 .completed(this.completed)
                 .createdAt(this.getCreatedAt())
                 .liftUpDate(this.liftUpDate)
                 .build();
-    }
-
-    private Club toCheerClubModel() {
-        return this.cheerClub != null ? this.cheerClub.toDomain() : null;
-    }
-
-    private Game toGameModel() {
-        return this.game != null ? this.game.toDomain() : null;
     }
 }

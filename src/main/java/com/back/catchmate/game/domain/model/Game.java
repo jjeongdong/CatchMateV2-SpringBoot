@@ -1,6 +1,5 @@
 package com.back.catchmate.game.domain.model;
 
-import com.back.catchmate.club.domain.model.Club;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,21 +16,21 @@ public class Game {
     private Long id;
     private LocalDateTime gameStartDate;
     private String location;
-    private Club homeClub;
-    private Club awayClub;
+    private Long homeClubId;
+    private Long awayClubId;
 
-    public static Game createGame(Club homeClub, Club awayClub, LocalDateTime date, String location) {
+    public static Game createGame(Long homeClubId, Long awayClubId, LocalDateTime date, String location) {
         return Game.builder()
-                .homeClub(homeClub)
-                .awayClub(awayClub)
+                .homeClubId(homeClubId)
+                .awayClubId(awayClubId)
                 .gameStartDate(date)
                 .location(location)
                 .build();
     }
 
-    public void update(Club homeClub, Club awayClub, LocalDateTime gameStartDate, String location) {
-        this.homeClub = homeClub;
-        this.awayClub = awayClub;
+    public void update(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {
+        this.homeClubId = homeClubId;
+        this.awayClubId = awayClubId;
         this.gameStartDate = gameStartDate;
         this.location = location;
     }
@@ -40,6 +39,6 @@ public class Game {
      * 게임 정보가 완전히 입력되었는지 확인하는 메서드
      */
     public boolean isComplete() {
-        return homeClub != null && awayClub != null && gameStartDate != null && location != null;
+        return homeClubId != null && awayClubId != null && gameStartDate != null && location != null;
     }
 }

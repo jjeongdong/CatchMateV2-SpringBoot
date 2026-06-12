@@ -3,7 +3,11 @@ package com.back.catchmate.board.application.dto.response;
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.board.domain.model.BoardButtonStatus;
 import com.back.catchmate.club.application.dto.response.ClubResponse;
+import com.back.catchmate.club.domain.model.Club;
+import com.back.catchmate.game.domain.model.Game;
 import com.back.catchmate.user.application.dto.response.UserResponse;
+import com.back.catchmate.user.domain.model.User;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,7 +28,8 @@ public record BoardDetailResponse(
         GameResponse game,
         UserResponse user
 ) {
-    public static BoardDetailResponse from(Board board, boolean bookMarked, BoardButtonStatus buttonStatus, Long myEnrollId, Long chatRoomId) {
+    public static BoardDetailResponse from(Board board, boolean bookMarked, BoardButtonStatus buttonStatus, Long myEnrollId, Long chatRoomId,
+                                           User user, Club cheerClub, Game game, Club homeClub, Club awayClub) {
         return new BoardDetailResponse(
                 board.getId(),
                 board.getTitle(),
@@ -38,9 +43,9 @@ public record BoardDetailResponse(
                 buttonStatus.name(),
                 myEnrollId,
                 chatRoomId,
-                ClubResponse.from(board.getCheerClub()),
-                GameResponse.from(board.getGame()),
-                UserResponse.from(board.getUser())
+                cheerClub != null ? ClubResponse.from(cheerClub) : null,
+                GameResponse.from(game, homeClub, awayClub),
+                user != null ? UserResponse.from(user) : null
         );
     }
 }

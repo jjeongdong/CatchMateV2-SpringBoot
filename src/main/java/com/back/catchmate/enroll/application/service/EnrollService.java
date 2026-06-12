@@ -75,16 +75,18 @@ public class EnrollService implements EnrollUseCase {
         User applicant = userFetchPort.getUser(command.userId());
         Board board = boardFetchPort.getCompletedBoard(command.boardId());
 
-        if (applicant.getId().equals(board.getUser().getId())) {
+        if (applicant.getId().equals(board.getUserId())) {
             throw new BaseException(ErrorCode.ENROLL_BAD_REQUEST);
         }
 
         Enroll savedEnroll = createEnroll(applicant, board, command.description());
 
+        User boardOwner = userFetchPort.getUser(board.getUserId());
+
         // FCM 알림 발송
         applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(
                 NotificationTemplate.ENROLL_REQUEST,
-                board.getUser(),
+                boardOwner,
                 applicant,
                 board,
                 "ENROLL_REQUEST",
@@ -98,7 +100,7 @@ public class EnrollService implements EnrollUseCase {
     public EnrollDetailResponse getEnroll(Long userId, Long enrollId) {
         Enroll enroll = getEnrollWithFetch(enrollId);
         Long applicantId = enroll.getUser().getId();
-        Long writerId = enroll.getBoard().getUser().getId();
+        Long writerId = enroll.getBoard().getUserId();
 
         if (!userId.equals(applicantId) && !userId.equals(writerId)) {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
@@ -109,17 +111,26 @@ public class EnrollService implements EnrollUseCase {
             updateEnroll(enroll);
         }
 
-        return EnrollDetailResponse.from(enroll);
+        BoardResponse boardResponse = boardFetchPort.buildBoardResponse(enroll.getBoard(), false);
+        return EnrollDetailResponse.from(enroll, boardResponse);
     }
 
     public PagedResponse<EnrollRequestResponse> getEnrollRequestList(Long userId, int page, int size) {
         Page<Enroll> enrollPage = getEnrollListByUserId(userId, PageRequest.of(page, size));
         Map<Long, Boolean> bookmarkMap = getBookmarkStatusMap(userId, enrollPage.getContent());
 
+        List<Board> boards = enrollPage.getContent().stream()
+                .map(Enroll::getBoard)
+                .toList();
+        Map<Long, BoardResponse> boardResponseById = boardFetchPort
+                .buildBoardResponses(boards, id -> bookmarkMap.getOrDefault(id, false))
+                .stream()
+                .collect(Collectors.toMap(BoardResponse::boardId, java.util.function.Function.identity()));
+
         List<EnrollRequestResponse> responses = enrollPage.getContent().stream()
                 .map(enroll -> EnrollRequestResponse.from(
                         enroll,
-                        bookmarkMap.getOrDefault(enroll.getBoard().getId(), false)
+                        boardResponseById.get(enroll.getBoard().getId())
                 ))
                 .toList();
 
@@ -128,7 +139,7 @@ public class EnrollService implements EnrollUseCase {
 
     public PagedResponse<EnrollApplicantResponse> getEnrollReceiveListByBoardId(Long userId, Long boardId, int page, int size) {
         Board board = boardFetchPort.getBoard(boardId);
-        if (!board.getUser().getId().equals(userId)) {
+        if (!board.getUserId().equals(userId)) {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }
 
@@ -188,10 +199,11 @@ public class EnrollService implements EnrollUseCase {
         applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), enroll.getUser()));
 
         // FCM 알림 발송
+        User boardOwner = userFetchPort.getUser(board.getUserId());
         applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(
                 NotificationTemplate.ENROLL_ACCEPT,
                 enroll.getUser(),
-                board.getUser(),
+                boardOwner,
                 board,
                 "ENROLL_ACCEPTED",
                 enrollId
@@ -210,10 +222,11 @@ public class EnrollService implements EnrollUseCase {
         updateEnroll(enroll);
 
         // FCM 알림 발송
+        User boardOwner = userFetchPort.getUser(board.getUserId());
         applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(
                 NotificationTemplate.ENROLL_REJECT,
                 enroll.getUser(),
-                board.getUser(),
+                boardOwner,
                 board,
                 "ENROLL_REJECTED",
                 enrollId
@@ -235,9 +248,10 @@ public class EnrollService implements EnrollUseCase {
         deleteEnroll(enroll);
 
         // 게시글 작성자에게 신청 취소 알림 발송 (FCM + WebSocket)
+        User boardOwner = userFetchPort.getUser(board.getUserId());
         applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(
                 NotificationTemplate.ENROLL_CANCEL,
-                board.getUser(),
+                boardOwner,
                 applicant,
                 board,
                 "ENROLL_CANCEL",
@@ -265,7 +279,7 @@ public class EnrollService implements EnrollUseCase {
         if (enrolls.isEmpty()) return null;
 
         Board board = enrolls.get(0).getBoard();
-        BoardResponse boardResponse = BoardResponse.from(board, false);
+        BoardResponse boardResponse = boardFetchPort.buildBoardResponse(board, false);
 
         List<EnrollResponse> enrollList = enrolls.stream()
                 .map(EnrollResponse::from)

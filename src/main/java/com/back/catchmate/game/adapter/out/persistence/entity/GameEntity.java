@@ -55,8 +55,8 @@ public class GameEntity extends BaseTimeEntity {
                 .id(game.getId())
                 .gameStartDate(game.getGameStartDate())
                 .location(game.getLocation())
-                .homeClub(ClubEntity.fromDomain(game.getHomeClub()))
-                .awayClub(ClubEntity.fromDomain(game.getAwayClub()))
+                .homeClub(game.getHomeClubId() != null ? ClubEntity.builder().id(game.getHomeClubId()).build() : null)
+                .awayClub(game.getAwayClubId() != null ? ClubEntity.builder().id(game.getAwayClubId()).build() : null)
                 .build();
     }
 
@@ -65,8 +65,8 @@ public class GameEntity extends BaseTimeEntity {
                 .id(this.id)
                 .gameStartDate(this.gameStartDate)
                 .location(this.location)
-                .homeClub(this.homeClub != null ? this.homeClub.toDomain() : null)
-                .awayClub(this.awayClub != null ? this.awayClub.toDomain() : null)
+                .homeClubId(this.homeClub != null ? this.homeClub.getId() : null)
+                .awayClubId(this.awayClub != null ? this.awayClub.getId() : null)
                 .build();
     }
 }

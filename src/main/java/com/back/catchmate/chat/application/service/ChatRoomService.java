@@ -159,7 +159,7 @@ public class ChatRoomService {
 
         // 1. 방장 권한 검증 (게시글 작성자가 방장이라고 가정)
         Board board = boardFetchPort.getBoard(chatRoom.getBoardId());
-        if (!board.getUser().getId().equals(hostId)) {
+        if (!board.getUserId().equals(hostId)) {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }
 

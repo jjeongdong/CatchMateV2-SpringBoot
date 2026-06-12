@@ -1,4 +1,4 @@
-package com.back.catchmate.board.application.port.out;
+package com.back.catchmate.notification.application.port.out;
 
 import com.back.catchmate.club.domain.model.Club;
 

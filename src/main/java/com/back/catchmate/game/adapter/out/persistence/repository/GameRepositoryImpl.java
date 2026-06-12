@@ -1,13 +1,13 @@
 package com.back.catchmate.game.adapter.out.persistence.repository;
 
-import com.back.catchmate.club.domain.model.Club;
-import com.back.catchmate.game.application.port.out.GameRepository;
 import com.back.catchmate.game.adapter.out.persistence.entity.GameEntity;
+import com.back.catchmate.game.application.port.out.GameRepository;
 import com.back.catchmate.game.domain.model.Game;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -22,11 +22,26 @@ public class GameRepositoryImpl implements GameRepository {
     }
 
     @Override
-    public Optional<Game> findByHomeClubAndAwayClubAndGameStartDate(Club homeClub, Club awayClub, LocalDateTime gameStartDate) {
+    public Optional<Game> findById(Long id) {
+        return jpaGameRepository.findById(id).map(GameEntity::toDomain);
+    }
+
+    @Override
+    public Optional<Game> findByHomeClubIdAndAwayClubIdAndGameStartDate(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate) {
         return jpaGameRepository.findByHomeClubIdAndAwayClubIdAndGameStartDate(
-                homeClub.getId(),
-                awayClub.getId(),
+                homeClubId,
+                awayClubId,
                 gameStartDate
         ).map(GameEntity::toDomain);
+    }
+
+    @Override
+    public List<Game> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return jpaGameRepository.findAllById(ids).stream()
+                .map(GameEntity::toDomain)
+                .toList();
     }
 }

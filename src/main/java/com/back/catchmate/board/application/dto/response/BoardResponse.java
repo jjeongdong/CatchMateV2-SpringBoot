@@ -2,7 +2,10 @@ package com.back.catchmate.board.application.dto.response;
 
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.club.application.dto.response.ClubResponse;
+import com.back.catchmate.club.domain.model.Club;
+import com.back.catchmate.game.domain.model.Game;
 import com.back.catchmate.user.application.dto.response.UserResponse;
+import com.back.catchmate.user.domain.model.User;
 
 public record BoardResponse(
         Long boardId,
@@ -15,7 +18,7 @@ public record BoardResponse(
         GameResponse gameResponse,
         UserResponse userResponse
 ) {
-    public static BoardResponse from(Board board, boolean bookMarked) {
+    public static BoardResponse from(Board board, boolean bookMarked, User user, Club cheerClub, Game game, Club homeClub, Club awayClub) {
         return new BoardResponse(
                 board.getId(),
                 board.getTitle(),
@@ -23,9 +26,9 @@ public record BoardResponse(
                 board.getCurrentPerson(),
                 board.getMaxPerson(),
                 bookMarked,
-                ClubResponse.from(board.getCheerClub()),
-                GameResponse.from(board.getGame()),
-                UserResponse.from(board.getUser())
+                cheerClub != null ? ClubResponse.from(cheerClub) : null,
+                GameResponse.from(game, homeClub, awayClub),
+                user != null ? UserResponse.from(user) : null
         );
     }
 }
