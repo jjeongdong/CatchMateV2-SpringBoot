@@ -1,37 +1,37 @@
 package com.back.catchmate.chat.application.service;
 
-import com.back.catchmate.chat.application.port.out.UserFetchPort;
-
-import com.back.catchmate.chat.application.port.in.ChatUseCase;
+import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.chat.application.dto.ChatMessageListDto;
-import com.back.catchmate.chat.application.event.ChatMessageEvent;
-import com.back.catchmate.chat.application.event.ChatNotificationEvent;
-import com.back.catchmate.chat.application.service.ChatMessageService;
-import com.back.catchmate.chat.application.service.ChatRoomMemberService;
-import com.back.catchmate.chat.application.service.ChatRoomService;
-import com.back.catchmate.chat.domain.enums.MessageType;
-import com.back.catchmate.chat.domain.model.ChatMessage;
-import com.back.catchmate.chat.domain.model.ChatRoom;
-import com.back.catchmate.chat.domain.model.ChatRoomMember;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import com.back.catchmate.user.domain.model.User;
-import com.back.catchmate.user.application.port.out.ImageUploaderPort;
 import com.back.catchmate.chat.application.dto.command.ChatMessageCommand;
 import com.back.catchmate.chat.application.dto.response.ChatMessageResponse;
 import com.back.catchmate.chat.application.dto.response.ChatRoomMemberResponse;
 import com.back.catchmate.chat.application.dto.response.ChatRoomResponse;
+import com.back.catchmate.chat.application.event.ChatMessageEvent;
+import com.back.catchmate.chat.application.event.ChatNotificationEvent;
+import com.back.catchmate.chat.application.port.in.ChatUseCase;
+import com.back.catchmate.chat.application.port.out.BoardFetchPort;
+import com.back.catchmate.chat.application.port.out.UserFetchPort;
+import com.back.catchmate.chat.domain.enums.MessageType;
+import com.back.catchmate.chat.domain.model.ChatMessage;
+import com.back.catchmate.chat.domain.model.ChatRoom;
+import com.back.catchmate.chat.domain.model.ChatRoomMember;
 import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.user.application.dto.command.UploadFile;
+import com.back.catchmate.user.application.port.out.ImageUploaderPort;
+import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 @Transactional(readOnly = true)
@@ -44,6 +44,7 @@ public class ChatService implements ChatUseCase {
     private final ChatRoomMemberService chatRoomMemberService;
     private final ChatRoomService chatRoomService;
 
+    private final BoardFetchPort boardFetchPort;
     private final UserFetchPort userFetchPort;
 
     private final ApplicationEventPublisher applicationEventPublisher;
@@ -102,6 +103,14 @@ public class ChatService implements ChatUseCase {
         Map<Long, ChatMessage> lastMessageMap = chatMessageService.getLastMessagesByChatRoomIds(chatRoomIds);
         Map<Long, ChatRoomMember> memberMap = chatRoomMemberService.getChatRoomMembersByChatRoomIds(chatRoomIds, userId);
 
+        List<Long> boardIds = chatRoomPage.getContent().stream()
+                .map(ChatRoom::getBoardId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, Board> boardById = boardFetchPort.getBoards(boardIds).stream()
+                .collect(Collectors.toMap(Board::getId, Function.identity()));
+
         List<ChatRoomResponse> responses = chatRoomPage.getContent().stream()
                 .map(chatRoom -> {
                     ChatMessageResponse lastMessage = Optional.ofNullable(lastMessageMap.get(chatRoom.getId()))
@@ -116,7 +125,8 @@ public class ChatService implements ChatUseCase {
                     boolean isNotificationOn = member != null && member.isNotificationOn();
                     boolean readOnly = member != null && member.isReadOnly();
 
-                    return ChatRoomResponse.from(chatRoom, lastMessage, unreadCount, isNotificationOn, readOnly);
+                    Board board = chatRoom.getBoardId() != null ? boardById.get(chatRoom.getBoardId()) : null;
+                    return ChatRoomResponse.from(chatRoom, board, lastMessage, unreadCount, isNotificationOn, readOnly);
                 })
                 .toList();
 

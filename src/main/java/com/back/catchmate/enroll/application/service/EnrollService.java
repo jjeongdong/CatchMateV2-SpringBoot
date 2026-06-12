@@ -183,7 +183,7 @@ public class EnrollService implements EnrollUseCase {
         updateEnroll(enroll);
 
         // 채팅방 처리
-        ChatRoom chatRoom = chatFetchPort.getOrCreateChatRoom(board);
+        ChatRoom chatRoom = chatFetchPort.getOrCreateChatRoom(board.getId());
         chatFetchPort.addMember(chatRoom, enroll.getUser());
         applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), enroll.getUser()));
 

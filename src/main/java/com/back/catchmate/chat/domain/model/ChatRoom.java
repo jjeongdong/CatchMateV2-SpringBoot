@@ -1,6 +1,5 @@
 package com.back.catchmate.chat.domain.model;
 
-import com.back.catchmate.board.domain.model.Board;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,16 +14,16 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoom {
     private Long id;
-    private Board board;
+    private Long boardId;
     private Long lastMessageSequence;
     private String chatRoomImageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
 
     // 채팅방 생성 메서드
-    public static ChatRoom createChatRoom(Board board) {
+    public static ChatRoom createChatRoom(Long boardId) {
         return ChatRoom.builder()
-                .board(board)
+                .boardId(boardId)
                 .lastMessageSequence(0L)
                 .createdAt(LocalDateTime.now())
                 .build();

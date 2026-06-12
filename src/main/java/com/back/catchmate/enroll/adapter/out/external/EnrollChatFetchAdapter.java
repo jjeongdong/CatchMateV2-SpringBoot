@@ -1,6 +1,5 @@
 package com.back.catchmate.enroll.adapter.out.external;
 
-import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.chat.application.service.ChatRoomMemberService;
 import com.back.catchmate.chat.application.service.ChatRoomService;
 import com.back.catchmate.chat.domain.model.ChatRoom;
@@ -22,7 +21,7 @@ public class EnrollChatFetchAdapter implements ChatFetchPort {
     }
 
     @Override
-    public ChatRoom getOrCreateChatRoom(Board board) {
-        return chatRoomService.getOrCreateChatRoom(board);
+    public ChatRoom getOrCreateChatRoom(Long boardId) {
+        return chatRoomService.getOrCreateChatRoom(boardId);
     }
 }

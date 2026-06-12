@@ -52,7 +52,7 @@ public class ChatRoomEntity extends BaseTimeEntity {
     public static ChatRoomEntity from(ChatRoom chatRoom) {
         return ChatRoomEntity.builder()
                 .id(chatRoom.getId())
-                .board(BoardEntity.fromDomain(chatRoom.getBoard()))
+                .board(BoardEntity.builder().id(chatRoom.getBoardId()).build())
                 .lastMessageSequence(chatRoom.getLastMessageSequence())
                 .chatRoomImageUrl(chatRoom.getChatRoomImageUrl())
                 .deletedAt(chatRoom.getDeletedAt())
@@ -62,7 +62,7 @@ public class ChatRoomEntity extends BaseTimeEntity {
     public ChatRoom toModel() {
         return ChatRoom.builder()
                 .id(this.id)
-                .board(this.board != null ? this.board.toDomain() : null)
+                .boardId(this.board != null ? this.board.getId() : null)
                 .lastMessageSequence(this.lastMessageSequence)
                 .chatRoomImageUrl(this.chatRoomImageUrl)
                 .createdAt(this.getCreatedAt())

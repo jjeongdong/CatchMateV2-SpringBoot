@@ -1,26 +1,24 @@
 package com.back.catchmate.chat.application.service;
 
-import com.back.catchmate.chat.application.port.out.UserFetchPort;
-
-import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.board.domain.model.Board;
+import com.back.catchmate.chat.application.port.out.BoardFetchPort;
+import com.back.catchmate.chat.application.port.out.ChatHistoryCachePort;
+import com.back.catchmate.chat.application.port.out.ChatMessageBufferPort;
+import com.back.catchmate.chat.application.port.out.ChatRoomMemberRepository;
+import com.back.catchmate.chat.application.port.out.ChatRoomRepository;
+import com.back.catchmate.chat.application.port.out.ChatSequencePort;
+import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
 import com.back.catchmate.chat.domain.model.ChatRoom;
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
-import com.back.catchmate.chat.application.port.out.ChatHistoryCachePort;
-import com.back.catchmate.chat.application.port.out.ChatMessageBufferPort;
-import com.back.catchmate.chat.application.port.out.ChatSequencePort;
-import com.back.catchmate.chat.application.port.out.ChatRoomMemberRepository;
-import com.back.catchmate.chat.application.port.out.ChatRoomRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import com.back.catchmate.user.domain.model.User;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
+import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +35,8 @@ public class ChatRoomService {
     private final ChatHistoryCachePort chatHistoryCachePort;
     private final ChatMessageBufferPort chatMessageBufferPort;
     private final ChatSequencePort chatSequencePort;
+
+    private final BoardFetchPort boardFetchPort;
 
     public ChatRoom getChatRoom(Long chatRoomId) {
         return chatRoomRepository.findById(chatRoomId)
@@ -59,12 +59,9 @@ public class ChatRoomService {
      * 게시글로 채팅방 조회 또는 생성
      * 이미 채팅방이 있으면 기존 채팅방을 반환하고, 없으면 새로 생성
      */
-    public ChatRoom getOrCreateChatRoom(Board board) {
-        return chatRoomRepository.findByBoardId(board.getId())
-                .orElseGet(() -> {
-                    ChatRoom newChatRoom = ChatRoom.createChatRoom(board);
-                    return chatRoomRepository.save(newChatRoom);
-                });
+    public ChatRoom getOrCreateChatRoom(Long boardId) {
+        return chatRoomRepository.findByBoardId(boardId)
+                .orElseGet(() -> chatRoomRepository.save(ChatRoom.createChatRoom(boardId)));
     }
 
     // 사용자 기준으로 참가중인 채팅방 리스트 조회 (페이징)
@@ -159,7 +156,8 @@ public class ChatRoomService {
         Long sequence = chatSequencePort.getCurrentSequence(chatRoomId);
 
         // 1. 방장 권한 검증 (게시글 작성자가 방장이라고 가정)
-        if (!chatRoom.getBoard().getUser().getId().equals(hostId)) {
+        Board board = boardFetchPort.getBoard(chatRoom.getBoardId());
+        if (!board.getUser().getId().equals(hostId)) {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }
 

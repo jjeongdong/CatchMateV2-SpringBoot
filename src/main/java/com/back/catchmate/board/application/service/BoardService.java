@@ -91,7 +91,7 @@ public class BoardService implements BoardUseCase {
         Board savedBoard = createBoardEntity(board);
 
         if (command.completed()) {
-            ChatRoom chatRoom = chatRoomFetchPort.getOrCreateChatRoom(savedBoard);
+            ChatRoom chatRoom = chatRoomFetchPort.getOrCreateChatRoom(savedBoard.getId());
             chatRoomFetchPort.addMember(chatRoom, user);
             applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), user));
         }
@@ -110,7 +110,7 @@ public class BoardService implements BoardUseCase {
         Long myEnrollId = myEnroll.map(Enroll::getId).orElse(null);
 
         Long chatRoomId = board.isCompleted()
-                ? chatRoomFetchPort.getOrCreateChatRoom(board).getId()
+                ? chatRoomFetchPort.getOrCreateChatRoom(board.getId()).getId()
                 : null;
 
         return BoardDetailResponse.from(board, isBookMarked, buttonStatus, myEnrollId, chatRoomId);
@@ -207,7 +207,7 @@ public class BoardService implements BoardUseCase {
         boardRepository.save(board);
 
         if (!wasCompleted && command.completed()) {
-            ChatRoom chatRoom = chatRoomFetchPort.getOrCreateChatRoom(board);
+            ChatRoom chatRoom = chatRoomFetchPort.getOrCreateChatRoom(board.getId());
             chatRoomFetchPort.addMember(chatRoom, user);
             applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), user));
         }
