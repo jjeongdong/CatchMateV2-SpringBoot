@@ -1,6 +1,6 @@
 package com.back.catchmate.enroll.application.port.in;
 
-import com.back.catchmate.common.orchestration.PagedResponse;
+import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.enroll.application.dto.command.EnrollCreateCommand;
 import com.back.catchmate.enroll.application.dto.response.EnrollAcceptResponse;
 import com.back.catchmate.enroll.application.dto.response.EnrollApplicantResponse;

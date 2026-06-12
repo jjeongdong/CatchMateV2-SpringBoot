@@ -22,7 +22,7 @@ import com.back.catchmate.chat.application.dto.command.ChatMessageCommand;
 import com.back.catchmate.chat.application.dto.response.ChatMessageResponse;
 import com.back.catchmate.chat.application.dto.response.ChatRoomMemberResponse;
 import com.back.catchmate.chat.application.dto.response.ChatRoomResponse;
-import com.back.catchmate.common.orchestration.PagedResponse;
+import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.user.application.dto.command.UploadFile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;

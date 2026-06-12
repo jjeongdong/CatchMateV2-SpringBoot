@@ -1,7 +1,7 @@
 package com.back.catchmate.board.domain.model;
 
 import com.back.catchmate.club.domain.model.Club;
-import com.back.catchmate.common.permission.ResourceOwnership;
+import com.back.catchmate.global.authorization.common.ResourceOwnership;
 import com.back.catchmate.game.domain.model.Game;
 import com.back.catchmate.user.domain.model.User;
 import com.back.catchmate.common.error.ErrorCode;

@@ -1,4 +1,4 @@
-package com.back.catchmate.common.orchestration;
+package com.back.catchmate.common.response;
 
 import org.springframework.data.domain.Page;
 import lombok.Getter;

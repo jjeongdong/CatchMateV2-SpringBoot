@@ -1,6 +1,6 @@
-package com.back.catchmate.common.orchestration;
+package com.back.catchmate.common.response;
 
-import com.back.catchmate.common.page.CursorPage;
+import com.back.catchmate.common.response.CursorPage;
 import lombok.Getter;
 
 import java.time.format.DateTimeFormatter;

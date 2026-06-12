@@ -1,7 +1,7 @@
 package com.back.catchmate.admin.adapter.out.external;
 
 import com.back.catchmate.admin.application.port.out.NoticeFetchPort;
-import com.back.catchmate.common.orchestration.PagedResponse;
+import com.back.catchmate.common.response.PagedResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

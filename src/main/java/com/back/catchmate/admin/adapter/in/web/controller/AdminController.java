@@ -20,7 +20,7 @@ import com.back.catchmate.admin.application.dto.response.InquiryAnswerResponse;
 import com.back.catchmate.admin.application.dto.response.NoticeActionResponse;
 import com.back.catchmate.admin.application.dto.response.NoticeCreateResponse;
 import com.back.catchmate.admin.application.dto.response.ReportActionResponse;
-import com.back.catchmate.common.orchestration.PagedResponse;
+import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.notice.application.dto.response.NoticeDetailResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

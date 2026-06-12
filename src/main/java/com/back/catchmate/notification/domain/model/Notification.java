@@ -1,7 +1,7 @@
 package com.back.catchmate.notification.domain.model;
 
 import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.common.permission.ResourceOwnership;
+import com.back.catchmate.global.authorization.common.ResourceOwnership;
 import com.back.catchmate.user.domain.model.User;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

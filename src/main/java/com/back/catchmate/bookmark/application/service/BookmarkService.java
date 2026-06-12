@@ -10,7 +10,7 @@ import com.back.catchmate.bookmark.application.dto.response.BookmarkUpdateRespon
 import com.back.catchmate.bookmark.application.port.in.BookmarkUseCase;
 import com.back.catchmate.bookmark.application.port.out.BookmarkRepository;
 import com.back.catchmate.bookmark.domain.model.Bookmark;
-import com.back.catchmate.common.orchestration.PagedResponse;
+import com.back.catchmate.common.response.PagedResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

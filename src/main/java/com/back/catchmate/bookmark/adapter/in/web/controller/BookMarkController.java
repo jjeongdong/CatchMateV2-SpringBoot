@@ -4,7 +4,7 @@ import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.board.application.dto.response.BoardResponse;
 import com.back.catchmate.bookmark.application.port.in.BookmarkUseCase;
 import com.back.catchmate.bookmark.application.dto.response.BookmarkUpdateResponse;
-import com.back.catchmate.common.orchestration.PagedResponse;
+import com.back.catchmate.common.response.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

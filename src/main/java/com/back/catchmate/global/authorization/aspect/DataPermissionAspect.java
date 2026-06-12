@@ -3,7 +3,7 @@ package com.back.catchmate.global.authorization.aspect;
 import com.back.catchmate.global.authorization.annotation.CheckDataPermission;
 import com.back.catchmate.global.authorization.annotation.PermissionId;
 import com.back.catchmate.global.authorization.common.DomainFinder;
-import com.back.catchmate.common.permission.ResourceOwnership;
+import com.back.catchmate.global.authorization.common.ResourceOwnership;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;

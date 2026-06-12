@@ -6,7 +6,7 @@ import com.back.catchmate.chat.application.port.in.ChatUseCase;
 import com.back.catchmate.chat.application.dto.response.ChatMessageResponse;
 import com.back.catchmate.chat.application.dto.response.ChatRoomMemberResponse;
 import com.back.catchmate.chat.application.dto.response.ChatRoomResponse;
-import com.back.catchmate.common.orchestration.PagedResponse;
+import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.user.application.dto.command.UploadFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,6 +1,6 @@
 package com.back.catchmate.inquiry.domain.model;
 
-import com.back.catchmate.common.permission.ResourceOwnership;
+import com.back.catchmate.global.authorization.common.ResourceOwnership;
 import com.back.catchmate.user.domain.model.User;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;

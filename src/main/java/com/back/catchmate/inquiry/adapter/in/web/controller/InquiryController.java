@@ -4,7 +4,7 @@ import com.back.catchmate.inquiry.adapter.in.web.dto.request.InquiryCreateReques
 import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.global.authorization.annotation.CheckInquiryPermission;
 import com.back.catchmate.global.authorization.annotation.PermissionId;
-import com.back.catchmate.common.orchestration.PagedResponse;
+import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.inquiry.application.port.in.InquiryUseCase;
 import com.back.catchmate.inquiry.application.dto.response.InquiryCreateResponse;
 import com.back.catchmate.inquiry.application.dto.response.InquiryDetailResponse;

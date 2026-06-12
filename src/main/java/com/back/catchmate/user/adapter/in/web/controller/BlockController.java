@@ -1,7 +1,7 @@
 package com.back.catchmate.user.adapter.in.web.controller;
 
 import com.back.catchmate.global.authorization.annotation.AuthUser;
-import com.back.catchmate.common.orchestration.PagedResponse;
+import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.user.application.port.in.UserBlockUseCase;
 import com.back.catchmate.user.application.dto.response.BlockActionResponse;
 import com.back.catchmate.user.application.dto.response.BlockedUserResponse;

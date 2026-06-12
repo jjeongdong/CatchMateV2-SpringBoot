@@ -1,7 +1,7 @@
 package com.back.catchmate.user.domain.model;
 
 import com.back.catchmate.club.domain.model.Club;
-import com.back.catchmate.common.permission.ResourceOwnership;
+import com.back.catchmate.global.authorization.common.ResourceOwnership;
 import lombok.Builder;
 import lombok.Getter;
 import com.back.catchmate.user.domain.enums.AlarmType;

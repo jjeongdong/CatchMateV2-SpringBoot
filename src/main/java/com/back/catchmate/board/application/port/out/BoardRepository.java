@@ -2,7 +2,7 @@ package com.back.catchmate.board.application.port.out;
 
 import com.back.catchmate.board.domain.dto.BoardSearchCondition;
 import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.common.page.CursorPage;
+import com.back.catchmate.common.response.CursorPage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

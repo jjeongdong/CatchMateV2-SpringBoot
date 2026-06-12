@@ -5,7 +5,7 @@ import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.global.authorization.annotation.CheckEnrollApplicantPermission;
 import com.back.catchmate.global.authorization.annotation.CheckEnrollHostPermission;
 import com.back.catchmate.global.authorization.annotation.PermissionId;
-import com.back.catchmate.common.orchestration.PagedResponse;
+import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.enroll.application.port.in.EnrollUseCase;
 import com.back.catchmate.enroll.application.dto.response.EnrollAcceptResponse;
 import com.back.catchmate.enroll.application.dto.response.EnrollApplicantResponse;

@@ -3,7 +3,7 @@ package com.back.catchmate.notification.adapter.in.web.controller;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.global.authorization.annotation.CheckNotificationPermission;
 import com.back.catchmate.global.authorization.annotation.PermissionId;
-import com.back.catchmate.common.orchestration.PagedResponse;
+import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.notification.application.port.in.NotificationUseCase;
 import com.back.catchmate.notification.application.dto.response.NotificationResponse;
 import com.back.catchmate.notification.application.dto.response.UnreadNotificationResponse;
