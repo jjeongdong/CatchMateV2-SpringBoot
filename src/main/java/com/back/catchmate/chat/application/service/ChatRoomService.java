@@ -7,6 +7,7 @@ import com.back.catchmate.chat.application.port.out.ChatMessageBufferPort;
 import com.back.catchmate.chat.application.port.out.ChatRoomMemberRepository;
 import com.back.catchmate.chat.application.port.out.ChatRoomRepository;
 import com.back.catchmate.chat.application.port.out.ChatSequencePort;
+import com.back.catchmate.chat.application.port.out.UserFetchPort;
 import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
 import com.back.catchmate.chat.domain.model.ChatRoom;
@@ -37,6 +38,7 @@ public class ChatRoomService {
     private final ChatSequencePort chatSequencePort;
 
     private final BoardFetchPort boardFetchPort;
+    private final UserFetchPort userFetchPort;
 
     public ChatRoom getChatRoom(Long chatRoomId) {
         return chatRoomRepository.findById(chatRoomId)
@@ -176,10 +178,11 @@ public class ChatRoomService {
         targetMember.leave();
         chatRoomMemberRepository.save(targetMember);
 
-        String kickMessage = targetMember.getUser().getNickName() + "님이 내보내졌습니다.";
+        User targetUser = userFetchPort.getUser(targetMember.getUserId());
+        String kickMessage = targetUser.getNickName() + "님이 내보내졌습니다.";
         ChatMessage chatMessage = ChatMessage.createMessage(
                 ChatRoom.builder().id(chatRoomId).build(),
-                targetMember.getUser(),
+                targetUser,
                 kickMessage,
                 MessageType.SYSTEM,
                 sequence

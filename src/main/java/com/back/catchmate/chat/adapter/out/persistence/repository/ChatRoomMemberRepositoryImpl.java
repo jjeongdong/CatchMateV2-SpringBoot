@@ -53,7 +53,7 @@ public class ChatRoomMemberRepositoryImpl implements ChatRoomMemberRepository {
         return jpaChatRoomMemberRepository.findByChatRoomIdsAndUserId(chatRoomIds, userId).stream()
                 .map(ChatRoomMemberEntity::toModel)
                 .collect(Collectors.toMap(
-                        member -> member.getChatRoom().getId(),
+                        ChatRoomMember::getChatRoomId,
                         member -> member
                 ));
     }

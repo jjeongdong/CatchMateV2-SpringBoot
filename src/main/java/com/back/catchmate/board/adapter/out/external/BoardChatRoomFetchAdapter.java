@@ -5,7 +5,6 @@ import com.back.catchmate.chat.application.service.ChatRoomMemberService;
 import com.back.catchmate.chat.application.service.ChatRoomService;
 import com.back.catchmate.chat.domain.model.ChatRoom;
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
-import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +20,7 @@ public class BoardChatRoomFetchAdapter implements ChatRoomFetchPort {
     }
 
     @Override
-    public ChatRoomMember addMember(ChatRoom chatRoom, User user) {
-        return chatRoomMemberService.addMember(chatRoom, user);
+    public ChatRoomMember addMember(ChatRoom chatRoom, Long userId) {
+        return chatRoomMemberService.addMember(chatRoom, userId);
     }
 }

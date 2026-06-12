@@ -1,11 +1,8 @@
 package com.back.catchmate.chat.application.service;
 
-import com.back.catchmate.chat.application.port.out.UserFetchPort;
-
+import com.back.catchmate.chat.application.port.out.ChatRoomMemberRepository;
 import com.back.catchmate.chat.domain.model.ChatRoom;
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
-import com.back.catchmate.chat.application.port.out.ChatRoomMemberRepository;
-import com.back.catchmate.user.domain.model.User;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -24,10 +21,10 @@ public class ChatRoomMemberService {
     /**
      * 채팅방 멤버 추가
      */
-    public ChatRoomMember addMember(ChatRoom chatRoom, User user) {
+    public ChatRoomMember addMember(ChatRoom chatRoom, Long userId) {
         // 이미 멤버인지 확인
         Optional<ChatRoomMember> existing = chatRoomMemberRepository
-                .findByChatRoomIdAndUserId(chatRoom.getId(), user.getId());
+                .findByChatRoomIdAndUserId(chatRoom.getId(), userId);
 
         if (existing.isPresent()) {
             ChatRoomMember member = existing.get();
@@ -44,7 +41,7 @@ public class ChatRoomMemberService {
             throw new BaseException(ErrorCode.CHATROOM_REENTRY_NOT_ALLOWED);
         }
 
-        ChatRoomMember newMember = ChatRoomMember.create(chatRoom, user);
+        ChatRoomMember newMember = ChatRoomMember.create(chatRoom.getId(), userId, chatRoom.getLastMessageSequence());
         return chatRoomMemberRepository.save(newMember);
     }
 
@@ -65,7 +62,7 @@ public class ChatRoomMemberService {
      */
     public List<Long> getChatRoomIdsByUserId(Long userId) {
         return chatRoomMemberRepository.findAllByUserIdAndActive(userId).stream()
-                .map(member -> member.getChatRoom().getId())
+                .map(ChatRoomMember::getChatRoomId)
                 .toList();
     }
 

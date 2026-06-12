@@ -2,9 +2,8 @@ package com.back.catchmate.enroll.application.port.out;
 
 import com.back.catchmate.chat.domain.model.ChatRoom;
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
-import com.back.catchmate.user.domain.model.User;
 
 public interface ChatFetchPort {
-    ChatRoomMember addMember(ChatRoom chatRoom, User user);
+    ChatRoomMember addMember(ChatRoom chatRoom, Long userId);
     ChatRoom getOrCreateChatRoom(Long boardId);
 }

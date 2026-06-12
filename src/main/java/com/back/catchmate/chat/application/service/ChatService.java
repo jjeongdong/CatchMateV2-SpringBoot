@@ -65,12 +65,13 @@ public class ChatService implements ChatUseCase {
 
         // 채팅방 멤버 중 발신자를 제외한 모든 사용자에게 알림 이벤트 발행
         // FCM 알림은 별도의 이벤트 리스너에서 처리
-        List<User> recipients = chatRoomMemberService.getChatRoomMembers(savedMessage.getChatRoom().getId())
+        List<Long> recipientIds = chatRoomMemberService.getChatRoomMembers(savedMessage.getChatRoom().getId())
                 .stream()
-                .filter(member -> !member.getUser().getId().equals(senderId))
+                .filter(member -> !member.getUserId().equals(senderId))
                 .filter(ChatRoomMember::isNotificationOn)
-                .map(ChatRoomMember::getUser)
+                .map(ChatRoomMember::getUserId)
                 .toList();
+        List<User> recipients = recipientIds.isEmpty() ? List.of() : userFetchPort.getUsers(recipientIds);
 
         // 알림을 받을 사용자가 있을 때만 이벤트 발행
         if (!recipients.isEmpty()) {
@@ -183,8 +184,15 @@ public class ChatService implements ChatUseCase {
     public List<ChatRoomMemberResponse> getChatRoomMembers(Long chatRoomId) {
         List<ChatRoomMember> activeMembers = chatRoomMemberService.getChatRoomMembers(chatRoomId);
 
+        List<Long> userIds = activeMembers.stream()
+                .map(ChatRoomMember::getUserId)
+                .distinct()
+                .toList();
+        Map<Long, User> userById = userFetchPort.getUsers(userIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
         return activeMembers.stream()
-                .map(ChatRoomMemberResponse::from)
+                .map(member -> ChatRoomMemberResponse.from(member, userById.get(member.getUserId())))
                 .toList();
     }
 

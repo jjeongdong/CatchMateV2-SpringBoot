@@ -184,7 +184,7 @@ public class EnrollService implements EnrollUseCase {
 
         // 채팅방 처리
         ChatRoom chatRoom = chatFetchPort.getOrCreateChatRoom(board.getId());
-        chatFetchPort.addMember(chatRoom, enroll.getUser());
+        chatFetchPort.addMember(chatRoom, enroll.getUser().getId());
         applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), enroll.getUser()));
 
         // FCM 알림 발송

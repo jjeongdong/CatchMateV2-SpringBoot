@@ -46,8 +46,8 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
     public static ChatRoomMemberEntity from(ChatRoomMember member) {
         return ChatRoomMemberEntity.builder()
                 .id(member.getId())
-                .chatRoom(ChatRoomEntity.from(member.getChatRoom()))
-                .user(UserEntity.from(member.getUser()))
+                .chatRoom(ChatRoomEntity.builder().id(member.getChatRoomId()).build())
+                .user(UserEntity.builder().id(member.getUserId()).build())
                 .joinedAt(member.getJoinedAt())
                 .leftAt(member.getLeftAt())
                 .readOnlyAt(member.getReadOnlyAt())
@@ -59,8 +59,8 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
     public ChatRoomMember toModel() {
         return ChatRoomMember.builder()
                 .id(this.id)
-                .chatRoom(this.chatRoom.toModel())
-                .user(this.user.toModel())
+                .chatRoomId(this.chatRoom != null ? this.chatRoom.getId() : null)
+                .userId(this.user != null ? this.user.getId() : null)
                 .joinedAt(this.joinedAt)
                 .leftAt(this.leftAt)
                 .readOnlyAt(this.readOnlyAt)

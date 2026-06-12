@@ -92,7 +92,7 @@ public class BoardService implements BoardUseCase {
 
         if (command.completed()) {
             ChatRoom chatRoom = chatRoomFetchPort.getOrCreateChatRoom(savedBoard.getId());
-            chatRoomFetchPort.addMember(chatRoom, user);
+            chatRoomFetchPort.addMember(chatRoom, user.getId());
             applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), user));
         }
 
@@ -208,7 +208,7 @@ public class BoardService implements BoardUseCase {
 
         if (!wasCompleted && command.completed()) {
             ChatRoom chatRoom = chatRoomFetchPort.getOrCreateChatRoom(board.getId());
-            chatRoomFetchPort.addMember(chatRoom, user);
+            chatRoomFetchPort.addMember(chatRoom, user.getId());
             applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), user));
         }
 

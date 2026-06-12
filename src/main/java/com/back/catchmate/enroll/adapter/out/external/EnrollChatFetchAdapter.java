@@ -5,7 +5,6 @@ import com.back.catchmate.chat.application.service.ChatRoomService;
 import com.back.catchmate.chat.domain.model.ChatRoom;
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
 import com.back.catchmate.enroll.application.port.out.ChatFetchPort;
-import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,8 +15,8 @@ public class EnrollChatFetchAdapter implements ChatFetchPort {
     private final ChatRoomService chatRoomService;
 
     @Override
-    public ChatRoomMember addMember(ChatRoom chatRoom, User user) {
-        return chatRoomMemberService.addMember(chatRoom, user);
+    public ChatRoomMember addMember(ChatRoom chatRoom, Long userId) {
+        return chatRoomMemberService.addMember(chatRoom, userId);
     }
 
     @Override

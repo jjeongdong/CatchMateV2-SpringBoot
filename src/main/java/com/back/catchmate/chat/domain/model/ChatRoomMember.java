@@ -1,6 +1,5 @@
 package com.back.catchmate.chat.domain.model;
 
-import com.back.catchmate.user.domain.model.User;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,8 +14,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoomMember {
     private Long id;
-    private ChatRoom chatRoom;
-    private User user;
+    private Long chatRoomId;
+    private Long userId;
     private Long lastReadSequence;
     private LocalDateTime joinedAt;
     private LocalDateTime leftAt;
@@ -26,11 +25,11 @@ public class ChatRoomMember {
     /**
      * 채팅방 멤버 생성 메서드
      */
-    public static ChatRoomMember create(ChatRoom chatRoom, User user) {
+    public static ChatRoomMember create(Long chatRoomId, Long userId, Long initialLastReadSequence) {
         return ChatRoomMember.builder()
-                .chatRoom(chatRoom)
-                .user(user)
-                .lastReadSequence(chatRoom.getLastMessageSequence())
+                .chatRoomId(chatRoomId)
+                .userId(userId)
+                .lastReadSequence(initialLastReadSequence)
                 .joinedAt(LocalDateTime.now())
                 .isNotificationOn(true)
                 .build();
