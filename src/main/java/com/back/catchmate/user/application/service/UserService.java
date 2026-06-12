@@ -59,20 +59,20 @@ public class UserService implements UserUseCase {
 
         Club club = null;
         if (command.hasFavoriteClubChange()) {
-            club = clubFetchPort.getClub(command.getFavoriteClubId());
+            club = clubFetchPort.getClub(command.favoriteClubId());
         }
 
         String profileImageUrl = null;
         if (uploadFile != null) {
             profileImageUrl = profileImageUploader.upload(
-                    uploadFile.getOriginalFilename(),
-                    uploadFile.getContentType(),
-                    uploadFile.getInputStream(),
-                    uploadFile.getSize()
+                    uploadFile.originalFilename(),
+                    uploadFile.contentType(),
+                    uploadFile.inputStream(),
+                    uploadFile.size()
             );
         }
 
-        user.updateProfile(command.getNickName(), command.getWatchStyle(), club, profileImageUrl);
+        user.updateProfile(command.nickName(), command.watchStyle(), club, profileImageUrl);
         updateUser(user);
 
         return UserUpdateResponse.from(user);
@@ -95,7 +95,7 @@ public class UserService implements UserUseCase {
     @Transactional
     public void updateUserFcmToken(Long userId, UserFcmTokenUpdateCommand command) {
         User user = getUser(userId);
-        user.updateFcmToken(command.getFcmToken());
+        user.updateFcmToken(command.fcmToken());
         updateUser(user);
     }
 

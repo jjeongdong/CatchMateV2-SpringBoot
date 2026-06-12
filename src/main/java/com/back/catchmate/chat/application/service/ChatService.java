@@ -53,10 +53,10 @@ public class ChatService implements ChatUseCase {
         User sender = userFetchPort.getUser(senderId);
 
         ChatMessage savedMessage = chatMessageService.saveMessage(
-                command.getChatRoomId(),
+                command.chatRoomId(),
                 sender,
-                command.getContent(),
-                command.getMessageType()
+                command.content(),
+                command.messageType()
         );
 
         // 웹 소켓을 통해 채팅 메시지 이벤트 발행 (채팅방 멤버 전체에게 실시간 전송)
@@ -190,10 +190,10 @@ public class ChatService implements ChatUseCase {
         // 1. 이미지가 전달된 경우 S3 등에 업로드하여 URL 획득
         if (uploadFile != null) {
             imageUrl = imageUploaderPort.upload(
-                    uploadFile.getOriginalFilename(),
-                    uploadFile.getContentType(),
-                    uploadFile.getInputStream(),
-                    uploadFile.getSize()
+                    uploadFile.originalFilename(),
+                    uploadFile.contentType(),
+                    uploadFile.inputStream(),
+                    uploadFile.size()
             );
         }
 

@@ -38,8 +38,8 @@ public class InquiryService implements InquiryUseCase {
 
         Inquiry inquiry = registerInquiry(
                 user,
-                command.getType(),
-                command.getContent()
+                command.type(),
+                command.content()
         );
 
         return InquiryCreateResponse.of(inquiry.getId());

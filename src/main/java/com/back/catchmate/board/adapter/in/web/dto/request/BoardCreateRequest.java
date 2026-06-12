@@ -24,25 +24,26 @@ public record BoardCreateRequest(
             String location
     ) {
         public GameCreateCommand toCommand() {
-            return GameCreateCommand.builder()
-                    .homeClubId(homeClubId)
-                    .awayClubId(awayClubId)
-                    .gameStartDate(gameStartDate)
-                    .location(location)
-                    .build();
+            return new GameCreateCommand(
+                homeClubId,
+                awayClubId,
+                gameStartDate,
+                location
+        );
         }
     }
 
     public BoardCreateCommand toCommand() {
-        return BoardCreateCommand.builder()
-                .title(title)
-                .content(content)
-                .maxPerson(maxPerson != null ? maxPerson : 0)
-                .cheerClubId(cheerClubId)
-                .preferredGender(preferredGender)
-                .preferredAgeRange(preferredAgeRange)
-                .gameCreateCommand(gameCreateRequest != null ? gameCreateRequest.toCommand() : null)
-                .completed(completed)
-                .build();
+        return new BoardCreateCommand(
+                null,
+                title,
+                content,
+                maxPerson != null ? maxPerson : 0,
+                cheerClubId,
+                preferredGender,
+                preferredAgeRange,
+                gameCreateRequest != null ? gameCreateRequest.toCommand() : null,
+                completed
+        );
     }
 }

@@ -31,13 +31,13 @@ public class ReportService implements ReportUseCase {
     @Transactional
     public ReportCreateResponse createReport(Long reporterId, ReportCreateCommand command) {
         User reporter = userFetchPort.getUser(reporterId);
-        User reportedUser = userFetchPort.getUser(command.getReportedUserId());
+        User reportedUser = userFetchPort.getUser(command.reportedUserId());
 
         Report report = createReport(
                 reporter,
                 reportedUser,
-                command.getReason(),
-                command.getDescription()
+                command.reason(),
+                command.description()
         );
 
         return ReportCreateResponse.from(report);

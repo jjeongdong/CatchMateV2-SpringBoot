@@ -8,9 +8,9 @@ public record NoticeCreateRequest(
         @NotBlank(message = "내용을 입력해주세요.") String content
 ) {
     public NoticeCreateCommand toCommand() {
-        return NoticeCreateCommand.builder()
-                .title(this.title)
-                .content(this.content)
-                .build();
+        return new NoticeCreateCommand(
+                this.title,
+                this.content
+        );
     }
 }

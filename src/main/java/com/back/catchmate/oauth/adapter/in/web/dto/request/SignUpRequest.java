@@ -15,13 +15,13 @@ public record SignUpRequest(
         String watchStyle
 ) {
     public SignUpCommand toCommand() {
-        return SignUpCommand.builder()
-                .signupToken(signupToken)
-                .gender(gender)
-                .nickName(nickName)
-                .birthDate(birthDate)
-                .favoriteClubId(favoriteClubId)
-                .watchStyle(watchStyle)
-                .build();
+        return new SignUpCommand(
+                signupToken,
+                gender,
+                nickName,
+                birthDate,
+                favoriteClubId,
+                watchStyle
+        );
     }
 }

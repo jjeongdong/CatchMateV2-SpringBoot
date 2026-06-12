@@ -1,22 +1,16 @@
 package com.back.catchmate.board.application.dto.command;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.util.List;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class BoardCreateCommand {
-    private Long boardId;
-    private String title;
-    private String content;
-    private int maxPerson;
-    private Long cheerClubId;
-    private String preferredGender;
-    private List<String> preferredAgeRange;
-    private GameCreateCommand gameCreateCommand;
-    private boolean completed;
+public record BoardCreateCommand(
+        Long boardId,
+        String title,
+        String content,
+        int maxPerson,
+        Long cheerClubId,
+        String preferredGender,
+        List<String> preferredAgeRange,
+        GameCreateCommand gameCreateCommand,
+        boolean completed
+) {
 }

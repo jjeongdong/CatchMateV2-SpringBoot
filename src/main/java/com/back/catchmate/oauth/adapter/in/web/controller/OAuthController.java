@@ -87,12 +87,12 @@ public class OAuthController {
         }
 
         Provider p = Provider.of(provider);
-        OAuthCallbackResult result = oauthOrchestrator.handleCallback(OAuthCallbackCommand.builder()
-                .provider(p)
-                .code(code)
-                .state(state)
-                .stateFromCookie(stateCookie)
-                .build());
+        OAuthCallbackResult result = oauthOrchestrator.handleCallback(new OAuthCallbackCommand(
+                p,
+                code,
+                state,
+                stateCookie
+        ));
 
         String redirectUrl = buildRedirectUrl(result, response);
         return ResponseEntity.status(HttpStatus.FOUND)

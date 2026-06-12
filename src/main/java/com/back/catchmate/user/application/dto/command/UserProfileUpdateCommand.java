@@ -1,17 +1,11 @@
 package com.back.catchmate.user.application.dto.command;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class UserProfileUpdateCommand {
-    private String nickName;
-    private String watchStyle;
-    private Long favoriteClubId;
-
+public record UserProfileUpdateCommand(
+        String nickName,
+        String watchStyle,
+        Long favoriteClubId
+) {
     public boolean hasFavoriteClubChange() {
         return favoriteClubId != null;
     }

@@ -10,10 +10,10 @@ public record ReportCreateRequest(
         String description
 ) {
     public ReportCreateCommand toCommand() {
-        return ReportCreateCommand.builder()
-                .reportedUserId(this.reportedUserId)
-                .reason(this.reason)
-                .description(this.description)
-                .build();
+        return new ReportCreateCommand(
+                this.reportedUserId,
+                this.reason,
+                this.description
+        );
     }
 }

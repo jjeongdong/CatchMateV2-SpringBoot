@@ -10,16 +10,12 @@ public record UserProfileUpdateRequest(
 ) {
     public static UserProfileUpdateCommand toCommand(UserProfileUpdateRequest request) {
         if (request == null) {
-            return com.back.catchmate.user.application.dto.command.UserProfileUpdateCommand.builder().build();
+            return new UserProfileUpdateCommand(null, null, null);
         }
         return request.toCommand();
     }
 
     private UserProfileUpdateCommand toCommand() {
-        return UserProfileUpdateCommand.builder()
-                .nickName(nickName)
-                .favoriteClubId(favoriteClubId)
-                .watchStyle(watchStyle)
-                .build();
+        return new UserProfileUpdateCommand(nickName, watchStyle, favoriteClubId);
     }
 }

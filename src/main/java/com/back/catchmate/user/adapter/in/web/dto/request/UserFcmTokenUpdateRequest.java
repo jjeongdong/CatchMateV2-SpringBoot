@@ -7,8 +7,8 @@ public record UserFcmTokenUpdateRequest(
         @NotBlank(message = "fcmToken은 필수 값입니다.") String fcmToken
 ) {
     public UserFcmTokenUpdateCommand toCommand() {
-        return UserFcmTokenUpdateCommand.builder()
-                .fcmToken(fcmToken)
-                .build();
+        return new UserFcmTokenUpdateCommand(
+                fcmToken
+        );
     }
 }

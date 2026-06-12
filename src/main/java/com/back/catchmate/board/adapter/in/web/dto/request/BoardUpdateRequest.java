@@ -24,25 +24,26 @@ public record BoardUpdateRequest(
             String location
     ) {
         public GameUpdateCommand toCommand() {
-            return GameUpdateCommand.builder()
-                    .homeClubId(homeClubId)
-                    .awayClubId(awayClubId)
-                    .gameStartDate(gameStartDate)
-                    .location(location)
-                    .build();
+            return new GameUpdateCommand(
+                homeClubId,
+                awayClubId,
+                gameStartDate,
+                location
+        );
         }
     }
 
     public BoardUpdateCommand toCommand() {
-        return BoardUpdateCommand.builder()
-                .title(title)
-                .content(content)
-                .maxPerson(maxPerson != null ? maxPerson : 0)
-                .cheerClubId(cheerClubId)
-                .preferredGender(preferredGender)
-                .preferredAgeRange(preferredAgeRange)
-                .gameUpdateCommand(gameUpdateRequest != null ? gameUpdateRequest.toCommand() : null)
-                .completed(completed)
-                .build();
+        return new BoardUpdateCommand(
+                null,
+                title,
+                content,
+                maxPerson != null ? maxPerson : 0,
+                cheerClubId,
+                preferredGender,
+                preferredAgeRange,
+                gameUpdateRequest != null ? gameUpdateRequest.toCommand() : null,
+                completed
+        );
     }
 }

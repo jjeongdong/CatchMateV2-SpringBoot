@@ -6,10 +6,10 @@ public record EnrollCreateRequest(
         String description
 ) {
     public EnrollCreateCommand toCommand(Long userId, Long boardId) {
-        return EnrollCreateCommand.builder()
-                .userId(userId)
-                .boardId(boardId)
-                .description(description)
-                .build();
+        return new EnrollCreateCommand(
+                userId,
+                boardId,
+                description
+        );
     }
 }

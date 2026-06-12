@@ -107,12 +107,12 @@ public class ChatRestController {
 
         UploadFile uploadFile = null;
         if (chatRoomImage != null && !chatRoomImage.isEmpty()) {
-            uploadFile = UploadFile.builder()
-                    .originalFilename(chatRoomImage.getOriginalFilename())
-                    .contentType(chatRoomImage.getContentType())
-                    .size(chatRoomImage.getSize())
-                    .inputStream(chatRoomImage.getInputStream())
-                    .build();
+            uploadFile = new UploadFile(
+                chatRoomImage.getOriginalFilename(),
+                chatRoomImage.getContentType(),
+                chatRoomImage.getInputStream(),
+                chatRoomImage.getSize()
+        );
         }
 
         chatOrchestrator.updateChatRoomImage(userId, roomId, uploadFile);

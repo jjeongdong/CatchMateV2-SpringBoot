@@ -7,9 +7,9 @@ public record InquiryAnswerRequest(
         @NotBlank(message = "답변 내용은 필수입니다.") String content
 ) {
     public InquiryAnswerCommand toCommand(Long inquiryId) {
-        return InquiryAnswerCommand.builder()
-                .inquiryId(inquiryId)
-                .content(content)
-                .build();
+        return new InquiryAnswerCommand(
+                inquiryId,
+                content
+        );
     }
 }

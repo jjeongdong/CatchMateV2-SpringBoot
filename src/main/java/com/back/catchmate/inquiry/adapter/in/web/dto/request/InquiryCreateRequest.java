@@ -10,9 +10,9 @@ public record InquiryCreateRequest(
         @NotBlank(message = "내용을 입력해주세요.") String content
 ) {
     public InquiryCreateCommand toCommand() {
-        return InquiryCreateCommand.builder()
-                .type(this.type)
-                .content(this.content)
-                .build();
+        return new InquiryCreateCommand(
+                this.type,
+                this.content
+        );
     }
 }

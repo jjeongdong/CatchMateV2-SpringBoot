@@ -71,7 +71,7 @@ public class AdminService implements AdminUseCase {
     @Transactional
     public NoticeCreateResponse createNotice(Long userId, NoticeCreateCommand command) {
         User writer = userFetchPort.getUser(userId);
-        Notice savedNotice = noticeFetchPort.createNotice(writer, command.getTitle(), command.getContent());
+        Notice savedNotice = noticeFetchPort.createNotice(writer, command.title(), command.content());
 
         List<User> recipients = userFetchPort.getEventAlarmEnabledUsers();
         applicationEventPublisher.publishEvent(AdminNoticeCreateNotificationEvent.of(savedNotice, recipients));
@@ -81,9 +81,9 @@ public class AdminService implements AdminUseCase {
 
     @Transactional
     public InquiryAnswerResponse createInquiryAnswer(InquiryAnswerCommand command) {
-        Inquiry inquiry = inquiryFetchPort.getInquiryEntity(command.getInquiryId());
+        Inquiry inquiry = inquiryFetchPort.getInquiryEntity(command.inquiryId());
 
-        inquiry.registerAnswer(command.getContent());
+        inquiry.registerAnswer(command.content());
         Inquiry updatedInquiry = inquiryFetchPort.updateInquiry(inquiry);
 
         applicationEventPublisher.publishEvent(AdminInquiryAnswerNotificationEvent.of(
@@ -227,7 +227,7 @@ public class AdminService implements AdminUseCase {
     @Transactional
     public NoticeDetailResponse updateNotice(Long noticeId, NoticeUpdateCommand command) {
         Notice notice = noticeFetchPort.getNoticeEntity(noticeId);
-        notice.updateNotice(command.getTitle(), command.getContent());
+        notice.updateNotice(command.title(), command.content());
         Notice updatedNotice = noticeFetchPort.updateNotice(notice);
         return NoticeDetailResponse.from(updatedNotice);
     }

@@ -63,12 +63,12 @@ public class UserController {
                                                                 @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
         UploadFile uploadFile = null;
         if (profileImage != null && !profileImage.isEmpty()) {
-            uploadFile = UploadFile.builder()
-                    .originalFilename(profileImage.getOriginalFilename())
-                    .contentType(profileImage.getContentType())
-                    .size(profileImage.getSize())
-                    .inputStream(profileImage.getInputStream())
-                    .build();
+            uploadFile = new UploadFile(
+                profileImage.getOriginalFilename(),
+                profileImage.getContentType(),
+                profileImage.getInputStream(),
+                profileImage.getSize()
+        );
         }
 
         return ResponseEntity.ok(userOrchestrator.updateUserProfile(userId, UserProfileUpdateRequest.toCommand(request), uploadFile));

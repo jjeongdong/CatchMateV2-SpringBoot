@@ -73,24 +73,24 @@ public class BoardService implements BoardUseCase {
         oldDraft.ifPresent(this::deleteBoardHard);
 
         User user = userFetchPort.getUser(userId);
-        Club cheerClub = getCheerClub(command.getCheerClubId());
-        Game game = getGame(command.getGameCreateCommand());
+        Club cheerClub = getCheerClub(command.cheerClubId());
+        Game game = getGame(command.gameCreateCommand());
 
         Board board = Board.createBoard(
-                command.getTitle(),
-                command.getContent(),
-                command.getMaxPerson(),
+                command.title(),
+                command.content(),
+                command.maxPerson(),
                 user,
                 cheerClub,
                 game,
-                command.getPreferredGender(),
-                PreferredAgeRange.of(command.getPreferredAgeRange()),
-                command.isCompleted()
+                command.preferredGender(),
+                PreferredAgeRange.of(command.preferredAgeRange()),
+                command.completed()
         );
 
         Board savedBoard = createBoardEntity(board);
 
-        if (command.isCompleted()) {
+        if (command.completed()) {
             ChatRoom chatRoom = chatRoomFetchPort.getOrCreateChatRoom(savedBoard);
             chatRoomFetchPort.addMember(chatRoom, user);
             applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), user));
@@ -190,23 +190,23 @@ public class BoardService implements BoardUseCase {
         User user = userFetchPort.getUser(userId);
 
         boolean wasCompleted = board.isCompleted();
-        Club cheerClub = getCheerClub(command.getCheerClubId());
-        Game game = getGame(command.getGameUpdateCommand());
+        Club cheerClub = getCheerClub(command.cheerClubId());
+        Game game = getGame(command.gameUpdateCommand());
 
         board.updateBoard(
-                command.getTitle(),
-                command.getContent(),
-                command.getMaxPerson(),
+                command.title(),
+                command.content(),
+                command.maxPerson(),
                 cheerClub,
                 game,
-                command.getPreferredGender(),
-                PreferredAgeRange.of(command.getPreferredAgeRange()),
-                command.isCompleted()
+                command.preferredGender(),
+                PreferredAgeRange.of(command.preferredAgeRange()),
+                command.completed()
         );
 
         boardRepository.save(board);
 
-        if (!wasCompleted && command.isCompleted()) {
+        if (!wasCompleted && command.completed()) {
             ChatRoom chatRoom = chatRoomFetchPort.getOrCreateChatRoom(board);
             chatRoomFetchPort.addMember(chatRoom, user);
             applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), user));
@@ -295,12 +295,12 @@ public class BoardService implements BoardUseCase {
 
     private Game getGame(GameCreateCommand command) {
         if (command == null) return null;
-        return resolveGame(command.getHomeClubId(), command.getAwayClubId(), command.getGameStartDate(), command.getLocation());
+        return resolveGame(command.homeClubId(), command.awayClubId(), command.gameStartDate(), command.location());
     }
 
     private Game getGame(GameUpdateCommand command) {
         if (command == null) return null;
-        return resolveGame(command.getHomeClubId(), command.getAwayClubId(), command.getGameStartDate(), command.getLocation());
+        return resolveGame(command.homeClubId(), command.awayClubId(), command.gameStartDate(), command.location());
     }
 
     private Game resolveGame(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {

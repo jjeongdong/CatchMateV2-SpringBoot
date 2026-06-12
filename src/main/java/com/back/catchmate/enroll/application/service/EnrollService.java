@@ -72,14 +72,14 @@ public class EnrollService implements EnrollUseCase {
 
     @Transactional
     public EnrollCreateResponse createEnroll(EnrollCreateCommand command) {
-        User applicant = userFetchPort.getUser(command.getUserId());
-        Board board = boardFetchPort.getCompletedBoard(command.getBoardId());
+        User applicant = userFetchPort.getUser(command.userId());
+        Board board = boardFetchPort.getCompletedBoard(command.boardId());
 
         if (applicant.getId().equals(board.getUser().getId())) {
             throw new BaseException(ErrorCode.ENROLL_BAD_REQUEST);
         }
 
-        Enroll savedEnroll = createEnroll(applicant, board, command.getDescription());
+        Enroll savedEnroll = createEnroll(applicant, board, command.description());
 
         // FCM 알림 발송
         applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(

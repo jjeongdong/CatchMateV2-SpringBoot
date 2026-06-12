@@ -50,10 +50,10 @@ public class OAuthService implements OAuthUseCase {
     @Override
     @Transactional
     public OAuthCallbackResult handleCallback(OAuthCallbackCommand command) {
-        validateState(command.getState(), command.getStateFromCookie());
+        validateState(command.state(), command.stateFromCookie());
 
-        OAuthClient client = oauthClientRegistry.get(command.getProvider());
-        OAuthUserInfo userInfo = client.exchange(command.getCode());
+        OAuthClient client = oauthClientRegistry.get(command.provider());
+        OAuthUserInfo userInfo = client.exchange(command.code());
 
         Optional<User> userOptional = userFetchPort.findByProviderId(userInfo.getProviderIdWithProvider());
         if (userOptional.isPresent()) {
@@ -68,20 +68,20 @@ public class OAuthService implements OAuthUseCase {
     @Override
     @Transactional
     public SignUpResult signUp(SignUpCommand command) {
-        SignupTokenClaims claims = tokenProvider.parseSignupToken(command.getSignupToken());
-        Club club = clubFetchPort.getClub(command.getFavoriteClubId());
+        SignupTokenClaims claims = tokenProvider.parseSignupToken(command.signupToken());
+        Club club = clubFetchPort.getClub(command.favoriteClubId());
 
         User user = User.createUser(
                 claims.getProvider(),
                 claims.getProviderIdWithProvider(),
                 claims.getEmail(),
-                command.getNickName(),
-                command.getGender(),
-                command.getBirthDate(),
+                command.nickName(),
+                command.gender(),
+                command.birthDate(),
                 club,
                 claims.getProfileImageUrl(),
                 null,
-                command.getWatchStyle()
+                command.watchStyle()
         );
         User savedUser = userFetchPort.createUser(user);
 

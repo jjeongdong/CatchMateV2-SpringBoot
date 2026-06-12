@@ -8,9 +8,9 @@ public record NoticeUpdateRequest(
         @NotBlank(message = "내용은 필수입니다.") String content
 ) {
     public NoticeUpdateCommand toCommand() {
-        return NoticeUpdateCommand.builder()
-                .title(this.title)
-                .content(this.content)
-                .build();
+        return new NoticeUpdateCommand(
+                this.title,
+                this.content
+        );
     }
 }
