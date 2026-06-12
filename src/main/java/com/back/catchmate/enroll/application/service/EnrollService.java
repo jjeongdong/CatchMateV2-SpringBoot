@@ -79,7 +79,7 @@ public class EnrollService implements EnrollUseCase {
             throw new BaseException(ErrorCode.ENROLL_BAD_REQUEST);
         }
 
-        Enroll savedEnroll = createEnroll(applicant, board, command.description());
+        Enroll savedEnroll = createEnrollInternal(applicant.getId(), board.getId(), command.description());
 
         User boardOwner = userFetchPort.getUser(board.getUserId());
 
@@ -99,8 +99,9 @@ public class EnrollService implements EnrollUseCase {
     @Transactional
     public EnrollDetailResponse getEnroll(Long userId, Long enrollId) {
         Enroll enroll = getEnrollWithFetch(enrollId);
-        Long applicantId = enroll.getUser().getId();
-        Long writerId = enroll.getBoard().getUserId();
+        Long applicantId = enroll.getUserId();
+        Board board = boardFetchPort.getBoard(enroll.getBoardId());
+        Long writerId = board.getUserId();
 
         if (!userId.equals(applicantId) && !userId.equals(writerId)) {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
@@ -111,17 +112,20 @@ public class EnrollService implements EnrollUseCase {
             updateEnroll(enroll);
         }
 
-        BoardResponse boardResponse = boardFetchPort.buildBoardResponse(enroll.getBoard(), false);
-        return EnrollDetailResponse.from(enroll, boardResponse);
+        User applicant = userFetchPort.getUser(applicantId);
+        BoardResponse boardResponse = boardFetchPort.buildBoardResponse(board, false);
+        return EnrollDetailResponse.from(enroll, applicant, boardResponse);
     }
 
     public PagedResponse<EnrollRequestResponse> getEnrollRequestList(Long userId, int page, int size) {
         Page<Enroll> enrollPage = getEnrollListByUserId(userId, PageRequest.of(page, size));
         Map<Long, Boolean> bookmarkMap = getBookmarkStatusMap(userId, enrollPage.getContent());
 
-        List<Board> boards = enrollPage.getContent().stream()
-                .map(Enroll::getBoard)
+        List<Long> boardIds = enrollPage.getContent().stream()
+                .map(Enroll::getBoardId)
+                .distinct()
                 .toList();
+        List<Board> boards = boardIds.isEmpty() ? List.of() : boardFetchPort.getBoards(boardIds);
         Map<Long, BoardResponse> boardResponseById = boardFetchPort
                 .buildBoardResponses(boards, id -> bookmarkMap.getOrDefault(id, false))
                 .stream()
@@ -130,7 +134,7 @@ public class EnrollService implements EnrollUseCase {
         List<EnrollRequestResponse> responses = enrollPage.getContent().stream()
                 .map(enroll -> EnrollRequestResponse.from(
                         enroll,
-                        boardResponseById.get(enroll.getBoard().getId())
+                        boardResponseById.get(enroll.getBoardId())
                 ))
                 .toList();
 
@@ -145,11 +149,22 @@ public class EnrollService implements EnrollUseCase {
 
         Page<Enroll> enrollPage = getEnrollListByBoardIdAndStatus(boardId, AcceptStatus.PENDING, PageRequest.of(page, size));
 
+        Map<Long, User> userById = resolveEnrollApplicants(enrollPage.getContent());
         List<EnrollApplicantResponse> responses = enrollPage.getContent().stream()
-                .map(EnrollApplicantResponse::from)
+                .map(enroll -> EnrollApplicantResponse.from(enroll, userById.get(enroll.getUserId())))
                 .toList();
 
         return new PagedResponse<>(enrollPage, responses);
+    }
+
+    private Map<Long, User> resolveEnrollApplicants(List<Enroll> enrolls) {
+        List<Long> userIds = enrolls.stream()
+                .map(Enroll::getUserId)
+                .distinct()
+                .toList();
+        if (userIds.isEmpty()) return Map.of();
+        return userFetchPort.getUsers(userIds).stream()
+                .collect(Collectors.toMap(User::getId, java.util.function.Function.identity()));
     }
 
     public PagedResponse<EnrollReceiveResponse> getEnrollReceiveList(Long userId, int page, int size) {
@@ -183,7 +198,8 @@ public class EnrollService implements EnrollUseCase {
         }
 
         Enroll enroll = getEnroll(enrollId);
-        Board board = boardFetchPort.getBoardWithLock(enroll.getBoard().getId());
+        Board board = boardFetchPort.getBoardWithLock(enroll.getBoardId());
+        User applicant = userFetchPort.getUser(enroll.getUserId());
 
         // 비즈니스 로직
         board.increaseCurrentPerson();
@@ -195,14 +211,14 @@ public class EnrollService implements EnrollUseCase {
 
         // 채팅방 처리
         ChatRoom chatRoom = chatFetchPort.getOrCreateChatRoom(board.getId());
-        chatFetchPort.addMember(chatRoom, enroll.getUser().getId());
-        applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), enroll.getUser()));
+        chatFetchPort.addMember(chatRoom, applicant.getId());
+        applicationEventPublisher.publishEvent(ChatRoomMemberJoinedEvent.of(chatRoom.getId(), applicant));
 
         // FCM 알림 발송
         User boardOwner = userFetchPort.getUser(board.getUserId());
         applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(
                 NotificationTemplate.ENROLL_ACCEPT,
-                enroll.getUser(),
+                applicant,
                 boardOwner,
                 board,
                 "ENROLL_ACCEPTED",
@@ -215,7 +231,8 @@ public class EnrollService implements EnrollUseCase {
     @Transactional
     public EnrollRejectResponse updateEnrollReject(Long userId, Long enrollId) {
         Enroll enroll = getEnroll(enrollId);
-        Board board = boardFetchPort.getBoardWithLock(enroll.getBoard().getId());
+        Board board = boardFetchPort.getBoardWithLock(enroll.getBoardId());
+        User applicant = userFetchPort.getUser(enroll.getUserId());
 
         // 비즈니스 로직
         enroll.reject();
@@ -225,7 +242,7 @@ public class EnrollService implements EnrollUseCase {
         User boardOwner = userFetchPort.getUser(board.getUserId());
         applicationEventPublisher.publishEvent(EnrollNotificationEvent.of(
                 NotificationTemplate.ENROLL_REJECT,
-                enroll.getUser(),
+                applicant,
                 boardOwner,
                 board,
                 "ENROLL_REJECTED",
@@ -238,12 +255,13 @@ public class EnrollService implements EnrollUseCase {
     @Transactional
     public EnrollCancelResponse deleteEnroll(Long userId, Long enrollId) {
         Enroll enroll = getEnroll(enrollId);
-        User applicant = enroll.getUser();
-        Board board = enroll.getBoard();
 
-        if (!applicant.getId().equals(userId)) {
+        if (!enroll.getUserId().equals(userId)) {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }
+
+        User applicant = userFetchPort.getUser(enroll.getUserId());
+        Board board = boardFetchPort.getBoard(enroll.getBoardId());
 
         deleteEnroll(enroll);
 
@@ -265,32 +283,33 @@ public class EnrollService implements EnrollUseCase {
     private Map<Long, Boolean> getBookmarkStatusMap(Long userId, List<Enroll> enrolls) {
         Map<Long, Boolean> map = new HashMap<>();
         for (Enroll enroll : enrolls) {
-            boolean isBookMarked = bookmarkFetchPort.isBookmarked(userId, enroll.getBoard().getId());
-            map.put(enroll.getBoard().getId(), isBookMarked);
+            boolean isBookMarked = bookmarkFetchPort.isBookmarked(userId, enroll.getBoardId());
+            map.put(enroll.getBoardId(), isBookMarked);
         }
         return map;
     }
 
     private EnrollReceiveResponse mapToEnrollReceiveResponse(Long boardId, List<Enroll> allEnrolls) {
         List<Enroll> enrolls = allEnrolls.stream()
-                .filter(e -> e.getBoard().getId().equals(boardId))
+                .filter(e -> e.getBoardId().equals(boardId))
                 .toList();
 
         if (enrolls.isEmpty()) return null;
 
-        Board board = enrolls.get(0).getBoard();
+        Board board = boardFetchPort.getBoard(boardId);
         BoardResponse boardResponse = boardFetchPort.buildBoardResponse(board, false);
 
+        Map<Long, User> userById = resolveEnrollApplicants(enrolls);
         List<EnrollResponse> enrollList = enrolls.stream()
-                .map(EnrollResponse::from)
+                .map(e -> EnrollResponse.from(e, userById.get(e.getUserId())))
                 .collect(Collectors.toList());
 
         return EnrollReceiveResponse.of(boardResponse, enrollList);
     }
 
-    public Enroll createEnroll(User user, Board board, String description) {
-        validateDuplicateEnroll(user, board);
-        Enroll enroll = Enroll.createEnroll(user, board, description);
+    public Enroll createEnrollInternal(Long userId, Long boardId, String description) {
+        validateDuplicateEnroll(userId, boardId);
+        Enroll enroll = Enroll.createEnroll(userId, boardId, description);
         return enrollRepository.save(enroll);
     }
 
@@ -308,8 +327,8 @@ public class EnrollService implements EnrollUseCase {
         return enrollRepository.findById(enrollId);
     }
 
-    public Optional<Enroll> findEnrollByUserAndBoard(User user, Board board) {
-        return enrollRepository.findByUserAndBoard(user, board);
+    public Optional<Enroll> findEnrollByUserIdAndBoardId(Long userId, Long boardId) {
+        return enrollRepository.findByUserIdAndBoardId(userId, boardId);
     }
 
     public Page<Enroll> getEnrollListByUserId(Long userId, Pageable pageable) {
@@ -356,8 +375,8 @@ public class EnrollService implements EnrollUseCase {
         enrollRepository.delete(enroll);
     }
 
-    private void validateDuplicateEnroll(User user, Board board) {
-        enrollRepository.findByUserAndBoard(user, board)
+    private void validateDuplicateEnroll(Long userId, Long boardId) {
+        enrollRepository.findByUserIdAndBoardId(userId, boardId)
                 .ifPresent(existingEnroll -> {
                     if (existingEnroll.getAcceptStatus() == AcceptStatus.PENDING) {
                         throw new BaseException(ErrorCode.ALREADY_ENROLL_PENDING);

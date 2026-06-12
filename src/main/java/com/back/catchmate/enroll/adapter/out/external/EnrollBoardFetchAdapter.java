@@ -39,6 +39,11 @@ public class EnrollBoardFetchAdapter implements BoardFetchPort {
     }
 
     @Override
+    public List<Board> getBoards(List<Long> boardIds) {
+        return boardService.getBoards(boardIds);
+    }
+
+    @Override
     public BoardUpdateResponse updateBoard(Long userId, Long boardId, BoardUpdateCommand command) {
         return boardService.updateBoard(userId, boardId, command);
     }

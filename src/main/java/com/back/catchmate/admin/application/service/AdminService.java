@@ -134,8 +134,17 @@ public class AdminService implements AdminUseCase {
         Board board = boardFetchPort.getCompletedBoard(boardId);
         List<Enroll> enrolls = enrollFetchPort.getEnrollListByBoardIds(Collections.singletonList(boardId));
 
+        java.util.List<Long> enrollUserIds = enrolls.stream()
+                .map(Enroll::getUserId)
+                .distinct()
+                .toList();
+        java.util.Map<Long, User> enrollUserById = enrollUserIds.isEmpty()
+                ? java.util.Map.of()
+                : userFetchPort.getUsers(enrollUserIds).stream()
+                        .collect(Collectors.toMap(User::getId, java.util.function.Function.identity()));
+
         List<AdminEnrollmentResponse> enrollmentInfos = enrolls.stream()
-                .map(AdminEnrollmentResponse::from)
+                .map(enroll -> AdminEnrollmentResponse.from(enroll, enrollUserById.get(enroll.getUserId())))
                 .toList();
 
         User writer = board.getUserId() != null ? userFetchPort.getUser(board.getUserId()) : null;

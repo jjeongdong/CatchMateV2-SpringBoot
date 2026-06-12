@@ -1,6 +1,8 @@
 package com.back.catchmate.enroll.application.dto.response;
 
 import com.back.catchmate.enroll.domain.model.Enroll;
+import com.back.catchmate.user.domain.model.User;
+
 import java.time.LocalDateTime;
 
 public record EnrollResponse(
@@ -10,13 +12,13 @@ public record EnrollResponse(
         LocalDateTime requestDate,
         ApplicantResponse applicant
 ) {
-    public static EnrollResponse from(Enroll enroll) {
+    public static EnrollResponse from(Enroll enroll, User user) {
         return new EnrollResponse(
                 enroll.getId(),
                 enroll.getDescription(),
                 enroll.isNewEnroll(),
                 enroll.getRequestedAt(),
-                ApplicantResponse.from(enroll.getUser())
+                ApplicantResponse.from(user)
         );
     }
 }

@@ -1,10 +1,8 @@
 package com.back.catchmate.enroll.domain.model;
 
-import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.global.authorization.common.ResourceOwnership;
-import com.back.catchmate.user.domain.model.User;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
+import com.back.catchmate.global.authorization.common.ResourceOwnership;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,17 +17,17 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Enroll implements ResourceOwnership {
     private Long id;
-    private User user;
-    private Board board;
+    private Long userId;
+    private Long boardId;
     private String description;
     private AcceptStatus acceptStatus;
     private boolean newEnroll;
     private LocalDateTime requestedAt;
 
-    public static Enroll createEnroll(User user, Board board, String description) {
+    public static Enroll createEnroll(Long userId, Long boardId, String description) {
         return Enroll.builder()
-                .user(user)
-                .board(board)
+                .userId(userId)
+                .boardId(boardId)
                 .description(description)
                 .acceptStatus(AcceptStatus.PENDING)
                 .newEnroll(true)
@@ -60,6 +58,6 @@ public class Enroll implements ResourceOwnership {
 
     @Override
     public Long getOwnershipId() {
-        return user.getId();
+        return userId;
     }
 }

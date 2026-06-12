@@ -14,6 +14,7 @@ public interface BoardFetchPort {
     Board getBoard(Long boardId);
     Board getBoardWithLock(Long boardId);
     Board getCompletedBoard(Long boardId);
+    List<Board> getBoards(List<Long> boardIds);
     BoardUpdateResponse updateBoard(Long userId, Long boardId, BoardUpdateCommand command);
     void updateBoard(Board board);
     BoardResponse buildBoardResponse(Board board, boolean bookmarked);

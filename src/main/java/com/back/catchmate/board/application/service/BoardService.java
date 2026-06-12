@@ -112,7 +112,7 @@ public class BoardService implements BoardUseCase {
         Board board = getBoardEntity(boardId);
         boolean isBookMarked = bookmarkFetchPort.isBookmarked(userId, boardId);
 
-        Optional<Enroll> myEnroll = enrollFetchPort.findEnrollByUserAndBoard(user, board);
+        Optional<Enroll> myEnroll = enrollFetchPort.findEnrollByUserIdAndBoardId(user.getId(), board.getId());
         BoardButtonStatus buttonStatus = BoardButtonStatus.resolve(user, board, myEnroll);
         Long myEnrollId = myEnroll.map(Enroll::getId).orElse(null);
 

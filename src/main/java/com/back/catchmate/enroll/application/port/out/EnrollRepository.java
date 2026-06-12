@@ -1,12 +1,9 @@
 package com.back.catchmate.enroll.application.port.out;
 
-import com.back.catchmate.board.domain.model.Board;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import com.back.catchmate.enroll.domain.model.Enroll;
-import com.back.catchmate.user.domain.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
@@ -19,7 +16,7 @@ public interface EnrollRepository {
 
     Optional<Enroll> findByIdWithFetch(Long id);
 
-    Optional<Enroll> findByUserAndBoard(User user, Board board);
+    Optional<Enroll> findByUserIdAndBoardId(Long userId, Long boardId);
 
     Page<Enroll> findAllByUserId(Long userId, Pageable pageable);
 

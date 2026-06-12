@@ -63,8 +63,8 @@ public class EnrollEntity extends BaseTimeEntity {
     public static EnrollEntity from(Enroll enroll) {
         return EnrollEntity.builder()
                 .id(enroll.getId())
-                .user(UserEntity.from(enroll.getUser()))
-                .board(BoardEntity.fromDomain(enroll.getBoard()))
+                .user(UserEntity.builder().id(enroll.getUserId()).build())
+                .board(BoardEntity.builder().id(enroll.getBoardId()).build())
                 .description(enroll.getDescription())
                 .acceptStatus(enroll.getAcceptStatus())
                 .newEnroll(enroll.isNewEnroll())
@@ -74,8 +74,8 @@ public class EnrollEntity extends BaseTimeEntity {
     public Enroll toModel() {
         return Enroll.builder()
                 .id(id)
-                .user(user.toModel())
-                .board(board.toDomain())
+                .userId(user != null ? user.getId() : null)
+                .boardId(board != null ? board.getId() : null)
                 .description(description)
                 .acceptStatus(acceptStatus)
                 .newEnroll(newEnroll)

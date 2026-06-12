@@ -1,15 +1,13 @@
 package com.back.catchmate.enroll.adapter.out.persistence.repository;
 
-import com.back.catchmate.board.domain.model.Board;
+import com.back.catchmate.enroll.adapter.out.persistence.entity.EnrollEntity;
+import com.back.catchmate.enroll.application.port.out.EnrollRepository;
+import com.back.catchmate.enroll.domain.model.AcceptStatus;
+import com.back.catchmate.enroll.domain.model.Enroll;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import com.back.catchmate.enroll.domain.model.AcceptStatus;
-import com.back.catchmate.enroll.domain.model.Enroll;
-import com.back.catchmate.enroll.application.port.out.EnrollRepository;
-import com.back.catchmate.user.domain.model.User;
-import com.back.catchmate.enroll.adapter.out.persistence.entity.EnrollEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
@@ -39,8 +37,8 @@ public class EnrollRepositoryImpl implements EnrollRepository {
     }
 
     @Override
-    public Optional<Enroll> findByUserAndBoard(User user, Board board) {
-        return jpaEnrollRepository.findByUserIdAndBoardId(user.getId(), board.getId())
+    public Optional<Enroll> findByUserIdAndBoardId(Long userId, Long boardId) {
+        return jpaEnrollRepository.findByUserIdAndBoardId(userId, boardId)
                 .map(EnrollEntity::toModel);
     }
 
