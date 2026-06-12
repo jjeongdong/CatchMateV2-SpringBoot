@@ -40,12 +40,14 @@ public class UserService implements UserUseCase {
 
     public UserResponse getUserProfile(Long userId) {
         User user = getUser(userId);
-        return UserResponse.from(user);
+        Club club = user.getClubId() != null ? clubFetchPort.getClub(user.getClubId()) : null;
+        return UserResponse.from(user, club);
     }
 
     public UserResponse getUserProfileById(Long currentUserId, Long targetUserId) {
         User targetUser = getUser(targetUserId);
-        return UserResponse.from(targetUser);
+        Club club = targetUser.getClubId() != null ? clubFetchPort.getClub(targetUser.getClubId()) : null;
+        return UserResponse.from(targetUser, club);
     }
 
     public UserNicknameCheckResponse getUserNicknameAvailability(String nickName) {
@@ -57,10 +59,7 @@ public class UserService implements UserUseCase {
     public UserUpdateResponse updateUserProfile(Long userId, UserProfileUpdateCommand command, UploadFile uploadFile) {
         User user = getUser(userId);
 
-        Club club = null;
-        if (command.hasFavoriteClubChange()) {
-            club = clubFetchPort.getClub(command.favoriteClubId());
-        }
+        Long newClubId = command.hasFavoriteClubChange() ? command.favoriteClubId() : null;
 
         String profileImageUrl = null;
         if (uploadFile != null) {
@@ -72,10 +71,11 @@ public class UserService implements UserUseCase {
             );
         }
 
-        user.updateProfile(command.nickName(), command.watchStyle(), club, profileImageUrl);
+        user.updateProfile(command.nickName(), command.watchStyle(), newClubId, profileImageUrl);
         updateUser(user);
 
-        return UserUpdateResponse.from(user);
+        Club club = user.getClubId() != null ? clubFetchPort.getClub(user.getClubId()) : null;
+        return UserUpdateResponse.from(user, club);
     }
 
     @Transactional

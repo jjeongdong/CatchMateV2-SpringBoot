@@ -29,7 +29,7 @@ public record BoardDetailResponse(
         UserResponse user
 ) {
     public static BoardDetailResponse from(Board board, boolean bookMarked, BoardButtonStatus buttonStatus, Long myEnrollId, Long chatRoomId,
-                                           User user, Club cheerClub, Game game, Club homeClub, Club awayClub) {
+                                           User user, Club userClub, Club cheerClub, Game game, Club homeClub, Club awayClub) {
         return new BoardDetailResponse(
                 board.getId(),
                 board.getTitle(),
@@ -45,7 +45,7 @@ public record BoardDetailResponse(
                 chatRoomId,
                 cheerClub != null ? ClubResponse.from(cheerClub) : null,
                 GameResponse.from(game, homeClub, awayClub),
-                user != null ? UserResponse.from(user) : null
+                user != null ? UserResponse.from(user, userClub) : null
         );
     }
 }

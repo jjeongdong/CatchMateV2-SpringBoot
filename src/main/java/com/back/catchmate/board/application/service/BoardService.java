@@ -121,13 +121,14 @@ public class BoardService implements BoardUseCase {
                 : null;
 
         User boardOwner = userFetchPort.getUser(board.getUserId());
+        Club ownerClub = boardOwner.getClubId() != null ? clubFetchPort.getClub(boardOwner.getClubId()) : null;
         Club cheerClub = board.getCheerClubId() != null ? clubFetchPort.getClub(board.getCheerClubId()) : null;
         Game game = board.getGameId() != null ? gameFetchPort.getGame(board.getGameId()) : null;
         Club homeClub = game != null && game.getHomeClubId() != null ? clubFetchPort.getClub(game.getHomeClubId()) : null;
         Club awayClub = game != null && game.getAwayClubId() != null ? clubFetchPort.getClub(game.getAwayClubId()) : null;
 
         return BoardDetailResponse.from(board, isBookMarked, buttonStatus, myEnrollId, chatRoomId,
-                boardOwner, cheerClub, game, homeClub, awayClub);
+                boardOwner, ownerClub, cheerClub, game, homeClub, awayClub);
     }
 
     @Override
@@ -200,11 +201,12 @@ public class BoardService implements BoardUseCase {
         Optional<Board> tempBoard = findTempBoard(userId);
         return tempBoard.map(board -> {
             User owner = board.getUserId() != null ? userFetchPort.getUser(board.getUserId()) : null;
+            Club ownerClub = owner != null && owner.getClubId() != null ? clubFetchPort.getClub(owner.getClubId()) : null;
             Club cheerClub = board.getCheerClubId() != null ? clubFetchPort.getClub(board.getCheerClubId()) : null;
             Game game = board.getGameId() != null ? gameFetchPort.getGame(board.getGameId()) : null;
             Club homeClub = game != null && game.getHomeClubId() != null ? clubFetchPort.getClub(game.getHomeClubId()) : null;
             Club awayClub = game != null && game.getAwayClubId() != null ? clubFetchPort.getClub(game.getAwayClubId()) : null;
-            return BoardTempDetailResponse.from(board, owner, cheerClub, game, homeClub, awayClub);
+            return BoardTempDetailResponse.from(board, owner, ownerClub, cheerClub, game, homeClub, awayClub);
         }).orElse(null);
     }
 
@@ -384,7 +386,8 @@ public class BoardService implements BoardUseCase {
         List<Long> clubIds = Stream.of(
                         boards.stream().map(Board::getCheerClubId),
                         gameById.values().stream().map(Game::getHomeClubId),
-                        gameById.values().stream().map(Game::getAwayClubId)
+                        gameById.values().stream().map(Game::getAwayClubId),
+                        userById.values().stream().map(User::getClubId)
                 )
                 .flatMap(Function.identity())
                 .filter(Objects::nonNull)
@@ -401,10 +404,11 @@ public class BoardService implements BoardUseCase {
 
     private BoardResponse toBoardResponse(Board board, boolean bookMarked, BoardRefs refs) {
         User user = board.getUserId() != null ? refs.userById().get(board.getUserId()) : null;
+        Club userClub = user != null && user.getClubId() != null ? refs.clubById().get(user.getClubId()) : null;
         Club cheerClub = board.getCheerClubId() != null ? refs.clubById().get(board.getCheerClubId()) : null;
         Game game = board.getGameId() != null ? refs.gameById().get(board.getGameId()) : null;
         Club homeClub = game != null && game.getHomeClubId() != null ? refs.clubById().get(game.getHomeClubId()) : null;
         Club awayClub = game != null && game.getAwayClubId() != null ? refs.clubById().get(game.getAwayClubId()) : null;
-        return BoardResponse.from(board, bookMarked, user, cheerClub, game, homeClub, awayClub);
+        return BoardResponse.from(board, bookMarked, user, userClub, cheerClub, game, homeClub, awayClub);
     }
 }

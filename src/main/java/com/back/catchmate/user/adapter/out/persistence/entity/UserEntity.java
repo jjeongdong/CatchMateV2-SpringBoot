@@ -112,7 +112,7 @@ public class UserEntity extends BaseTimeEntity {
                 .fcmToken(user.getFcmToken())
                 .authority(user.getAuthority())
                 .reported(user.isReported())
-                .club(ClubEntity.fromDomain(user.getClub()))
+                .club(user.getClubId() != null ? ClubEntity.builder().id(user.getClubId()).build() : null)
                 .deletedAt(user.getDeletedAt())
                 .build();
     }
@@ -135,7 +135,7 @@ public class UserEntity extends BaseTimeEntity {
                 .fcmToken(this.fcmToken)
                 .authority(this.authority)
                 .reported(this.reported)
-                .club(this.club.toDomain())
+                .clubId(this.club != null ? this.club.getId() : null)
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getModifiedAt())
                 .deletedAt(this.deletedAt)

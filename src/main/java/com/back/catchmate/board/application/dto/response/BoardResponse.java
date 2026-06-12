@@ -18,7 +18,7 @@ public record BoardResponse(
         GameResponse gameResponse,
         UserResponse userResponse
 ) {
-    public static BoardResponse from(Board board, boolean bookMarked, User user, Club cheerClub, Game game, Club homeClub, Club awayClub) {
+    public static BoardResponse from(Board board, boolean bookMarked, User user, Club userClub, Club cheerClub, Game game, Club homeClub, Club awayClub) {
         return new BoardResponse(
                 board.getId(),
                 board.getTitle(),
@@ -28,7 +28,7 @@ public record BoardResponse(
                 bookMarked,
                 cheerClub != null ? ClubResponse.from(cheerClub) : null,
                 GameResponse.from(game, homeClub, awayClub),
-                user != null ? UserResponse.from(user) : null
+                user != null ? UserResponse.from(user, userClub) : null
         );
     }
 }

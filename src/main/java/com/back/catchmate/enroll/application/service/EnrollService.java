@@ -1,15 +1,13 @@
 package com.back.catchmate.enroll.application.service;
 
-import com.back.catchmate.enroll.application.port.out.UserFetchPort;
-
-import com.back.catchmate.enroll.application.port.out.BookmarkFetchPort;
-
-import com.back.catchmate.enroll.application.port.out.BoardFetchPort;
-
-import com.back.catchmate.enroll.application.port.out.ChatFetchPort;
-
 import com.back.catchmate.board.application.dto.response.BoardResponse;
 import com.back.catchmate.board.domain.model.Board;
+import com.back.catchmate.club.domain.model.Club;
+import com.back.catchmate.enroll.application.port.out.BoardFetchPort;
+import com.back.catchmate.enroll.application.port.out.BookmarkFetchPort;
+import com.back.catchmate.enroll.application.port.out.ChatFetchPort;
+import com.back.catchmate.enroll.application.port.out.ClubFetchPort;
+import com.back.catchmate.enroll.application.port.out.UserFetchPort;
 import com.back.catchmate.chat.application.event.ChatRoomMemberJoinedEvent;
 import com.back.catchmate.chat.domain.model.ChatRoom;
 import com.back.catchmate.common.error.ErrorCode;
@@ -63,6 +61,7 @@ public class EnrollService implements EnrollUseCase {
     private final BoardFetchPort boardFetchPort;
     private final BookmarkFetchPort bookmarkFetchPort;
     private final ChatFetchPort chatFetchPort;
+    private final ClubFetchPort clubFetchPort;
     private final UserFetchPort userFetchPort;
 
     private final ApplicationEventPublisher applicationEventPublisher;
@@ -113,8 +112,9 @@ public class EnrollService implements EnrollUseCase {
         }
 
         User applicant = userFetchPort.getUser(applicantId);
+        Club applicantClub = applicant.getClubId() != null ? clubFetchPort.getClub(applicant.getClubId()) : null;
         BoardResponse boardResponse = boardFetchPort.buildBoardResponse(board, false);
-        return EnrollDetailResponse.from(enroll, applicant, boardResponse);
+        return EnrollDetailResponse.from(enroll, applicant, applicantClub, boardResponse);
     }
 
     public PagedResponse<EnrollRequestResponse> getEnrollRequestList(Long userId, int page, int size) {
@@ -150,8 +150,13 @@ public class EnrollService implements EnrollUseCase {
         Page<Enroll> enrollPage = getEnrollListByBoardIdAndStatus(boardId, AcceptStatus.PENDING, PageRequest.of(page, size));
 
         Map<Long, User> userById = resolveEnrollApplicants(enrollPage.getContent());
+        Map<Long, Club> clubById = resolveClubs(userById.values());
         List<EnrollApplicantResponse> responses = enrollPage.getContent().stream()
-                .map(enroll -> EnrollApplicantResponse.from(enroll, userById.get(enroll.getUserId())))
+                .map(enroll -> {
+                    User u = userById.get(enroll.getUserId());
+                    Club c = u != null && u.getClubId() != null ? clubById.get(u.getClubId()) : null;
+                    return EnrollApplicantResponse.from(enroll, u, c);
+                })
                 .toList();
 
         return new PagedResponse<>(enrollPage, responses);
@@ -165,6 +170,17 @@ public class EnrollService implements EnrollUseCase {
         if (userIds.isEmpty()) return Map.of();
         return userFetchPort.getUsers(userIds).stream()
                 .collect(Collectors.toMap(User::getId, java.util.function.Function.identity()));
+    }
+
+    private Map<Long, Club> resolveClubs(java.util.Collection<User> users) {
+        List<Long> clubIds = users.stream()
+                .map(User::getClubId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        if (clubIds.isEmpty()) return Map.of();
+        return clubFetchPort.getClubs(clubIds).stream()
+                .collect(Collectors.toMap(Club::getId, java.util.function.Function.identity()));
     }
 
     public PagedResponse<EnrollReceiveResponse> getEnrollReceiveList(Long userId, int page, int size) {
@@ -300,9 +316,14 @@ public class EnrollService implements EnrollUseCase {
         BoardResponse boardResponse = boardFetchPort.buildBoardResponse(board, false);
 
         Map<Long, User> userById = resolveEnrollApplicants(enrolls);
+        Map<Long, Club> clubById = resolveClubs(userById.values());
         List<EnrollResponse> enrollList = enrolls.stream()
-                .map(e -> EnrollResponse.from(e, userById.get(e.getUserId())))
-                .collect(Collectors.toList());
+                .map(e -> {
+                    User u = userById.get(e.getUserId());
+                    Club c = u != null && u.getClubId() != null ? clubById.get(u.getClubId()) : null;
+                    return EnrollResponse.from(e, u, c);
+                })
+                .toList();
 
         return EnrollReceiveResponse.of(boardResponse, enrollList);
     }

@@ -1,11 +1,10 @@
 package com.back.catchmate.user.domain.model;
 
-import com.back.catchmate.club.domain.model.Club;
 import com.back.catchmate.global.authorization.common.ResourceOwnership;
-import lombok.Builder;
-import lombok.Getter;
 import com.back.catchmate.user.domain.enums.AlarmType;
 import com.back.catchmate.user.domain.enums.Provider;
+import lombok.Builder;
+import lombok.Getter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,13 +29,13 @@ public class User implements ResourceOwnership {
     private String fcmToken;
     private Authority authority;
     private boolean reported;
-    private Club club;
+    private Long clubId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
 
     public static User createUser(Provider provider, String providerId, String email, String nickName, Character gender,
-                                  LocalDate birthDate, Club favoriteClub, String profileImageUrl, String fcmToken,
+                                  LocalDate birthDate, Long favoriteClubId, String profileImageUrl, String fcmToken,
                                   String watchStyle) {
         return User.builder()
                 .email(email)
@@ -45,7 +44,7 @@ public class User implements ResourceOwnership {
                 .nickName(nickName)
                 .gender(gender)
                 .birthDate(birthDate)
-                .club(favoriteClub)
+                .clubId(favoriteClubId)
                 .profileImageUrl(profileImageUrl)
                 .allAlarm('Y')
                 .chatAlarm('Y')
@@ -69,15 +68,15 @@ public class User implements ResourceOwnership {
         }
     }
 
-    public void updateProfile(String nickName, String watchStyle, Club club, String profileImageUrl) {
+    public void updateProfile(String nickName, String watchStyle, Long clubId, String profileImageUrl) {
         if (nickName != null) {
             this.nickName = nickName;
         }
         if (watchStyle != null) {
             this.watchStyle = watchStyle;
         }
-        if (club != null) {
-            this.club = club;
+        if (clubId != null) {
+            this.clubId = clubId;
         }
         if (profileImageUrl != null) {
             this.profileImageUrl = profileImageUrl;

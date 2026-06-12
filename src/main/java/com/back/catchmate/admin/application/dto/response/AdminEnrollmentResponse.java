@@ -1,5 +1,6 @@
 package com.back.catchmate.admin.application.dto.response;
 
+import com.back.catchmate.club.domain.model.Club;
 import com.back.catchmate.enroll.domain.model.Enroll;
 import com.back.catchmate.user.domain.model.User;
 
@@ -17,13 +18,13 @@ public record AdminEnrollmentResponse(
         String status,
         LocalDateTime requestedAt
 ) {
-    public static AdminEnrollmentResponse from(Enroll enroll, User user) {
+    public static AdminEnrollmentResponse from(Enroll enroll, User user, Club club) {
         return new AdminEnrollmentResponse(
                 enroll.getId(),
                 user.getId(),
                 user.getProfileImageUrl(),
                 user.getNickName(),
-                user.getClub() != null ? user.getClub().getName() : null,
+                club != null ? club.getName() : null,
                 user.getGender(),
                 user.getEmail(),
                 user.getProvider().name(),

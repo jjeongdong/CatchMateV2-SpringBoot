@@ -1,6 +1,8 @@
 package com.back.catchmate.admin.application.dto.response;
 
+import com.back.catchmate.club.domain.model.Club;
 import com.back.catchmate.user.domain.model.User;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -18,7 +20,7 @@ public record AdminUserDetailResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static AdminUserDetailResponse from(User user) {
+    public static AdminUserDetailResponse from(User user, Club club) {
         return new AdminUserDetailResponse(
                 user.getId(),
                 user.getEmail(),
@@ -26,7 +28,7 @@ public record AdminUserDetailResponse(
                 user.getProvider().name(),
                 user.getGender(),
                 user.getBirthDate(),
-                user.getClub().getName(),
+                club != null ? club.getName() : null,
                 user.getWatchStyle(),
                 user.getAuthority().name(),
                 user.isReported(),

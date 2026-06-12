@@ -20,7 +20,7 @@ public record BoardTempDetailResponse(
         GameResponse game,
         UserResponse user
 ) {
-    public static BoardTempDetailResponse from(Board board, User user, Club cheerClub, Game game, Club homeClub, Club awayClub) {
+    public static BoardTempDetailResponse from(Board board, User user, Club userClub, Club cheerClub, Game game, Club homeClub, Club awayClub) {
         if (board == null) {
             return null;
         }
@@ -34,7 +34,7 @@ public record BoardTempDetailResponse(
                 board.getPreferredAgeRange().asList(),
                 cheerClub != null ? ClubResponse.from(cheerClub) : null,
                 GameResponse.from(game, homeClub, awayClub),
-                user != null ? UserResponse.from(user) : null
+                user != null ? UserResponse.from(user, userClub) : null
         );
     }
 }

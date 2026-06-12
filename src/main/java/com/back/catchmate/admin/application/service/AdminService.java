@@ -15,8 +15,10 @@ import com.back.catchmate.admin.application.port.out.ReportFetchPort;
 import com.back.catchmate.admin.application.event.AdminInquiryAnswerNotificationEvent;
 import com.back.catchmate.admin.application.event.AdminNoticeCreateNotificationEvent;
 import com.back.catchmate.admin.application.port.in.AdminUseCase;
+import com.back.catchmate.admin.application.port.out.ClubFetchPort;
 import com.back.catchmate.admin.application.port.out.GameFetchPort;
 import com.back.catchmate.board.domain.model.Board;
+import com.back.catchmate.club.domain.model.Club;
 import com.back.catchmate.game.domain.model.Game;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -62,6 +64,7 @@ import java.util.stream.Collectors;
 public class AdminService implements AdminUseCase {
 
     private final BoardFetchPort boardFetchPort;
+    private final ClubFetchPort clubFetchPort;
     private final EnrollFetchPort enrollFetchPort;
     private final GameFetchPort gameFetchPort;
     private final InquiryFetchPort inquiryFetchPort;
@@ -116,15 +119,18 @@ public class AdminService implements AdminUseCase {
 
     public AdminUserDetailResponse getUser(Long userId) {
         User user = userFetchPort.getUser(userId);
-        return AdminUserDetailResponse.from(user);
+        Club club = user.getClubId() != null ? clubFetchPort.getClub(user.getClubId()) : null;
+        return AdminUserDetailResponse.from(user, club);
     }
 
     public PagedResponse<AdminUserResponse> getUserList(String clubName, int page, int size) {
         Pageable domainPageable = PageRequest.of(page, size);
         Page<User> userPage = userFetchPort.getUsersByClub(clubName, domainPageable);
 
+        java.util.Map<Long, Club> clubById = resolveUserClubs(userPage.getContent());
+
         List<AdminUserResponse> responses = userPage.getContent().stream()
-                .map(AdminUserResponse::from)
+                .map(u -> AdminUserResponse.from(u, u.getClubId() != null ? clubById.get(u.getClubId()) : null))
                 .toList();
 
         return new PagedResponse<>(userPage, responses);
@@ -142,9 +148,14 @@ public class AdminService implements AdminUseCase {
                 ? java.util.Map.of()
                 : userFetchPort.getUsers(enrollUserIds).stream()
                         .collect(Collectors.toMap(User::getId, java.util.function.Function.identity()));
+        java.util.Map<Long, Club> enrollUserClubById = resolveUserClubs(enrollUserById.values());
 
         List<AdminEnrollmentResponse> enrollmentInfos = enrolls.stream()
-                .map(enroll -> AdminEnrollmentResponse.from(enroll, enrollUserById.get(enroll.getUserId())))
+                .map(enroll -> {
+                    User u = enrollUserById.get(enroll.getUserId());
+                    Club c = u != null && u.getClubId() != null ? enrollUserClubById.get(u.getClubId()) : null;
+                    return AdminEnrollmentResponse.from(enroll, u, c);
+                })
                 .toList();
 
         User writer = board.getUserId() != null ? userFetchPort.getUser(board.getUserId()) : null;
@@ -267,5 +278,16 @@ public class AdminService implements AdminUseCase {
         Notice notice = noticeFetchPort.getNoticeEntity(noticeId);
         noticeFetchPort.deleteNotice(notice);
         return NoticeActionResponse.of(noticeId, "공지사항이 삭제되었습니다.");
+    }
+
+    private java.util.Map<Long, Club> resolveUserClubs(java.util.Collection<User> users) {
+        java.util.List<Long> clubIds = users.stream()
+                .map(User::getClubId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        if (clubIds.isEmpty()) return java.util.Map.of();
+        return clubFetchPort.getClubs(clubIds).stream()
+                .collect(Collectors.toMap(Club::getId, java.util.function.Function.identity()));
     }
 }

@@ -1,8 +1,10 @@
 package com.back.catchmate.user.application.dto.response;
 
+import com.back.catchmate.club.application.dto.response.ClubResponse;
+import com.back.catchmate.club.domain.model.Club;
 import com.back.catchmate.user.domain.model.Authority;
 import com.back.catchmate.user.domain.model.User;
-import com.back.catchmate.club.application.dto.response.ClubResponse;
+
 import java.time.LocalDate;
 
 public record UserResponse(
@@ -16,7 +18,7 @@ public record UserResponse(
         ClubResponse club,
         Authority authority
 ) {
-    public static UserResponse from(User user) {
+    public static UserResponse from(User user, Club club) {
         return new UserResponse(
                 user.getId(),
                 user.getNickName(),
@@ -25,7 +27,7 @@ public record UserResponse(
                 user.getGender(),
                 user.getBirthDate(),
                 user.getWatchStyle(),
-                ClubResponse.from(user.getClub()),
+                club != null ? ClubResponse.from(club) : null,
                 user.getAuthority()
         );
     }

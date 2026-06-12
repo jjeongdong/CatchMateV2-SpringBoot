@@ -1,4 +1,4 @@
-package com.back.catchmate.user.application.port.out;
+package com.back.catchmate.admin.application.port.out;
 
 import com.back.catchmate.club.domain.model.Club;
 

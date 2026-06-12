@@ -2,7 +2,6 @@ package com.back.catchmate.oauth.application.service;
 
 import com.back.catchmate.auth.application.port.out.TokenProvider;
 import com.back.catchmate.auth.domain.model.AuthToken;
-import com.back.catchmate.club.domain.model.Club;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.oauth.application.dto.command.OAuthCallbackCommand;
@@ -69,7 +68,9 @@ public class OAuthService implements OAuthUseCase {
     @Transactional
     public SignUpResult signUp(SignUpCommand command) {
         SignupTokenClaims claims = tokenProvider.parseSignupToken(command.signupToken());
-        Club club = clubFetchPort.getClub(command.favoriteClubId());
+        Long favoriteClubId = command.favoriteClubId();
+        // validate club exists
+        clubFetchPort.getClub(favoriteClubId);
 
         User user = User.createUser(
                 claims.getProvider(),
@@ -78,7 +79,7 @@ public class OAuthService implements OAuthUseCase {
                 command.nickName(),
                 command.gender(),
                 command.birthDate(),
-                club,
+                favoriteClubId,
                 claims.getProfileImageUrl(),
                 null,
                 command.watchStyle()
