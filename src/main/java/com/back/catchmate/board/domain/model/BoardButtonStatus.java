@@ -1,7 +1,6 @@
 package com.back.catchmate.board.domain.model;
 
-import com.back.catchmate.enroll.domain.model.Enroll;
-import com.back.catchmate.user.domain.model.User;
+import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -17,14 +16,14 @@ public enum BoardButtonStatus {
 
     private final String description;
 
-    public static BoardButtonStatus resolve(User requestingUser, Board board, Optional<Enroll> enrollOptional) {
-        if (board.getUserId().equals(requestingUser.getId())) {
+    public static BoardButtonStatus resolve(Long requestingUserId, Board board, Optional<AcceptStatus> enrollAcceptStatus) {
+        if (board.getUserId().equals(requestingUserId)) {
             return VIEW_CHAT;
         }
-        if (enrollOptional.isEmpty()) {
+        if (enrollAcceptStatus.isEmpty()) {
             return APPLY;
         }
-        return switch (enrollOptional.get().getAcceptStatus()) {
+        return switch (enrollAcceptStatus.get()) {
             case ACCEPTED -> VIEW_CHAT;
             case PENDING -> CANCEL;
             case REJECTED -> REJECTED;
