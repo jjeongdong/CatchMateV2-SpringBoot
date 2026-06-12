@@ -2,17 +2,10 @@ package com.back.catchmate.admin.adapter.in.web.dto.request;
 
 import com.back.catchmate.admin.application.dto.command.InquiryAnswerCommand;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class InquiryAnswerRequest {
-    @NotBlank(message = "답변 내용은 필수입니다.")
-    private String content;
-
+public record InquiryAnswerRequest(
+        @NotBlank(message = "답변 내용은 필수입니다.") String content
+) {
     public InquiryAnswerCommand toCommand(Long inquiryId) {
         return InquiryAnswerCommand.builder()
                 .inquiryId(inquiryId)

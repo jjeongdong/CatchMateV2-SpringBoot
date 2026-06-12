@@ -1,22 +1,15 @@
 package com.back.catchmate.inquiry.application.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class InquiryCreateResponse {
-    private Long inquiryId;
-    private LocalDateTime createdAt;
-
+public record InquiryCreateResponse(
+        Long inquiryId,
+        LocalDateTime createdAt
+) {
     public static InquiryCreateResponse of(Long inquiryId) {
-        return InquiryCreateResponse.builder()
-                .inquiryId(inquiryId)
-                .createdAt(LocalDateTime.now())
-                .build();
+        return new InquiryCreateResponse(
+                inquiryId,
+                LocalDateTime.now()
+        );
     }
 }

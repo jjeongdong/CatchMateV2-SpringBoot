@@ -1,31 +1,26 @@
 package com.back.catchmate.admin.application.dto.response;
 
 import com.back.catchmate.board.domain.model.Board;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-public class AdminBoardResponse {
-    private Long boardId;
-    private String title;
-    private String content;
-    private boolean completed;
-    private int currentPerson;
-    private int maxPerson;
-    private LocalDateTime createdAt;
-
+public record AdminBoardResponse(
+        Long boardId,
+        String title,
+        String content,
+        boolean completed,
+        int currentPerson,
+        int maxPerson,
+        LocalDateTime createdAt
+) {
     public static AdminBoardResponse from(Board board) {
-        return AdminBoardResponse.builder()
-                .boardId(board.getId())
-                .title(board.getTitle())
-                .content(board.getContent())
-                .completed(board.isCompleted())
-                .currentPerson(board.getCurrentPerson())
-                .maxPerson(board.getMaxPerson())
-                .createdAt(board.getCreatedAt())
-                .build();
+        return new AdminBoardResponse(
+                board.getId(),
+                board.getTitle(),
+                board.getContent(),
+                board.isCompleted(),
+                board.getCurrentPerson(),
+                board.getMaxPerson(),
+                board.getCreatedAt()
+        );
     }
 }

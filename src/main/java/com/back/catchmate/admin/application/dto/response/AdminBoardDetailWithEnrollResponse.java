@@ -1,41 +1,35 @@
 package com.back.catchmate.admin.application.dto.response;
 
 import com.back.catchmate.board.domain.model.Board;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Getter
-@Builder
-public class AdminBoardDetailWithEnrollResponse {
-    private Long boardId;
-    private String title;
-    private String content;
-    private String writerNickname;
-    private LocalDateTime gameStartDate;
-    private String location;
-    private int maxPerson;
-    private int currentPerson;
-    private boolean completed;
-    private LocalDateTime createdAt;
-
-    private List<AdminEnrollmentResponse> enrollments;
-
+public record AdminBoardDetailWithEnrollResponse(
+        Long boardId,
+        String title,
+        String content,
+        String writerNickname,
+        LocalDateTime gameStartDate,
+        String location,
+        int maxPerson,
+        int currentPerson,
+        boolean completed,
+        LocalDateTime createdAt,
+        List<AdminEnrollmentResponse> enrollments
+) {
     public static AdminBoardDetailWithEnrollResponse from(Board board, List<AdminEnrollmentResponse> enrollments) {
-        return AdminBoardDetailWithEnrollResponse.builder()
-                .boardId(board.getId())
-                .title(board.getTitle())
-                .content(board.getContent())
-                .writerNickname(board.getUser().getNickName())
-                .gameStartDate(board.getGame().getGameStartDate())
-                .location(board.getGame().getLocation())
-                .maxPerson(board.getMaxPerson())
-                .currentPerson(board.getCurrentPerson())
-                .completed(board.isCompleted())
-                .createdAt(board.getCreatedAt())
-                .enrollments(enrollments)
-                .build();
+        return new AdminBoardDetailWithEnrollResponse(
+                board.getId(),
+                board.getTitle(),
+                board.getContent(),
+                board.getUser().getNickName(),
+                board.getGame().getGameStartDate(),
+                board.getGame().getLocation(),
+                board.getMaxPerson(),
+                board.getCurrentPerson(),
+                board.isCompleted(),
+                board.getCreatedAt(),
+                enrollments
+        );
     }
 }

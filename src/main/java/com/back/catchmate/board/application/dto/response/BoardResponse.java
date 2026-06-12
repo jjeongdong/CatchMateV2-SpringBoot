@@ -3,36 +3,29 @@ package com.back.catchmate.board.application.dto.response;
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.club.application.dto.response.ClubResponse;
 import com.back.catchmate.user.application.dto.response.UserResponse;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class BoardResponse {
-    private Long boardId;
-    private String title;
-    private String content;
-    private int currentPerson;
-    private int maxPerson;
-    private boolean bookMarked;
-
-    private ClubResponse cheerClub;
-    private GameResponse gameResponse;
-    private UserResponse userResponse;
-
+public record BoardResponse(
+        Long boardId,
+        String title,
+        String content,
+        int currentPerson,
+        int maxPerson,
+        boolean bookMarked,
+        ClubResponse cheerClub,
+        GameResponse gameResponse,
+        UserResponse userResponse
+) {
     public static BoardResponse from(Board board, boolean bookMarked) {
-        return BoardResponse.builder()
-                .boardId(board.getId())
-                .title(board.getTitle())
-                .content(board.getContent())
-                .currentPerson(board.getCurrentPerson())
-                .maxPerson(board.getMaxPerson())
-                .bookMarked(bookMarked)
-                .cheerClub(ClubResponse.from(board.getCheerClub()))
-                .gameResponse(GameResponse.from(board.getGame()))
-                .userResponse(UserResponse.from(board.getUser()))
-                .build();
+        return new BoardResponse(
+                board.getId(),
+                board.getTitle(),
+                board.getContent(),
+                board.getCurrentPerson(),
+                board.getMaxPerson(),
+                bookMarked,
+                ClubResponse.from(board.getCheerClub()),
+                GameResponse.from(board.getGame()),
+                UserResponse.from(board.getUser())
+        );
     }
 }

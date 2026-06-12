@@ -1,13 +1,9 @@
 package com.back.catchmate.notification.application.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
-@Getter
-@AllArgsConstructor
-public class UnreadNotificationResponse {
-    private boolean hasUnread;
-
+public record UnreadNotificationResponse(
+        boolean hasUnread
+) {
     public static UnreadNotificationResponse of(boolean hasUnread) {
         return new UnreadNotificationResponse(hasUnread);
     }

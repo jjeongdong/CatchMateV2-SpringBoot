@@ -1,48 +1,39 @@
 package com.back.catchmate.admin.application.dto.response;
 
 import com.back.catchmate.report.domain.model.Report;
-import lombok.Builder;
-import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-public class AdminReportDetailResponse {
-    private Long reportId;
-    
-    // 신고자 정보
-    private Long reporterId;
-    private String reporterNickname;
-    private String reporterEmail;
-    private String reporterProfileImage;
-
-    // 신고 대상자 정보
-    private Long reportedUserId;
-    private String reportedUserNickname;
-    private String reportedUserEmail;
-    private String reportedUserProfileImage;
-
-    private String reason;      // 신고 사유
-    private String description; // 상세 내용
-    private LocalDateTime createdAt;
-    private boolean completed;
-
+public record AdminReportDetailResponse(
+        Long reportId,
+        Long reporterId,
+        String reporterNickname,
+        String reporterEmail,
+        String reporterProfileImage,
+        Long reportedUserId,
+        String reportedUserNickname,
+        String reportedUserEmail,
+        String reportedUserProfileImage,
+        String reason,
+        String description,
+        LocalDateTime createdAt,
+        boolean completed
+) {
     public static AdminReportDetailResponse from(Report report) {
-        return AdminReportDetailResponse.builder()
-                .reportId(report.getId())
-                .reporterId(report.getReporter().getId())
-                .reporterNickname(report.getReporter().getNickName())
-                .reporterEmail(report.getReporter().getEmail())
-                .reporterProfileImage(report.getReporter().getProfileImageUrl())
-                .reportedUserId(report.getReportedUser().getId())
-                .reportedUserNickname(report.getReportedUser().getNickName())
-                .reportedUserEmail(report.getReportedUser().getEmail())
-                .reportedUserProfileImage(report.getReportedUser().getProfileImageUrl())
-                .reason(report.getReason().name())
-                .description(report.getDescription())
-                .createdAt(report.getCreatedAt())
-                .completed(report.isCompleted())
-                .build();
+        return new AdminReportDetailResponse(
+                report.getId(),
+                report.getReporter().getId(),
+                report.getReporter().getNickName(),
+                report.getReporter().getEmail(),
+                report.getReporter().getProfileImageUrl(),
+                report.getReportedUser().getId(),
+                report.getReportedUser().getNickName(),
+                report.getReportedUser().getEmail(),
+                report.getReportedUser().getProfileImageUrl(),
+                report.getReason().name(),
+                report.getDescription(),
+                report.getCreatedAt(),
+                report.isCompleted()
+        );
     }
 }

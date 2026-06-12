@@ -2,20 +2,11 @@ package com.back.catchmate.admin.adapter.in.web.dto.request;
 
 import com.back.catchmate.admin.application.dto.command.NoticeCreateCommand;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class NoticeCreateRequest {
-    @NotBlank(message = "제목을 입력해주세요.")
-    private String title;
-
-    @NotBlank(message = "내용을 입력해주세요.")
-    private String content;
-
+public record NoticeCreateRequest(
+        @NotBlank(message = "제목을 입력해주세요.") String title,
+        @NotBlank(message = "내용을 입력해주세요.") String content
+) {
     public NoticeCreateCommand toCommand() {
         return NoticeCreateCommand.builder()
                 .title(this.title)

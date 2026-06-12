@@ -1,33 +1,28 @@
 package com.back.catchmate.admin.application.dto.response;
 
 import com.back.catchmate.user.domain.model.User;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-public class AdminUserResponse {
-    private Long userId;
-    private String profileImageUrl;
-    private String nickName;
-    private String email;
-    private String clubName;
-    private String gender;
-    private String authority;
-    private LocalDateTime createdAt;
-
+public record AdminUserResponse(
+        Long userId,
+        String profileImageUrl,
+        String nickName,
+        String email,
+        String clubName,
+        String gender,
+        String authority,
+        LocalDateTime createdAt
+) {
     public static AdminUserResponse from(User user) {
-        return AdminUserResponse.builder()
-                .userId(user.getId())
-                .profileImageUrl(user.getProfileImageUrl())
-                .nickName(user.getNickName())
-                .email(user.getEmail())
-                .clubName(user.getClub().getName())
-                .gender(user.getGender().toString())
-                .authority(user.getAuthority().name())
-                .createdAt(user.getCreatedAt())
-                .build();
+        return new AdminUserResponse(
+                user.getId(),
+                user.getProfileImageUrl(),
+                user.getNickName(),
+                user.getEmail(),
+                user.getClub().getName(),
+                user.getGender().toString(),
+                user.getAuthority().name(),
+                user.getCreatedAt()
+        );
     }
 }

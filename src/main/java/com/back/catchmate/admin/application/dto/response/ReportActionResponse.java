@@ -1,18 +1,11 @@
 package com.back.catchmate.admin.application.dto.response;
 
-import lombok.Builder;
-import lombok.Getter;
 
-@Getter
-@Builder
-public class ReportActionResponse {
-    private Long reportId;
-    private Long reportedUserId;
-
+public record ReportActionResponse(
+        Long reportId,
+        Long reportedUserId
+) {
     public static ReportActionResponse of(Long reportId, Long reportedUserId) {
-        return ReportActionResponse.builder()
-                .reportId(reportId)
-                .reportedUserId(reportedUserId)
-                .build();
+        return new ReportActionResponse(reportId, reportedUserId);
     }
 }

@@ -1,22 +1,15 @@
 package com.back.catchmate.enroll.application.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class EnrollCreateResponse {
-    private Long enrollId;
-    private LocalDateTime requestAt;
-
+public record EnrollCreateResponse(
+        Long enrollId,
+        LocalDateTime requestAt
+) {
     public static EnrollCreateResponse of(Long enrollId) {
-        return EnrollCreateResponse.builder()
-                .enrollId(enrollId)
-                .requestAt(LocalDateTime.now())
-                .build();
+        return new EnrollCreateResponse(
+                enrollId,
+                LocalDateTime.now()
+        );
     }
 }

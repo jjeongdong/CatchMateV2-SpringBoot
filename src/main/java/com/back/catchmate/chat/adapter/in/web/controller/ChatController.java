@@ -26,7 +26,7 @@ public class ChatController {
         Long senderId = extractUserId(principal);
 
         log.info("채팅 메시지 수신 - chatRoomId: {}, senderId: {}, content: {}",
-                request.getChatRoomId(), senderId, request.getContent());
+                request.chatRoomId(), senderId, request.content());
 
         chatOrchestrator.sendMessage(senderId, request.toCommand(senderId));
         log.info("채팅 메시지 처리 위임 완료 (Redis Pub/Sub 동작 중)");
@@ -35,27 +35,27 @@ public class ChatController {
     @MessageMapping("/chat/enter")
     public void enterChatRoom(@Payload ChatRoomEnterRequest request, Principal principal) {
         Long userId = extractUserId(principal);
-        log.info("채팅방 입장 - chatRoomId: {}, userId: {}", request.getChatRoomId(), userId);
+        log.info("채팅방 입장 - chatRoomId: {}, userId: {}", request.chatRoomId(), userId);
 
-        chatOrchestrator.enterChatRoom(userId, request.getChatRoomId());
+        chatOrchestrator.enterChatRoom(userId, request.chatRoomId());
         log.info("채팅방 입장 처리 완료");
     }
 
     @MessageMapping("/chat/leave")
     public void leaveChatRoom(@Payload ChatRoomLeaveRequest request, Principal principal) {
         Long userId = extractUserId(principal);
-        log.info("채팅방 퇴장 - chatRoomId: {}, userId: {}", request.getChatRoomId(), userId);
+        log.info("채팅방 퇴장 - chatRoomId: {}, userId: {}", request.chatRoomId(), userId);
 
-        chatOrchestrator.leaveChatRoom(userId, request.getChatRoomId());
+        chatOrchestrator.leaveChatRoom(userId, request.chatRoomId());
         log.info("채팅방 퇴장 처리 완료");
     }
 
     @MessageMapping("/chat/read")
     public void readChatRoom(@Payload ChatReadRequest request, Principal principal) {
         Long userId = extractUserId(principal);
-        log.info("채팅 읽음 처리 - chatRoomId: {}, userId: {}", request.getChatRoomId(), userId);
+        log.info("채팅 읽음 처리 - chatRoomId: {}, userId: {}", request.chatRoomId(), userId);
 
-        chatOrchestrator.readChatRoom(userId, request.getChatRoomId());
+        chatOrchestrator.readChatRoom(userId, request.chatRoomId());
     }
 
     private Long extractUserId(Principal principal) {

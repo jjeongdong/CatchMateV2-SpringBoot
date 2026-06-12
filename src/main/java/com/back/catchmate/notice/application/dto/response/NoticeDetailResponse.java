@@ -1,29 +1,22 @@
 package com.back.catchmate.notice.application.dto.response;
 
 import com.back.catchmate.notice.domain.model.Notice;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class NoticeDetailResponse {
-    private Long noticeId;
-    private String title;
-    private String content;
-    private String writerNickname;
-    private LocalDateTime createdAt;
-
+public record NoticeDetailResponse(
+        Long noticeId,
+        String title,
+        String content,
+        String writerNickname,
+        LocalDateTime createdAt
+) {
     public static NoticeDetailResponse from(Notice notice) {
-        return NoticeDetailResponse.builder()
-                .noticeId(notice.getId())
-                .title(notice.getTitle())
-                .content(notice.getContent())
-                .writerNickname(notice.getWriter().getNickName())
-                .createdAt(notice.getCreatedAt())
-                .build();
+        return new NoticeDetailResponse(
+                notice.getId(),
+                notice.getTitle(),
+                notice.getContent(),
+                notice.getWriter().getNickName(),
+                notice.getCreatedAt()
+        );
     }
 }

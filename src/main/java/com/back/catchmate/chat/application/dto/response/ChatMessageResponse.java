@@ -2,33 +2,28 @@ package com.back.catchmate.chat.application.dto.response;
 
 import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-public class ChatMessageResponse {
-    private Long messageId;
-    private Long chatRoomId;
-    private Long senderId;
-    private String senderNickName;
-    private String senderProfileImageUrl;
-    private String content;
-    private MessageType messageType;
-    private LocalDateTime createdAt;
-
+public record ChatMessageResponse(
+        Long messageId,
+        Long chatRoomId,
+        Long senderId,
+        String senderNickName,
+        String senderProfileImageUrl,
+        String content,
+        MessageType messageType,
+        LocalDateTime createdAt
+) {
     public static ChatMessageResponse from(ChatMessage chatMessage) {
-        return ChatMessageResponse.builder()
-                .messageId(chatMessage.getId())
-                .chatRoomId(chatMessage.getChatRoom().getId())
-                .senderId(chatMessage.getSender().getId())
-                .senderNickName(chatMessage.getSender().getNickName())
-                .senderProfileImageUrl(chatMessage.getSender().getProfileImageUrl())
-                .content(chatMessage.getContent())
-                .messageType(chatMessage.getMessageType())
-                .createdAt(chatMessage.getCreatedAt())
-                .build();
+        return new ChatMessageResponse(
+                chatMessage.getId(),
+                chatMessage.getChatRoom().getId(),
+                chatMessage.getSender().getId(),
+                chatMessage.getSender().getNickName(),
+                chatMessage.getSender().getProfileImageUrl(),
+                chatMessage.getContent(),
+                chatMessage.getMessageType(),
+                chatMessage.getCreatedAt()
+        );
     }
 }

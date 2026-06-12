@@ -1,27 +1,22 @@
 package com.back.catchmate.admin.application.dto.response;
 
 import com.back.catchmate.notice.domain.model.Notice;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-public class AdminNoticeDetailResponse {
-    private Long noticeId;
-    private String title;
-    private String content;
-    private String writerNickname;
-    private LocalDateTime createdAt;
-
+public record AdminNoticeDetailResponse(
+        Long noticeId,
+        String title,
+        String content,
+        String writerNickname,
+        LocalDateTime createdAt
+) {
     public static AdminNoticeDetailResponse from(Notice notice) {
-        return AdminNoticeDetailResponse.builder()
-                .noticeId(notice.getId())
-                .title(notice.getTitle())
-                .content(notice.getContent())
-                .writerNickname(notice.getWriter().getNickName())
-                .createdAt(notice.getCreatedAt())
-                .build();
+        return new AdminNoticeDetailResponse(
+                notice.getId(),
+                notice.getTitle(),
+                notice.getContent(),
+                notice.getWriter().getNickName(),
+                notice.getCreatedAt()
+        );
     }
 }

@@ -1,15 +1,10 @@
 package com.back.catchmate.bookmark.application.dto.response;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
-@Getter
-@AllArgsConstructor
-public class BookmarkUpdateResponse {
-    private Long boardId;
-    private boolean bookmarked;
-
+public record BookmarkUpdateResponse(
+        Long boardId,
+        boolean bookmarked
+) {
     public static BookmarkUpdateResponse of(Long boardId, boolean bookmarked) {
         return new BookmarkUpdateResponse(boardId, bookmarked);
     }

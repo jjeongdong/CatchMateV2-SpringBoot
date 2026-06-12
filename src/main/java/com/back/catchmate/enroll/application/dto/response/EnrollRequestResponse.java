@@ -3,29 +3,22 @@ package com.back.catchmate.enroll.application.dto.response;
 import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import com.back.catchmate.enroll.domain.model.Enroll;
 import com.back.catchmate.board.application.dto.response.BoardResponse;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class EnrollRequestResponse {
-    private Long enrollId;
-    private AcceptStatus acceptStatus;
-    private String description;
-    private LocalDateTime requestDate;
-    private BoardResponse boardResponse;
-
+public record EnrollRequestResponse(
+        Long enrollId,
+        AcceptStatus acceptStatus,
+        String description,
+        LocalDateTime requestDate,
+        BoardResponse boardResponse
+) {
     public static EnrollRequestResponse from(Enroll enroll, boolean bookMarked) {
-        return EnrollRequestResponse.builder()
-                .enrollId(enroll.getId())
-                .acceptStatus(enroll.getAcceptStatus())
-                .description(enroll.getDescription())
-                .requestDate(enroll.getRequestedAt())
-                .boardResponse(BoardResponse.from(enroll.getBoard(), bookMarked))
-                .build();
+        return new EnrollRequestResponse(
+                enroll.getId(),
+                enroll.getAcceptStatus(),
+                enroll.getDescription(),
+                enroll.getRequestedAt(),
+                BoardResponse.from(enroll.getBoard(), bookMarked)
+        );
     }
 }

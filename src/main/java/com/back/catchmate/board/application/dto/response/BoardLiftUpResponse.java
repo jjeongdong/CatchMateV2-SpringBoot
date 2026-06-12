@@ -1,21 +1,12 @@
 package com.back.catchmate.board.application.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class BoardLiftUpResponse {
-    private boolean state;
-    private String remainTime;
-
+public record BoardLiftUpResponse(
+        boolean state,
+        String remainTime
+) {
     public static BoardLiftUpResponse of(boolean state, String remainTime) {
-        return BoardLiftUpResponse.builder()
-                .state(state)
-                .remainTime(remainTime)
-                .build();
+        return new BoardLiftUpResponse(state, remainTime);
     }
 
     public static BoardLiftUpResponse fromRemainingMinutes(boolean state, long remainingMinutes) {

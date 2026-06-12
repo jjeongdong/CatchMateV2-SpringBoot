@@ -133,16 +133,16 @@ public class ChatService implements ChatUseCase {
         ChatMessageListDto cacheDtoList = chatMessageService.getChatHistory(roomId, lastMessageId, size);
 
         return cacheDtoList.getMessages().stream()
-                .map(dto -> ChatMessageResponse.builder()
-                        .messageId(dto.getId())
-                        .chatRoomId(dto.getRoomId())
-                        .senderId(dto.getSenderId())
-                        .senderNickName(dto.getSenderNickname())
-                        .senderProfileImageUrl(dto.getSenderProfileImageUrl())
-                        .content(dto.getContent())
-                        .messageType(MessageType.valueOf(dto.getMessageType().name()))
-                        .createdAt(dto.getCreatedAt())
-                        .build()
+                .map(dto -> new ChatMessageResponse(
+                dto.getId(),
+                dto.getRoomId(),
+                dto.getSenderId(),
+                dto.getSenderNickname(),
+                dto.getSenderProfileImageUrl(),
+                dto.getContent(),
+                MessageType.valueOf(dto.getMessageType().name()),
+                dto.getCreatedAt()
+        )
                 )
                 .toList();
     }
