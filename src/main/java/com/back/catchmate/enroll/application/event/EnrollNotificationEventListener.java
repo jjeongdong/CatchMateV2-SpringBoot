@@ -34,9 +34,9 @@ public class EnrollNotificationEventListener {
     public void saveNotification(EnrollNotificationEvent event) {
         // 1. 알림 히스토리 저장
         Notification notification = Notification.createNotification(
-                event.recipient(),
-                event.sender(),
-                event.board(),
+                event.recipient().getId(),
+                event.sender() != null ? event.sender().getId() : null,
+                event.board() != null ? event.board().getId() : null,
                 event.title(),
                 AlarmType.ENROLL,
                 event.referenceId()

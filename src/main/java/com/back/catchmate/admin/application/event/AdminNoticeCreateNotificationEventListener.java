@@ -34,7 +34,7 @@ public class AdminNoticeCreateNotificationEventListener {
 
         for (User recipient : recipients) {
             Notification notification = Notification.createNotification(
-                    recipient,
+                    recipient.getId(),
                     null,
                     null,
                     event.title(),

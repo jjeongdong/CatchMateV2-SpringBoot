@@ -10,12 +10,15 @@ import com.back.catchmate.game.domain.model.Game;
 import com.back.catchmate.notification.application.dto.response.NotificationResponse;
 import com.back.catchmate.notification.application.dto.response.UnreadNotificationResponse;
 import com.back.catchmate.notification.application.port.in.NotificationUseCase;
+import com.back.catchmate.notification.application.port.out.BoardFetchPort;
 import com.back.catchmate.notification.application.port.out.ClubFetchPort;
 import com.back.catchmate.notification.application.port.out.EnrollFetchPort;
 import com.back.catchmate.notification.application.port.out.GameFetchPort;
 import com.back.catchmate.notification.application.port.out.NotificationRepository;
+import com.back.catchmate.notification.application.port.out.UserFetchPort;
 import com.back.catchmate.notification.domain.model.Notification;
 import com.back.catchmate.user.domain.enums.AlarmType;
+import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,9 +45,11 @@ public class NotificationService implements NotificationUseCase {
 
     private final NotificationRetryService notificationRetryService;
 
+    private final BoardFetchPort boardFetchPort;
     private final ClubFetchPort clubFetchPort;
     private final EnrollFetchPort enrollFetchPort;
     private final GameFetchPort gameFetchPort;
+    private final UserFetchPort userFetchPort;
 
     @Transactional
     public NotificationResponse getNotification(Long userId, Long notificationId) {
@@ -57,9 +62,9 @@ public class NotificationService implements NotificationUseCase {
                     .orElse(null);
         }
 
-        String gameInfo = resolveGameInfo(notification.getBoard());
-        // 2. DTO 변환 및 반환
-        return NotificationResponse.from(notification, acceptStatus, gameInfo);
+        User sender = notification.getSenderId() != null ? userFetchPort.getUser(notification.getSenderId()) : null;
+        String gameInfo = resolveGameInfo(notification.getBoardId());
+        return NotificationResponse.from(notification, sender, acceptStatus, gameInfo);
     }
 
     public PagedResponse<NotificationResponse> getNotificationList(Long userId, int page, int size) {
@@ -79,16 +84,28 @@ public class NotificationService implements NotificationUseCase {
         // 3. 게임 정보 일괄 조회
         Map<Long, String> gameInfoByBoardId = resolveGameInfos(notificationPage.getContent());
 
-        // 4. DTO 변환
+        // 4. 발신자 일괄 조회
+        List<Long> senderIds = notificationPage.getContent().stream()
+                .map(Notification::getSenderId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, User> senderById = senderIds.isEmpty()
+                ? Map.of()
+                : userFetchPort.getUsers(senderIds).stream()
+                        .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        // 5. DTO 변환
         List<NotificationResponse> responses = notificationPage.getContent().stream()
                 .map(notification -> {
                     AcceptStatus status = (notification.getType() == AlarmType.ENROLL)
                             ? enrollStatusMap.get(notification.getTargetId())
                             : null;
-                    String gameInfo = notification.getBoard() != null
-                            ? gameInfoByBoardId.get(notification.getBoard().getId())
+                    String gameInfo = notification.getBoardId() != null
+                            ? gameInfoByBoardId.get(notification.getBoardId())
                             : null;
-                    return NotificationResponse.from(notification, status, gameInfo);
+                    User sender = notification.getSenderId() != null ? senderById.get(notification.getSenderId()) : null;
+                    return NotificationResponse.from(notification, sender, status, gameInfo);
                 })
                 .toList();
 
@@ -139,7 +156,6 @@ public class NotificationService implements NotificationUseCase {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new BaseException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
-        // 소유권 검증 로직이 필요하다면 여기에 추가 (현재는 AOP에서 처리 중)
         notificationRepository.delete(notification);
     }
 
@@ -152,7 +168,11 @@ public class NotificationService implements NotificationUseCase {
     }
 
     // --- Helpers ---
-    private String resolveGameInfo(Board board) {
+    private String resolveGameInfo(Long boardId) {
+        if (boardId == null) {
+            return null;
+        }
+        Board board = boardFetchPort.getBoard(boardId);
         if (board == null || board.getGameId() == null) {
             return null;
         }
@@ -164,12 +184,18 @@ public class NotificationService implements NotificationUseCase {
     }
 
     private Map<Long, String> resolveGameInfos(List<Notification> notifications) {
-        List<Board> boards = notifications.stream()
-                .map(Notification::getBoard)
+        List<Long> boardIds = notifications.stream()
+                .map(Notification::getBoardId)
                 .filter(Objects::nonNull)
+                .distinct()
                 .toList();
+        if (boardIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Board> boardById = boardFetchPort.getBoards(boardIds).stream()
+                .collect(Collectors.toMap(Board::getId, Function.identity()));
 
-        List<Long> gameIds = boards.stream()
+        List<Long> gameIds = boardById.values().stream()
                 .map(Board::getGameId)
                 .filter(Objects::nonNull)
                 .distinct()
@@ -190,18 +216,18 @@ public class NotificationService implements NotificationUseCase {
                 : clubFetchPort.getClubs(clubIds).stream()
                         .collect(Collectors.toMap(Club::getId, Function.identity()));
 
-        return boards.stream()
-                .filter(b -> b.getGameId() != null)
+        return boardIds.stream()
                 .collect(Collectors.toMap(
-                        Board::getId,
-                        b -> {
+                        Function.identity(),
+                        bid -> {
+                            Board b = boardById.get(bid);
+                            if (b == null || b.getGameId() == null) return "";
                             Game game = gameById.get(b.getGameId());
                             if (game == null) return "";
                             Club home = game.getHomeClubId() != null ? clubById.get(game.getHomeClubId()) : null;
                             Club away = game.getAwayClubId() != null ? clubById.get(game.getAwayClubId()) : null;
                             return formatGameInfo(game, home, away);
-                        },
-                        (a, b) -> a
+                        }
                 ));
     }
 

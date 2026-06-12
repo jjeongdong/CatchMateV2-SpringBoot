@@ -36,7 +36,7 @@ public class AdminInquiryAnswerNotificationEventListener {
 
         // 1. 알림 히스토리 저장
         Notification notification = Notification.createNotification(
-                recipient,
+                recipient.getId(),
                 null,
                 null,
                 event.title(),
