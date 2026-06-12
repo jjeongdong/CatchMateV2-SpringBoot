@@ -9,11 +9,11 @@ public record AdminNoticeResponse(
         String writerNickname,
         LocalDateTime createdAt
 ) {
-    public static AdminNoticeResponse from(Notice notice) {
+    public static AdminNoticeResponse from(Notice notice, String writerNickname) {
         return new AdminNoticeResponse(
                 notice.getId(),
                 notice.getTitle(),
-                notice.getWriter().getNickName(),
+                writerNickname,
                 notice.getCreatedAt()
         );
     }

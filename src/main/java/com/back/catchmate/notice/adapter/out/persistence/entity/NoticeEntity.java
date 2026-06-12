@@ -42,7 +42,7 @@ public class NoticeEntity extends BaseTimeEntity {
     public static NoticeEntity from(Notice notice) {
         return NoticeEntity.builder()
                 .id(notice.getId())
-                .writer(UserEntity.from(notice.getWriter()))
+                .writer(UserEntity.builder().id(notice.getWriterId()).build())
                 .title(notice.getTitle())
                 .content(notice.getContent())
                 .build();
@@ -51,7 +51,7 @@ public class NoticeEntity extends BaseTimeEntity {
     public Notice toModel() {
         return Notice.builder()
                 .id(this.id)
-                .writer(this.writer.toModel())
+                .writerId(this.writer.getId())
                 .title(this.title)
                 .content(this.content)
                 .createdAt(this.getCreatedAt())

@@ -1,6 +1,5 @@
 package com.back.catchmate.notice.domain.model;
 
-import com.back.catchmate.user.domain.model.User;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,14 +14,14 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Notice {
     private Long id;
-    private User writer;
+    private Long writerId;
     private String title;
     private String content;
     private LocalDateTime createdAt;
 
-    public static Notice createNotice(User writer, String title, String content) {
+    public static Notice createNotice(Long writerId, String title, String content) {
         return Notice.builder()
-                .writer(writer)
+                .writerId(writerId)
                 .title(title)
                 .content(content)
                 .createdAt(LocalDateTime.now())

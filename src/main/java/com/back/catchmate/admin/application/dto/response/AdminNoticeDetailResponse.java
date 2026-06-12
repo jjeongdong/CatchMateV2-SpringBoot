@@ -10,12 +10,12 @@ public record AdminNoticeDetailResponse(
         String writerNickname,
         LocalDateTime createdAt
 ) {
-    public static AdminNoticeDetailResponse from(Notice notice) {
+    public static AdminNoticeDetailResponse from(Notice notice, String writerNickname) {
         return new AdminNoticeDetailResponse(
                 notice.getId(),
                 notice.getTitle(),
                 notice.getContent(),
-                notice.getWriter().getNickName(),
+                writerNickname,
                 notice.getCreatedAt()
         );
     }

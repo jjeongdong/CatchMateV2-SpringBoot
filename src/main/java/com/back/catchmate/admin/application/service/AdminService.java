@@ -70,8 +70,7 @@ public class AdminService implements AdminUseCase {
 
     @Transactional
     public NoticeCreateResponse createNotice(Long userId, NoticeCreateCommand command) {
-        User writer = userFetchPort.getUser(userId);
-        Notice savedNotice = noticeFetchPort.createNotice(writer, command.title(), command.content());
+        Notice savedNotice = noticeFetchPort.createNotice(userId, command.title(), command.content());
 
         List<User> recipients = userFetchPort.getEventAlarmEnabledUsers();
         applicationEventPublisher.publishEvent(AdminNoticeCreateNotificationEvent.of(savedNotice, recipients));
@@ -194,15 +193,20 @@ public class AdminService implements AdminUseCase {
 
     public AdminNoticeDetailResponse getNotice(Long noticeId) {
         Notice notice = noticeFetchPort.getNoticeEntity(noticeId);
-        return AdminNoticeDetailResponse.from(notice);
+        User writer = userFetchPort.getUser(notice.getWriterId());
+        return AdminNoticeDetailResponse.from(notice, writer.getNickName());
     }
 
     public PagedResponse<AdminNoticeResponse> getNoticeList(int page, int size) {
         Pageable domainPageable = PageRequest.of(page, size);
         Page<Notice> noticePage = noticeFetchPort.getNoticeList(domainPageable);
 
+        java.util.Map<Long, String> writerNicknameById = userFetchPort.getUsers(
+                noticePage.getContent().stream().map(Notice::getWriterId).distinct().toList()
+        ).stream().collect(Collectors.toMap(User::getId, User::getNickName));
+
         List<AdminNoticeResponse> responses = noticePage.getContent().stream()
-                .map(AdminNoticeResponse::from)
+                .map(n -> AdminNoticeResponse.from(n, writerNicknameById.getOrDefault(n.getWriterId(), "")))
                 .collect(Collectors.toList());
 
         return new PagedResponse<>(noticePage, responses);
@@ -229,7 +233,8 @@ public class AdminService implements AdminUseCase {
         Notice notice = noticeFetchPort.getNoticeEntity(noticeId);
         notice.updateNotice(command.title(), command.content());
         Notice updatedNotice = noticeFetchPort.updateNotice(notice);
-        return NoticeDetailResponse.from(updatedNotice);
+        User writer = userFetchPort.getUser(updatedNotice.getWriterId());
+        return NoticeDetailResponse.from(updatedNotice, writer.getNickName());
     }
 
     @Transactional

@@ -10,12 +10,12 @@ public record NoticeDetailResponse(
         String writerNickname,
         LocalDateTime createdAt
 ) {
-    public static NoticeDetailResponse from(Notice notice) {
+    public static NoticeDetailResponse from(Notice notice, String writerNickname) {
         return new NoticeDetailResponse(
                 notice.getId(),
                 notice.getTitle(),
                 notice.getContent(),
-                notice.getWriter().getNickName(),
+                writerNickname,
                 notice.getCreatedAt()
         );
     }

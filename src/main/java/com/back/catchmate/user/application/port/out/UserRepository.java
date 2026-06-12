@@ -16,6 +16,8 @@ public interface UserRepository {
 
     Optional<User> findById(Long id);
 
+    List<User> findAllByIds(List<Long> ids);
+
     List<User> findAllEventAlarmEnabled();
 
     Page<User> findAllByClubName(String clubName, Pageable pageable);

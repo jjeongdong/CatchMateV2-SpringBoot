@@ -32,6 +32,11 @@ public class AdminUserFetchAdapter implements UserFetchPort {
     }
 
     @Override
+    public List<User> getUsers(List<Long> userIds) {
+        return userService.getUsers(userIds);
+    }
+
+    @Override
     public Map<String, Long> getUserCountByClub() {
         return userService.getUserCountByClub();
     }

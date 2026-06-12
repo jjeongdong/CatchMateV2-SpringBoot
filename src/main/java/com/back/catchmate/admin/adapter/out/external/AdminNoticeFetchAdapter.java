@@ -8,7 +8,6 @@ import org.springframework.data.domain.Pageable;
 import com.back.catchmate.notice.application.dto.response.NoticeResponse;
 import com.back.catchmate.notice.application.service.NoticeService;
 import com.back.catchmate.notice.domain.model.Notice;
-import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +17,8 @@ public class AdminNoticeFetchAdapter implements NoticeFetchPort {
     private final NoticeService noticeService;
 
     @Override
-    public Notice createNotice(User writer, String title, String content) {
-        return noticeService.createNotice(writer, title, content);
+    public Notice createNotice(Long writerId, String title, String content) {
+        return noticeService.createNotice(writerId, title, content);
     }
 
     @Override

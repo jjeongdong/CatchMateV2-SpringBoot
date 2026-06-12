@@ -11,6 +11,7 @@ public interface UserFetchPort {
     List<User> getEventAlarmEnabledUsers();
     long getTotalUserCount();
     User getUser(Long userId);
+    List<User> getUsers(List<Long> userIds);
     Map<String, Long> getUserCountByClub();
     long getUserCountByGender(Character gender);
     Map<String, Long> getUserCountByWatchStyle();

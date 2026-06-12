@@ -1,0 +1,25 @@
+package com.back.catchmate.notice.adapter.out.external;
+
+import com.back.catchmate.notice.application.port.out.UserFetchPort;
+import com.back.catchmate.user.application.service.UserService;
+import com.back.catchmate.user.domain.model.User;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Component
+@RequiredArgsConstructor
+public class NoticeUserFetchAdapter implements UserFetchPort {
+    private final UserService userService;
+
+    @Override
+    public User getUser(Long userId) {
+        return userService.getUser(userId);
+    }
+
+    @Override
+    public List<User> getUsers(List<Long> userIds) {
+        return userService.getUsers(userIds);
+    }
+}

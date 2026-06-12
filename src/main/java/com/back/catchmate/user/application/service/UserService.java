@@ -113,6 +113,10 @@ public class UserService implements UserUseCase {
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
     }
 
+    public List<User> getUsers(List<Long> userIds) {
+        return userRepository.findAllByIds(userIds);
+    }
+
     public Optional<User> findByProviderId(String providerIdWithProvider) {
         return userRepository.findByProviderId(providerIdWithProvider);
     }

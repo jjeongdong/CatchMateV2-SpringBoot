@@ -9,11 +9,11 @@ public record NoticeResponse(
         String writerNickname,
         LocalDateTime createdAt
 ) {
-    public static NoticeResponse from(Notice notice) {
+    public static NoticeResponse from(Notice notice, String writerNickname) {
         return new NoticeResponse(
                 notice.getId(),
                 notice.getTitle(),
-                notice.getWriter().getNickName(),
+                writerNickname,
                 notice.getCreatedAt()
         );
     }

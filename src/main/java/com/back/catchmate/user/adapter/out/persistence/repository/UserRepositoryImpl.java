@@ -35,6 +35,13 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public List<User> findAllByIds(List<Long> ids) {
+        return jpaUserRepository.findAllById(ids).stream()
+                .map(UserEntity::toModel)
+                .toList();
+    }
+
+    @Override
     public Optional<User> findById(Long id) {
         return jpaUserRepository.findById(id)
                 .map(UserEntity::toModel);
