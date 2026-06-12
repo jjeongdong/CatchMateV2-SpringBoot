@@ -52,7 +52,7 @@ public class InquiryEntity extends BaseTimeEntity {
     public static InquiryEntity from(Inquiry inquiry) {
         return InquiryEntity.builder()
                 .id(inquiry.getId())
-                .user(UserEntity.from(inquiry.getUser()))
+                .user(UserEntity.builder().id(inquiry.getUserId()).build())
                 .content(inquiry.getContent())
                 .answer(inquiry.getAnswer())
                 .status(inquiry.getStatus())
@@ -63,7 +63,7 @@ public class InquiryEntity extends BaseTimeEntity {
     public Inquiry toModel() {
         return Inquiry.builder()
                 .id(this.id)
-                .user(this.user.toModel())
+                .userId(this.user.getId())
                 .type(this.type)
                 .content(this.content)
                 .answer(this.answer)

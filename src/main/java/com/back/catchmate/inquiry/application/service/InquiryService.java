@@ -34,35 +34,34 @@ public class InquiryService implements InquiryUseCase {
 
     @Transactional
     public InquiryCreateResponse createInquiry(Long userId, InquiryCreateCommand command) {
-        User user = userFetchPort.getUser(userId);
-
-        Inquiry inquiry = registerInquiry(
-                user,
-                command.type(),
-                command.content()
-        );
-
+        Inquiry inquiry = registerInquiry(userId, command.type(), command.content());
         return InquiryCreateResponse.of(inquiry.getId());
     }
 
     public InquiryDetailResponse getInquiry(Long inquiryId) {
         Inquiry inquiry = getInquiryEntity(inquiryId);
-        return InquiryDetailResponse.from(inquiry);
+        User user = userFetchPort.getUser(inquiry.getUserId());
+        return InquiryDetailResponse.from(inquiry, user.getNickName());
     }
 
     public PagedResponse<InquiryDetailResponse> getInquiryListByUser(Long userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Inquiry> inquiryPage = getInquiryListByUser(userId, pageable);
 
+        // 같은 유저의 문의 목록이므로 nickname 한 번만 조회.
+        String nickname = inquiryPage.getContent().isEmpty()
+                ? ""
+                : userFetchPort.getUser(userId).getNickName();
+
         List<InquiryDetailResponse> responses = inquiryPage.getContent().stream()
-                .map(InquiryDetailResponse::from)
+                .map(i -> InquiryDetailResponse.from(i, nickname))
                 .toList();
 
         return new PagedResponse<>(inquiryPage, responses);
     }
 
-    public Inquiry registerInquiry(User user, InquiryType type, String content) {
-        Inquiry inquiry = Inquiry.createInquiry(user, type, content);
+    public Inquiry registerInquiry(Long userId, InquiryType type, String content) {
+        Inquiry inquiry = Inquiry.createInquiry(userId, type, content);
         return inquiryRepository.save(inquiry);
     }
 

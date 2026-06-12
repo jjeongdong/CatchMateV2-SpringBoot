@@ -85,12 +85,13 @@ public class AdminService implements AdminUseCase {
         inquiry.registerAnswer(command.content());
         Inquiry updatedInquiry = inquiryFetchPort.updateInquiry(inquiry);
 
+        User recipient = userFetchPort.getUser(updatedInquiry.getUserId());
         applicationEventPublisher.publishEvent(AdminInquiryAnswerNotificationEvent.of(
-                updatedInquiry.getUser(),
+                recipient,
                 updatedInquiry
         ));
 
-        return InquiryAnswerResponse.of(updatedInquiry.getId(), updatedInquiry.getUser().getId());
+        return InquiryAnswerResponse.of(updatedInquiry.getId(), updatedInquiry.getUserId());
     }
 
     public AdminDashboardResponse getDashboardStats() {
@@ -177,15 +178,20 @@ public class AdminService implements AdminUseCase {
 
     public AdminInquiryDetailResponse getInquiry(Long inquiryId) {
         Inquiry inquiry = inquiryFetchPort.getInquiryEntity(inquiryId);
-        return AdminInquiryDetailResponse.from(inquiry);
+        User user = userFetchPort.getUser(inquiry.getUserId());
+        return AdminInquiryDetailResponse.from(inquiry, user);
     }
 
     public PagedResponse<AdminInquiryResponse> getInquiryList(int page, int size) {
         Pageable domainPageable = PageRequest.of(page, size);
         Page<Inquiry> inquiryPage = inquiryFetchPort.getInquiryList(domainPageable);
 
+        java.util.Map<Long, User> userById = userFetchPort.getUsers(
+                inquiryPage.getContent().stream().map(Inquiry::getUserId).distinct().toList()
+        ).stream().collect(Collectors.toMap(User::getId, u -> u));
+
         List<AdminInquiryResponse> responses = inquiryPage.getContent().stream()
-                .map(AdminInquiryResponse::from)
+                .map(i -> AdminInquiryResponse.from(i, userById.get(i.getUserId())))
                 .toList();
 
         return new PagedResponse<>(inquiryPage, responses);

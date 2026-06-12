@@ -12,10 +12,10 @@ public record InquiryDetailResponse(
         String status,
         LocalDateTime createdAt
 ) {
-    public static InquiryDetailResponse from(Inquiry inquiry) {
+    public static InquiryDetailResponse from(Inquiry inquiry, String nickname) {
         return new InquiryDetailResponse(
                 inquiry.getId(),
-                inquiry.getUser().getNickName(),
+                nickname,
                 inquiry.getType().getDescription(),
                 inquiry.getContent(),
                 inquiry.getAnswer(),
