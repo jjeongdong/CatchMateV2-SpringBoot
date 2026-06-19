@@ -1,7 +1,7 @@
 package com.back.catchmate.report.domain.model;
 
-import com.back.catchmate.global.authorization.common.ResourceOwnership;
-import com.back.catchmate.report.domain.enums.ReportReason;
+import com.back.catchmate.common.error.ErrorCode;
+import com.back.catchmate.common.error.exception.BaseException;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Report implements ResourceOwnership {
+public class Report {
     private Long id;
     private Long reporterId;
     private Long reportedUserId;
@@ -24,6 +24,10 @@ public class Report implements ResourceOwnership {
     private boolean completed;
 
     public static Report createReport(Long reporterId, Long reportedUserId, ReportReason reason, String description) {
+        if (reporterId.equals(reportedUserId)) {
+            throw new BaseException(ErrorCode.CANNOT_REPORT_SELF);
+        }
+
         return Report.builder()
                 .reporterId(reporterId)
                 .reportedUserId(reportedUserId)
@@ -36,10 +40,5 @@ public class Report implements ResourceOwnership {
 
     public void process() {
         this.completed = true;
-    }
-
-    @Override
-    public Long getOwnershipId() {
-        return reporterId;
     }
 }

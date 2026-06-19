@@ -1,44 +1,38 @@
 package com.back.catchmate.report.adapter.out.persistence.entity;
 
+import com.back.catchmate.global.persistence.BaseTimeEntity;
 import com.back.catchmate.report.domain.model.Report;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
-import com.back.catchmate.user.adapter.out.persistence.entity.UserEntity;
+import com.back.catchmate.report.domain.model.ReportReason;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import com.back.catchmate.report.domain.enums.ReportReason;
 
 @Entity
-@Table(name = "reports")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Table(name = "reports")
 public class ReportEntity extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reporter_id")
-    private UserEntity reporter;
+    @Column(name = "reporter_id", nullable = false)
+    private Long reporterId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reported_user_id")
-    private UserEntity reportedUser;
+    @Column(name = "reported_user_id", nullable = false)
+    private Long reportedUserId;
 
     @Enumerated(EnumType.STRING)
     private ReportReason reason;
@@ -51,19 +45,19 @@ public class ReportEntity extends BaseTimeEntity {
     public static ReportEntity from(Report report) {
         return ReportEntity.builder()
                 .id(report.getId())
-                .reporter(UserEntity.builder().id(report.getReporterId()).build())
-                .reportedUser(UserEntity.builder().id(report.getReportedUserId()).build())
+                .reporterId(report.getReporterId())
+                .reportedUserId(report.getReportedUserId())
                 .reason(report.getReason())
                 .description(report.getDescription())
                 .completed(report.isCompleted())
                 .build();
     }
 
-    public Report toModel() {
+    public Report toDomain() {
         return Report.builder()
                 .id(this.id)
-                .reporterId(this.reporter.getId())
-                .reportedUserId(this.reportedUser.getId())
+                .reporterId(this.reporterId)
+                .reportedUserId(this.reportedUserId)
                 .reason(this.reason)
                 .description(this.description)
                 .createdAt(this.getCreatedAt())

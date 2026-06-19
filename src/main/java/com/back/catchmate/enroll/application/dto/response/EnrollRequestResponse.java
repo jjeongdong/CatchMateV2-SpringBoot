@@ -1,6 +1,5 @@
 package com.back.catchmate.enroll.application.dto.response;
 
-import com.back.catchmate.board.application.dto.response.BoardResponse;
 import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import com.back.catchmate.enroll.domain.model.Enroll;
 
@@ -11,9 +10,9 @@ public record EnrollRequestResponse(
         AcceptStatus acceptStatus,
         String description,
         LocalDateTime requestDate,
-        BoardResponse boardResponse
+        EnrollBoardSummary boardResponse
 ) {
-    public static EnrollRequestResponse from(Enroll enroll, BoardResponse boardResponse) {
+    public static EnrollRequestResponse from(Enroll enroll, EnrollBoardSummary boardResponse) {
         return new EnrollRequestResponse(
                 enroll.getId(),
                 enroll.getAcceptStatus(),

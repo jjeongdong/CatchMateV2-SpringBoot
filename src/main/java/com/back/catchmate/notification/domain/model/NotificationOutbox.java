@@ -1,7 +1,5 @@
 package com.back.catchmate.notification.domain.model;
 
-import com.back.catchmate.notification.domain.enums.NotificationChannel;
-import com.back.catchmate.notification.domain.enums.OutboxStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -11,7 +9,6 @@ public class NotificationOutbox {
     private Long id;
     private Long recipientId;
     private String recipientAddress;
-    private NotificationChannel channel;
     private String title;
     private String body;
     private String payload;
@@ -19,11 +16,10 @@ public class NotificationOutbox {
     private OutboxStatus status;
     private String errorMessage;
 
-    public static NotificationOutbox create(Long recipientId, String recipientAddress, NotificationChannel channel, String title, String body, String payload) {
+    public static NotificationOutbox create(Long recipientId, String recipientAddress, String title, String body, String payload) {
         return NotificationOutbox.builder()
                 .recipientId(recipientId)
                 .recipientAddress(recipientAddress)
-                .channel(channel)
                 .title(title)
                 .body(body)
                 .payload(payload)
@@ -55,5 +51,10 @@ public class NotificationOutbox {
 
     public void success() {
         this.status = OutboxStatus.SUCCESS;
+    }
+
+    public void permanentFail(String reason) {
+        this.status = OutboxStatus.PERMANENT_FAILURE;
+        this.errorMessage = reason;
     }
 }

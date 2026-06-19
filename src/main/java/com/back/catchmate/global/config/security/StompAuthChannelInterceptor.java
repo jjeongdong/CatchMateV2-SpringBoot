@@ -1,7 +1,7 @@
 package com.back.catchmate.global.config.security;
 
-import com.back.catchmate.auth.application.port.in.AuthUseCase;
-import com.back.catchmate.chat.application.port.in.ChatUseCase;
+import com.back.catchmate.auth.application.port.in.AuthInternalQueryUseCase;
+import com.back.catchmate.chat.application.port.in.ChatClientQueryUseCase;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,8 @@ import java.util.Collections;
 @Component
 @RequiredArgsConstructor
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
-    private final AuthUseCase authOrchestrator;
-    private final ChatUseCase chatOrchestrator;
+    private final AuthInternalQueryUseCase authInternalQueryUseCase;
+    private final ChatClientQueryUseCase chatClientQueryUseCase;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -50,8 +50,8 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             }
 
             try {
-                Long userId = authOrchestrator.getUserId(token);
-                String role = authOrchestrator.getUserRole(token);
+                Long userId = authInternalQueryUseCase.getUserId(token);
+                String role = authInternalQueryUseCase.getUserRole(token);
 
                 Authentication authentication = new UsernamePasswordAuthenticationToken(
                         userId,
@@ -90,7 +90,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                         throw new BaseException(ErrorCode.SOCKET_CONNECT_FAILED);
                     }
 
-                    boolean participant = chatOrchestrator.canAccessChatRoom(userId, chatRoomId);
+                    boolean participant = chatClientQueryUseCase.canAccessChatRoom(userId, chatRoomId);
                     if (!participant) {
                         log.warn("User {} tried to subscribe to chatRoom {} without participation", userId, chatRoomId);
                         throw new BaseException(ErrorCode.USER_CHATROOM_NOT_FOUND);

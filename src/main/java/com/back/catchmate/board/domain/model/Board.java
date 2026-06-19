@@ -2,7 +2,6 @@ package com.back.catchmate.board.domain.model;
 
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.global.authorization.common.ResourceOwnership;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +16,7 @@ import java.util.Objects;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Board implements ResourceOwnership {
+public class Board {
     private Long id;
     private String title;
     private String content;
@@ -169,10 +168,5 @@ public class Board implements ResourceOwnership {
             throw new BaseException(ErrorCode.FULL_PERSON);
         }
         this.currentPerson++;
-    }
-
-    @Override
-    public Long getOwnershipId() {
-        return this.userId;
     }
 }

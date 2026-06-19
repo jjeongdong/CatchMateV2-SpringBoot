@@ -1,6 +1,7 @@
 package com.back.catchmate.admin.application.dto.response;
 
-import com.back.catchmate.board.domain.model.Board;
+import com.back.catchmate.admin.application.port.out.dto.AdminBoardInfo;
+
 import java.time.LocalDateTime;
 
 public record AdminBoardResponse(
@@ -12,15 +13,15 @@ public record AdminBoardResponse(
         int maxPerson,
         LocalDateTime createdAt
 ) {
-    public static AdminBoardResponse from(Board board) {
+    public static AdminBoardResponse from(AdminBoardInfo board) {
         return new AdminBoardResponse(
-                board.getId(),
-                board.getTitle(),
-                board.getContent(),
-                board.isCompleted(),
-                board.getCurrentPerson(),
-                board.getMaxPerson(),
-                board.getCreatedAt()
+                board.boardId(),
+                board.title(),
+                board.content(),
+                board.completed(),
+                board.currentPerson(),
+                board.maxPerson(),
+                board.createdAt()
         );
     }
 }

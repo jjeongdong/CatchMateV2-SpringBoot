@@ -2,18 +2,17 @@ package com.back.catchmate.board.adapter.in.web.controller;
 
 import com.back.catchmate.board.adapter.in.web.dto.request.BoardCreateRequest;
 import com.back.catchmate.board.adapter.in.web.dto.request.BoardUpdateRequest;
-import com.back.catchmate.global.authorization.annotation.AuthUser;
-import com.back.catchmate.global.authorization.annotation.CheckBoardPermission;
-import com.back.catchmate.global.authorization.annotation.PermissionId;
-import com.back.catchmate.board.application.port.in.BoardUseCase;
 import com.back.catchmate.board.application.dto.response.BoardCreateResponse;
 import com.back.catchmate.board.application.dto.response.BoardDetailResponse;
 import com.back.catchmate.board.application.dto.response.BoardLiftUpResponse;
 import com.back.catchmate.board.application.dto.response.BoardResponse;
 import com.back.catchmate.board.application.dto.response.BoardTempDetailResponse;
 import com.back.catchmate.board.application.dto.response.BoardUpdateResponse;
+import com.back.catchmate.board.application.port.in.BoardClientCommandUseCase;
+import com.back.catchmate.board.application.port.in.BoardClientQueryUseCase;
 import com.back.catchmate.common.response.CursorPagedResponse;
 import com.back.catchmate.common.response.PagedResponse;
+import com.back.catchmate.global.authorization.annotation.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,26 +40,27 @@ import java.util.List;
 @RequestMapping("/api/boards")
 @RequiredArgsConstructor
 public class BoardController {
-    private final BoardUseCase boardOrchestrator;
+    private final BoardClientCommandUseCase boardClientCommandUseCase;
+    private final BoardClientQueryUseCase boardClientQueryUseCase;
 
     @PostMapping
     @Operation(summary = "게시글 생성/임시저장 API", description = "게시글을 생성하거나 임시저장합니다.")
     public ResponseEntity<BoardCreateResponse> createBoard(@AuthUser Long userId,
                                                            @Valid @RequestBody BoardCreateRequest request) {
-        return ResponseEntity.ok(boardOrchestrator.createBoard(userId, request.toCommand()));
+        return ResponseEntity.ok(boardClientCommandUseCase.createBoard(userId, request.toCommand()));
     }
 
     @GetMapping("/{boardId}")
     @Operation(summary = "게시글 단일 조회 API", description = "게시글 ID로 상세 정보를 조회합니다.")
     public ResponseEntity<BoardDetailResponse> getBoard(@AuthUser Long userId,
                                                         @PathVariable Long boardId) {
-        return ResponseEntity.ok(boardOrchestrator.getBoard(userId, boardId));
+        return ResponseEntity.ok(boardClientQueryUseCase.getBoard(userId, boardId));
     }
 
     @GetMapping("/temp")
     @Operation(summary = "임시저장된 게시글 단일 조회 API")
     public ResponseEntity<BoardTempDetailResponse> getTempBoard(@AuthUser Long userId) {
-        BoardTempDetailResponse response = boardOrchestrator.getTempBoard(userId);
+        BoardTempDetailResponse response = boardClientQueryUseCase.getTempBoard(userId);
         if (response == null) {
             return ResponseEntity.noContent().build();
         }
@@ -79,7 +79,7 @@ public class BoardController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastLiftUpDate,
             @RequestParam(required = false) Long lastBoardId,
             @RequestParam(defaultValue = "10") int size) {
-        CursorPagedResponse<BoardResponse> response = boardOrchestrator.getBoardList(
+        CursorPagedResponse<BoardResponse> response = boardClientQueryUseCase.getBoardList(
                 userId,
                 gameDate,
                 maxPerson,
@@ -97,33 +97,30 @@ public class BoardController {
                                                                              @Parameter(hidden = true) @AuthUser Long loginUserId,
                                                                              @RequestParam(defaultValue = "0") int page,
                                                                              @RequestParam(defaultValue = "10") int size) {
-        PagedResponse<BoardResponse> response = boardOrchestrator.getBoardListByUserId(userId, loginUserId, page, size);
+        PagedResponse<BoardResponse> response = boardClientQueryUseCase.getBoardListByUserId(userId, loginUserId, page, size);
         return ResponseEntity.ok(response);
     }
 
-    @CheckBoardPermission
     @PutMapping("/{boardId}")
     @Operation(summary = "게시글 수정 API")
     public ResponseEntity<BoardUpdateResponse> updateBoard(@AuthUser Long userId,
-                                                           @PermissionId @PathVariable Long boardId,
+                                                           @PathVariable Long boardId,
                                                            @Valid @RequestBody BoardUpdateRequest request) {
-        return ResponseEntity.ok(boardOrchestrator.updateBoard(userId, boardId, request.toCommand()));
+        return ResponseEntity.ok(boardClientCommandUseCase.updateBoard(userId, boardId, request.toCommand()));
     }
 
-    @CheckBoardPermission
     @PatchMapping("/{boardId}/lift-up")
     @Operation(summary = "게시글 끌어올리기 API")
     public ResponseEntity<BoardLiftUpResponse> updateLiftUpDate(@AuthUser Long userId,
-                                                                @PermissionId @PathVariable Long boardId) {
-        return ResponseEntity.ok(boardOrchestrator.updateLiftUpDate(userId, boardId));
+                                                                @PathVariable Long boardId) {
+        return ResponseEntity.ok(boardClientCommandUseCase.updateLiftUpDate(userId, boardId));
     }
 
-    @CheckBoardPermission
     @DeleteMapping("/{boardId}")
     @Operation(summary = "게시글 삭제 API")
     public ResponseEntity<Void> deleteBoard(@AuthUser Long userId,
-                                            @PermissionId @PathVariable Long boardId) {
-        boardOrchestrator.deleteBoard(userId, boardId);
+                                            @PathVariable Long boardId) {
+        boardClientCommandUseCase.deleteBoard(userId, boardId);
         return ResponseEntity.ok().build();
     }
 }

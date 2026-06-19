@@ -2,7 +2,7 @@ package com.back.catchmate.chat.adapter.out.persistence.repository;
 
 import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
-import com.back.catchmate.chat.application.port.out.ChatMessageRepository;
+import com.back.catchmate.chat.application.port.out.persistence.ChatMessageRepository;
 import com.back.catchmate.chat.adapter.out.persistence.entity.ChatMessageEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -15,25 +15,25 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     private final JpaChatMessageRepository jpaChatMessageRepository;
-    private final QueryDslChatMessageRepository queryDslChatMessageRepository;
     private final JdbcChatMessageBatchWriter jdbcChatMessageBatchWriter;
+    private final QueryDslChatMessageRepository queryDslChatMessageRepository;
 
     @Override
     public ChatMessage save(ChatMessage chatMessage) {
         ChatMessageEntity entity = ChatMessageEntity.from(chatMessage);
-        return jpaChatMessageRepository.save(entity).toModel();
+        return jpaChatMessageRepository.save(entity).toDomain();
     }
 
     @Override
     public Optional<ChatMessage> findById(Long id) {
         return jpaChatMessageRepository.findById(id)
-                .map(ChatMessageEntity::toModel);
+                .map(ChatMessageEntity::toDomain);
     }
 
     @Override
     public Optional<ChatMessage> findLastTextMessageByChatRoomId(Long chatRoomId) {
         return jpaChatMessageRepository.findTopByChatRoomIdAndMessageTypeOrderByIdDesc(chatRoomId, MessageType.TEXT)
-                .map(ChatMessageEntity::toModel);
+                .map(ChatMessageEntity::toDomain);
     }
 
     @Override
@@ -54,11 +54,5 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     @Override
     public void saveAll(List<ChatMessage> chatMessages) {
         jdbcChatMessageBatchWriter.batchInsert(chatMessages);
-    }
-
-    @Override
-    public void delete(ChatMessage chatMessage) {
-        ChatMessageEntity entity = ChatMessageEntity.from(chatMessage);
-        jpaChatMessageRepository.delete(entity);
     }
 }

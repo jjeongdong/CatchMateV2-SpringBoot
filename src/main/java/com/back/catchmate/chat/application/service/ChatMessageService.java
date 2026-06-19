@@ -4,23 +4,24 @@ import com.back.catchmate.chat.application.dto.ChatMessageCacheDto;
 import com.back.catchmate.chat.application.dto.ChatMessageListDto;
 import com.back.catchmate.chat.application.port.out.ChatHistoryCachePort;
 import com.back.catchmate.chat.application.port.out.ChatMessageBufferPort;
-import com.back.catchmate.chat.application.port.out.ChatMessageRepository;
-import com.back.catchmate.chat.application.port.out.ChatRoomMemberRepository;
-import com.back.catchmate.chat.application.port.out.ChatRoomRepository;
 import com.back.catchmate.chat.application.port.out.ChatRoomSequenceBufferPort;
 import com.back.catchmate.chat.application.port.out.ChatSequencePort;
 import com.back.catchmate.chat.application.port.out.ReadSequenceBufferPort;
-import com.back.catchmate.chat.application.port.out.UserFetchPort;
+import com.back.catchmate.chat.application.port.out.dto.ChatUserInfo;
+import com.back.catchmate.chat.application.port.out.external.UserFetchPort;
+import com.back.catchmate.chat.application.port.out.persistence.ChatMessageRepository;
+import com.back.catchmate.chat.application.port.out.persistence.ChatRoomMemberRepository;
+import com.back.catchmate.chat.application.port.out.persistence.ChatRoomRepository;
 import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ChatMessageService {
 
@@ -90,6 +92,7 @@ public class ChatMessageService {
         }
     }
 
+    @Transactional
     public void flushReadSequences() {
         Map<String, Long> buffered = readSequenceBufferPort.drainAll();
 
@@ -107,6 +110,7 @@ public class ChatMessageService {
         }
     }
 
+    @Transactional
     public void flushMessages() {
         List<ChatMessage> messages = chatMessageBufferPort.drainAll();
         if (!messages.isEmpty()) {
@@ -139,10 +143,10 @@ public class ChatMessageService {
                 .map(ChatMessage::getSenderId)
                 .distinct()
                 .toList();
-        Map<Long, User> senderById = senderIds.isEmpty()
+        Map<Long, ChatUserInfo> senderById = senderIds.isEmpty()
                 ? Map.of()
                 : userFetchPort.getUsers(senderIds).stream()
-                        .collect(Collectors.toMap(User::getId, Function.identity()));
+                        .collect(Collectors.toMap(ChatUserInfo::userId, Function.identity()));
 
         List<ChatMessageCacheDto> chatMessageCacheDtoList = merged.stream()
                 .map(msg -> ChatMessageCacheDto.from(msg, senderById.get(msg.getSenderId())))

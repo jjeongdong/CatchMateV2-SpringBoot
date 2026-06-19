@@ -1,8 +1,8 @@
 package com.back.catchmate.chat.application.dto;
 
+import com.back.catchmate.chat.application.port.out.dto.ChatUserInfo;
 import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
-import com.back.catchmate.user.domain.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,13 +22,13 @@ public class ChatMessageCacheDto {
     private MessageType messageType;
     private LocalDateTime createdAt;
 
-    public static ChatMessageCacheDto from(ChatMessage message, User sender) {
+    public static ChatMessageCacheDto from(ChatMessage message, ChatUserInfo sender) {
         return new ChatMessageCacheDto(
                 message.getId(),
                 message.getChatRoomId(),
                 message.getSenderId(),
-                sender != null ? sender.getNickName() : null,
-                sender != null ? sender.getProfileImageUrl() : null,
+                sender != null ? sender.nickName() : null,
+                sender != null ? sender.profileImageUrl() : null,
                 message.getContent(),
                 message.getMessageType(),
                 message.getCreatedAt()

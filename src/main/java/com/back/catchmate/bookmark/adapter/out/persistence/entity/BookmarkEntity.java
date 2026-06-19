@@ -1,16 +1,12 @@
 package com.back.catchmate.bookmark.adapter.out.persistence.entity;
 
 import com.back.catchmate.bookmark.domain.model.Bookmark;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
-import com.back.catchmate.board.adapter.out.persistence.entity.BoardEntity;
-import com.back.catchmate.user.adapter.out.persistence.entity.UserEntity;
+import com.back.catchmate.global.persistence.BaseTimeEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -22,39 +18,36 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Table(name = "bookmarks",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"user_id", "board_id"})
         })
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class BookmarkEntity extends BaseTimeEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "board_id", nullable = false)
-    private BoardEntity board;
+    @Column(name = "board_id", nullable = false)
+    private Long boardId;
 
     public static BookmarkEntity from(Bookmark bookmark) {
         return BookmarkEntity.builder()
                 .id(bookmark.getId())
-                .user(UserEntity.builder().id(bookmark.getUserId()).build())
-                .board(BoardEntity.builder().id(bookmark.getBoardId()).build())
+                .userId(bookmark.getUserId())
+                .boardId(bookmark.getBoardId())
                 .build();
     }
 
-    public Bookmark toModel() {
+    public Bookmark toDomain() {
         return Bookmark.builder()
                 .id(id)
-                .userId(user.getId())
-                .boardId(board.getId())
+                .userId(userId)
+                .boardId(boardId)
                 .createdAt(getCreatedAt())
                 .build();
     }

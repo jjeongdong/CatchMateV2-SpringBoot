@@ -2,19 +2,14 @@ package com.back.catchmate.enroll.adapter.out.persistence.entity;
 
 import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import com.back.catchmate.enroll.domain.model.Enroll;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
-import com.back.catchmate.board.adapter.out.persistence.entity.BoardEntity;
-import com.back.catchmate.user.adapter.out.persistence.entity.UserEntity;
+import com.back.catchmate.global.persistence.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -42,13 +37,15 @@ public class EnrollEntity extends BaseTimeEntity {
     @Column(name = "enroll_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "board_id", nullable = false)
-    private BoardEntity board;
+    @Column(name = "board_id", nullable = false)
+    private Long boardId;
+
+    /** 게시글 작성자 ID — 생성 시점 board.userId 스냅샷 (cross-context 조인 회피용). */
+    @Column(name = "board_owner_id", nullable = false)
+    private Long boardOwnerId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -63,19 +60,21 @@ public class EnrollEntity extends BaseTimeEntity {
     public static EnrollEntity from(Enroll enroll) {
         return EnrollEntity.builder()
                 .id(enroll.getId())
-                .user(UserEntity.builder().id(enroll.getUserId()).build())
-                .board(BoardEntity.builder().id(enroll.getBoardId()).build())
+                .userId(enroll.getUserId())
+                .boardId(enroll.getBoardId())
+                .boardOwnerId(enroll.getBoardOwnerId())
                 .description(enroll.getDescription())
                 .acceptStatus(enroll.getAcceptStatus())
                 .newEnroll(enroll.isNewEnroll())
                 .build();
     }
 
-    public Enroll toModel() {
+    public Enroll toDomain() {
         return Enroll.builder()
                 .id(id)
-                .userId(user != null ? user.getId() : null)
-                .boardId(board != null ? board.getId() : null)
+                .userId(userId)
+                .boardId(boardId)
+                .boardOwnerId(boardOwnerId)
                 .description(description)
                 .acceptStatus(acceptStatus)
                 .newEnroll(newEnroll)

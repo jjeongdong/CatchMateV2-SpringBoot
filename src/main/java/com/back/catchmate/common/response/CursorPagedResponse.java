@@ -1,6 +1,5 @@
 package com.back.catchmate.common.response;
 
-import com.back.catchmate.common.response.CursorPage;
 import lombok.Getter;
 
 import java.time.format.DateTimeFormatter;

@@ -35,9 +35,9 @@ out/
 
 ### VS Code ###
 .vscode/
-/catchmate-boot/src/main/resources/application-local.yml
-/catchmate-boot/src/main/resources/application-dev.yml
-/catchmate-boot/src/main/resources/firebase-adminsdk.json
+/src/main/resources/application-local.yml
+/src/main/resources/application-dev.yml
+/src/main/resources/firebase-adminsdk.json
 /docker-compose.yml
 
 ### macOS ###
@@ -45,3 +45,4 @@ out/
 
 ### Claude Code ###
 .claude/settings.local.json
+CLAUDE.md

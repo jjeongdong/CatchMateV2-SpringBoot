@@ -49,6 +49,7 @@ public class SecurityConfig {
                         "/actuator/health",
                         "/api/oauth/authorize/**",
                         "/api/oauth/callback/**",
+                        "/api/oauth/signup",
                         "/api/auth/reissue",
                         "/api/auth/logout",
                         "/api/users/check-nickname",

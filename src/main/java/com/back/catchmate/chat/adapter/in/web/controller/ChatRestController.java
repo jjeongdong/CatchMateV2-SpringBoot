@@ -2,12 +2,13 @@ package com.back.catchmate.chat.adapter.in.web.controller;
 
 import com.back.catchmate.chat.adapter.in.web.dto.request.ChatNotificationUpdateRequest;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
-import com.back.catchmate.chat.application.port.in.ChatUseCase;
+import com.back.catchmate.chat.application.port.in.ChatClientCommandUseCase;
+import com.back.catchmate.chat.application.port.in.ChatClientQueryUseCase;
 import com.back.catchmate.chat.application.dto.response.ChatMessageResponse;
 import com.back.catchmate.chat.application.dto.response.ChatRoomMemberResponse;
 import com.back.catchmate.chat.application.dto.response.ChatRoomResponse;
 import com.back.catchmate.common.response.PagedResponse;
-import com.back.catchmate.user.application.dto.command.UploadFile;
+import com.back.catchmate.common.upload.UploadFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,8 @@ import java.util.List;
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
 public class ChatRestController {
-    private final ChatUseCase chatOrchestrator;
+    private final ChatClientCommandUseCase chatClientCommandUseCase;
+    private final ChatClientQueryUseCase chatClientQueryUseCase;
 
     @GetMapping("/rooms")
     @Operation(summary = "내가 속한 채팅방 목록 조회 (페이징)", description = "현재 사용자가 참여 중인 모든 채팅방을 조회합니다. 각 채팅방의 마지막 메시지도 함께 반환됩니다.")
@@ -41,7 +43,7 @@ public class ChatRestController {
             @AuthUser Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(chatOrchestrator.getMyChatRooms(userId, page, size));
+        return ResponseEntity.ok(chatClientQueryUseCase.getMyChatRooms(userId, page, size));
     }
 
     @GetMapping("/rooms/{roomId}/messages")
@@ -53,8 +55,8 @@ public class ChatRestController {
             @PathVariable Long roomId,
             @RequestParam(required = false) Long lastMessageId,
             @RequestParam(defaultValue = "20") int size) {
-        chatOrchestrator.readChatRoom(userId, roomId);
-        return chatOrchestrator.getChatHistory(userId, roomId, lastMessageId, size);
+        chatClientCommandUseCase.readChatRoom(userId, roomId);
+        return chatClientQueryUseCase.getChatHistory(userId, roomId, lastMessageId, size);
     }
 
     @Operation(summary = "메시지 동기화 (Sync)", description = "소켓 재연결 시 누락된 최신 메시지들을 가져옵니다.")
@@ -64,7 +66,7 @@ public class ChatRestController {
             @PathVariable Long roomId,
             @RequestParam Long lastMessageId,
             @RequestParam(defaultValue = "100") int size) {
-        List<ChatMessageResponse> response = chatOrchestrator.syncMessages(userId, roomId, lastMessageId, size);
+        List<ChatMessageResponse> response = chatClientQueryUseCase.syncMessages(userId, roomId, lastMessageId, size);
         return ResponseEntity.ok(response);
     }
 
@@ -73,7 +75,7 @@ public class ChatRestController {
     public ResponseEntity<ChatMessageResponse> getLastMessage(
             @AuthUser Long userId,
             @PathVariable Long chatRoomId) {
-        ChatMessageResponse response = chatOrchestrator.getLastMessage(chatRoomId);
+        ChatMessageResponse response = chatClientQueryUseCase.getLastMessage(chatRoomId);
         if (response == null) {
             return ResponseEntity.noContent().build();
         }
@@ -85,7 +87,7 @@ public class ChatRestController {
     public ResponseEntity<List<ChatRoomMemberResponse>> getChatRoomMembers(
             @AuthUser Long userId,
             @PathVariable Long chatRoomId) {
-        return ResponseEntity.ok(chatOrchestrator.getChatRoomMembers(chatRoomId));
+        return ResponseEntity.ok(chatClientQueryUseCase.getChatRoomMembers(chatRoomId));
     }
 
     @PutMapping("/rooms/{roomId}/notifications")
@@ -94,7 +96,7 @@ public class ChatRestController {
             @AuthUser Long userId,
             @PathVariable Long roomId,
             @RequestBody ChatNotificationUpdateRequest request) {
-        chatOrchestrator.updateNotificationSetting(userId, roomId, request.isOn());
+        chatClientCommandUseCase.updateNotificationSetting(userId, roomId, request.isNotificationOn());
         return ResponseEntity.ok().build();
     }
 
@@ -115,7 +117,7 @@ public class ChatRestController {
         );
         }
 
-        chatOrchestrator.updateChatRoomImage(userId, roomId, uploadFile);
+        chatClientCommandUseCase.updateChatRoomImage(userId, roomId, uploadFile);
         return ResponseEntity.ok().build();
     }
 
@@ -124,7 +126,7 @@ public class ChatRestController {
     public ResponseEntity<Void> leaveChatRoom(
             @AuthUser Long userId,
             @PathVariable Long roomId) {
-        chatOrchestrator.leaveChatRoom(userId, roomId);
+        chatClientCommandUseCase.leaveChatRoom(userId, roomId);
         return ResponseEntity.noContent().build();
     }
 
@@ -134,7 +136,7 @@ public class ChatRestController {
             @AuthUser Long userId,
             @PathVariable Long roomId,
             @PathVariable Long targetUserId) {
-        chatOrchestrator.kickChatRoomMember(userId, roomId, targetUserId);
+        chatClientCommandUseCase.kickChatRoomMember(userId, roomId, targetUserId);
         return ResponseEntity.noContent().build();
     }
 }

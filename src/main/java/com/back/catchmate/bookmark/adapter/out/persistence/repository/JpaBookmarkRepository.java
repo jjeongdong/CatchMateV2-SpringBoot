@@ -15,10 +15,8 @@ public interface JpaBookmarkRepository extends JpaRepository<BookmarkEntity, Lon
 
     boolean existsByUserIdAndBoardId(Long userId, Long boardId);
 
-    // N+1 문제 방지를 위해 Fetch Join 사용 (Board와 User 정보를 함께 로딩)
-    @Query("SELECT b FROM BookmarkEntity b JOIN FETCH b.board WHERE b.user.id = :userId")
-    Page<BookmarkEntity> findAllByUserId(@Param("userId") Long userId, Pageable pageable);
+    Page<BookmarkEntity> findAllByUserId(Long userId, Pageable pageable);
 
-    @Query("SELECT b.board.id FROM BookmarkEntity b WHERE b.user.id = :userId AND b.board.id IN :boardIds")
+    @Query("SELECT b.boardId FROM BookmarkEntity b WHERE b.userId = :userId AND b.boardId IN :boardIds")
     List<Long> findBookmarkedBoardIds(@Param("userId") Long userId, @Param("boardIds") List<Long> boardIds);
 }

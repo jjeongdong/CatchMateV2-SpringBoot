@@ -1,8 +1,9 @@
 package com.back.catchmate.notification.adapter.out.external;
 
-import com.back.catchmate.board.application.service.BoardService;
-import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.notification.application.port.out.BoardFetchPort;
+import com.back.catchmate.board.application.dto.response.BoardInternalResponse;
+import com.back.catchmate.board.application.port.in.BoardInternalQueryUseCase;
+import com.back.catchmate.notification.application.port.out.dto.NotificationBoardInfo;
+import com.back.catchmate.notification.application.port.out.external.BoardFetchPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,15 +12,26 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class NotificationBoardFetchAdapter implements BoardFetchPort {
-    private final BoardService boardService;
+    private final BoardInternalQueryUseCase boardInternalQueryUseCase;
 
     @Override
-    public Board getBoard(Long boardId) {
-        return boardService.getBoard(boardId);
+    public NotificationBoardInfo getBoard(Long boardId) {
+        return fromInternalResponse(boardInternalQueryUseCase.getBoard(boardId));
     }
 
     @Override
-    public List<Board> getBoards(List<Long> boardIds) {
-        return boardService.getBoards(boardIds);
+    public List<NotificationBoardInfo> getBoards(List<Long> boardIds) {
+        return boardInternalQueryUseCase.getBoards(boardIds).stream()
+                .map(this::fromInternalResponse)
+                .toList();
+    }
+
+    private NotificationBoardInfo fromInternalResponse(BoardInternalResponse response) {
+        if (response == null) return null;
+        return new NotificationBoardInfo(
+                response.boardId(),
+                response.gameId(),
+                response.title()
+        );
     }
 }

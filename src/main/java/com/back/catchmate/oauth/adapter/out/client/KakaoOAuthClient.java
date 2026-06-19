@@ -1,13 +1,13 @@
 package com.back.catchmate.oauth.adapter.out.client;
 
 import com.back.catchmate.oauth.domain.model.OAuthUserInfo;
-import com.back.catchmate.oauth.application.port.out.OAuthClient;
+import com.back.catchmate.oauth.application.port.out.external.OAuthClient;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.oauth.adapter.out.config.OAuthProperties;
 import com.back.catchmate.oauth.adapter.out.dto.KakaoTokenResponse;
 import com.back.catchmate.oauth.adapter.out.dto.KakaoUserResponse;
-import com.back.catchmate.user.domain.enums.Provider;
+import com.back.catchmate.oauth.domain.enums.Provider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;

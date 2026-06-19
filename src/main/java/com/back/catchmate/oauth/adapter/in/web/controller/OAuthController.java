@@ -10,8 +10,9 @@ import com.back.catchmate.oauth.application.dto.response.AuthorizeRedirect;
 import com.back.catchmate.oauth.application.dto.response.OAuthCallbackResult;
 import com.back.catchmate.oauth.application.dto.response.SignUpResponse;
 import com.back.catchmate.oauth.application.dto.response.SignUpResult;
-import com.back.catchmate.oauth.application.port.in.OAuthUseCase;
-import com.back.catchmate.user.domain.enums.Provider;
+import com.back.catchmate.oauth.application.port.in.OAuthClientCommandUseCase;
+import com.back.catchmate.oauth.application.port.in.OAuthClientQueryUseCase;
+import com.back.catchmate.oauth.domain.enums.Provider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
@@ -40,14 +41,15 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 @RequestMapping("/api/oauth")
 public class OAuthController {
-    private final OAuthUseCase oauthOrchestrator;
+    private final OAuthClientCommandUseCase oauthClientCommandUseCase;
+    private final OAuthClientQueryUseCase oauthClientQueryUseCase;
     private final CookieFactory cookieFactory;
     private final OAuthFrontendProperties frontendProperties;
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입 완료", description = "OAuth 콜백 단계에서 발급된 signupToken으로 회원가입을 완료하고 JWT를 발급합니다.")
     public ResponseEntity<SignUpResponse> signUp(@Valid @RequestBody SignUpRequest request) {
-        SignUpResult result = oauthOrchestrator.signUp(request.toCommand());
+        SignUpResult result = oauthClientCommandUseCase.signUp(request.toCommand());
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookieFactory.refresh(result.refreshToken()).toString())
                 .body(result.response());
@@ -57,7 +59,7 @@ public class OAuthController {
     @Operation(summary = "OAuth 로그인 시작", description = "지정된 provider의 인증 화면으로 redirect 합니다.")
     public ResponseEntity<Void> authorize(@PathVariable String provider, HttpServletResponse response) {
         Provider p = Provider.of(provider);
-        AuthorizeRedirect redirect = oauthOrchestrator.buildAuthorizeRedirect(p);
+        AuthorizeRedirect redirect = oauthClientQueryUseCase.buildAuthorizeRedirect(p);
         response.addHeader(HttpHeaders.SET_COOKIE, cookieFactory.oauthState(redirect.state()).toString());
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(redirect.url()))
@@ -87,7 +89,7 @@ public class OAuthController {
         }
 
         Provider p = Provider.of(provider);
-        OAuthCallbackResult result = oauthOrchestrator.handleCallback(new OAuthCallbackCommand(
+        OAuthCallbackResult result = oauthClientCommandUseCase.handleCallback(new OAuthCallbackCommand(
                 p,
                 code,
                 state,

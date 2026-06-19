@@ -1,7 +1,7 @@
 package com.back.catchmate.admin.application.dto.response;
 
-import com.back.catchmate.inquiry.domain.model.Inquiry;
-import com.back.catchmate.user.domain.model.User;
+import com.back.catchmate.admin.application.port.out.dto.AdminInquiryInfo;
+import com.back.catchmate.admin.application.port.out.dto.AdminUserInfo;
 
 import java.time.LocalDateTime;
 
@@ -14,15 +14,15 @@ public record AdminInquiryResponse(
         String status,
         LocalDateTime createdAt
 ) {
-    public static AdminInquiryResponse from(Inquiry inquiry, User user) {
+    public static AdminInquiryResponse from(AdminInquiryInfo inquiry, AdminUserInfo user) {
         return new AdminInquiryResponse(
-                inquiry.getId(),
-                user.getId(),
-                user.getNickName(),
-                inquiry.getType().name(),
-                inquiry.getContent(),
-                inquiry.getStatus().name(),
-                inquiry.getCreatedAt()
+                inquiry.inquiryId(),
+                user.userId(),
+                user.nickName(),
+                inquiry.type(),
+                inquiry.content(),
+                inquiry.status(),
+                inquiry.createdAt()
         );
     }
 }

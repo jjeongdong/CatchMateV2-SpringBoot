@@ -1,14 +1,12 @@
 package com.back.catchmate.user.adapter.out.persistence.entity;
 
 import com.back.catchmate.user.domain.model.Block;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
+import com.back.catchmate.global.persistence.BaseTimeEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -18,40 +16,38 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "blocks",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"blocker_id", "blocked_id"})
-        })
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Table(name = "blocks",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"blocker_id", "blocked_id"})
+        })
 public class BlockEntity extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "blocker_id", nullable = false)
-    private UserEntity blocker;
+    @Column(name = "blocker_id", nullable = false)
+    private Long blockerId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "blocked_id", nullable = false)
-    private UserEntity blocked;
+    @Column(name = "blocked_id", nullable = false)
+    private Long blockedId;
 
     public static BlockEntity from(Block block) {
         return BlockEntity.builder()
                 .id(block.getId())
-                .blocker(UserEntity.builder().id(block.getBlockerId()).build())
-                .blocked(UserEntity.builder().id(block.getBlockedId()).build())
+                .blockerId(block.getBlockerId())
+                .blockedId(block.getBlockedId())
                 .build();
     }
 
-    public Block toModel() {
+    public Block toDomain() {
         return Block.builder()
                 .id(this.id)
-                .blockerId(this.blocker.getId())
-                .blockedId(this.blocked.getId())
+                .blockerId(this.blockerId)
+                .blockedId(this.blockedId)
                 .build();
     }
 }

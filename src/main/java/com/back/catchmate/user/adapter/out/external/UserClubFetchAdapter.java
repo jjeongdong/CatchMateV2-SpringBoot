@@ -1,25 +1,29 @@
 package com.back.catchmate.user.adapter.out.external;
 
-import com.back.catchmate.club.application.service.ClubService;
-import com.back.catchmate.club.domain.model.Club;
-import com.back.catchmate.user.application.port.out.ClubFetchPort;
+import com.back.catchmate.club.application.dto.response.ClubInternalResponse;
+import com.back.catchmate.club.application.port.in.ClubInternalQueryUseCase;
+import com.back.catchmate.user.application.port.out.dto.UserClubInfo;
+import com.back.catchmate.user.application.port.out.external.ClubFetchPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class UserClubFetchAdapter implements ClubFetchPort {
-    private final ClubService clubService;
+    private final ClubInternalQueryUseCase clubInternalQueryUseCase;
 
     @Override
-    public Club getClub(Long clubId) {
-        return clubService.getClub(clubId);
+    public UserClubInfo getClub(Long clubId) {
+        return fromInternalResponse(clubInternalQueryUseCase.getClub(clubId));
     }
 
-    @Override
-    public List<Club> getClubs(List<Long> clubIds) {
-        return clubService.getClubs(clubIds);
+    private UserClubInfo fromInternalResponse(ClubInternalResponse response) {
+        if (response == null) return null;
+        return new UserClubInfo(
+                response.clubId(),
+                response.name(),
+                response.homeStadium(),
+                response.region()
+        );
     }
 }

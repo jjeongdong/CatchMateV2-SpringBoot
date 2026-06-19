@@ -2,8 +2,7 @@ package com.back.catchmate.chat.adapter.out.persistence.entity;
 
 import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
-import com.back.catchmate.user.adapter.out.persistence.entity.UserEntity;
+import com.back.catchmate.global.persistence.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -31,6 +30,9 @@ import java.time.LocalDateTime;
 @Table(name = "chat_messages", indexes = {
         @Index(name = "idx_chat_messages_room_deleted_id",
                 columnList = "chat_room_id, deleted_at, chat_message_id DESC"
+        ),
+        @Index(name = "idx_chat_messages_room_type_deleted_id",
+                columnList = "chat_room_id, message_type, deleted_at, chat_message_id DESC"
         )
 })
 @SQLRestriction("deleted_at IS NULL")
@@ -46,9 +48,8 @@ public class ChatMessageEntity extends BaseTimeEntity {
     @JoinColumn(name = "chat_room_id", nullable = false)
     private ChatRoomEntity chatRoom;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_id", nullable = false)
-    private UserEntity sender;
+    @Column(name = "sender_id", nullable = false)
+    private Long senderId;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
@@ -66,7 +67,7 @@ public class ChatMessageEntity extends BaseTimeEntity {
         return ChatMessageEntity.builder()
                 .id(chatMessage.getId())
                 .chatRoom(ChatRoomEntity.builder().id(chatMessage.getChatRoomId()).build())
-                .sender(UserEntity.builder().id(chatMessage.getSenderId()).build())
+                .senderId(chatMessage.getSenderId())
                 .content(chatMessage.getContent())
                 .messageType(chatMessage.getMessageType())
                 .sequence(chatMessage.getSequence())
@@ -74,11 +75,11 @@ public class ChatMessageEntity extends BaseTimeEntity {
                 .build();
     }
 
-    public ChatMessage toModel() {
+    public ChatMessage toDomain() {
         return ChatMessage.builder()
                 .id(this.id)
                 .chatRoomId(this.chatRoom != null ? this.chatRoom.getId() : null)
-                .senderId(this.sender != null ? this.sender.getId() : null)
+                .senderId(this.senderId)
                 .content(this.content)
                 .messageType(this.messageType)
                 .createdAt(this.getCreatedAt())

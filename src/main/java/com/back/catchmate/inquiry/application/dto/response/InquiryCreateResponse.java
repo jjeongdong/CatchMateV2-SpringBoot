@@ -6,10 +6,4 @@ public record InquiryCreateResponse(
         Long inquiryId,
         LocalDateTime createdAt
 ) {
-    public static InquiryCreateResponse of(Long inquiryId) {
-        return new InquiryCreateResponse(
-                inquiryId,
-                LocalDateTime.now()
-        );
-    }
 }

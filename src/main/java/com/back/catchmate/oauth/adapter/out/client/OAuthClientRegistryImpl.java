@@ -1,10 +1,10 @@
 package com.back.catchmate.oauth.adapter.out.client;
 
-import com.back.catchmate.oauth.application.port.out.OAuthClient;
-import com.back.catchmate.oauth.application.port.out.OAuthClientRegistry;
+import com.back.catchmate.oauth.application.port.out.external.OAuthClient;
+import com.back.catchmate.oauth.application.port.out.external.OAuthClientRegistry;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.user.domain.enums.Provider;
+import com.back.catchmate.oauth.domain.enums.Provider;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumMap;

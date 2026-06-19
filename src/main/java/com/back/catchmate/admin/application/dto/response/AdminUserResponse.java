@@ -1,7 +1,6 @@
 package com.back.catchmate.admin.application.dto.response;
 
-import com.back.catchmate.club.domain.model.Club;
-import com.back.catchmate.user.domain.model.User;
+import com.back.catchmate.admin.application.port.out.dto.AdminUserInfo;
 
 import java.time.LocalDateTime;
 
@@ -15,16 +14,16 @@ public record AdminUserResponse(
         String authority,
         LocalDateTime createdAt
 ) {
-    public static AdminUserResponse from(User user, Club club) {
+    public static AdminUserResponse from(AdminUserInfo user, String clubName) {
         return new AdminUserResponse(
-                user.getId(),
-                user.getProfileImageUrl(),
-                user.getNickName(),
-                user.getEmail(),
-                club != null ? club.getName() : null,
-                user.getGender().toString(),
-                user.getAuthority().name(),
-                user.getCreatedAt()
+                user.userId(),
+                user.profileImageUrl(),
+                user.nickName(),
+                user.email(),
+                clubName,
+                user.gender() != null ? user.gender().toString() : null,
+                user.authority(),
+                user.createdAt()
         );
     }
 }

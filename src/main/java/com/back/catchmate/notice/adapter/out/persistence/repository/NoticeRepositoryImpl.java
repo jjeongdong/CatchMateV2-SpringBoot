@@ -5,7 +5,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import com.back.catchmate.notice.domain.model.Notice;
-import com.back.catchmate.notice.application.port.out.NoticeRepository;
+import com.back.catchmate.notice.application.port.out.persistence.NoticeRepository;
 import com.back.catchmate.notice.adapter.out.persistence.entity.NoticeEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -22,31 +22,30 @@ public class NoticeRepositoryImpl implements NoticeRepository {
     @Override
     public Notice save(Notice notice) {
         NoticeEntity entity = NoticeEntity.from(notice);
-        return jpaNoticeRepository.save(entity).toModel();
+        return jpaNoticeRepository.save(entity).toDomain();
     }
 
     @Override
     public Optional<Notice> findById(Long id) {
-        return jpaNoticeRepository.findByIdWithWriter(id)
-                .map(NoticeEntity::toModel);
+        return jpaNoticeRepository.findById(id)
+                .map(NoticeEntity::toDomain);
     }
 
     @Override
-    public Page<Notice> findAll(Pageable domainPageable) {
-        Pageable pageable = PageRequest.of(
-                domainPageable.getPageNumber(),
-                domainPageable.getPageSize(),
+    public Page<Notice> findAll(Pageable pageable) {
+        PageRequest sortedPageRequest = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        // 페이징 조회 시에도 작성자 정보를 한 번에 가져옴 (Fetch Join)
-        Page<NoticeEntity> entityPage = jpaNoticeRepository.findAllWithWriter(pageable);
+        Page<NoticeEntity> entityPage = jpaNoticeRepository.findAll(sortedPageRequest);
 
         List<Notice> domains = entityPage.getContent().stream()
-                .map(NoticeEntity::toModel)
+                .map(NoticeEntity::toDomain)
                 .toList();
 
-        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
+        return new PageImpl<>(domains, sortedPageRequest, entityPage.getTotalElements());
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.back.catchmate.chat.adapter.out.persistence.repository;
 
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
-import com.back.catchmate.chat.application.port.out.ChatRoomMemberRepository;
+import com.back.catchmate.chat.application.port.out.persistence.ChatRoomMemberRepository;
 import com.back.catchmate.chat.adapter.out.persistence.entity.ChatRoomMemberEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -19,54 +19,49 @@ public class ChatRoomMemberRepositoryImpl implements ChatRoomMemberRepository {
     @Override
     public ChatRoomMember save(ChatRoomMember member) {
         ChatRoomMemberEntity entity = ChatRoomMemberEntity.from(member);
-        return jpaChatRoomMemberRepository.save(entity).toModel();
+        return jpaChatRoomMemberRepository.save(entity).toDomain();
     }
 
     @Override
     public Optional<ChatRoomMember> findById(Long id) {
         return jpaChatRoomMemberRepository.findById(id)
-                .map(ChatRoomMemberEntity::toModel);
+                .map(ChatRoomMemberEntity::toDomain);
     }
 
     @Override
     public Optional<ChatRoomMember> findByChatRoomIdAndUserId(Long chatRoomId, Long userId) {
         return jpaChatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoomId, userId)
-                .map(ChatRoomMemberEntity::toModel);
+                .map(ChatRoomMemberEntity::toDomain);
     }
 
     @Override
     public List<ChatRoomMember> findAllByUserIdAndActive(Long userId) {
         return jpaChatRoomMemberRepository.findAllByUserIdAndActive(userId).stream()
-                .map(ChatRoomMemberEntity::toModel)
+                .map(ChatRoomMemberEntity::toDomain)
                 .toList();
     }
 
     @Override
     public List<ChatRoomMember> findAllByChatRoomIdAndActive(Long chatRoomId) {
         return jpaChatRoomMemberRepository.findAllByChatRoomIdAndActive(chatRoomId).stream()
-                .map(ChatRoomMemberEntity::toModel)
+                .map(ChatRoomMemberEntity::toDomain)
                 .toList();
     }
 
     @Override
     public Map<Long, ChatRoomMember> findByChatRoomIdsAndUserId(List<Long> chatRoomIds, Long userId) {
         return jpaChatRoomMemberRepository.findByChatRoomIdsAndUserId(chatRoomIds, userId).stream()
-                .map(ChatRoomMemberEntity::toModel)
+                .map(ChatRoomMemberEntity::toDomain)
                 .collect(Collectors.toMap(
                         ChatRoomMember::getChatRoomId,
-                        member -> member
+                        member -> member,
+                        (existing, replacement) -> existing
                 ));
     }
 
     @Override
     public boolean existsByChatRoomIdAndUserIdAndActive(Long chatRoomId, Long userId) {
         return jpaChatRoomMemberRepository.existsByChatRoomIdAndUserIdAndActive(chatRoomId, userId);
-    }
-
-    @Override
-    public void delete(ChatRoomMember member) {
-        ChatRoomMemberEntity entity = ChatRoomMemberEntity.from(member);
-        jpaChatRoomMemberRepository.delete(entity);
     }
 
     @Override

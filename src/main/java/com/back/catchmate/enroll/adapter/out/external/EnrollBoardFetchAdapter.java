@@ -1,65 +1,51 @@
 package com.back.catchmate.enroll.adapter.out.external;
 
-import com.back.catchmate.board.application.dto.command.BoardUpdateCommand;
-import com.back.catchmate.board.application.dto.response.BoardDetailResponse;
-import com.back.catchmate.board.application.dto.response.BoardResponse;
-import com.back.catchmate.board.application.dto.response.BoardUpdateResponse;
-import com.back.catchmate.board.application.service.BoardService;
-import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.enroll.application.port.out.BoardFetchPort;
+import com.back.catchmate.board.application.dto.response.BoardInternalResponse;
+import com.back.catchmate.board.application.port.in.BoardInternalQueryUseCase;
+import com.back.catchmate.enroll.application.port.out.dto.EnrollBoardInfo;
+import com.back.catchmate.enroll.application.port.out.external.BoardFetchPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 @Component
 @RequiredArgsConstructor
 public class EnrollBoardFetchAdapter implements BoardFetchPort {
-    private final BoardService boardService;
+    private final BoardInternalQueryUseCase boardInternalQueryUseCase;
 
     @Override
-    public BoardDetailResponse getBoard(Long userId, Long boardId) {
-        return boardService.getBoard(userId, boardId);
+    public EnrollBoardInfo getBoard(Long boardId) {
+        return toEnrollBoardInfo(boardInternalQueryUseCase.getBoard(boardId));
     }
 
     @Override
-    public Board getBoard(Long boardId) {
-        return boardService.getBoard(boardId);
+    public EnrollBoardInfo getBoardWithLock(Long boardId) {
+        return toEnrollBoardInfo(boardInternalQueryUseCase.getBoardWithLock(boardId));
     }
 
     @Override
-    public Board getBoardWithLock(Long boardId) {
-        return boardService.getBoardWithLock(boardId);
+    public EnrollBoardInfo getCompletedBoard(Long boardId) {
+        return toEnrollBoardInfo(boardInternalQueryUseCase.getCompletedBoard(boardId));
     }
 
     @Override
-    public Board getCompletedBoard(Long boardId) {
-        return boardService.getCompletedBoard(boardId);
+    public List<EnrollBoardInfo> getBoards(List<Long> boardIds) {
+        return boardInternalQueryUseCase.getBoards(boardIds).stream()
+                .map(this::toEnrollBoardInfo)
+                .toList();
     }
 
-    @Override
-    public List<Board> getBoards(List<Long> boardIds) {
-        return boardService.getBoards(boardIds);
-    }
-
-    @Override
-    public BoardUpdateResponse updateBoard(Long userId, Long boardId, BoardUpdateCommand command) {
-        return boardService.updateBoard(userId, boardId, command);
-    }
-
-    @Override
-    public void updateBoard(Board board) {
-        boardService.updateBoard(board);
-    }
-
-    @Override
-    public BoardResponse buildBoardResponse(Board board, boolean bookmarked) {
-        return boardService.buildBoardResponse(board, bookmarked);
-    }
-
-    @Override
-    public List<BoardResponse> buildBoardResponses(List<Board> boards, Predicate<Long> bookmarkedPredicate) {
-        return boardService.buildBoardResponses(boards, bookmarkedPredicate);
+    private EnrollBoardInfo toEnrollBoardInfo(BoardInternalResponse response) {
+        return new EnrollBoardInfo(
+                response.boardId(),
+                response.userId(),
+                response.title(),
+                response.content(),
+                response.currentPerson(),
+                response.maxPerson() != null ? response.maxPerson() : 0,
+                response.cheerClubId(),
+                response.gameId()
+        );
     }
 }

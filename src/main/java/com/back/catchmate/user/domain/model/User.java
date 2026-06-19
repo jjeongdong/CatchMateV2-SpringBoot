@@ -1,8 +1,5 @@
 package com.back.catchmate.user.domain.model;
 
-import com.back.catchmate.global.authorization.common.ResourceOwnership;
-import com.back.catchmate.user.domain.enums.AlarmType;
-import com.back.catchmate.user.domain.enums.Provider;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -12,10 +9,11 @@ import java.util.Objects;
 
 @Getter
 @Builder
-public class User implements ResourceOwnership {
+public class User {
     private Long id;
     private String email;
-    private Provider provider;
+    /** OAuth 인증 제공자 식별자 (KAKAO 등). oauth 컨텍스트의 Provider enum 값이 문자열로 저장된다. */
+    private String provider;
     private String providerId;
     private Character gender;
     private String nickName;
@@ -34,7 +32,7 @@ public class User implements ResourceOwnership {
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
 
-    public static User createUser(Provider provider, String providerId, String email, String nickName, Character gender,
+    public static User createUser(String provider, String providerId, String email, String nickName, Character gender,
                                   LocalDate birthDate, Long favoriteClubId, String profileImageUrl, String fcmToken,
                                   String watchStyle) {
         return User.builder()
@@ -83,10 +81,10 @@ public class User implements ResourceOwnership {
         }
     }
 
-    public void updateAlarm(AlarmType alarmType, boolean isEnabled) {
+    public void updateAlarm(UserAlarmType alarmType, boolean isEnabled) {
         char status = isEnabled ? 'Y' : 'N';
 
-        if (alarmType == AlarmType.ALL) {
+        if (alarmType == UserAlarmType.ALL) {
             this.allAlarm = status;
             this.chatAlarm = status;
             this.enrollAlarm = status;
@@ -101,10 +99,21 @@ public class User implements ResourceOwnership {
         }
     }
 
-    public boolean isAllAlarmEnabled()    { return 'Y' == this.allAlarm; }
-    public boolean isChatAlarmEnabled()   { return 'Y' == this.chatAlarm; }
-    public boolean isEnrollAlarmEnabled() { return 'Y' == this.enrollAlarm; }
-    public boolean isEventAlarmEnabled()  { return 'Y' == this.eventAlarm; }
+    public boolean isAllAlarmEnabled() {
+        return 'Y' == this.allAlarm;
+    }
+
+    public boolean isChatAlarmEnabled() {
+        return 'Y' == this.chatAlarm;
+    }
+
+    public boolean isEnrollAlarmEnabled() {
+        return 'Y' == this.enrollAlarm;
+    }
+
+    public boolean isEventAlarmEnabled() {
+        return 'Y' == this.eventAlarm;
+    }
 
     public void deleteFcmToken() {
         this.fcmToken = null;
@@ -114,8 +123,4 @@ public class User implements ResourceOwnership {
         this.reported = true;
     }
 
-    @Override
-    public Long getOwnershipId() {
-        return this.id;
-    }
 }

@@ -154,7 +154,7 @@ public class BoardRepositoryImpl implements BoardRepository {
 4. `{ctx}/adapter/out/persistence/` — JPA Entity + Repository 구현
 5. `{ctx}/adapter/out/external/` — Fetch Port 구현 (필요 시)
 6. `{ctx}/application/dto/` — Command / Response DTO
-7. `{ctx}/application/port/in/{Ctx}UseCase` — UseCase 인터페이스
+7. `{ctx}/application/port/in/{Ctx}{Client/Internal}{Command/Query}UseCase` — UseCase 인터페이스
 8. `{ctx}/application/service/{Ctx}Service` — 구현
 9. `{ctx}/adapter/in/web/controller/` — Controller, Request DTO
 10. `global/authorization/` — 권한 어노테이션 (필요 시)

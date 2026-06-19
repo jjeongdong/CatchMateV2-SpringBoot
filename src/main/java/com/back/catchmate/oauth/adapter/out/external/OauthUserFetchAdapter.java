@@ -1,24 +1,21 @@
 package com.back.catchmate.oauth.adapter.out.external;
 
-import com.back.catchmate.oauth.application.port.out.UserFetchPort;
-import com.back.catchmate.user.application.service.UserService;
-import com.back.catchmate.user.domain.model.User;
-import java.util.Optional;
+import com.back.catchmate.oauth.application.dto.response.RegisteredUserSummary;
+import com.back.catchmate.oauth.application.port.out.external.UserFetchPort;
+import com.back.catchmate.user.application.port.in.UserInternalQueryUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class OauthUserFetchAdapter implements UserFetchPort {
-    private final UserService userService;
+    private final UserInternalQueryUseCase userInternalQueryUseCase;
 
     @Override
-    public Optional<User> findByProviderId(String providerIdWithProvider) {
-        return userService.findByProviderId(providerIdWithProvider);
-    }
-
-    @Override
-    public User createUser(User user) {
-        return userService.createUser(user);
+    public Optional<RegisteredUserSummary> findByProviderId(String providerIdWithProvider) {
+        return userInternalQueryUseCase.findByProviderId(providerIdWithProvider)
+                .map(user -> new RegisteredUserSummary(user.userId(), user.authority()));
     }
 }

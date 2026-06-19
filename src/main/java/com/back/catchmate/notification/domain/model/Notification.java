@@ -1,7 +1,5 @@
 package com.back.catchmate.notification.domain.model;
 
-import com.back.catchmate.global.authorization.common.ResourceOwnership;
-import com.back.catchmate.user.domain.enums.AlarmType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Notification implements ResourceOwnership {
+public class Notification {
     private Long id;
     private Long userId;
     private Long senderId;
@@ -40,10 +38,5 @@ public class Notification implements ResourceOwnership {
 
     public void markAsRead() {
         this.read = true;
-    }
-
-    @Override
-    public Long getOwnershipId() {
-        return userId;
     }
 }

@@ -14,11 +14,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "clubs")
 @Getter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
+@Table(name = "clubs")
 public class ClubEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,19 +33,6 @@ public class ClubEntity {
 
     @Column(nullable = false)
     private String region;
-
-    public static ClubEntity fromDomain(Club club) {
-        if (club == null) {
-            return null;
-        }
-
-        return ClubEntity.builder()
-                .id(club.getId())
-                .name(club.getName())
-                .homeStadium(club.getHomeStadium())
-                .region(club.getRegion())
-                .build();
-    }
 
     public Club toDomain() {
         return Club.builder()

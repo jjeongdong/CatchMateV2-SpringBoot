@@ -1,7 +1,7 @@
 package com.back.catchmate.board.adapter.out.external;
 
-import com.back.catchmate.board.application.port.out.BlockFetchPort;
-import com.back.catchmate.user.application.service.BlockService;
+import com.back.catchmate.board.application.port.out.external.BlockFetchPort;
+import com.back.catchmate.user.application.port.in.BlockInternalQueryUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -10,15 +10,15 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class BoardBlockFetchAdapter implements BlockFetchPort {
-    private final BlockService blockService;
+    private final BlockInternalQueryUseCase blockInternalQueryUseCase;
 
     @Override
     public List<Long> getBlockedUserIds(Long userId) {
-        return blockService.getBlockedUserIds(userId);
+        return blockInternalQueryUseCase.getBlockedUserIds(userId);
     }
 
     @Override
     public boolean isUserBlocked(Long targetUserId, Long loginUserId) {
-        return blockService.isUserBlocked(targetUserId, loginUserId);
+        return blockInternalQueryUseCase.isUserBlocked(targetUserId, loginUserId);
     }
 }

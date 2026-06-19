@@ -1,9 +1,9 @@
 package com.back.catchmate.report.adapter.in.web.controller;
 
-import com.back.catchmate.report.adapter.in.web.dto.request.ReportCreateRequest;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
-import com.back.catchmate.report.application.port.in.ReportUseCase;
+import com.back.catchmate.report.adapter.in.web.dto.request.ReportCreateRequest;
 import com.back.catchmate.report.application.dto.response.ReportCreateResponse;
+import com.back.catchmate.report.application.port.in.ReportClientCommandUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -14,17 +14,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "[사용자] 유저 신고 API")
+@Tag(name = "[사용자] 신고 관련 API")
 @RestController
-@RequestMapping("/api/reports")
 @RequiredArgsConstructor
+@RequestMapping("/api/reports")
 public class ReportController {
-    private final ReportUseCase reportOrchestrator;
+    private final ReportClientCommandUseCase reportClientCommandUseCase;
 
     @PostMapping
-    @Operation(summary = "유저 신고", description = "특정 유저를 신고합니다.")
-    public ResponseEntity<ReportCreateResponse> createReport(@AuthUser Long userId,
-                                                             @RequestBody @Valid ReportCreateRequest request) {
-        return ResponseEntity.ok(reportOrchestrator.createReport(userId, request.toCommand()));
+    @Operation(summary = "신고 접수 API", description = "유저 신고를 접수하는 API 입니다.")
+    public ResponseEntity<ReportCreateResponse> createReport(@AuthUser Long reporterId,
+                                                             @Valid @RequestBody ReportCreateRequest request) {
+        return ResponseEntity.ok(reportClientCommandUseCase.createReport(reporterId, request.toCommand()));
     }
 }

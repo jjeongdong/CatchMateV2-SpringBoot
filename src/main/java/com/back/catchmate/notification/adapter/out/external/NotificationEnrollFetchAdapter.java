@@ -1,26 +1,26 @@
 package com.back.catchmate.notification.adapter.out.external;
 
-import com.back.catchmate.enroll.application.service.EnrollService;
-import com.back.catchmate.enroll.domain.model.AcceptStatus;
-import com.back.catchmate.notification.application.port.out.EnrollFetchPort;
+import com.back.catchmate.enroll.application.port.in.EnrollInternalQueryUseCase;
+import com.back.catchmate.notification.application.port.out.external.EnrollFetchPort;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class NotificationEnrollFetchAdapter implements EnrollFetchPort {
-    private final EnrollService enrollService;
+    private final EnrollInternalQueryUseCase enrollInternalQueryUseCase;
 
     @Override
-    public Optional<AcceptStatus> findAcceptStatusById(Long id) {
-        return enrollService.findAcceptStatusById(id);
+    public Optional<String> findAcceptStatusById(Long id) {
+        return enrollInternalQueryUseCase.findAcceptStatusById(id);
     }
 
     @Override
-    public Map<Long, AcceptStatus> getAcceptStatusMapByIds(List<Long> ids) {
-        return enrollService.getAcceptStatusMapByIds(ids);
+    public Map<Long, String> getAcceptStatusMapByIds(List<Long> ids) {
+        return enrollInternalQueryUseCase.getAcceptStatusMapByIds(ids);
     }
 }

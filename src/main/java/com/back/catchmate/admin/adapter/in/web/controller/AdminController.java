@@ -4,8 +4,9 @@ import com.back.catchmate.admin.adapter.in.web.dto.request.InquiryAnswerRequest;
 import com.back.catchmate.admin.adapter.in.web.dto.request.NoticeCreateRequest;
 import com.back.catchmate.admin.adapter.in.web.dto.request.NoticeUpdateRequest;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
-import com.back.catchmate.admin.application.port.in.AdminUseCase;
-import com.back.catchmate.admin.application.dto.response.AdminBoardDetailWithEnrollResponse;
+import com.back.catchmate.admin.application.port.in.AdminClientCommandUseCase;
+import com.back.catchmate.admin.application.port.in.AdminClientQueryUseCase;
+import com.back.catchmate.admin.application.dto.response.AdminBoardDetailResponse;
 import com.back.catchmate.admin.application.dto.response.AdminBoardResponse;
 import com.back.catchmate.admin.application.dto.response.AdminDashboardResponse;
 import com.back.catchmate.admin.application.dto.response.AdminInquiryDetailResponse;
@@ -16,12 +17,12 @@ import com.back.catchmate.admin.application.dto.response.AdminReportDetailRespon
 import com.back.catchmate.admin.application.dto.response.AdminReportResponse;
 import com.back.catchmate.admin.application.dto.response.AdminUserDetailResponse;
 import com.back.catchmate.admin.application.dto.response.AdminUserResponse;
-import com.back.catchmate.admin.application.dto.response.InquiryAnswerResponse;
-import com.back.catchmate.admin.application.dto.response.NoticeActionResponse;
-import com.back.catchmate.admin.application.dto.response.NoticeCreateResponse;
-import com.back.catchmate.admin.application.dto.response.ReportActionResponse;
+import com.back.catchmate.admin.application.dto.response.AdminInquiryAnswerResponse;
+import com.back.catchmate.admin.application.dto.response.AdminNoticeActionResponse;
+import com.back.catchmate.admin.application.dto.response.AdminNoticeCreateResponse;
+import com.back.catchmate.admin.application.dto.response.AdminNoticeUpdateResponse;
+import com.back.catchmate.admin.application.dto.response.AdminReportActionResponse;
 import com.back.catchmate.common.response.PagedResponse;
-import com.back.catchmate.notice.application.dto.response.NoticeDetailResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,40 +36,37 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
-    private final AdminUseCase adminOrchestrator;
+    private final AdminClientCommandUseCase adminClientCommandUseCase;
+    private final AdminClientQueryUseCase adminClientQueryUseCase;
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/notices")
     @Operation(summary = "공지사항 등록", description = "공지사항을 등록할 수 있습니다. (관리자 전용)")
-    public ResponseEntity<NoticeCreateResponse> createNotice(@AuthUser Long userId,
-                                                             @RequestBody @Valid NoticeCreateRequest request) {
-        return ResponseEntity.ok(adminOrchestrator.createNotice(userId, request.toCommand()));
+    public ResponseEntity<AdminNoticeCreateResponse> createNotice(@AuthUser Long userId,
+                                                                  @RequestBody @Valid NoticeCreateRequest request) {
+        return ResponseEntity.ok(adminClientCommandUseCase.createNotice(userId, request.toCommand()));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/inquiries/{inquiryId}/answer")
     @Operation(summary = "문의 답변 등록", description = "유저의 문의에 답변을 등록하고 상태를 '완료'로 변경합니다.")
-    public ResponseEntity<InquiryAnswerResponse> createInquiryAnswer(@PathVariable Long inquiryId,
-                                                                     @RequestBody @Valid InquiryAnswerRequest request) {
-        return ResponseEntity.ok(adminOrchestrator.createInquiryAnswer(request.toCommand(inquiryId)));
+    public ResponseEntity<AdminInquiryAnswerResponse> createInquiryAnswer(@PathVariable Long inquiryId,
+                                                                          @RequestBody @Valid InquiryAnswerRequest request) {
+        return ResponseEntity.ok(adminClientCommandUseCase.createInquiryAnswer(request.toCommand(inquiryId)));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/dashboard/stats")
     @Operation(summary = "관리자 대시보드 통계 조회", description = "관리자 대시보드에 필요한 통계 정보를 조회합니다.")
     public ResponseEntity<AdminDashboardResponse> getDashboardStats() {
-        return ResponseEntity.ok(adminOrchestrator.getDashboardStats());
+        return ResponseEntity.ok(adminClientQueryUseCase.getDashboardStats());
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users/{userId}")
     @Operation(summary = "유저 상세 정보 조회", description = "특정 유저의 상세 정보를 조회합니다.")
     public ResponseEntity<AdminUserDetailResponse> getUser(@PathVariable Long userId) {
-        return ResponseEntity.ok(adminOrchestrator.getUser(userId));
+        return ResponseEntity.ok(adminClientQueryUseCase.getUser(userId));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
     @Operation(summary = "관리자 유저 리스트 조회", description = "구단명을 파라미터로 받아 유저 목록을 조회합니다.")
     public ResponseEntity<PagedResponse<AdminUserResponse>> getUserList(
@@ -76,99 +74,87 @@ public class AdminController {
             @RequestParam(required = false) String clubName,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(adminOrchestrator.getUserList(clubName, page, size));
+        return ResponseEntity.ok(adminClientQueryUseCase.getUserList(clubName, page, size));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/boards/{boardId}")
     @Operation(summary = "관리자 게시글 상세 조회", description = "게시글 상세 정보와 해당 게시글에 대한 신청자 목록을 조회합니다.")
-    public ResponseEntity<AdminBoardDetailWithEnrollResponse> getBoardWithEnrollList(@PathVariable Long boardId) {
-        return ResponseEntity.ok(adminOrchestrator.getBoardWithEnrollList(boardId));
+    public ResponseEntity<AdminBoardDetailResponse> getBoardWithEnrollList(@PathVariable Long boardId) {
+        return ResponseEntity.ok(adminClientQueryUseCase.getBoardWithEnrollList(boardId));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users/{userId}/boards")
     @Operation(summary = "유저 작성 게시글 조회", description = "특정 유저가 작성한 게시글 목록을 페이징하여 조회합니다.")
     public ResponseEntity<PagedResponse<AdminBoardResponse>> getBoardListByUserId(@PathVariable Long userId,
                                                                                   @RequestParam(defaultValue = "0") int page,
                                                                                   @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(adminOrchestrator.getBoardListByUserId(userId, page, size));
+        return ResponseEntity.ok(adminClientQueryUseCase.getBoardListByUserId(userId, page, size));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/boards")
     @Operation(summary = "관리자 게시글 전체 조회", description = "전체 게시글을 페이징하여 조회합니다.")
     public ResponseEntity<PagedResponse<AdminBoardResponse>> getBoardList(@RequestParam(defaultValue = "0") int page,
                                                                           @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(adminOrchestrator.getBoardList(page, size));
+        return ResponseEntity.ok(adminClientQueryUseCase.getBoardList(page, size));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/reports/{reportId}")
     @Operation(summary = "관리자 신고 상세 조회", description = "특정 신고 내역의 상세 정보를 조회합니다.")
     public ResponseEntity<AdminReportDetailResponse> getReport(@PathVariable Long reportId) {
-        return ResponseEntity.ok(adminOrchestrator.getReport(reportId));
+        return ResponseEntity.ok(adminClientQueryUseCase.getReport(reportId));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/reports")
     @Operation(summary = "관리자 신고 목록 조회", description = "전체 신고 내역을 페이징하여 조회합니다.")
     public ResponseEntity<PagedResponse<AdminReportResponse>> getReportList(@RequestParam(defaultValue = "0") int page,
                                                                             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(adminOrchestrator.getReportList(page, size));
+        return ResponseEntity.ok(adminClientQueryUseCase.getReportList(page, size));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/inquiries/{inquiryId}")
     @Operation(summary = "관리자 문의 상세 조회", description = "특정 문의 내역의 상세 정보를 조회합니다.")
     public ResponseEntity<AdminInquiryDetailResponse> getInquiry(@PathVariable Long inquiryId) {
-        return ResponseEntity.ok(adminOrchestrator.getInquiry(inquiryId));
+        return ResponseEntity.ok(adminClientQueryUseCase.getInquiry(inquiryId));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/inquiries")
     @Operation(summary = "관리자 문의 목록 조회", description = "전체 1:1 문의 내역을 페이징하여 조회합니다.")
     public ResponseEntity<PagedResponse<AdminInquiryResponse>> getInquiryList(@RequestParam(defaultValue = "0") int page,
                                                                               @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(adminOrchestrator.getInquiryList(page, size));
+        return ResponseEntity.ok(adminClientQueryUseCase.getInquiryList(page, size));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/notices/{noticeId}")
     @Operation(summary = "공지사항 상세 조회", description = "특정 공지사항의 상세 내용을 조회합니다.")
     public ResponseEntity<AdminNoticeDetailResponse> getNotice(@PathVariable Long noticeId) {
-        return ResponseEntity.ok(adminOrchestrator.getNotice(noticeId));
+        return ResponseEntity.ok(adminClientQueryUseCase.getNotice(noticeId));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/notices")
     @Operation(summary = "공지사항 목록 조회", description = "공지사항 목록을 페이징하여 조회합니다. (page는 0부터 시작)")
     public ResponseEntity<PagedResponse<AdminNoticeResponse>> getNoticeList(@RequestParam(defaultValue = "0") int page,
                                                                             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(adminOrchestrator.getNoticeList(page, size));
+        return ResponseEntity.ok(adminClientQueryUseCase.getNoticeList(page, size));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/reports/{reportId}/process")
     @Operation(summary = "신고 처리", description = "별도의 입력 정보 없이, 해당 신고 건을 처리하고 신고 당한 유저를 '신고됨(true)' 상태로 변경합니다.")
-    public ResponseEntity<ReportActionResponse> updateReportProcess(@PathVariable Long reportId) {
-        return ResponseEntity.ok(adminOrchestrator.updateReportProcess(reportId));
+    public ResponseEntity<AdminReportActionResponse> updateReportProcess(@PathVariable Long reportId) {
+        return ResponseEntity.ok(adminClientCommandUseCase.updateReportProcess(reportId));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/notices/{noticeId}")
     @Operation(summary = "공지사항 수정", description = "특정 공지사항을 수정합니다. (관리자 전용)")
-    public ResponseEntity<NoticeDetailResponse> updateNotice(@AuthUser Long userId,
-                                                             @PathVariable Long noticeId,
-                                                             @RequestBody @Valid NoticeUpdateRequest request) {
-        return ResponseEntity.ok(adminOrchestrator.updateNotice(noticeId, request.toCommand()));
+    public ResponseEntity<AdminNoticeUpdateResponse> updateNotice(@AuthUser Long userId,
+                                                                  @PathVariable Long noticeId,
+                                                                  @RequestBody @Valid NoticeUpdateRequest request) {
+        return ResponseEntity.ok(adminClientCommandUseCase.updateNotice(noticeId, request.toCommand()));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/notices/{noticeId}")
     @Operation(summary = "공지사항 삭제", description = "특정 공지사항을 삭제합니다. (관리자 전용)")
-    public ResponseEntity<NoticeActionResponse> deleteNotice(@AuthUser Long userId,
-                                                             @PathVariable Long noticeId) {
-        return ResponseEntity.ok(adminOrchestrator.deleteNotice(noticeId));
+    public ResponseEntity<AdminNoticeActionResponse> deleteNotice(@AuthUser Long userId,
+                                                                  @PathVariable Long noticeId) {
+        return ResponseEntity.ok(adminClientCommandUseCase.deleteNotice(noticeId));
     }
 }

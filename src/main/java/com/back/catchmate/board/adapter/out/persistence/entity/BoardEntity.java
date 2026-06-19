@@ -2,19 +2,13 @@ package com.back.catchmate.board.adapter.out.persistence.entity;
 
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.board.domain.model.PreferredAgeRange;
-import com.back.catchmate.club.adapter.out.persistence.entity.ClubEntity;
-import com.back.catchmate.game.adapter.out.persistence.entity.GameEntity;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
-import com.back.catchmate.user.adapter.out.persistence.entity.UserEntity;
+import com.back.catchmate.global.persistence.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -51,17 +45,14 @@ public class BoardEntity extends BaseTimeEntity {
     @Column
     private int currentPerson;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "club_id")
-    private ClubEntity cheerClub;
+    @Column(name = "club_id")
+    private Long cheerClubId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "game_id")
-    private GameEntity game;
+    @Column(name = "game_id")
+    private Long gameId;
 
     @Column
     private String preferredGender;
@@ -84,9 +75,9 @@ public class BoardEntity extends BaseTimeEntity {
                 .content(board.getContent())
                 .maxPerson(board.getMaxPerson())
                 .currentPerson(board.getCurrentPerson())
-                .user(UserEntity.builder().id(board.getUserId()).build())
-                .cheerClub(board.getCheerClubId() != null ? ClubEntity.builder().id(board.getCheerClubId()).build() : null)
-                .game(board.getGameId() != null ? GameEntity.builder().id(board.getGameId()).build() : null)
+                .userId(board.getUserId())
+                .cheerClubId(board.getCheerClubId())
+                .gameId(board.getGameId())
                 .preferredGender(board.getPreferredGender())
                 .preferredAgeRange(board.getPreferredAgeRange().asStored())
                 .completed(board.isCompleted())
@@ -102,9 +93,9 @@ public class BoardEntity extends BaseTimeEntity {
                 .content(this.content)
                 .maxPerson(this.maxPerson)
                 .currentPerson(this.currentPerson)
-                .userId(this.user != null ? this.user.getId() : null)
-                .cheerClubId(this.cheerClub != null ? this.cheerClub.getId() : null)
-                .gameId(this.game != null ? this.game.getId() : null)
+                .userId(this.userId)
+                .cheerClubId(this.cheerClubId)
+                .gameId(this.gameId)
                 .preferredGender(this.preferredGender)
                 .preferredAgeRange(PreferredAgeRange.fromStored(this.preferredAgeRange))
                 .completed(this.completed)

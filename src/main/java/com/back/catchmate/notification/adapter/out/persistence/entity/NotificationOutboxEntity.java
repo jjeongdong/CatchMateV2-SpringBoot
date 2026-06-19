@@ -1,10 +1,16 @@
 package com.back.catchmate.notification.adapter.out.persistence.entity;
 
 import com.back.catchmate.notification.domain.model.NotificationOutbox;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
-import com.back.catchmate.notification.domain.enums.NotificationChannel;
-import com.back.catchmate.notification.domain.enums.OutboxStatus;
-import jakarta.persistence.*;
+import com.back.catchmate.global.persistence.BaseTimeEntity;
+import com.back.catchmate.notification.domain.model.OutboxStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,9 +20,9 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @Builder
-@Table(name = "notification_outbox")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Table(name = "notification_outbox")
 public class NotificationOutboxEntity extends BaseTimeEntity {
 
     @Id
@@ -27,10 +33,6 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
 
     @Column(name = "fcm_token")
     private String recipientAddress;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "channel")
-    private NotificationChannel channel;
 
     private String title;
     private String body;
@@ -46,13 +48,11 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String errorMessage;
 
-    // Domain -> Entity 변환
     public static NotificationOutboxEntity from(NotificationOutbox domain) {
         return NotificationOutboxEntity.builder()
                 .id(domain.getId())
                 .recipientId(domain.getRecipientId())
                 .recipientAddress(domain.getRecipientAddress())
-                .channel(domain.getChannel())
                 .title(domain.getTitle())
                 .body(domain.getBody())
                 .payload(domain.getPayload())
@@ -62,13 +62,11 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
                 .build();
     }
 
-    // Entity -> Domain 변환
-    public NotificationOutbox toModel() {
+    public NotificationOutbox toDomain() {
         return NotificationOutbox.builder()
                 .id(this.id)
                 .recipientId(this.recipientId)
                 .recipientAddress(this.recipientAddress)
-                .channel(this.channel)
                 .title(this.title)
                 .body(this.body)
                 .payload(this.payload)

@@ -1,23 +1,20 @@
 package com.back.catchmate.auth.adapter.out.external;
 
-import com.back.catchmate.auth.application.port.out.UserFetchPort;
-import com.back.catchmate.user.application.service.UserService;
-import com.back.catchmate.user.domain.model.User;
+import com.back.catchmate.auth.application.port.out.external.UserFetchPort;
+import com.back.catchmate.auth.application.port.out.dto.AuthUserInfo;
+import com.back.catchmate.user.application.dto.response.UserInternalResponse;
+import com.back.catchmate.user.application.port.in.UserInternalQueryUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class AuthUserFetchAdapter implements UserFetchPort {
-    private final UserService userService;
+    private final UserInternalQueryUseCase userInternalQueryUseCase;
 
     @Override
-    public User getUser(Long userId) {
-        return userService.getUser(userId);
-    }
-
-    @Override
-    public void updateUser(User user) {
-        userService.updateUser(user);
+    public AuthUserInfo getUser(Long userId) {
+        UserInternalResponse response = userInternalQueryUseCase.getUser(userId);
+        return new AuthUserInfo(response.userId(), response.authority());
     }
 }

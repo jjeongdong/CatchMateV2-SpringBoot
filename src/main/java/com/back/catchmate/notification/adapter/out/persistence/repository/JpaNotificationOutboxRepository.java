@@ -1,7 +1,7 @@
 package com.back.catchmate.notification.adapter.out.persistence.repository;
 
 import com.back.catchmate.notification.adapter.out.persistence.entity.NotificationOutboxEntity;
-import com.back.catchmate.notification.domain.enums.OutboxStatus;
+import com.back.catchmate.notification.domain.model.OutboxStatus;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
 import org.springframework.data.domain.Pageable;
@@ -13,9 +13,8 @@ import org.springframework.data.jpa.repository.QueryHints;
 import java.util.List;
 
 public interface JpaNotificationOutboxRepository extends JpaRepository<NotificationOutboxEntity, Long> {
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2")}) // SKIP LOCKED (PostgreSQL/MySQL 8.0+)
+    @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2")})
     @Query("SELECT n FROM NotificationOutboxEntity n WHERE n.status = :status AND n.retryCount < :retryCount")
     List<NotificationOutboxEntity> findAllForProcessing(OutboxStatus status, int retryCount, Pageable pageable);
 

@@ -1,7 +1,5 @@
 package com.back.catchmate.chat.application.event;
 
-import com.back.catchmate.user.domain.model.User;
-
 /**
  * 채팅방에 새 멤버가 합류했음을 알리는 도메인 이벤트.
  *
@@ -10,9 +8,9 @@ import com.back.catchmate.user.domain.model.User;
  */
 public record ChatRoomMemberJoinedEvent(
         Long chatRoomId,
-        User user
+        Long userId
 ) {
-    public static ChatRoomMemberJoinedEvent of(Long chatRoomId, User user) {
-        return new ChatRoomMemberJoinedEvent(chatRoomId, user);
+    public static ChatRoomMemberJoinedEvent of(Long chatRoomId, Long userId) {
+        return new ChatRoomMemberJoinedEvent(chatRoomId, userId);
     }
 }

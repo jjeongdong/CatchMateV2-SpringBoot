@@ -1,7 +1,7 @@
 package com.back.catchmate.bookmark.adapter.out.persistence.repository;
 
 import com.back.catchmate.bookmark.domain.model.Bookmark;
-import com.back.catchmate.bookmark.application.port.out.BookmarkRepository;
+import com.back.catchmate.bookmark.application.port.out.persistence.BookmarkRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -22,30 +22,26 @@ public class BookmarkRepositoryImpl implements BookmarkRepository {
     @Override
     public Bookmark save(Bookmark bookmark) {
         BookmarkEntity entity = BookmarkEntity.from(bookmark);
-        return jpaBookmarkRepository.save(entity).toModel();
+        return jpaBookmarkRepository.save(entity).toDomain();
     }
 
     @Override
     public Optional<Bookmark> findByUserIdAndBoardId(Long userId, Long boardId) {
         return jpaBookmarkRepository.findByUserIdAndBoardId(userId, boardId)
-                .map(BookmarkEntity::toModel);
+                .map(BookmarkEntity::toDomain);
     }
 
     @Override
-    public Page<Bookmark> findAllByUserId(Long userId, Pageable domainPageable) {
-        Pageable pageable = PageRequest.of(
-                domainPageable.getPageNumber(),
-                domainPageable.getPageSize(),
+    public Page<Bookmark> findAllByUserId(Long userId, Pageable pageable) {
+        PageRequest sortedPageRequest = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        Page<BookmarkEntity> entityPage = jpaBookmarkRepository.findAllByUserId(userId, pageable);
+        Page<BookmarkEntity> entityPage = jpaBookmarkRepository.findAllByUserId(userId, sortedPageRequest);
 
-        List<Bookmark> domains = entityPage.getContent().stream()
-                .map(BookmarkEntity::toModel)
-                .toList();
-
-        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
+        return entityPage.map(BookmarkEntity::toDomain);
     }
 
     @Override
@@ -60,7 +56,6 @@ public class BookmarkRepositoryImpl implements BookmarkRepository {
 
     @Override
     public void delete(Bookmark bookmark) {
-        BookmarkEntity entity = BookmarkEntity.from(bookmark);
-        jpaBookmarkRepository.delete(entity);
+        jpaBookmarkRepository.deleteById(bookmark.getId());
     }
 }

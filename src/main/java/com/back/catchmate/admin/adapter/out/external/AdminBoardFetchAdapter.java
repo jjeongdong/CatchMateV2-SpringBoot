@@ -1,54 +1,67 @@
 package com.back.catchmate.admin.adapter.out.external;
 
-import com.back.catchmate.admin.application.port.out.BoardFetchPort;
-import com.back.catchmate.board.application.dto.response.BoardResponse;
-import com.back.catchmate.board.application.service.BoardService;
-import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.common.response.CursorPagedResponse;
-import com.back.catchmate.common.response.PagedResponse;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
+import com.back.catchmate.admin.application.port.out.dto.AdminBoardInfo;
+import com.back.catchmate.admin.application.port.out.external.BoardFetchPort;
+import com.back.catchmate.board.application.dto.response.BoardAdminView;
+import com.back.catchmate.board.application.dto.response.BoardInternalResponse;
+import com.back.catchmate.board.application.port.in.BoardAdminQueryUseCase;
+import com.back.catchmate.board.application.port.in.BoardInternalQueryUseCase;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class AdminBoardFetchAdapter implements BoardFetchPort {
-    private final BoardService boardService;
+    private final BoardAdminQueryUseCase boardAdminQueryUseCase;
+    private final BoardInternalQueryUseCase boardInternalQueryUseCase;
 
     @Override
-    public CursorPagedResponse<BoardResponse> getBoardList(Long userId, LocalDate gameDate, Integer maxPerson,
-                                                           List<Long> preferredTeamIdList,
-                                                           LocalDateTime lastLiftUpDate, Long lastBoardId, int size) {
-        return boardService.getBoardList(userId, gameDate, maxPerson, preferredTeamIdList, lastLiftUpDate, lastBoardId, size);
+    public Page<AdminBoardInfo> getBoardList(Pageable pageable) {
+        return boardAdminQueryUseCase.getBoardList(pageable).map(this::fromAdminView);
     }
 
     @Override
-    public Page<Board> getBoardList(Pageable pageable) {
-        return boardService.getBoardList(pageable);
+    public Page<AdminBoardInfo> getBoardListByUserId(Long userId, Pageable pageable) {
+        return boardAdminQueryUseCase.getBoardListByUserId(userId, pageable).map(this::fromAdminView);
     }
 
     @Override
-    public PagedResponse<BoardResponse> getBoardListByUserId(Long targetUserId, Long loginUserId, int page, int size) {
-        return boardService.getBoardListByUserId(targetUserId, loginUserId, page, size);
-    }
-
-    @Override
-    public Page<Board> getBoardListByUserId(Long userId, Pageable pageable) {
-        return boardService.getBoardListByUserId(userId, pageable);
-    }
-
-    @Override
-    public Board getCompletedBoard(Long boardId) {
-        return boardService.getCompletedBoard(boardId);
+    public AdminBoardInfo getCompletedBoard(Long boardId) {
+        return fromInternalResponse(boardInternalQueryUseCase.getCompletedBoard(boardId));
     }
 
     @Override
     public long getTotalBoardCount() {
-        return boardService.getTotalBoardCount();
+        return boardAdminQueryUseCase.getTotalBoardCount();
+    }
+
+    private AdminBoardInfo fromInternalResponse(BoardInternalResponse response) {
+        return new AdminBoardInfo(
+                response.boardId(),
+                response.title(),
+                response.content(),
+                response.maxPerson() != null ? response.maxPerson() : 0,
+                response.currentPerson(),
+                response.userId(),
+                response.gameId(),
+                response.completed(),
+                response.createdAt()
+        );
+    }
+
+    private AdminBoardInfo fromAdminView(BoardAdminView view) {
+        return new AdminBoardInfo(
+                view.boardId(),
+                view.title(),
+                view.content(),
+                view.maxPerson(),
+                view.currentPerson(),
+                view.userId(),
+                view.gameId(),
+                view.completed(),
+                view.createdAt()
+        );
     }
 }

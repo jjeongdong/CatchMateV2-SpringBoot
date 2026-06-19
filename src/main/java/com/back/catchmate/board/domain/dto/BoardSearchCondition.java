@@ -3,7 +3,6 @@ package com.back.catchmate.board.domain.dto;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -11,7 +10,11 @@ import java.util.List;
 @Builder
 public class BoardSearchCondition {
     private final Long userId;
-    private final LocalDate gameDate;
+    /**
+     * 게임 날짜 필터를 미리 game 컨텍스트에서 ID 목록으로 resolve 한 결과.
+     * <p>null: 게임 날짜 필터 미적용. 빈 리스트: 매칭 경기 없음(→ 결과도 비어야 함).
+     */
+    private final List<Long> matchingGameIds;
     private final Integer maxPerson;
     private final List<Long> preferredTeamIdList;
     private final List<Long> blockedUserIds;
@@ -19,29 +22,15 @@ public class BoardSearchCondition {
     private final Long lastBoardId;
 
     public static BoardSearchCondition of(Long userId,
-                                          LocalDate gameDate,
+                                          List<Long> matchingGameIds,
                                           Integer maxPerson,
                                           List<Long> preferredTeamIdList,
-                                          List<Long> blockedUserIds) {
+                                          List<Long> blockedUserIds,
+                                          LocalDateTime lastLiftUpDate,
+                                          Long lastBoardId) {
         return BoardSearchCondition.builder()
                 .userId(userId)
-                .gameDate(gameDate)
-                .maxPerson(maxPerson)
-                .preferredTeamIdList(preferredTeamIdList == null ? List.of() : List.copyOf(preferredTeamIdList))
-                .blockedUserIds(blockedUserIds == null ? List.of() : List.copyOf(blockedUserIds))
-                .build();
-    }
-
-    public static BoardSearchCondition ofCursor(Long userId,
-                                                LocalDate gameDate,
-                                                Integer maxPerson,
-                                                List<Long> preferredTeamIdList,
-                                                List<Long> blockedUserIds,
-                                                LocalDateTime lastLiftUpDate,
-                                                Long lastBoardId) {
-        return BoardSearchCondition.builder()
-                .userId(userId)
-                .gameDate(gameDate)
+                .matchingGameIds(matchingGameIds == null ? null : List.copyOf(matchingGameIds))
                 .maxPerson(maxPerson)
                 .preferredTeamIdList(preferredTeamIdList == null ? List.of() : List.copyOf(preferredTeamIdList))
                 .blockedUserIds(blockedUserIds == null ? List.of() : List.copyOf(blockedUserIds))

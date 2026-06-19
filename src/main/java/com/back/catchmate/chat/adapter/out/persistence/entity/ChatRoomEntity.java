@@ -1,24 +1,19 @@
 package com.back.catchmate.chat.adapter.out.persistence.entity;
 
 import com.back.catchmate.chat.domain.model.ChatRoom;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
-import com.back.catchmate.board.adapter.out.persistence.entity.BoardEntity;
+import com.back.catchmate.global.persistence.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.NotFound;
-import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
@@ -26,7 +21,14 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Builder
-@Table(name = "chat_rooms")
+@Table(name = "chat_rooms",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_chat_rooms_board_id",
+                        columnNames = {"board_id"}
+                )
+        }
+)
 @SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -36,10 +38,8 @@ public class ChatRoomEntity extends BaseTimeEntity {
     @Column(name = "chat_room_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "board_id", nullable = false)
-    @NotFound(action = NotFoundAction.IGNORE)
-    private BoardEntity board;
+    @Column(name = "board_id", nullable = false)
+    private Long boardId;
 
     @Column(name = "last_message_sequence", nullable = false)
     private Long lastMessageSequence;
@@ -52,17 +52,17 @@ public class ChatRoomEntity extends BaseTimeEntity {
     public static ChatRoomEntity from(ChatRoom chatRoom) {
         return ChatRoomEntity.builder()
                 .id(chatRoom.getId())
-                .board(BoardEntity.builder().id(chatRoom.getBoardId()).build())
+                .boardId(chatRoom.getBoardId())
                 .lastMessageSequence(chatRoom.getLastMessageSequence())
                 .chatRoomImageUrl(chatRoom.getChatRoomImageUrl())
                 .deletedAt(chatRoom.getDeletedAt())
                 .build();
     }
 
-    public ChatRoom toModel() {
+    public ChatRoom toDomain() {
         return ChatRoom.builder()
                 .id(this.id)
-                .boardId(this.board != null ? this.board.getId() : null)
+                .boardId(this.boardId)
                 .lastMessageSequence(this.lastMessageSequence)
                 .chatRoomImageUrl(this.chatRoomImageUrl)
                 .createdAt(this.getCreatedAt())

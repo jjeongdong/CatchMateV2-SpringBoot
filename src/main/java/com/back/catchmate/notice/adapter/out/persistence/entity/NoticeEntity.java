@@ -1,16 +1,12 @@
 package com.back.catchmate.notice.adapter.out.persistence.entity;
 
+import com.back.catchmate.global.persistence.BaseTimeEntity;
 import com.back.catchmate.notice.domain.model.Notice;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
-import com.back.catchmate.user.adapter.out.persistence.entity.UserEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -19,19 +15,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "notices")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Table(name = "notices")
 public class NoticeEntity extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity writer;
+    @Column(name = "user_id", nullable = false)
+    private Long writerId;
 
     @Column(nullable = false)
     private String title;
@@ -42,16 +37,16 @@ public class NoticeEntity extends BaseTimeEntity {
     public static NoticeEntity from(Notice notice) {
         return NoticeEntity.builder()
                 .id(notice.getId())
-                .writer(UserEntity.builder().id(notice.getWriterId()).build())
+                .writerId(notice.getWriterId())
                 .title(notice.getTitle())
                 .content(notice.getContent())
                 .build();
     }
 
-    public Notice toModel() {
+    public Notice toDomain() {
         return Notice.builder()
                 .id(this.id)
-                .writerId(this.writer.getId())
+                .writerId(this.writerId)
                 .title(this.title)
                 .content(this.content)
                 .createdAt(this.getCreatedAt())

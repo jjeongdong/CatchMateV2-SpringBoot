@@ -11,27 +11,18 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface
-JpaChatRoomRepository extends JpaRepository<ChatRoomEntity, Long> {
+public interface JpaChatRoomRepository extends JpaRepository<ChatRoomEntity, Long> {
 
-    @Query("SELECT cr FROM ChatRoomEntity cr " +
-            "JOIN FETCH cr.board b " +
-            "WHERE cr.id = :id")
-    Optional<ChatRoomEntity> findByIdWithBoard(@Param("id") Long id);
-
-    @Query("SELECT cr FROM ChatRoomEntity cr " +
-            "JOIN FETCH cr.board b " +
-            "WHERE b.id = :boardId")
-    Optional<ChatRoomEntity> findByBoardId(@Param("boardId") Long boardId);
+    Optional<ChatRoomEntity> findByBoardId(Long boardId);
 
     @Query("SELECT r FROM ChatRoomEntity r " +
             "JOIN ChatRoomMemberEntity m ON r.id = m.chatRoom.id " +
-            "WHERE m.user.id = :userId AND m.leftAt IS NULL")
+            "WHERE m.userId = :userId AND m.leftAt IS NULL")
     Page<ChatRoomEntity> findAllByUserIdWithPaging(@Param("userId") Long userId, Pageable pageable);
 
     @Query("SELECT r FROM ChatRoomEntity r " +
             "JOIN ChatRoomMemberEntity m ON r.id = m.chatRoom.id " +
-            "WHERE m.user.id = :userId AND m.leftAt IS NULL")
+            "WHERE m.userId = :userId AND m.leftAt IS NULL")
     List<ChatRoomEntity> findAllByUserId(@Param("userId") Long userId);
 
     @Modifying

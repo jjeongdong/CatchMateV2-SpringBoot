@@ -14,19 +14,16 @@ import java.util.Optional;
 public interface JpaChatMessageRepository extends JpaRepository<ChatMessageEntity, Long> {
 
     @Query("SELECT cm FROM ChatMessageEntity cm " +
-            "JOIN FETCH cm.sender s " +
             "WHERE cm.chatRoom.id = :chatRoomId " +
             "ORDER BY cm.createdAt DESC")
     Page<ChatMessageEntity> findAllByChatRoomId(@Param("chatRoomId") Long chatRoomId, Pageable pageable);
 
     @Query("SELECT cm FROM ChatMessageEntity cm " +
-            "JOIN FETCH cm.sender s " +
             "WHERE cm.chatRoom.id = :chatRoomId " +
             "ORDER BY cm.createdAt ASC")
     List<ChatMessageEntity> findAllByChatRoomIdList(@Param("chatRoomId") Long chatRoomId);
 
     @Query("SELECT cm FROM ChatMessageEntity cm " +
-            "JOIN FETCH cm.sender s " +
             "WHERE cm.chatRoom.id = :chatRoomId " +
             "ORDER BY cm.createdAt DESC " +
             "LIMIT 1")

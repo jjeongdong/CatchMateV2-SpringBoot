@@ -1,8 +1,7 @@
 package com.back.catchmate.chat.adapter.out.persistence.entity;
 
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
-import com.back.catchmate.user.adapter.out.persistence.entity.UserEntity;
+import com.back.catchmate.global.persistence.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,9 +23,8 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
     @JoinColumn(name = "chat_room_id", nullable = false)
     private ChatRoomEntity chatRoom;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt;
@@ -47,7 +45,7 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
         return ChatRoomMemberEntity.builder()
                 .id(member.getId())
                 .chatRoom(ChatRoomEntity.builder().id(member.getChatRoomId()).build())
-                .user(UserEntity.builder().id(member.getUserId()).build())
+                .userId(member.getUserId())
                 .joinedAt(member.getJoinedAt())
                 .leftAt(member.getLeftAt())
                 .readOnlyAt(member.getReadOnlyAt())
@@ -56,11 +54,11 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
                 .build();
     }
 
-    public ChatRoomMember toModel() {
+    public ChatRoomMember toDomain() {
         return ChatRoomMember.builder()
                 .id(this.id)
                 .chatRoomId(this.chatRoom != null ? this.chatRoom.getId() : null)
-                .userId(this.user != null ? this.user.getId() : null)
+                .userId(this.userId)
                 .joinedAt(this.joinedAt)
                 .leftAt(this.leftAt)
                 .readOnlyAt(this.readOnlyAt)

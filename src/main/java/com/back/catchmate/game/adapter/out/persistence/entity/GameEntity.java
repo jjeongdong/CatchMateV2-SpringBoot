@@ -1,16 +1,12 @@
 package com.back.catchmate.game.adapter.out.persistence.entity;
 
-import com.back.catchmate.club.adapter.out.persistence.entity.ClubEntity;
 import com.back.catchmate.game.domain.model.Game;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
+import com.back.catchmate.global.persistence.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -35,28 +31,23 @@ public class GameEntity extends BaseTimeEntity {
     @Column
     private LocalDateTime gameStartDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "home_club_id")
-    private ClubEntity homeClub;
+    @Column(name = "home_club_id")
+    private Long homeClubId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "away_club_id")
-    private ClubEntity awayClub;
+    @Column(name = "away_club_id")
+    private Long awayClubId;
 
     @Column
     private String location;
 
-    public static GameEntity fromDomain(Game game) {
-        if (game == null) {
-            return null;
-        }
-
+    public static GameEntity from(Game game) {
+        if (game == null) return null;
         return GameEntity.builder()
                 .id(game.getId())
                 .gameStartDate(game.getGameStartDate())
                 .location(game.getLocation())
-                .homeClub(game.getHomeClubId() != null ? ClubEntity.builder().id(game.getHomeClubId()).build() : null)
-                .awayClub(game.getAwayClubId() != null ? ClubEntity.builder().id(game.getAwayClubId()).build() : null)
+                .homeClubId(game.getHomeClubId())
+                .awayClubId(game.getAwayClubId())
                 .build();
     }
 
@@ -65,8 +56,8 @@ public class GameEntity extends BaseTimeEntity {
                 .id(this.id)
                 .gameStartDate(this.gameStartDate)
                 .location(this.location)
-                .homeClubId(this.homeClub != null ? this.homeClub.getId() : null)
-                .awayClubId(this.awayClub != null ? this.awayClub.getId() : null)
+                .homeClubId(this.homeClubId)
+                .awayClubId(this.awayClubId)
                 .build();
     }
 }

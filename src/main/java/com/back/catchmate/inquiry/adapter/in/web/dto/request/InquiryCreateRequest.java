@@ -1,7 +1,7 @@
 package com.back.catchmate.inquiry.adapter.in.web.dto.request;
 
 import com.back.catchmate.inquiry.application.dto.command.InquiryCreateCommand;
-import com.back.catchmate.inquiry.domain.enums.InquiryType;
+import com.back.catchmate.inquiry.domain.model.InquiryType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
 

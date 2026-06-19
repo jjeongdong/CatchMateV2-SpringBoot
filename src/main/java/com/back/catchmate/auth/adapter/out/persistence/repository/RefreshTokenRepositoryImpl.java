@@ -1,6 +1,6 @@
 package com.back.catchmate.auth.adapter.out.persistence.repository;
 
-import com.back.catchmate.auth.application.port.out.RefreshTokenRepository;
+import com.back.catchmate.auth.application.port.out.persistence.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -32,16 +32,6 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         } catch (Exception e) {
             log.error("Redis 장애: Refresh Token 조회 실패. 재로그인 유도 - {}", e.getMessage());
             return Optional.empty();
-        }
-    }
-
-    @Override
-    public boolean existsById(String refreshToken) {
-        try {
-            return redisTemplate.hasKey(refreshToken);
-        } catch (Exception e) {
-            log.error("Redis 장애: Refresh Token 존재 여부 확인 실패 - {}", e.getMessage());
-            return false;
         }
     }
 

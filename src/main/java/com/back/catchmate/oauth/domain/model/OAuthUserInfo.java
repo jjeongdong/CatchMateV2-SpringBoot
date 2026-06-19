@@ -1,6 +1,6 @@
 package com.back.catchmate.oauth.domain.model;
 
-import com.back.catchmate.user.domain.enums.Provider;
+import com.back.catchmate.oauth.domain.enums.Provider;
 import lombok.Builder;
 import lombok.Getter;
 

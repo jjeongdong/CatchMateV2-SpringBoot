@@ -1,9 +1,8 @@
 package com.back.catchmate.chat.adapter.out.persistence.repository;
 
 import com.back.catchmate.chat.domain.model.ChatRoom;
-import com.back.catchmate.chat.application.port.out.ChatRoomRepository;
+import com.back.catchmate.chat.application.port.out.persistence.ChatRoomRepository;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import com.back.catchmate.chat.adapter.out.persistence.entity.ChatRoomEntity;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -23,19 +21,19 @@ public class ChatRoomRepositoryImpl implements ChatRoomRepository {
     @Override
     public ChatRoom save(ChatRoom chatRoom) {
         ChatRoomEntity entity = ChatRoomEntity.from(chatRoom);
-        return jpaChatRoomRepository.save(entity).toModel();
+        return jpaChatRoomRepository.save(entity).toDomain();
     }
 
     @Override
     public Optional<ChatRoom> findById(Long id) {
-        return jpaChatRoomRepository.findByIdWithBoard(id)
-                .map(ChatRoomEntity::toModel);
+        return jpaChatRoomRepository.findById(id)
+                .map(ChatRoomEntity::toDomain);
     }
 
     @Override
     public Optional<ChatRoom> findByBoardId(Long boardId) {
         return jpaChatRoomRepository.findByBoardId(boardId)
-                .map(ChatRoomEntity::toModel);
+                .map(ChatRoomEntity::toDomain);
     }
 
     @Override
@@ -44,37 +42,27 @@ public class ChatRoomRepositoryImpl implements ChatRoomRepository {
     }
 
     @Override
-    public Page<ChatRoom> findAllByUserId(Long userId, Pageable domainPageable) {
-        Pageable pageable = PageRequest.of(
-                domainPageable.getPageNumber(),
-                domainPageable.getPageSize(),
+    public Page<ChatRoom> findAllByUserId(Long userId, Pageable pageable) {
+        PageRequest sortedPageRequest = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        Page<ChatRoomEntity> entityPage = jpaChatRoomRepository.findAllByUserIdWithPaging(userId, pageable);
+        Page<ChatRoomEntity> entityPage = jpaChatRoomRepository.findAllByUserIdWithPaging(userId, sortedPageRequest);
 
-        List<ChatRoom> domains = entityPage.getContent().stream()
-                .map(ChatRoomEntity::toModel)
-                .toList();
-
-        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
+        return entityPage.map(ChatRoomEntity::toDomain);
     }
 
     @Override
     public List<ChatRoom> findAllByUserId(Long userId) {
         return jpaChatRoomRepository.findAllByUserId(userId).stream()
-                .map(ChatRoomEntity::toModel)
-                .collect(Collectors.toList());
+                .map(ChatRoomEntity::toDomain)
+                .toList();
     }
 
     @Override
     public void updateMaxSequence(Long roomId, Long sequence) {
         jpaChatRoomRepository.updateMaxSequence(roomId, sequence);
-    }
-
-    @Override
-    public void delete(ChatRoom chatRoom) {
-        ChatRoomEntity entity = ChatRoomEntity.from(chatRoom);
-        jpaChatRoomRepository.delete(entity);
     }
 }

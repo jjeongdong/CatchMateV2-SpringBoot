@@ -1,7 +1,6 @@
 package com.back.catchmate.user.application.dto.response;
 
-import com.back.catchmate.club.application.dto.response.ClubResponse;
-import com.back.catchmate.club.domain.model.Club;
+import com.back.catchmate.user.application.port.out.dto.UserClubInfo;
 import com.back.catchmate.user.domain.model.User;
 
 import java.time.LocalDate;
@@ -16,11 +15,11 @@ public record UserUpdateResponse(
         char enrollAlarm,
         char eventAlarm,
         String nickName,
-        ClubResponse club,
+        UserClubInfo club,
         LocalDate birthDate,
         String watchStyle
 ) {
-    public static UserUpdateResponse from(User user, Club club) {
+    public static UserUpdateResponse from(User user, UserClubInfo club) {
         return new UserUpdateResponse(
                 user.getId(),
                 user.getEmail(),
@@ -31,7 +30,7 @@ public record UserUpdateResponse(
                 user.getEnrollAlarm(),
                 user.getEventAlarm(),
                 user.getNickName(),
-                club != null ? ClubResponse.from(club) : null,
+                club,
                 user.getBirthDate(),
                 user.getWatchStyle()
         );

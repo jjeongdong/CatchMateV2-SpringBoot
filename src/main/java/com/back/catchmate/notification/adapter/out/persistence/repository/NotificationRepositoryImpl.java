@@ -5,7 +5,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import com.back.catchmate.notification.domain.model.Notification;
-import com.back.catchmate.notification.application.port.out.NotificationRepository;
+import com.back.catchmate.notification.application.port.out.persistence.NotificationRepository;
 import com.back.catchmate.notification.adapter.out.persistence.entity.NotificationEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -24,13 +24,13 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     @Transactional
     public Notification save(Notification notification) {
         NotificationEntity entity = NotificationEntity.from(notification);
-        return jpaNotificationRepository.save(entity).toModel();
+        return jpaNotificationRepository.save(entity).toDomain();
     }
 
     @Override
     public Optional<Notification> findById(Long notificationId) {
         return jpaNotificationRepository.findById(notificationId)
-                .map(NotificationEntity::toModel);
+                .map(NotificationEntity::toDomain);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         Page<NotificationEntity> entityPage = jpaNotificationRepository.findAllByUserId(userId, pageable);
 
         List<Notification> domains = entityPage.getContent().stream()
-                .map(NotificationEntity::toModel)
+                .map(NotificationEntity::toDomain)
                 .toList();
 
         return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
@@ -61,15 +61,9 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         return jpaNotificationRepository.existsByUserIdAndRead(userId, false);
     }
 
-//    @Override
-//    @Transactional
-//    public int markAllRead(Long userId) {
-//        return jpaNotificationRepository.markAllRead(userId);
-//    }
-
     @Override
     @Transactional
     public int markAllRead(Long userId) {
-        return 1;
+        return jpaNotificationRepository.markAllReadByUserId(userId);
     }
 }

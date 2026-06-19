@@ -1,32 +1,42 @@
 package com.back.catchmate.chat.adapter.out.external;
 
-import com.back.catchmate.board.application.dto.response.BoardResponse;
-import com.back.catchmate.board.application.service.BoardService;
-import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.chat.application.port.out.BoardFetchPort;
+import com.back.catchmate.board.application.dto.response.BoardInternalResponse;
+import com.back.catchmate.board.application.port.in.BoardInternalQueryUseCase;
+import com.back.catchmate.chat.application.port.out.dto.ChatBoardInfo;
+import com.back.catchmate.chat.application.port.out.external.BoardFetchPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 @Component
 @RequiredArgsConstructor
 public class ChatBoardFetchAdapter implements BoardFetchPort {
-    private final BoardService boardService;
+    private final BoardInternalQueryUseCase boardInternalQueryUseCase;
 
     @Override
-    public Board getBoard(Long boardId) {
-        return boardService.getBoard(boardId);
+    public ChatBoardInfo getBoard(Long boardId) {
+        return fromInternalResponse(boardInternalQueryUseCase.getBoard(boardId));
     }
 
     @Override
-    public List<Board> getBoards(List<Long> boardIds) {
-        return boardService.getBoards(boardIds);
+    public List<ChatBoardInfo> getBoards(List<Long> boardIds) {
+        return boardInternalQueryUseCase.getBoards(boardIds).stream()
+                .map(this::fromInternalResponse)
+                .toList();
     }
 
-    @Override
-    public List<BoardResponse> buildBoardResponses(List<Board> boards, Predicate<Long> bookmarkedPredicate) {
-        return boardService.buildBoardResponses(boards, bookmarkedPredicate);
+    private ChatBoardInfo fromInternalResponse(BoardInternalResponse response) {
+        if (response == null) return null;
+        return new ChatBoardInfo(
+                response.boardId(),
+                response.title(),
+                response.content(),
+                response.currentPerson(),
+                response.maxPerson() != null ? response.maxPerson() : 0,
+                response.userId(),
+                response.cheerClubId(),
+                response.gameId()
+        );
     }
 }

@@ -6,7 +6,7 @@ import com.back.catchmate.chat.adapter.in.web.dto.request.ChatRoomEnterRequest;
 import com.back.catchmate.chat.adapter.in.web.dto.request.ChatRoomLeaveRequest;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.chat.application.port.in.ChatUseCase;
+import com.back.catchmate.chat.application.port.in.ChatClientCommandUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -19,7 +19,7 @@ import java.security.Principal;
 @Controller
 @RequiredArgsConstructor
 public class ChatController {
-    private final ChatUseCase chatOrchestrator;
+    private final ChatClientCommandUseCase chatClientCommandUseCase;
 
     @MessageMapping("/chat/message")
     public void sendMessage(@Payload ChatMessageRequest request, Principal principal) {
@@ -28,7 +28,7 @@ public class ChatController {
         log.info("채팅 메시지 수신 - chatRoomId: {}, senderId: {}, content: {}",
                 request.chatRoomId(), senderId, request.content());
 
-        chatOrchestrator.sendMessage(senderId, request.toCommand(senderId));
+        chatClientCommandUseCase.sendMessage(senderId, request.toCommand(senderId));
         log.info("채팅 메시지 처리 위임 완료 (Redis Pub/Sub 동작 중)");
     }
 
@@ -37,7 +37,7 @@ public class ChatController {
         Long userId = extractUserId(principal);
         log.info("채팅방 입장 - chatRoomId: {}, userId: {}", request.chatRoomId(), userId);
 
-        chatOrchestrator.enterChatRoom(userId, request.chatRoomId());
+        chatClientCommandUseCase.enterChatRoom(userId, request.chatRoomId());
         log.info("채팅방 입장 처리 완료");
     }
 
@@ -46,7 +46,7 @@ public class ChatController {
         Long userId = extractUserId(principal);
         log.info("채팅방 퇴장 - chatRoomId: {}, userId: {}", request.chatRoomId(), userId);
 
-        chatOrchestrator.leaveChatRoom(userId, request.chatRoomId());
+        chatClientCommandUseCase.leaveChatRoom(userId, request.chatRoomId());
         log.info("채팅방 퇴장 처리 완료");
     }
 
@@ -55,7 +55,7 @@ public class ChatController {
         Long userId = extractUserId(principal);
         log.info("채팅 읽음 처리 - chatRoomId: {}, userId: {}", request.chatRoomId(), userId);
 
-        chatOrchestrator.readChatRoom(userId, request.chatRoomId());
+        chatClientCommandUseCase.readChatRoom(userId, request.chatRoomId());
     }
 
     private Long extractUserId(Principal principal) {

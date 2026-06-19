@@ -1,7 +1,7 @@
 package com.back.catchmate.enroll.application.dto.response;
 
-import com.back.catchmate.club.domain.model.Club;
-import com.back.catchmate.user.domain.model.User;
+import com.back.catchmate.enroll.application.port.out.dto.EnrollClubInfo;
+import com.back.catchmate.enroll.application.port.out.dto.EnrollUserInfo;
 
 public record ApplicantResponse(
         Long userId,
@@ -12,15 +12,15 @@ public record ApplicantResponse(
         String favoriteClub,
         String watchStyle
 ) {
-    public static ApplicantResponse from(User user, Club club) {
+    public static ApplicantResponse from(EnrollUserInfo user, EnrollClubInfo club) {
         return new ApplicantResponse(
-                user.getId(),
-                user.getNickName(),
-                user.getProfileImageUrl(),
-                String.valueOf(user.getGender()),
-                String.valueOf(user.getBirthDate()),
-                club != null ? club.getName() : null,
-                user.getWatchStyle()
+                user.userId(),
+                user.nickName(),
+                user.profileImageUrl(),
+                String.valueOf(user.gender()),
+                String.valueOf(user.birthDate()),
+                club != null ? club.name() : null,
+                user.watchStyle()
         );
     }
 }

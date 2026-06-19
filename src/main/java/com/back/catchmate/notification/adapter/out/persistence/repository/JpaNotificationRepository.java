@@ -13,7 +13,11 @@ public interface JpaNotificationRepository extends JpaRepository<NotificationEnt
 
     boolean existsByUserIdAndRead(Long userId, boolean read);
 
-//    @Modifying(clearAutomatically = true)
-//    @Query("UPDATE NotificationEntity n SET n.read = true WHERE n.userId = :userId AND n.read = false")
-//    int markAllRead(@Param("userId") Long userId);
+    /**
+     * 해당 사용자의 unread 알림을 일괄 read=true 로 업데이트하고 반영된 row 수 반환.
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE NotificationEntity n SET n.read = true " +
+            "WHERE n.userId = :userId AND n.read = false")
+    int markAllReadByUserId(@Param("userId") Long userId);
 }

@@ -2,18 +2,14 @@ package com.back.catchmate.user.adapter.out.persistence.entity;
 
 import com.back.catchmate.user.domain.model.Authority;
 import com.back.catchmate.user.domain.model.User;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
-import com.back.catchmate.club.adapter.out.persistence.entity.ClubEntity;
+import com.back.catchmate.global.persistence.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -23,33 +19,31 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import com.back.catchmate.user.domain.enums.Provider;
 
 import java.time.LocalDate;
 
 @Entity
 @Getter
 @Builder
-@Table(name = "users")
-@SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Table(name = "users")
+@SQLRestriction("deleted_at IS NULL")
 public class UserEntity extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "club_id", nullable = false)
-    private ClubEntity club;
+    @Column(name = "club_id", nullable = false)
+    private Long clubId;
 
     @Column(nullable = false)
     private String email;
 
-    @Enumerated(EnumType.STRING)
+    /** OAuth 인증 제공자 식별자 — oauth.domain.enums.Provider 의 문자열 값(KAKAO 등)을 그대로 저장. */
     @Column(nullable = false)
-    private Provider provider;
+    private String provider;
 
     @Column(nullable = false)
     private String providerId;
@@ -112,12 +106,12 @@ public class UserEntity extends BaseTimeEntity {
                 .fcmToken(user.getFcmToken())
                 .authority(user.getAuthority())
                 .reported(user.isReported())
-                .club(user.getClubId() != null ? ClubEntity.builder().id(user.getClubId()).build() : null)
+                .clubId(user.getClubId())
                 .deletedAt(user.getDeletedAt())
                 .build();
     }
 
-    public User toModel() {
+    public User toDomain() {
         return User.builder()
                 .id(this.id)
                 .email(this.email)
@@ -135,7 +129,7 @@ public class UserEntity extends BaseTimeEntity {
                 .fcmToken(this.fcmToken)
                 .authority(this.authority)
                 .reported(this.reported)
-                .clubId(this.club != null ? this.club.getId() : null)
+                .clubId(this.clubId)
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getModifiedAt())
                 .deletedAt(this.deletedAt)

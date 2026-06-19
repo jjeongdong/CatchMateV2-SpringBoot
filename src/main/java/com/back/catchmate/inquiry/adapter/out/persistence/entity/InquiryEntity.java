@@ -1,20 +1,16 @@
 package com.back.catchmate.inquiry.adapter.out.persistence.entity;
 
+import com.back.catchmate.global.persistence.BaseTimeEntity;
 import com.back.catchmate.inquiry.domain.model.Inquiry;
 import com.back.catchmate.inquiry.domain.model.InquiryStatus;
-import com.back.catchmate.global.infrastructure.BaseTimeEntity;
-import com.back.catchmate.user.adapter.out.persistence.entity.UserEntity;
-import com.back.catchmate.inquiry.domain.enums.InquiryType;
+import com.back.catchmate.inquiry.domain.model.InquiryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -23,19 +19,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "inquiries")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Table(name = "inquiries")
 public class InquiryEntity extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private UserEntity user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(columnDefinition = "TEXT")
     private String content;
@@ -52,7 +47,7 @@ public class InquiryEntity extends BaseTimeEntity {
     public static InquiryEntity from(Inquiry inquiry) {
         return InquiryEntity.builder()
                 .id(inquiry.getId())
-                .user(UserEntity.builder().id(inquiry.getUserId()).build())
+                .userId(inquiry.getUserId())
                 .content(inquiry.getContent())
                 .answer(inquiry.getAnswer())
                 .status(inquiry.getStatus())
@@ -60,10 +55,10 @@ public class InquiryEntity extends BaseTimeEntity {
                 .build();
     }
 
-    public Inquiry toModel() {
+    public Inquiry toDomain() {
         return Inquiry.builder()
                 .id(this.id)
-                .userId(this.user.getId())
+                .userId(this.userId)
                 .type(this.type)
                 .content(this.content)
                 .answer(this.answer)

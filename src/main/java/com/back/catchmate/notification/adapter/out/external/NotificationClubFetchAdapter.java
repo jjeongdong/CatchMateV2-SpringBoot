@@ -1,8 +1,9 @@
 package com.back.catchmate.notification.adapter.out.external;
 
-import com.back.catchmate.club.application.service.ClubService;
-import com.back.catchmate.club.domain.model.Club;
-import com.back.catchmate.notification.application.port.out.ClubFetchPort;
+import com.back.catchmate.club.application.dto.response.ClubInternalResponse;
+import com.back.catchmate.club.application.port.in.ClubInternalQueryUseCase;
+import com.back.catchmate.notification.application.port.out.dto.NotificationClubInfo;
+import com.back.catchmate.notification.application.port.out.external.ClubFetchPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,15 +12,24 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class NotificationClubFetchAdapter implements ClubFetchPort {
-    private final ClubService clubService;
+    private final ClubInternalQueryUseCase clubInternalQueryUseCase;
 
     @Override
-    public Club getClub(Long clubId) {
-        return clubService.getClub(clubId);
+    public NotificationClubInfo getClub(Long clubId) {
+        return fromInternalResponse(clubInternalQueryUseCase.getClub(clubId));
     }
 
     @Override
-    public List<Club> getClubs(List<Long> clubIds) {
-        return clubService.getClubs(clubIds);
+    public List<NotificationClubInfo> getClubs(List<Long> clubIds) {
+        return clubInternalQueryUseCase.getClubs(clubIds).stream()
+                .map(this::fromInternalResponse)
+                .toList();
+    }
+
+    private NotificationClubInfo fromInternalResponse(ClubInternalResponse response) {
+        return new NotificationClubInfo(
+                response.clubId(),
+                response.name()
+        );
     }
 }

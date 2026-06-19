@@ -15,19 +15,21 @@ Controller → Request → Command → UseCase 인터페이스 → ApplicationSe
 @RestController
 @RequiredArgsConstructor
 public class BoardController {
-    private final BoardUseCase boardUseCase;        // 인터페이스만
+    private final BoardClientCommandUseCase boardClientCommandUseCase;   // 인터페이스만
 
     @PostMapping("/boards")
     public ResponseEntity<BoardCreateResponse> createBoard(
             @AuthUser Long userId,
             @RequestBody @Valid BoardCreateRequest request) {
-        return ResponseEntity.ok(boardUseCase.createBoard(userId, request.toCommand(userId)));
+        return ResponseEntity.ok(boardClientCommandUseCase.createBoard(userId, request.toCommand(userId)));
     }
 }
 
 // application/port/in
-public interface BoardUseCase {
+public interface BoardClientCommandUseCase {
     BoardCreateResponse createBoard(Long userId, BoardCreateCommand command);
+}
+public interface BoardClientQueryUseCase {
     BoardDetailResponse getBoard(Long userId, Long boardId);
 }
 
@@ -35,7 +37,7 @@ public interface BoardUseCase {
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class BoardService implements BoardUseCase {
+public class BoardClientCommandService implements BoardClientCommandUseCase {
     private final BoardRepository boardRepository;
     private final UserFetchPort userFetchPort;
     private final ApplicationEventPublisher publisher;
@@ -65,17 +67,17 @@ public interface UserFetchPort {
 @Component
 @RequiredArgsConstructor
 public class BoardUserFetchAdapter implements UserFetchPort {
-    private final UserService userService;          // 다른 컨텍스트 의존은 여기 하나만
+    private final UserInternalQueryUseCase userInternalQueryUseCase;          // 다른 컨텍스트 의존은 여기 하나만
     @Override
     public User getUser(Long userId) {
-        return userService.getUser(userId);
+        return userInternalQueryUseCase.getUser(userId);
     }
 }
 
-// 3. board/application/service/BoardService.java
+// 3. board/application/service/BoardClientCommandService.java
 @Service
 @RequiredArgsConstructor
-public class BoardService implements BoardUseCase {
+public class BoardClientCommandService implements BoardClientCommandUseCase {
     private final UserFetchPort userFetchPort;     // 인터페이스에만 의존
     // ...
 }

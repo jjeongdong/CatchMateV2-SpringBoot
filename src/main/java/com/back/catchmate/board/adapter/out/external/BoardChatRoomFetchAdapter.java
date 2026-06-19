@@ -1,26 +1,19 @@
 package com.back.catchmate.board.adapter.out.external;
 
-import com.back.catchmate.board.application.port.out.ChatRoomFetchPort;
-import com.back.catchmate.chat.application.service.ChatRoomMemberService;
-import com.back.catchmate.chat.application.service.ChatRoomService;
-import com.back.catchmate.chat.domain.model.ChatRoom;
-import com.back.catchmate.chat.domain.model.ChatRoomMember;
+import com.back.catchmate.board.application.port.out.external.ChatRoomFetchPort;
+import com.back.catchmate.chat.application.port.in.ChatInternalQueryUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class BoardChatRoomFetchAdapter implements ChatRoomFetchPort {
-    private final ChatRoomService chatRoomService;
-    private final ChatRoomMemberService chatRoomMemberService;
+    private final ChatInternalQueryUseCase chatInternalQueryUseCase;
 
     @Override
-    public ChatRoom getOrCreateChatRoom(Long boardId) {
-        return chatRoomService.getOrCreateChatRoom(boardId);
-    }
-
-    @Override
-    public ChatRoomMember addMember(ChatRoom chatRoom, Long userId) {
-        return chatRoomMemberService.addMember(chatRoom, userId);
+    public Optional<Long> findChatRoomIdByBoardId(Long boardId) {
+        return chatInternalQueryUseCase.findChatRoomIdByBoardId(boardId);
     }
 }

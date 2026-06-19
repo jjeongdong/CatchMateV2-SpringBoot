@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.back.catchmate.chat.adapter.out.persistence.entity.QChatMessageEntity.chatMessageEntity;
-import static com.back.catchmate.user.adapter.out.persistence.entity.QUserEntity.userEntity;
 
 @Component
 @RequiredArgsConstructor
@@ -39,20 +38,18 @@ public class QueryDslChatMessageRepository {
 
         List<ChatMessageEntity> entities = jpaQueryFactory
                 .selectFrom(chatMessageEntity)
-                .join(chatMessageEntity.sender, userEntity).fetchJoin()
                 .where(chatMessageEntity.id.in(messageIds))
                 .orderBy(chatMessageEntity.id.asc())
                 .fetch();
 
         return entities.stream()
-                .map(ChatMessageEntity::toModel)
+                .map(ChatMessageEntity::toDomain)
                 .toList();
     }
 
     public List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size) {
         return jpaQueryFactory
                 .selectFrom(chatMessageEntity)
-                .join(chatMessageEntity.sender, userEntity).fetchJoin()
                 .where(
                         chatMessageEntity.chatRoom.id.eq(roomId),
                         gtMessageId(lastMessageId)
@@ -61,7 +58,7 @@ public class QueryDslChatMessageRepository {
                 .limit(size)
                 .fetch()
                 .stream()
-                .map(ChatMessageEntity::toModel)
+                .map(ChatMessageEntity::toDomain)
                 .toList();
     }
 
@@ -87,12 +84,12 @@ public class QueryDslChatMessageRepository {
 
         List<ChatMessageEntity> entities = jpaQueryFactory
                 .selectFrom(chatMessageEntity)
-                .join(chatMessageEntity.sender, userEntity).fetchJoin()
+                .join(chatMessageEntity.chatRoom).fetchJoin()
                 .where(chatMessageEntity.id.in(messageIds))
                 .fetch();
 
         return entities.stream()
-                .map(ChatMessageEntity::toModel)
+                .map(ChatMessageEntity::toDomain)
                 .collect(Collectors.toMap(
                         ChatMessage::getChatRoomId,
                         msg -> msg

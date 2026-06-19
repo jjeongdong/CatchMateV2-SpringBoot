@@ -1,8 +1,8 @@
 package com.back.catchmate.chat.application.event;
 
+import com.back.catchmate.chat.application.port.out.dto.ChatUserInfo;
 import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
-import com.back.catchmate.user.domain.model.User;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 
@@ -24,13 +24,13 @@ public record ChatMessageEvent(
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
         LocalDateTime createdAt
 ) {
-    public static ChatMessageEvent from(ChatMessage domain, User sender) {
+    public static ChatMessageEvent from(ChatMessage domain, ChatUserInfo sender) {
         return ChatMessageEvent.builder()
                 .messageId(domain.getId())
                 .roomId(domain.getChatRoomId())
                 .senderId(domain.getSenderId())
-                .senderNickname(sender != null ? sender.getNickName() : null)
-                .senderProfileImage(sender != null ? sender.getProfileImageUrl() : null)
+                .senderNickname(sender != null ? sender.nickName() : null)
+                .senderProfileImage(sender != null ? sender.profileImageUrl() : null)
                 .content(domain.getContent())
                 .messageType(domain.getMessageType())
                 .createdAt(domain.getCreatedAt())

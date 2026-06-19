@@ -1,9 +1,7 @@
 package com.back.catchmate.inquiry.domain.model;
 
-import com.back.catchmate.global.authorization.common.ResourceOwnership;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.inquiry.domain.enums.InquiryType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Inquiry implements ResourceOwnership {
+public class Inquiry {
     private Long id;
     private Long userId;
     private InquiryType type;
@@ -41,10 +39,5 @@ public class Inquiry implements ResourceOwnership {
         }
         this.answer = answer;
         this.status = InquiryStatus.ANSWERED;
-    }
-
-    @Override
-    public Long getOwnershipId() {
-        return userId;
     }
 }

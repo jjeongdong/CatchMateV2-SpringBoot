@@ -1,10 +1,7 @@
 package com.back.catchmate.board.domain.model;
 
-import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-
-import java.util.Optional;
 
 @Getter
 @RequiredArgsConstructor
@@ -16,17 +13,22 @@ public enum BoardButtonStatus {
 
     private final String description;
 
-    public static BoardButtonStatus resolve(Long requestingUserId, Board board, Optional<AcceptStatus> enrollAcceptStatus) {
+    public static BoardButtonStatus resolve(Long requestingUserId, Board board, String enrollAcceptStatus) {
+        // 1. 게시글 작성자 본인인 경우
         if (board.getUserId().equals(requestingUserId)) {
             return VIEW_CHAT;
         }
-        if (enrollAcceptStatus.isEmpty()) {
+
+        // 2. 신청 내역이 아예 없는 경우 (호출부에서 null을 넘김)
+        if (enrollAcceptStatus == null) {
             return APPLY;
         }
-        return switch (enrollAcceptStatus.get()) {
-            case ACCEPTED -> VIEW_CHAT;
-            case PENDING -> CANCEL;
-            case REJECTED -> REJECTED;
+
+        // 3. 신청 내역이 있는 경우, 상태에 따라 버튼 매핑
+        return switch (enrollAcceptStatus) {
+            case "ACCEPTED" -> VIEW_CHAT;
+            case "PENDING" -> CANCEL;
+            case "REJECTED" -> REJECTED;
             default -> APPLY;
         };
     }

@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "oauth")
 public class OAuthProperties {
     private ProviderProps kakao = new ProviderProps();
+    private ProviderProps google = new ProviderProps();
 
     @Getter
     @Setter

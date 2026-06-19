@@ -19,4 +19,12 @@ public class PagedResponse<T> {
         this.totalElements = page.getTotalElements();
         this.hasNext = page.hasNext();
     }
+
+    public PagedResponse(PagedResponse<?> source, List<T> content) {
+        this.content = content;
+        this.pageNumber = source.pageNumber;
+        this.totalPages = source.totalPages;
+        this.totalElements = source.totalElements;
+        this.hasNext = source.hasNext;
+    }
 }

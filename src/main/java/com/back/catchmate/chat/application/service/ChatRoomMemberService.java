@@ -1,18 +1,20 @@
 package com.back.catchmate.chat.application.service;
 
-import com.back.catchmate.chat.application.port.out.ChatRoomMemberRepository;
+import com.back.catchmate.chat.application.port.out.persistence.ChatRoomMemberRepository;
 import com.back.catchmate.chat.domain.model.ChatRoom;
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ChatRoomMemberService {
 
@@ -21,6 +23,7 @@ public class ChatRoomMemberService {
     /**
      * 채팅방 멤버 추가
      */
+    @Transactional
     public ChatRoomMember addMember(ChatRoom chatRoom, Long userId) {
         // 이미 멤버인지 확인
         Optional<ChatRoomMember> existing = chatRoomMemberRepository
@@ -48,6 +51,7 @@ public class ChatRoomMemberService {
     /**
      * 채팅방 멤버 퇴장
      */
+    @Transactional
     public void removeMember(Long chatRoomId, Long userId) {
         ChatRoomMember member = chatRoomMemberRepository
                 .findByChatRoomIdAndUserId(chatRoomId, userId)
@@ -106,6 +110,7 @@ public class ChatRoomMemberService {
     /**
      * 멤버별 알림 수신 설정 변경
      */
+    @Transactional
     public void updateNotificationSetting(Long chatRoomId, Long userId, boolean isOn) {
         ChatRoomMember member = getChatRoomMember(chatRoomId, userId);
         member.updateNotificationSetting(isOn);

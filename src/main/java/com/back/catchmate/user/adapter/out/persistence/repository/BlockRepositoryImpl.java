@@ -1,7 +1,7 @@
 package com.back.catchmate.user.adapter.out.persistence.repository;
 
 import com.back.catchmate.user.adapter.out.persistence.entity.BlockEntity;
-import com.back.catchmate.user.application.port.out.BlockRepository;
+import com.back.catchmate.user.application.port.out.persistence.BlockRepository;
 import com.back.catchmate.user.domain.model.Block;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,30 +22,29 @@ public class BlockRepositoryImpl implements BlockRepository {
     @Override
     public Block save(Block block) {
         BlockEntity entity = BlockEntity.from(block);
-        return jpaBlockRepository.save(entity).toModel();
+        return jpaBlockRepository.save(entity).toDomain();
     }
 
     @Override
     public Optional<Block> findByBlockerIdAndBlockedId(Long blockerId, Long blockedId) {
         return jpaBlockRepository.findByBlockerIdAndBlockedId(blockerId, blockedId)
-                .map(BlockEntity::toModel);
+                .map(BlockEntity::toDomain);
     }
 
     @Override
-    public Page<Block> findAllByBlockerId(Long blockerId, Pageable domainPageable) {
-        Pageable pageable = PageRequest.of(
-                domainPageable.getPageNumber(),
-                domainPageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
-
+    public Page<Block> findAllByBlockerId(Long blockerId, Pageable pageable) {
         Page<BlockEntity> entityPage = jpaBlockRepository.findAllByBlockerId(blockerId, pageable);
 
         List<Block> domains = entityPage.getContent().stream()
-                .map(BlockEntity::toModel)
+                .map(BlockEntity::toDomain)
                 .toList();
 
-        return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
+        PageRequest sortedPageRequest = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        return new PageImpl<>(domains, sortedPageRequest, entityPage.getTotalElements());
     }
 
     @Override
@@ -60,7 +59,6 @@ public class BlockRepositoryImpl implements BlockRepository {
 
     @Override
     public void delete(Block block) {
-        BlockEntity entity = BlockEntity.from(block);
-        jpaBlockRepository.delete(entity);
+        jpaBlockRepository.deleteById(block.getId());
     }
 }

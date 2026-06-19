@@ -1,6 +1,6 @@
 package com.back.catchmate.club.adapter.out.persistence.repository;
 
-import com.back.catchmate.club.application.port.out.ClubRepository;
+import com.back.catchmate.club.application.port.out.persistence.ClubRepository;
 import com.back.catchmate.club.adapter.out.persistence.entity.ClubEntity;
 import com.back.catchmate.club.domain.model.Club;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,14 @@ public class ClubRepositoryImpl implements ClubRepository {
 
     @Override
     public Optional<Club> findById(Long id) {
-        return jpaClubRepository.findById(id).map(ClubEntity::toDomain);
+        return jpaClubRepository.findById(id)
+                .map(ClubEntity::toDomain);
+    }
+
+    @Override
+    public Optional<Club> findByName(String name) {
+        return jpaClubRepository.findByName(name)
+                .map(ClubEntity::toDomain);
     }
 
     @Override

@@ -1,48 +1,36 @@
 package com.back.catchmate.admin.adapter.out.external;
 
-import com.back.catchmate.admin.application.port.out.NoticeFetchPort;
-import com.back.catchmate.common.response.PagedResponse;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import com.back.catchmate.notice.application.dto.response.NoticeResponse;
-import com.back.catchmate.notice.application.service.NoticeService;
-import com.back.catchmate.notice.domain.model.Notice;
+import com.back.catchmate.admin.application.port.out.dto.AdminNoticeInfo;
+import com.back.catchmate.admin.application.port.out.external.NoticeFetchPort;
+import com.back.catchmate.notice.application.dto.response.NoticeInternalResponse;
+import com.back.catchmate.notice.application.port.in.NoticeAdminQueryUseCase;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class AdminNoticeFetchAdapter implements NoticeFetchPort {
-    private final NoticeService noticeService;
+    private final NoticeAdminQueryUseCase noticeAdminQueryUseCase;
 
     @Override
-    public Notice createNotice(Long writerId, String title, String content) {
-        return noticeService.createNotice(writerId, title, content);
+    public AdminNoticeInfo getNotice(Long noticeId) {
+        return fromInternalResponse(noticeAdminQueryUseCase.getNotice(noticeId));
     }
 
     @Override
-    public void deleteNotice(Notice notice) {
-        noticeService.deleteNotice(notice);
+    public Page<AdminNoticeInfo> getNoticeList(Pageable pageable) {
+        return noticeAdminQueryUseCase.getNoticeList(pageable).map(this::fromInternalResponse);
     }
 
-    @Override
-    public Notice getNoticeEntity(Long noticeId) {
-        return noticeService.getNoticeEntity(noticeId);
-    }
-
-    @Override
-    public PagedResponse<NoticeResponse> getNoticeList(int page, int size) {
-        return noticeService.getNoticeList(page, size);
-    }
-
-    @Override
-    public Page<Notice> getNoticeList(Pageable pageable) {
-        return noticeService.getNoticeList(pageable);
-    }
-
-    @Override
-    public Notice updateNotice(Notice notice) {
-        return noticeService.updateNotice(notice);
+    private AdminNoticeInfo fromInternalResponse(NoticeInternalResponse response) {
+        return new AdminNoticeInfo(
+                response.noticeId(),
+                response.writerId(),
+                response.title(),
+                response.content(),
+                response.createdAt()
+        );
     }
 }

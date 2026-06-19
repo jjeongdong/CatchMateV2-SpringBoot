@@ -41,14 +41,4 @@ public class ChatRoom {
     public void updateImageUrl(String chatRoomImageUrl) {
         this.chatRoomImageUrl = chatRoomImageUrl;
     }
-
-    // 삭제 메서드
-    public void delete() {
-        this.deletedAt = LocalDateTime.now();
-    }
-
-    // 삭제 여부 확인
-    public boolean isDeleted() {
-        return this.deletedAt != null;
-    }
 }

@@ -1,11 +1,12 @@
 package com.back.catchmate.game.adapter.out.persistence.repository;
 
 import com.back.catchmate.game.adapter.out.persistence.entity.GameEntity;
-import com.back.catchmate.game.application.port.out.GameRepository;
+import com.back.catchmate.game.application.port.out.persistence.GameRepository;
 import com.back.catchmate.game.domain.model.Game;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +18,7 @@ public class GameRepositoryImpl implements GameRepository {
 
     @Override
     public Game save(Game game) {
-        GameEntity entity = GameEntity.fromDomain(game);
+        GameEntity entity = GameEntity.from(game);
         return jpaGameRepository.save(entity).toDomain();
     }
 
@@ -40,8 +41,16 @@ public class GameRepositoryImpl implements GameRepository {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
+
         return jpaGameRepository.findAllById(ids).stream()
                 .map(GameEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public List<Long> findIdsByGameStartDateOn(LocalDate gameDate) {
+        LocalDateTime start = gameDate.atStartOfDay();
+        LocalDateTime end = gameDate.plusDays(1).atStartOfDay();
+        return jpaGameRepository.findIdsByGameStartDateBetween(start, end);
     }
 }

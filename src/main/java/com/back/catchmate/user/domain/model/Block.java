@@ -20,7 +20,7 @@ public class Block {
     private Long blockedId;
 
     public static Block createBlock(Long blockerId, Long blockedId) {
-        if (Objects.equals(blockerId, blockedId)) {
+        if (blockerId.equals(blockedId)) {
             throw new BaseException(ErrorCode.SELF_BLOCK_FAILED);
         }
         return Block.builder()

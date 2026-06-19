@@ -13,8 +13,8 @@ globs: "**/*.java"
 |:---|:---|:---|:---|
 | Controller | `{Domain}Controller` | `BoardController` | `{ctx}.adapter.in.web.controller` |
 | WebSocket Listener | `{Domain}WebSocketSessionEventListener` | `ChatWebSocketSessionEventListener` | `{ctx}.adapter.in.websocket` |
-| Input Port (UseCase) | `{Domain}UseCase` | `BoardUseCase` | `{ctx}.application.port.in` |
-| Service (UseCase 구현) | `{Domain}Service` | `BoardService` | `{ctx}.application.service` |
+| Input Port (UseCase) | `{Domain}{Client/Internal/Admin}{Command/Query}UseCase` | `BoardClientCommandUseCase` | `{ctx}.application.port.in` |
+| Service (UseCase 구현) | `{Domain}{Client/Internal/Admin?}{Command/Query?}Service` | `BoardClientCommandService` | `{ctx}.application.service` |
 | Aggregate Service (서브) | `{Aggregate}Service` | `ChatRoomService`, `BlockService` | `{ctx}.application.service` |
 | Event | `{Domain}{Action}Event` | `EnrollNotificationEvent` | `{ctx}.application.event` |
 | Event Listener | `{Domain}{Action}EventListener` | `EnrollNotificationEventListener` | `{ctx}.application.event` |
@@ -63,21 +63,31 @@ public Optional<Enroll> findEnroll(Long id) {
 }
 ```
 
-## 3. Entity ↔ Domain 모델 변환
+## 3. Entity ↔ Domain ↔ DTO 변환
 
+### Entity ↔ Domain
 - JPA Entity (`{ctx}.adapter.out.persistence.entity`) ↔ Domain 모델 (`{ctx}.domain.model`) 분리.
 - 변환: `Entity.toModel()`, `Entity.from(domain)` — Entity 내부.
 
+### Domain ↔ DTO (Response)
+- DTO(record) 의 `from(Domain)` 정적 팩토리에서 **자기 컨텍스트의 도메인 모델** import 는 허용합니다. Service 의 private 매퍼로 강제 분리하지 않습니다.
+- **다른 컨텍스트의 도메인 모델은 DTO 에 import 금지** ([#6 Cross-Context DTO 격리](#) 참조 — Anti-Corruption Layer).
+
 ```java
-@Entity
-public class BoardEntity extends BaseEntity {
-    public Board toModel() {
-        return Board.builder().id(this.id).title(this.title).build();
+// ✅ 자기 컨텍스트 도메인 매핑은 DTO 안에서 OK
+public record BoardDetailResponse(Long boardId, String title, ...) {
+    public static BoardDetailResponse from(Board board) {
+        return new BoardDetailResponse(board.getId(), board.getTitle(), ...);
     }
-    public static BoardEntity from(Board board) {
-        BoardEntity e = new BoardEntity();
-        e.title = board.getTitle();
-        return e;
+}
+
+// 또는 Service 안에서 매핑해도 OK — 취향
+@Service
+public class BoardClientQueryService implements BoardClientQueryUseCase {
+    @Override
+    public BoardDetailResponse getBoard(Long userId, Long id) {
+        Board board = boardReader.getBoard(id);
+        return BoardDetailResponse.from(board);
     }
 }
 ```

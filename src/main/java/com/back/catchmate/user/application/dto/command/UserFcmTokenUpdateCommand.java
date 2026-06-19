@@ -2,6 +2,7 @@ package com.back.catchmate.user.application.dto.command;
 
 
 public record UserFcmTokenUpdateCommand(
+        Long userId,
         String fcmToken
 ) {
 }

@@ -1,7 +1,7 @@
 package com.back.catchmate.chat.adapter.in.websocket;
 
-import com.back.catchmate.chat.application.port.in.ChatUseCase;
-import com.back.catchmate.user.application.port.in.UserOnlineStatusUseCase;
+import com.back.catchmate.chat.application.port.in.ChatClientCommandUseCase;
+import com.back.catchmate.chat.application.port.out.external.UserOnlineStatusCommandPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -20,8 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @RequiredArgsConstructor
 public class ChatWebSocketSessionEventListener {
-    private final ChatUseCase chatOrchestrator;
-    private final UserOnlineStatusUseCase userOnlineStatusOrchestrator;
+    private final ChatClientCommandUseCase chatClientCommandUseCase;
+    private final UserOnlineStatusCommandPort userOnlineStatusCommandPort;
 
     /**
      * WebSocket 연결 성공
@@ -32,10 +32,10 @@ public class ChatWebSocketSessionEventListener {
         Long userId = extractUserId(headerAccessor);
 
         if (userId != null) {
-            userOnlineStatusOrchestrator.setUserOnline(userId);
+            userOnlineStatusCommandPort.setUserOnline(userId);
             // 이전 세션에서 비정상 종료로 남은 stale focus room 을 새 연결 시점에 초기화한다.
             // 채팅방 안이면 직후의 SUBSCRIBE 가 다시 focus 를 설정한다.
-            userOnlineStatusOrchestrator.removeUserFocusRoom(userId);
+            userOnlineStatusCommandPort.removeUserFocusRoom(userId);
             log.info("WebSocket connected - User {} set to ONLINE (focus reset)", userId);
         }
     }
@@ -50,9 +50,9 @@ public class ChatWebSocketSessionEventListener {
 
         if (userId != null) {
             // 온라인 상태 해제
-            userOnlineStatusOrchestrator.setUserOffline(userId);
+            userOnlineStatusCommandPort.setUserOffline(userId);
             // 포커스 룸 정보 제거
-            userOnlineStatusOrchestrator.removeUserFocusRoom(userId);
+            userOnlineStatusCommandPort.removeUserFocusRoom(userId);
             log.info("WebSocket disconnected - User {} set to OFFLINE", userId);
         }
     }
@@ -69,8 +69,8 @@ public class ChatWebSocketSessionEventListener {
         if (userId != null && destination != null && destination.contains("/chat/room/")) {
             Long roomId = extractRoomIdFromDestination(destination);
             if (roomId != null) {
-                chatOrchestrator.readChatRoom(userId, roomId);
-                userOnlineStatusOrchestrator.setUserFocusRoom(userId, roomId);
+                chatClientCommandUseCase.readChatRoom(userId, roomId);
+                userOnlineStatusCommandPort.setUserFocusRoom(userId, roomId);
                 log.info("User {} is focusing room {}", userId, roomId);
             }
         }
@@ -85,7 +85,7 @@ public class ChatWebSocketSessionEventListener {
         Long userId = extractUserId(headerAccessor);
 
         if (userId != null) {
-            userOnlineStatusOrchestrator.removeUserFocusRoom(userId);
+            userOnlineStatusCommandPort.removeUserFocusRoom(userId);
             log.info("User {} left the room (Focus removed)", userId);
         }
     }

@@ -1,7 +1,7 @@
 package com.back.catchmate.enroll.adapter.out.persistence.repository;
 
 import com.back.catchmate.enroll.adapter.out.persistence.entity.EnrollEntity;
-import com.back.catchmate.enroll.application.port.out.EnrollRepository;
+import com.back.catchmate.enroll.application.port.out.persistence.EnrollRepository;
 import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import com.back.catchmate.enroll.domain.model.Enroll;
 import org.springframework.data.domain.Page;
@@ -27,19 +27,19 @@ public class EnrollRepositoryImpl implements EnrollRepository {
     @Override
     public Enroll save(Enroll enroll) {
         EnrollEntity entity = EnrollEntity.from(enroll);
-        return jpaEnrollRepository.save(entity).toModel();
+        return jpaEnrollRepository.save(entity).toDomain();
     }
 
     @Override
     public Optional<Enroll> findById(Long id) {
         return jpaEnrollRepository.findById(id)
-                .map(EnrollEntity::toModel);
+                .map(EnrollEntity::toDomain);
     }
 
     @Override
     public Optional<Enroll> findByUserIdAndBoardId(Long userId, Long boardId) {
         return jpaEnrollRepository.findByUserIdAndBoardId(userId, boardId)
-                .map(EnrollEntity::toModel);
+                .map(EnrollEntity::toDomain);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class EnrollRepositoryImpl implements EnrollRepository {
         Page<EnrollEntity> entityPage = jpaEnrollRepository.findAllByUserId(userId, pageable);
 
         List<Enroll> domains = entityPage.getContent().stream()
-                .map(EnrollEntity::toModel)
+                .map(EnrollEntity::toDomain)
                 .toList();
 
         return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
@@ -67,10 +67,10 @@ public class EnrollRepositoryImpl implements EnrollRepository {
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        Page<EnrollEntity> entityPage = jpaEnrollRepository.findAllByBoardId(boardId, status, pageable);
+        Page<EnrollEntity> entityPage = jpaEnrollRepository.findAllByBoardIdAndAcceptStatus(boardId, status, pageable);
 
         List<Enroll> domains = entityPage.getContent().stream()
-                .map(EnrollEntity::toModel)
+                .map(EnrollEntity::toDomain)
                 .collect(Collectors.toList());
 
         return new PageImpl<>(domains, pageable, entityPage.getTotalElements());
@@ -83,7 +83,7 @@ public class EnrollRepositoryImpl implements EnrollRepository {
                 pageable.getPageSize()
         );
 
-        Page<Long> idPage = jpaEnrollRepository.findDistinctBoardIdsByUserIdAndStatus(
+        Page<Long> idPage = jpaEnrollRepository.findDistinctBoardIdsByOwnerIdAndStatus(
                 userId, AcceptStatus.PENDING, springPageable
         );
 
@@ -96,7 +96,7 @@ public class EnrollRepositoryImpl implements EnrollRepository {
 
         return jpaEnrollRepository.findAllByBoardIdInAndStatus(boardIds, AcceptStatus.PENDING)
                 .stream()
-                .map(EnrollEntity::toModel)
+                .map(EnrollEntity::toDomain)
                 .collect(Collectors.toList());
     }
 
@@ -104,7 +104,7 @@ public class EnrollRepositoryImpl implements EnrollRepository {
     public List<Enroll> findAllByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) return Collections.emptyList();
         return jpaEnrollRepository.findAllById(ids).stream()
-                .map(EnrollEntity::toModel)
+                .map(EnrollEntity::toDomain)
                 .collect(Collectors.toList());
     }
 
@@ -124,21 +124,15 @@ public class EnrollRepositoryImpl implements EnrollRepository {
     }
 
     @Override
-    public Optional<Enroll> findByIdWithFetch(Long id) {
-        return jpaEnrollRepository.findByIdWithFetch(id)
-                .map(EnrollEntity::toModel);
-    }
-
-    @Override
     public long countByBoardWriterAndStatus(Long userId, AcceptStatus status) {
-        return jpaEnrollRepository.countByBoardUserIdAndAcceptStatus(userId, status);
+        return jpaEnrollRepository.countByBoardOwnerIdAndAcceptStatus(userId, status);
     }
 
     @Override
     public List<Enroll> findAllByApplicantAndBoardOwnerAndStatus(Long applicantId, Long ownerId, AcceptStatus status) {
         return jpaEnrollRepository.findAllByApplicantIdAndBoardOwnerIdAndStatus(applicantId, ownerId, status)
                 .stream()
-                .map(EnrollEntity::toModel)
+                .map(EnrollEntity::toDomain)
                 .toList();
     }
 

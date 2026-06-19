@@ -1,6 +1,7 @@
 package com.back.catchmate.admin.application.dto.response;
 
-import com.back.catchmate.notice.domain.model.Notice;
+import com.back.catchmate.admin.application.port.out.dto.AdminNoticeInfo;
+
 import java.time.LocalDateTime;
 
 public record AdminNoticeDetailResponse(
@@ -10,13 +11,13 @@ public record AdminNoticeDetailResponse(
         String writerNickname,
         LocalDateTime createdAt
 ) {
-    public static AdminNoticeDetailResponse from(Notice notice, String writerNickname) {
+    public static AdminNoticeDetailResponse from(AdminNoticeInfo notice, String writerNickname) {
         return new AdminNoticeDetailResponse(
-                notice.getId(),
-                notice.getTitle(),
-                notice.getContent(),
+                notice.noticeId(),
+                notice.title(),
+                notice.content(),
                 writerNickname,
-                notice.getCreatedAt()
+                notice.createdAt()
         );
     }
 }

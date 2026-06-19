@@ -2,7 +2,7 @@ package com.back.catchmate.report.adapter.in.web.dto.request;
 
 import com.back.catchmate.report.application.dto.command.ReportCreateCommand;
 import jakarta.validation.constraints.NotNull;
-import com.back.catchmate.report.domain.enums.ReportReason;
+import com.back.catchmate.report.domain.model.ReportReason;
 
 public record ReportCreateRequest(
         @NotNull(message = "신고할 유저 ID는 필수입니다.") Long reportedUserId,

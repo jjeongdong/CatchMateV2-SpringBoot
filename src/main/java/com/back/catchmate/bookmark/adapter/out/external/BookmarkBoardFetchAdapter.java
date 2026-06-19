@@ -1,38 +1,35 @@
 package com.back.catchmate.bookmark.adapter.out.external;
 
-import com.back.catchmate.board.application.dto.response.BoardDetailResponse;
-import com.back.catchmate.board.application.dto.response.BoardResponse;
-import com.back.catchmate.board.application.service.BoardService;
-import com.back.catchmate.board.domain.model.Board;
-import com.back.catchmate.bookmark.application.port.out.BoardFetchPort;
+import com.back.catchmate.board.application.dto.response.BoardInternalResponse;
+import com.back.catchmate.board.application.port.in.BoardInternalQueryUseCase;
+import com.back.catchmate.bookmark.application.port.out.external.BoardFetchPort;
+import com.back.catchmate.bookmark.application.port.out.dto.BookmarkBoardInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class BookmarkBoardFetchAdapter implements BoardFetchPort {
-    private final BoardService boardService;
+    private final BoardInternalQueryUseCase boardInternalQueryUseCase;
 
     @Override
-    public BoardDetailResponse getBoard(Long userId, Long boardId) {
-        return boardService.getBoard(userId, boardId);
-    }
+    public List<BookmarkBoardInfo> getBoards(List<Long> boardIds) {
+        List<BoardInternalResponse> boards = boardInternalQueryUseCase.getBoards(boardIds);
 
-    @Override
-    public Board getBoard(Long boardId) {
-        return boardService.getBoard(boardId);
-    }
-
-    @Override
-    public List<Board> getBoards(List<Long> boardIds) {
-        return boardService.getBoards(boardIds);
-    }
-
-    @Override
-    public List<BoardResponse> buildBoardResponses(List<Board> boards, Predicate<Long> bookmarkedPredicate) {
-        return boardService.buildBoardResponses(boards, bookmarkedPredicate);
+        return boards.stream()
+                .map(board -> new BookmarkBoardInfo(
+                        board.boardId(),
+                        board.userId(),
+                        board.gameId(),
+                        board.cheerClubId(),
+                        board.title(),
+                        board.content(),
+                        board.currentPerson(),
+                        board.maxPerson()
+                ))
+                .collect(Collectors.toList());
     }
 }

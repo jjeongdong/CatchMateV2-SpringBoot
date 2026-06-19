@@ -8,14 +8,11 @@ public record UserProfileUpdateRequest(
         Long favoriteClubId,
         String watchStyle
 ) {
-    public static UserProfileUpdateCommand toCommand(UserProfileUpdateRequest request) {
-        if (request == null) {
-            return new UserProfileUpdateCommand(null, null, null);
-        }
-        return request.toCommand();
-    }
-
-    private UserProfileUpdateCommand toCommand() {
-        return new UserProfileUpdateCommand(nickName, watchStyle, favoriteClubId);
+    public UserProfileUpdateCommand toCommand() {
+        return new UserProfileUpdateCommand(
+                this.nickName,
+                this.watchStyle,
+                this.favoriteClubId
+        );
     }
 }

@@ -12,8 +12,7 @@ public class CursorPage<T> {
     private final Long nextCursorId;
     private final LocalDateTime nextCursorDateTime;
 
-    public CursorPage(List<T> content, boolean hasNext,
-                      Long nextCursorId, LocalDateTime nextCursorDateTime) {
+    public CursorPage(List<T> content, boolean hasNext, Long nextCursorId, LocalDateTime nextCursorDateTime) {
         this.content = content;
         this.hasNext = hasNext;
         this.nextCursorId = nextCursorId;

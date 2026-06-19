@@ -28,16 +28,6 @@ public class Game {
                 .build();
     }
 
-    public void update(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {
-        this.homeClubId = homeClubId;
-        this.awayClubId = awayClubId;
-        this.gameStartDate = gameStartDate;
-        this.location = location;
-    }
-
-    /**
-     * 게임 정보가 완전히 입력되었는지 확인하는 메서드
-     */
     public boolean isComplete() {
         return homeClubId != null && awayClubId != null && gameStartDate != null && location != null;
     }

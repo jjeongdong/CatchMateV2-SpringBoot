@@ -1,9 +1,9 @@
 package com.back.catchmate.notification.adapter.out.persistence.repository;
 
 import com.back.catchmate.notification.domain.model.NotificationOutbox;
-import com.back.catchmate.notification.application.port.out.NotificationOutboxRepository;
+import com.back.catchmate.notification.application.port.out.persistence.NotificationOutboxRepository;
 import com.back.catchmate.notification.adapter.out.persistence.entity.NotificationOutboxEntity;
-import com.back.catchmate.notification.domain.enums.OutboxStatus;
+import com.back.catchmate.notification.domain.model.OutboxStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -19,13 +19,13 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
     @Override
     public NotificationOutbox save(NotificationOutbox outbox) {
         NotificationOutboxEntity entity = NotificationOutboxEntity.from(outbox);
-        return jpaRepository.save(entity).toModel();
+        return jpaRepository.save(entity).toDomain();
     }
 
     @Override
     public List<NotificationOutbox> findAllPending(int maxRetryCount, int batchSize) {
         return jpaRepository.findAllForProcessing(OutboxStatus.PENDING, maxRetryCount, Pageable.ofSize(batchSize)).stream()
-                .map(NotificationOutboxEntity::toModel)
+                .map(NotificationOutboxEntity::toDomain)
                 .toList();
     }
 
@@ -33,13 +33,13 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
     @Override
     public List<NotificationOutbox> findAllPendingByRecipientId(Long recipientId) {
         return jpaRepository.findAllByRecipientIdAndStatusForProcessing(recipientId, OutboxStatus.PENDING).stream()
-                .map(NotificationOutboxEntity::toModel)
+                .map(NotificationOutboxEntity::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<NotificationOutbox> findById(Long id) {
         return jpaRepository.findById(id)
-                .map(NotificationOutboxEntity::toModel);
+                .map(NotificationOutboxEntity::toDomain);
     }
 }

@@ -1,7 +1,7 @@
 package com.back.catchmate.chat.application.dto.response;
 
+import com.back.catchmate.chat.application.port.out.dto.ChatUserInfo;
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
-import com.back.catchmate.user.domain.model.User;
 
 import java.time.LocalDateTime;
 
@@ -12,12 +12,12 @@ public record ChatRoomMemberResponse(
         String profileImageUrl,
         LocalDateTime joinedAt
 ) {
-    public static ChatRoomMemberResponse from(ChatRoomMember member, User user) {
+    public static ChatRoomMemberResponse from(ChatRoomMember member, ChatUserInfo user) {
         return new ChatRoomMemberResponse(
                 member.getId(),
-                user.getId(),
-                user.getNickName(),
-                user.getProfileImageUrl(),
+                user.userId(),
+                user.nickName(),
+                user.profileImageUrl(),
                 member.getJoinedAt()
         );
     }
