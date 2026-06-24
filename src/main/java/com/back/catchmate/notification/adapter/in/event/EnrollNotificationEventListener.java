@@ -4,6 +4,7 @@ import com.back.catchmate.enroll.application.event.EnrollAcceptedEvent;
 import com.back.catchmate.enroll.application.event.EnrollCancelledEvent;
 import com.back.catchmate.enroll.application.event.EnrollRejectedEvent;
 import com.back.catchmate.enroll.application.event.EnrollRequestedEvent;
+import com.back.catchmate.notification.application.port.in.EnrollNotificationDispatchUseCase;
 import com.back.catchmate.notification.application.port.in.EnrollNotificationUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
@@ -16,6 +17,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class EnrollNotificationEventListener {
     private final EnrollNotificationUseCase enrollNotificationUseCase;
+    private final EnrollNotificationDispatchUseCase enrollNotificationDispatchUseCase;
 
     @EventListener
     public void onSaveRequested(EnrollRequestedEvent event) {
@@ -45,34 +47,34 @@ public class EnrollNotificationEventListener {
         );
     }
 
-    @Async("taskExecutor")
+    @Async("notificationDispatchExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onDispatchRequested(EnrollRequestedEvent event) {
-        enrollNotificationUseCase.dispatchOnEnrollRequested(
+        enrollNotificationDispatchUseCase.dispatchOnEnrollRequested(
                 event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId()
         );
     }
 
-    @Async("taskExecutor")
+    @Async("notificationDispatchExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onDispatchAccepted(EnrollAcceptedEvent event) {
-        enrollNotificationUseCase.dispatchOnEnrollAccepted(
+        enrollNotificationDispatchUseCase.dispatchOnEnrollAccepted(
                 event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId()
         );
     }
 
-    @Async("taskExecutor")
+    @Async("notificationDispatchExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onDispatchRejected(EnrollRejectedEvent event) {
-        enrollNotificationUseCase.dispatchOnEnrollRejected(
+        enrollNotificationDispatchUseCase.dispatchOnEnrollRejected(
                 event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId()
         );
     }
 
-    @Async("taskExecutor")
+    @Async("notificationDispatchExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onDispatchCancelled(EnrollCancelledEvent event) {
-        enrollNotificationUseCase.dispatchOnEnrollCancelled(
+        enrollNotificationDispatchUseCase.dispatchOnEnrollCancelled(
                 event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId()
         );
     }

@@ -20,9 +20,9 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class OutboxDispatcher implements OutboxDispatchUseCase {
-    private final NotificationSenderPort notificationSenderPort;
-    private final OutboxStateTransitioner outboxStateTransitioner;
     private final ObjectMapper objectMapper;
+    private final OutboxStateTransitioner outboxStateTransitioner;
+    private final NotificationSenderPort notificationSenderPort;
     private final UserOnlineStatusFetchPort userOnlineStatusFetchPort;
 
     @Value("${notification.outbox.max-retry-count:5}")

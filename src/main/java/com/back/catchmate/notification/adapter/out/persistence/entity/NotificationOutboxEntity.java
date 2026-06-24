@@ -73,6 +73,7 @@ public class NotificationOutboxEntity extends BaseTimeEntity {
                 .retryCount(this.retryCount)
                 .status(this.status)
                 .errorMessage(this.errorMessage)
+                .createdAt(this.getCreatedAt())
                 .build();
     }
 }

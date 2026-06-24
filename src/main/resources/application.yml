@@ -12,12 +12,39 @@ notification:
     max-retry-count: 5
     scheduler-delay-ms: 60000
     batch-size: 50
+  # 알림 즉시발송 전용 executor. 과부하 시 즉시발송을 버리고(CallerRuns 금지) 스케줄러가 회수 → 웹 스레드 커넥션 데드락 방지.
+  dispatch:
+    executor:
+      core-pool-size: 50
+      max-pool-size: 50
+      queue-capacity: 1000
+
+# 모니터링 / 메트릭 (프로파일 공통). 노출 엔드포인트는 각 프로파일 yml 의 management.endpoints 에서 제어.
+management:
+  metrics:
+    tags:
+      application: catchmate
+    distribution:
+      # http.server.requests 와 outbox 지연(PENDING→SUCCESS)에 대해 히스토그램/백분위 버킷을 생성 → Prometheus 에서 p95/p99 집계 가능
+      percentiles-histogram:
+        http.server.requests: true
+        notification.outbox.latency: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+        notification.outbox.latency: 0.5, 0.95, 0.99
+      slo:
+        http.server.requests: 50ms, 100ms, 200ms, 500ms, 1s
+        # 알림은 즉시 발송(밀리초)부터 스케줄러 재시도(60s 주기) 까지 폭이 넓어 더 큰 버킷을 둔다
+        notification.outbox.latency: 100ms, 500ms, 1s, 5s, 30s, 1m, 5m
+  observations:
+    key-values:
+      application: catchmate
 
 async:
   executor:
-    core-pool-size: 10
+    core-pool-size: 50
     max-pool-size: 50
-    queue-capacity: 100
+    queue-capacity: 5000
 
 chat:
   message:

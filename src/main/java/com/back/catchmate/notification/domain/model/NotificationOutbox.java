@@ -3,6 +3,8 @@ package com.back.catchmate.notification.domain.model;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
 public class NotificationOutbox {
@@ -15,6 +17,9 @@ public class NotificationOutbox {
     private int retryCount;
     private OutboxStatus status;
     private String errorMessage;
+    // PENDING 최초 적재 시각. 영속 계층(BaseTimeEntity.createdAt)에서 채워지며,
+    // PENDING→SUCCESS 지연 측정의 기준점으로만 사용한다. (불변)
+    private LocalDateTime createdAt;
 
     public static NotificationOutbox create(Long recipientId, String recipientAddress, String title, String body, String payload) {
         return NotificationOutbox.builder()

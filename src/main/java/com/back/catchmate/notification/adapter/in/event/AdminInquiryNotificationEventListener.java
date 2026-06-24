@@ -1,6 +1,7 @@
 package com.back.catchmate.notification.adapter.in.event;
 
 import com.back.catchmate.admin.application.event.InquiryAnswerRegisteredEvent;
+import com.back.catchmate.notification.application.port.in.AdminInquiryNotificationDispatchUseCase;
 import com.back.catchmate.notification.application.port.in.AdminInquiryNotificationUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
@@ -13,15 +14,16 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class AdminInquiryNotificationEventListener {
     private final AdminInquiryNotificationUseCase adminInquiryNotificationUseCase;
+    private final AdminInquiryNotificationDispatchUseCase adminInquiryNotificationDispatchUseCase;
 
     @EventListener
     public void onSave(InquiryAnswerRegisteredEvent event) {
         adminInquiryNotificationUseCase.saveOnInquiryAnswered(event.inquiryId(), event.inquiryAuthorId());
     }
 
-    @Async("taskExecutor")
+    @Async("notificationDispatchExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onDispatch(InquiryAnswerRegisteredEvent event) {
-        adminInquiryNotificationUseCase.dispatchOnInquiryAnswered(event.inquiryId(), event.inquiryAuthorId());
+        adminInquiryNotificationDispatchUseCase.dispatchOnInquiryAnswered(event.inquiryId(), event.inquiryAuthorId());
     }
 }

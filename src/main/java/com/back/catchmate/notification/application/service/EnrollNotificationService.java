@@ -1,9 +1,7 @@
 package com.back.catchmate.notification.application.service;
 
 import com.back.catchmate.notification.application.port.in.EnrollNotificationUseCase;
-import com.back.catchmate.notification.application.port.in.NotificationDispatchUseCase;
 import com.back.catchmate.notification.application.port.in.NotificationInternalCommandUseCase;
-import com.back.catchmate.notification.application.port.in.OutboxDispatchUseCase;
 import com.back.catchmate.notification.application.port.in.OutboxSaveUseCase;
 import com.back.catchmate.notification.application.port.out.dto.NotificationBoardInfo;
 import com.back.catchmate.notification.application.port.out.dto.NotificationUserInfo;
@@ -18,6 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
+/**
+ * Enroll 알림의 영속화(Notification + Outbox 저장) 전용 서비스.
+ * 실시간/FCM 발송은 {@link EnrollNotificationDispatchService}(비트랜잭션) 가 담당한다.
+ */
 @Slf4j
 @Service
 @Transactional
@@ -28,11 +30,9 @@ public class EnrollNotificationService implements EnrollNotificationUseCase {
     private static final String TYPE_ENROLL_REJECTED = "ENROLL_REJECTED";
     private static final String TYPE_ENROLL_CANCEL = "ENROLL_CANCEL";
 
-    private final UserFetchPort userFetchPort;
     private final BoardFetchPort boardFetchPort;
+    private final UserFetchPort userFetchPort;
     private final OutboxSaveUseCase outboxSaveUseCase;
-    private final OutboxDispatchUseCase outboxDispatchUseCase;
-    private final NotificationDispatchUseCase notificationDispatchUseCase;
     private final NotificationInternalCommandUseCase notificationInternalCommandUseCase;
 
     @Override
@@ -48,24 +48,6 @@ public class EnrollNotificationService implements EnrollNotificationUseCase {
     }
 
     @Override
-    public void dispatchOnEnrollRequested(Long enrollId, Long boardId, Long applicantId, Long boardOwnerId) {
-        log.info("[Enroll알림] dispatchOnEnrollRequested 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
-                enrollId, boardId, applicantId, boardOwnerId);
-        NotificationUserInfo recipient = userFetchPort.getUser(boardOwnerId);
-        if (!recipient.enrollAlarmEnabled()) {
-            log.warn("[Enroll알림] 수신자(boardOwnerId: {})의 enrollAlarm 설정이 비활성화(false)되어 발송을 중단합니다.", boardOwnerId);
-            return;
-        }
-
-        NotificationUserInfo applicant = userFetchPort.getUser(applicantId);
-        NotificationBoardInfo board = boardFetchPort.getBoard(boardId);
-        String title = NotificationTemplate.ENROLL_REQUEST.formatTitle(applicant.nickName());
-        String body = NotificationTemplate.ENROLL_REQUEST.formatBody(board.title());
-
-        dispatch(recipient, boardId, title, body, TYPE_ENROLL_REQUEST, true);
-    }
-
-    @Override
     public void saveOnEnrollAccepted(Long enrollId, Long boardId, Long applicantId, Long boardOwnerId) {
         log.info("[Enroll알림] saveOnEnrollAccepted 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
                 enrollId, boardId, applicantId, boardOwnerId);
@@ -77,23 +59,6 @@ public class EnrollNotificationService implements EnrollNotificationUseCase {
     }
 
     @Override
-    public void dispatchOnEnrollAccepted(Long enrollId, Long boardId, Long applicantId, Long boardOwnerId) {
-        log.info("[Enroll알림] dispatchOnEnrollAccepted 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
-                enrollId, boardId, applicantId, boardOwnerId);
-        NotificationUserInfo recipient = userFetchPort.getUser(applicantId);
-        if (!recipient.enrollAlarmEnabled()) {
-            log.warn("[Enroll알림] 수신자(applicantId: {})의 enrollAlarm 설정이 비활성화(false)되어 발송을 중단합니다.", applicantId);
-            return;
-        }
-
-        NotificationBoardInfo board = boardFetchPort.getBoard(boardId);
-        String title = NotificationTemplate.ENROLL_ACCEPT.getTitle();
-        String body = NotificationTemplate.ENROLL_ACCEPT.formatBody(board.title());
-
-        dispatch(recipient, boardId, title, body, TYPE_ENROLL_ACCEPTED, true);
-    }
-
-    @Override
     public void saveOnEnrollRejected(Long enrollId, Long boardId, Long applicantId, Long boardOwnerId) {
         log.info("[Enroll알림] saveOnEnrollRejected 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
                 enrollId, boardId, applicantId, boardOwnerId);
@@ -102,23 +67,6 @@ public class EnrollNotificationService implements EnrollNotificationUseCase {
         String body = NotificationTemplate.ENROLL_REJECT.formatBody(board.title());
 
         saveNotificationAndOutbox(applicantId, boardOwnerId, boardId, enrollId, title, body, TYPE_ENROLL_REJECTED, true);
-    }
-
-    @Override
-    public void dispatchOnEnrollRejected(Long enrollId, Long boardId, Long applicantId, Long boardOwnerId) {
-        log.info("[Enroll알림] dispatchOnEnrollRejected 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
-                enrollId, boardId, applicantId, boardOwnerId);
-        NotificationUserInfo recipient = userFetchPort.getUser(applicantId);
-        if (!recipient.enrollAlarmEnabled()) {
-            log.warn("[Enroll알림] 수신자(applicantId: {})의 enrollAlarm 설정이 비활성화(false)되어 발송을 중단합니다.", applicantId);
-            return;
-        }
-
-        NotificationBoardInfo board = boardFetchPort.getBoard(boardId);
-        String title = NotificationTemplate.ENROLL_REJECT.getTitle();
-        String body = NotificationTemplate.ENROLL_REJECT.formatBody(board.title());
-
-        dispatch(recipient, boardId, title, body, TYPE_ENROLL_REJECTED, true);
     }
 
     @Override
@@ -136,24 +84,6 @@ public class EnrollNotificationService implements EnrollNotificationUseCase {
                 AlarmType.ENROLL,
                 enrollId
         );
-    }
-
-    @Override
-    public void dispatchOnEnrollCancelled(Long enrollId, Long boardId, Long applicantId, Long boardOwnerId) {
-        log.info("[Enroll알림] dispatchOnEnrollCancelled 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
-                enrollId, boardId, applicantId, boardOwnerId);
-        NotificationUserInfo recipient = userFetchPort.getUser(boardOwnerId);
-        if (!recipient.enrollAlarmEnabled()) {
-            log.warn("[Enroll알림] 수신자(boardOwnerId: {})의 enrollAlarm 설정이 비활성화(false)되어 발송을 중단합니다.", boardOwnerId);
-            return;
-        }
-
-        NotificationUserInfo applicant = userFetchPort.getUser(applicantId);
-        NotificationBoardInfo board = boardFetchPort.getBoard(boardId);
-        String title = NotificationTemplate.ENROLL_CANCEL.formatTitle(applicant.nickName());
-        String body = NotificationTemplate.ENROLL_CANCEL.formatBody(board.title());
-
-        dispatch(recipient, boardId, title, body, TYPE_ENROLL_CANCEL, false);
     }
 
     private void saveNotificationAndOutbox(
@@ -197,26 +127,6 @@ public class EnrollNotificationService implements EnrollNotificationUseCase {
         } else {
             log.warn("[Enroll알림] outbox 저장 불필요 혹은 조건 미달 (alarmEnabled: {}, token존재여부: {})",
                     recipient.enrollAlarmEnabled(), recipient.fcmToken() != null);
-        }
-    }
-
-    private void dispatch(
-            NotificationUserInfo recipient,
-            Long boardId,
-            String title,
-            String body,
-            String type,
-            boolean pushEnabled
-    ) {
-        Map<String, String> payload = createNotificationData(type, boardId, title, body);
-        log.info("[Enroll알림] STOMP 알림 전송 시도 - recipientId: {}, payload: {}", recipient.userId(), payload);
-        notificationDispatchUseCase.dispatch(recipient.userId(), payload);
-
-        if (pushEnabled) {
-            log.info("[Enroll알림] FCM 알림 즉시 발송 시도 - recipientId: {}", recipient.userId());
-            outboxDispatchUseCase.sendPendingOutboxImmediately(recipient.userId());
-        } else {
-            log.info("[Enroll알림] FCM 알림 발송 생략 (pushEnabled: false)");
         }
     }
 

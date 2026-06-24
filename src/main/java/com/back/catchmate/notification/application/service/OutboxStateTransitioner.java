@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -40,6 +42,20 @@ public class OutboxStateTransitioner {
     public void updateStatusSuccess(NotificationOutbox outbox) {
         outbox.success();
         outboxRepository.save(outbox);
+        recordSuccessMetrics(outbox);
+    }
+
+    // 발송 성공률 / 재시도 후 성공률 / PENDING→SUCCESS 지연을 Prometheus 에서 집계할 수 있도록 계측.
+    // 성공률 = success / (success + outbox.failure) 로 산출되며, retried 태그로 재시도 후 성공만 분리할 수 있다.
+    private void recordSuccessMetrics(NotificationOutbox outbox) {
+        String retried = outbox.getRetryCount() > 0 ? "true" : "false";
+        meterRegistry.counter("notification.outbox.success", "retried", retried).increment();
+
+        LocalDateTime createdAt = outbox.getCreatedAt();
+        if (createdAt != null) {
+            meterRegistry.timer("notification.outbox.latency", "retried", retried)
+                    .record(Duration.between(createdAt, LocalDateTime.now()));
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

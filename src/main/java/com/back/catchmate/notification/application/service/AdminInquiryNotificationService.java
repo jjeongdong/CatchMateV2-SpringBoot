@@ -1,9 +1,7 @@
 package com.back.catchmate.notification.application.service;
 
 import com.back.catchmate.notification.application.port.in.AdminInquiryNotificationUseCase;
-import com.back.catchmate.notification.application.port.in.NotificationDispatchUseCase;
 import com.back.catchmate.notification.application.port.in.NotificationInternalCommandUseCase;
-import com.back.catchmate.notification.application.port.in.OutboxDispatchUseCase;
 import com.back.catchmate.notification.application.port.in.OutboxSaveUseCase;
 import com.back.catchmate.notification.application.port.out.dto.NotificationUserInfo;
 import com.back.catchmate.notification.application.port.out.external.UserFetchPort;
@@ -26,8 +24,6 @@ AdminInquiryNotificationService implements AdminInquiryNotificationUseCase {
 
     private final UserFetchPort userFetchPort;
     private final OutboxSaveUseCase outboxSaveUseCase;
-    private final OutboxDispatchUseCase outboxDispatchUseCase;
-    private final NotificationDispatchUseCase notificationDispatchUseCase;
     private final NotificationInternalCommandUseCase notificationInternalCommandUseCase;
 
     @Override
@@ -58,28 +54,5 @@ AdminInquiryNotificationService implements AdminInquiryNotificationUseCase {
             );
             log.info("관리자 답변 알림 아웃박스 저장 완료: recipientId: {}", recipient.userId());
         }
-    }
-
-    @Override
-    public void dispatchOnInquiryAnswered(Long inquiryId, Long inquiryAuthorId) {
-        NotificationUserInfo recipient = userFetchPort.getUser(inquiryAuthorId);
-        if (!recipient.eventAlarmEnabled()) {
-            return;
-        }
-
-        String title = NotificationTemplate.INQUIRY_ANSWER.getTitle();
-        String body = NotificationTemplate.INQUIRY_ANSWER.getBodyTemplate();
-
-        notificationDispatchUseCase.dispatch(
-                recipient.userId(),
-                Map.of(
-                        "type", NOTIFICATION_TYPE,
-                        "inquiryId", inquiryId.toString(),
-                        "title", title,
-                        "body", body
-                )
-        );
-
-        outboxDispatchUseCase.sendPendingOutboxImmediately(recipient.userId());
     }
 }

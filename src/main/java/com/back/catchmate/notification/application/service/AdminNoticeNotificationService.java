@@ -1,9 +1,7 @@
 package com.back.catchmate.notification.application.service;
 
 import com.back.catchmate.notification.application.port.in.AdminNoticeNotificationUseCase;
-import com.back.catchmate.notification.application.port.in.NotificationDispatchUseCase;
 import com.back.catchmate.notification.application.port.in.NotificationInternalCommandUseCase;
-import com.back.catchmate.notification.application.port.in.OutboxDispatchUseCase;
 import com.back.catchmate.notification.application.port.in.OutboxSaveUseCase;
 import com.back.catchmate.notification.application.port.out.dto.NotificationUserInfo;
 import com.back.catchmate.notification.application.port.out.external.UserFetchPort;
@@ -26,8 +24,6 @@ public class AdminNoticeNotificationService implements AdminNoticeNotificationUs
 
     private final UserFetchPort userFetchPort;
     private final OutboxSaveUseCase outboxSaveUseCase;
-    private final OutboxDispatchUseCase outboxDispatchUseCase;
-    private final NotificationDispatchUseCase notificationDispatchUseCase;
     private final NotificationInternalCommandUseCase notificationInternalCommandUseCase;
 
     @Override
@@ -60,26 +56,5 @@ public class AdminNoticeNotificationService implements AdminNoticeNotificationUs
             );
         }
         log.info("공지사항 알림 아웃박스 저장 완료: noticeId={}, recipientCount={}", noticeId, recipients.size());
-    }
-
-    @Override
-    public void dispatchOnNoticeCreated(Long noticeId, String noticeTitle) {
-        String title = NotificationTemplate.NOTICE_CREATED.getTitle();
-        String body = NotificationTemplate.NOTICE_CREATED.formatBody(noticeTitle);
-        Map<String, String> stompPayload = Map.of(
-                "type", NOTIFICATION_TYPE,
-                "noticeId", noticeId.toString(),
-                "title", title,
-                "body", body
-        );
-
-        List<NotificationUserInfo> recipients = userFetchPort.getEventAlarmEnabledUsers();
-        for (NotificationUserInfo recipient : recipients) {
-            if (!recipient.eventAlarmEnabled()) continue;
-            notificationDispatchUseCase.dispatch(recipient.userId(), stompPayload);
-            if (recipient.fcmToken() != null) {
-                outboxDispatchUseCase.sendPendingOutboxImmediately(recipient.userId());
-            }
-        }
     }
 }

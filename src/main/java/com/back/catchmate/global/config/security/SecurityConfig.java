@@ -46,7 +46,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                         "/ws/chat/**",
-                        "/actuator/health",
+                        "/actuator/**",
                         "/api/oauth/authorize/**",
                         "/api/oauth/callback/**",
                         "/api/oauth/signup",
