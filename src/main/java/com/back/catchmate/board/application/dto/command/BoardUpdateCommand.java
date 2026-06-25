@@ -10,7 +10,7 @@ public record BoardUpdateCommand(
         Long cheerClubId,
         String preferredGender,
         List<String> preferredAgeRange,
-        GameUpdateCommand gameUpdateCommand,
+        Long gameId,
         boolean completed
 ) {
 }

@@ -3,6 +3,7 @@ package com.back.catchmate.game.application.service;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.game.application.port.out.persistence.GameRepository;
+import com.back.catchmate.game.domain.dto.GameSearchCondition;
 import com.back.catchmate.game.domain.model.Game;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,10 @@ public class GameReader {
 
     public List<Game> getGames(List<Long> gameIds) {
         return gameRepository.findAllByIds(gameIds);
+    }
+
+    public List<Game> getGameList(GameSearchCondition condition) {
+        return gameRepository.findAllByCondition(condition);
     }
 
     public List<Long> findIdsByGameStartDateOn(LocalDate gameDate) {

@@ -2,16 +2,13 @@ package com.back.catchmate.board.application.service;
 
 import com.back.catchmate.board.application.dto.command.BoardCreateCommand;
 import com.back.catchmate.board.application.dto.command.BoardUpdateCommand;
-import com.back.catchmate.board.application.dto.command.GameCreateCommand;
-import com.back.catchmate.board.application.dto.command.GameUpdateCommand;
 import com.back.catchmate.board.application.dto.response.BoardCreateResponse;
 import com.back.catchmate.board.application.dto.response.BoardLiftUpResponse;
 import com.back.catchmate.board.application.dto.response.BoardUpdateResponse;
 import com.back.catchmate.board.application.event.BoardCompletedEvent;
 import com.back.catchmate.board.application.port.in.BoardClientCommandUseCase;
 import com.back.catchmate.board.application.port.out.dto.BoardGameInfo;
-import com.back.catchmate.board.application.port.out.dto.BoardGameUpsertCommand;
-import com.back.catchmate.board.application.port.out.external.GameCommandPort;
+import com.back.catchmate.board.application.port.out.external.GameFetchPort;
 import com.back.catchmate.board.application.port.out.persistence.BoardRepository;
 import com.back.catchmate.board.domain.model.Board;
 import com.back.catchmate.board.domain.model.PreferredAgeRange;
@@ -30,14 +27,14 @@ import java.time.LocalDateTime;
 public class BoardClientCommandService implements BoardClientCommandUseCase {
     private final BoardRepository boardRepository;
     private final BoardReader boardReader;
-    private final GameCommandPort gameCommandPort;
+    private final GameFetchPort gameFetchPort;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public BoardCreateResponse createBoard(Long userId, BoardCreateCommand command) {
         boardReader.findTempBoard(userId).ifPresent(boardRepository::delete);
 
-        BoardGameInfo game = resolveGame(command.gameCreateCommand());
+        BoardGameInfo game = resolveGame(command.gameId());
 
         Board board = Board.createBoard(
                 command.title(),
@@ -66,7 +63,7 @@ public class BoardClientCommandService implements BoardClientCommandUseCase {
         Board board = boardReader.getBoard(boardId);
         verifyBoardOwner(board, userId);
         boolean wasCompleted = board.isCompleted();
-        BoardGameInfo game = resolveGame(command.gameUpdateCommand());
+        BoardGameInfo game = resolveGame(command.gameId());
 
         board.updateBoard(
                 command.title(),
@@ -118,24 +115,10 @@ public class BoardClientCommandService implements BoardClientCommandUseCase {
         }
     }
 
-    private BoardGameInfo resolveGame(GameCreateCommand command) {
-        if (command == null) return null;
-        return resolveGame(command.homeClubId(), command.awayClubId(), command.gameStartDate(), command.location());
-    }
-
-    private BoardGameInfo resolveGame(GameUpdateCommand command) {
-        if (command == null) return null;
-        return resolveGame(command.homeClubId(), command.awayClubId(), command.gameStartDate(), command.location());
-    }
-
-    private BoardGameInfo resolveGame(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {
-        if (gameStartDate == null && homeClubId == null && awayClubId == null && location == null) {
+    private BoardGameInfo resolveGame(Long gameId) {
+        if (gameId == null) {
             return null;
         }
-        BoardGameUpsertCommand upsertCommand = new BoardGameUpsertCommand(homeClubId, awayClubId, gameStartDate, location);
-        if (homeClubId != null && awayClubId != null && gameStartDate != null) {
-            return gameCommandPort.findOrCreateGame(upsertCommand);
-        }
-        return gameCommandPort.savePartialGame(upsertCommand);
+        return gameFetchPort.getGame(gameId);
     }
 }

@@ -1,9 +1,9 @@
 package com.back.catchmate.game.application.port.out.persistence;
 
+import com.back.catchmate.game.domain.dto.GameSearchCondition;
 import com.back.catchmate.game.domain.model.Game;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,9 +12,12 @@ public interface GameRepository {
 
     Optional<Game> findById(Long id);
 
-    Optional<Game> findByHomeClubIdAndAwayClubIdAndGameStartDate(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate);
-
     List<Game> findAllByIds(List<Long> ids);
+
+    /**
+     * 프론트 경기 선택 화면용 조회. 조건(날짜/구단)은 동적 필터링하며 시작 시각 오름차순으로 정렬한다.
+     */
+    List<Game> findAllByCondition(GameSearchCondition condition);
 
     /**
      * 해당 날짜(00:00 ~ 익일 00:00)에 시작하는 경기 ID 목록 반환.

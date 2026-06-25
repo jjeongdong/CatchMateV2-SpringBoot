@@ -2,6 +2,7 @@ package com.back.catchmate.game.adapter.out.persistence.repository;
 
 import com.back.catchmate.game.adapter.out.persistence.entity.GameEntity;
 import com.back.catchmate.game.application.port.out.persistence.GameRepository;
+import com.back.catchmate.game.domain.dto.GameSearchCondition;
 import com.back.catchmate.game.domain.model.Game;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -15,6 +16,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class GameRepositoryImpl implements GameRepository {
     private final JpaGameRepository jpaGameRepository;
+    private final QueryDslGameRepository queryDslGameRepository;
 
     @Override
     public Game save(Game game) {
@@ -28,21 +30,19 @@ public class GameRepositoryImpl implements GameRepository {
     }
 
     @Override
-    public Optional<Game> findByHomeClubIdAndAwayClubIdAndGameStartDate(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate) {
-        return jpaGameRepository.findByHomeClubIdAndAwayClubIdAndGameStartDate(
-                homeClubId,
-                awayClubId,
-                gameStartDate
-        ).map(GameEntity::toDomain);
-    }
-
-    @Override
     public List<Game> findAllByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
 
         return jpaGameRepository.findAllById(ids).stream()
+                .map(GameEntity::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Game> findAllByCondition(GameSearchCondition condition) {
+        return queryDslGameRepository.findAllByCondition(condition).stream()
                 .map(GameEntity::toDomain)
                 .toList();
     }

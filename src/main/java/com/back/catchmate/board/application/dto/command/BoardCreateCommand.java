@@ -10,7 +10,7 @@ public record BoardCreateCommand(
         Long cheerClubId,
         String preferredGender,
         List<String> preferredAgeRange,
-        GameCreateCommand gameCreateCommand,
+        Long gameId,
         boolean completed
 ) {
 }
