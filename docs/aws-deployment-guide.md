@@ -11,7 +11,8 @@
 *   **Cache/PubSub**: Redis (Docker Compose로 실행)
 *   **Storage**: AWS S3 (프로필 이미지 및 파일 업로드)
 *   **Reverse Proxy**: Nginx (Docker Compose로 실행)
-*   **CI/CD**: GitHub Actions
+*   **배포 방식**: EC2 서버에서 소스 직접 빌드 후 단일 컨테이너 재기동 (`deploy-local.sh`)
+    *   > ℹ️ GitHub Actions 기반 CI/CD(`.github/workflows/deploy.yml`)와 Blue/Green 무중단 스크립트(`deploy.sh`)도 존재하지만, **현재는 둘 다 사용하지 않고 아래 "직접 배포" 절차만 사용**합니다. (재기동 시 수 초 다운타임 감수)
 
 ---
 
@@ -50,56 +51,63 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 ---
 
-## 4. CI/CD 파이프라인 설정 (GitHub Actions)
+## 4. 직접(수동) 배포 — CI/CD · 무중단 미사용 ⭐
 
-`.github/workflows/deploy.yml` 파일(이미 존재함)을 기반으로 GitHub Repository Secret을 설정해야 합니다.
+GitHub Actions / Docker Hub 없이, **EC2 서버에서 소스를 직접 빌드**해 배포합니다.
+무중단(Blue/Green) 전환도 하지 않고 **단일 app 컨테이너(`catchmate-app`)를 재기동**합니다.
+(재기동되는 수 초간 짧은 다운타임 발생 — 일단 단순 배포 우선)
 
-### 설정해야 할 Secret 변수
-*   `DOCKER_USERNAME`: DockerHub ID
-*   `DOCKER_PASSWORD`: DockerHub Password/Token
-*   `HOST_ID`: EC2 인스턴스 퍼블릭 IP
-*   `SSH_KEY`: EC2 접속용 .pem 키 내용 전체
-*   `ENV_PROPERTIES`: `application-prod.yml` 파일 내용 전체
+`docker-compose.yml` 은 **단일 인스턴스 기준**(`catchmate-app` + `redis` + `nginx`)이며,
+app 컨테이너는 `mem_limit: 1g` 으로 메모리가 제한됩니다.
+
+### 4.1 최초 1회 준비 (EC2)
+
+```bash
+# 1) 코드 클론 (배포 폴더는 deploy.sh 의 경로와 동일하게)
+cd /home/ubuntu
+git clone https://github.com/jjeongdong/CatchMateV2-SpringBoot catchmatev2-springboot
+cd catchmatev2-springboot
+
+# 2) 운영 설정 파일 생성 (git 에 올라가지 않는 파일들 — 직접 작성/업로드)
+#    - 컨테이너는 SPRING_PROFILES_ACTIVE=dev 로 뜨므로 application-dev.yml 이 필요
+vim src/main/resources/application-dev.yml          # DB/Redis/JWT 등 운영 값
+#    - Firebase Admin SDK 키 (FCM)
+vim src/main/resources/firebase-adminsdk.json       # 또는 scp 로 업로드
+```
+
+> ⚠️ `application-dev.yml`, `application-local.yml`, `firebase-adminsdk.json` 은
+> `.gitignore` 에 포함되어 있어 clone 시 받아지지 않습니다. 서버에 직접 넣어야 합니다.
+
+### 4.2 배포 실행 (매 배포마다)
+
+```bash
+cd /home/ubuntu/catchmatev2-springboot
+git pull origin main          # 최신 소스 반영 (스크립트가 자동으로 하지 않음)
+./deploy-local.sh
+```
+
+`deploy-local.sh` 가 수행하는 일:
+1. `docker-compose up -d --build` — **서버에서 직접** app 이미지 빌드 후
+   `catchmate-app` 재기동(+`redis`, `nginx` 기동). Docker Hub pull 안 함.
+2. 미사용 이미지 정리 (`docker image prune -f`)
+
+> ⚠️ 스크립트는 더 이상 `git pull` 을 하지 않습니다. 배포 전 소스를 직접 최신화하세요.
+
+> Nginx 는 `nginx/conf.d/service-env.inc` 가 `catchmate-app` 을 가리킵니다.
+
+### 4.3 (선택) 무중단 · CI/CD 로 확장하려면
+- **무중단(Blue/Green)**: `deploy.sh` 는 `catchmate-blue`/`catchmate-green` 두 컨테이너를 전제로 하므로,
+  현재 단일 인스턴스 `docker-compose.yml` 에서는 그대로 동작하지 않습니다. 무중단이 필요하면
+  compose 에 blue/green 두 서비스를 복원한 뒤 `deploy.sh` 를 사용하세요.
+- **CI/CD**: `.github/workflows/deploy.yml` 이 그대로 남아 있습니다. `main` 푸시 시 동작하도록
+  하려면 GitHub Secrets(`DOCKER_USERNAME`, `DOCKER_PASSWORD`, `SERVER_HOST`,
+  `SERVER_USER`, `SERVER_SSH_KEY`, `APPLICATION_YML`, `FIREBASE_SERVICE_KEY`)를 설정하면 됩니다.
 
 ---
 
-## 5. 배포 절차
+## 5. 부가 설정
 
-### 5.1 Docker 컨테이너 구성
-프로젝트 루트의 `docker-compose.yml`을 사용하여 다음과 같이 구성합니다.
-
-```yaml
-version: '3.8'
-services:
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    env_file: .env
-    depends_on:
-      - redis
-      - nginx
-
-  redis:
-    image: redis:latest
-    ports:
-      - "6379:6379"
-    volumes:
-      - ./redis/data:/data
-    command: redis-server --appendonly yes
-
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/certs:/etc/nginx/certs # SSL 인증서 위치
-```
-
-### 5.2 SSL 인증서 설정 (Certbot)
+### 5.1 SSL 인증서 설정 (Certbot)
 무료 SSL 인증서(Let's Encrypt) 발급 방법:
 
 ```bash
