@@ -1,4 +1,20 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew compileJava*)",
+      "Bash(./gradlew compileTestJava*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(./deploy.sh:*)",
+      "Bash(./deploy-local.sh:*)",
+      "Read(./src/main/resources/firebase-adminsdk.json)",
+      "Read(./src/main/resources/application-local.yml)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
