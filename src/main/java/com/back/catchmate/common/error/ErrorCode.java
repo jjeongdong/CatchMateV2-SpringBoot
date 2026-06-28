@@ -65,6 +65,7 @@ public enum ErrorCode {
     FCM_TOKEN_SEND_BAD_REQUEST(HttpStatus.BAD_REQUEST, "토픽 알람 전송중 에러가 발생했습니다."),
     FCM_SUBSCRIBE_BAD_REQUEST(HttpStatus.BAD_REQUEST, "토픽 구독중 에러가 발생했습니다."),
     FCM_UNSUBSCRIBE_BAD_REQUEST(HttpStatus.BAD_REQUEST, "토픽 구독 취소중 에러가 발생했습니다."),
+    FCM_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FCM 알림 전송에 실패했습니다."),
 
     // 채팅방
     CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 채팅방입니다."),
