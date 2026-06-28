@@ -47,7 +47,7 @@ com.back.catchmate
 
 - **이중 단계 이벤트 리스너 (Transactional Outbox)**: `@EventListener`(커밋 전 DB 저장) + `@TransactionalEventListener(AFTER_COMMIT)`(커밋 후 FCM) + `NotificationScheduler`(60초 재시도). 합치거나 단순화 금지. (상세 → `backend-patterns.md`)
 - **RedisPublisher 분리**: `RedisPublisher`(`NotificationDispatchPort` 구현)와 `ChatMessageRedisPublisher`(`@TransactionalEventListener`)는 의도적 분리. 합치면 JDK 동적 프록시에서 메서드가 사라져 Spring 부팅이 깨짐.
-- **Soft Delete**: 모든 엔티티 `deletedAt` + `@SQLRestriction("deleted_at IS NULL")`. 물리 삭제 쿼리 금지.
+- **Soft Delete (엔티티 성격별)**: 핵심 애그리거트(`User`·`Board`·`ChatRoom`·`ChatMessage`)만 `deletedAt`+`@SQLRestriction("deleted_at IS NULL")`+도메인 `delete()`(deletedAt 세팅)→`save()`. **이 엔티티들엔 `deleteById`/물리 삭제 금지.** 조인·토글·토큰·아웃박스 엔티티(`Bookmark`·`Block`·`Enroll`·`ChatRoomMember`·`RefreshToken`·`NotificationOutbox` 등)는 유니크 제약·보안·볼륨 때문에 **물리 삭제가 정상**. ("모든 엔티티 soft-delete" 아님 — 상세·분류표 → `backend-patterns.md`)
 
 ## Configuration Profiles
 

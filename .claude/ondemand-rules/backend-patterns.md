@@ -157,9 +157,25 @@ private BooleanExpression eqSportType(SportType sportType) {
 }
 ```
 
-## Soft Delete
+## Soft Delete (엔티티 성격별 — "모든 엔티티" 아님)
 
-모든 엔티티는 `deletedAt` + `@SQLRestriction("deleted_at IS NULL")`. 물리 삭제 쿼리 금지.
+soft-delete 는 **핵심 도메인 애그리거트에만** 적용한다. 조인/토글·토큰·아웃박스 엔티티는 물리 삭제가 정상이며, 오히려 soft-delete 가 유니크 제약 붕괴·보안 취약·무한 증가를 유발한다.
+
+| 분류 | 엔티티 | 삭제 방식 |
+|:---|:---|:---|
+| 핵심 애그리거트 | `User`, `Board`, `ChatRoom`, `ChatMessage` | **soft** — `deletedAt`+`@SQLRestriction`, 도메인 `delete()`(deletedAt 세팅)→`save()` |
+| 조인/토글 | `Bookmark`, `Block`, `Enroll`, `ChatRoomMember` | **hard** — 재생성(재북마크/재신청) 시 유니크 제약 충돌 방지 |
+| 토큰/보안 | `RefreshToken` | **hard** — 폐기 토큰 잔존 금지 |
+| 운영/아웃박스 | `NotificationOutbox`, `Notification` | **hard** — 고볼륨, 처리 후 소멸 |
+| 참조/마스터 | `Game`, `Club`, `Notice`, `Report`, `Inquiry` | 삭제 거의 없음 (필요 시 개별 판단) |
+
+규칙:
+- **soft-delete 엔티티(@SQLRestriction 보유)에는 `deleteById`/`delete from` 등 물리 삭제 금지.** 반드시 도메인 `delete()`+`save()`.
+- 프로젝트에 `@SQLDelete` 는 쓰지 않는다 — soft-delete 는 도메인 `delete()` 가 `deletedAt` 을 세팅하고 `save()` 로 UPDATE 하는 수동 방식.
+- 새 엔티티 추가 시 성격으로 분류부터: 핵심 애그리거트면 soft, 조인/토큰/아웃박스면 hard.
+- **명시적 예외**: soft-delete 엔티티라도 *미완성·일회성 하위 상태*는 물리 삭제 가능. 예) `Board` 의 임시저장(`completed=false`, draft) 폐기는 `BoardRepository.deleteTempBoard` 가 물리 삭제 — draft 는 임시저장마다 교체돼 고빈도라 soft-delete 시 dead row 누적. 완성 게시글 삭제는 soft. 같은 엔티티라도 **상태(완성 vs draft)로 삭제 정책이 갈린다.**
+- 의도된 물리삭제 예외는 그 줄에 `// arch-audit:allow-hard-delete` 마커를 달아 자기문서화 + 감사 제외한다.
+- 검증: `python3 .claude/hooks/arch-audit.py [컨텍스트]` 의 `[F]` 가 soft-delete 엔티티의 (마커 없는) 물리삭제만 잡는다.
 
 ## Redis Pub/Sub — 두 Publisher 의도적 분리 (⚠️ 합치지 말 것)
 
