@@ -44,5 +44,5 @@ out/
 .DS_Store
 
 ### Claude Code ###
+# 개인 로컬 설정만 무시. CLAUDE.md / settings.json / hooks / ondemand-rules 는 팀 공유 자산이므로 추적한다.
 .claude/settings.local.json
-CLAUDE.md
