@@ -119,7 +119,8 @@ public class BoardRepositoryImpl implements BoardRepository {
     }
 
     @Override
-    public void delete(Board board) {
-        jpaBoardRepository.deleteById(board.getId());
+    public void deleteTempBoard(Board board) {
+        // draft(미완성)는 일회성·고빈도라 물리 삭제 (soft-delete 누적 방지). 의도된 예외.
+        jpaBoardRepository.deleteById(board.getId()); // arch-audit:allow-hard-delete
     }
 }

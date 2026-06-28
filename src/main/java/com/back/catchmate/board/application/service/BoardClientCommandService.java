@@ -32,7 +32,7 @@ public class BoardClientCommandService implements BoardClientCommandUseCase {
 
     @Override
     public BoardCreateResponse createBoard(Long userId, BoardCreateCommand command) {
-        boardReader.findTempBoard(userId).ifPresent(boardRepository::delete);
+        boardReader.findTempBoard(userId).ifPresent(boardRepository::deleteTempBoard);
 
         BoardGameInfo game = resolveGame(command.gameId());
 
@@ -105,7 +105,7 @@ public class BoardClientCommandService implements BoardClientCommandUseCase {
     public void deleteBoard(Long userId, Long boardId) {
         Board board = boardReader.getBoard(boardId);
         verifyBoardOwner(board, userId);
-        board.delete();
+        board.delete();                 // 완성 게시글: soft delete (deletedAt 세팅)
         boardRepository.save(board);
     }
 

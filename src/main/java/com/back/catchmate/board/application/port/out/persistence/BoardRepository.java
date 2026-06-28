@@ -33,5 +33,6 @@ public interface BoardRepository {
 
     long count();
 
-    void delete(Board board);
+    /** 임시저장(미완성 draft) 보드 폐기 — 일회성이라 물리 삭제. 완성 게시글 삭제는 save(deletedAt 세팅) 사용. */
+    void deleteTempBoard(Board board);
 }
