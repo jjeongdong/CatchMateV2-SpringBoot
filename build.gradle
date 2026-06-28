@@ -81,5 +81,46 @@ test {
     useJUnitPlatform()
 }
 
+// ── 아키텍처 검증 게이트 ──────────────────────────────────────────────
+// 규칙 SSOT 는 .claude/hooks/validate-java-architecture.py (Claude 편집 시 PostToolUse 훅과
+// 동일 로직). --scan 배치 모드로 src/main/java 전체를 검사해 사람·CI 도 동일하게 게이트한다.
+// python3 미설치 환경에선 빌드를 깨지 않고 경고 후 스킵, 위반 발견 시에만 실패.
+def findPython = {
+    for (exe in ['python3', 'python']) {
+        try {
+            if (['sh', '-c', "command -v ${exe}"].execute().waitFor() == 0) return exe
+        } catch (ignored) {}
+    }
+    return null
+}
+
+tasks.register('archCheck') {
+    group = 'verification'
+    description = '헥사고날 의존성·0-import 규칙 검사 (.claude/hooks SSOT)'
+    doLast {
+        def script = file('.claude/hooks/validate-java-architecture.py')
+        if (!script.exists()) {
+            logger.warn('[archCheck] 검증 스크립트 없음, 건너뜀: ' + script)
+            return
+        }
+        def python = findPython()
+        if (python == null) {
+            logger.warn('[archCheck] python3 미발견 — 아키텍처 검사 건너뜀. CI 환경엔 python 설치 권장.')
+            return
+        }
+        def result = exec {
+            commandLine python, script.absolutePath, '--scan'
+            environment 'CLAUDE_PROJECT_DIR', projectDir.absolutePath
+            ignoreExitValue = true
+        }
+        if (result.exitValue != 0) {
+            throw new GradleException(
+                '아키텍처 규칙 위반 발견 (위 로그 참조). 수정 후 다시 빌드하세요. SSOT: .claude/ondemand-rules/*')
+        }
+    }
+}
+
+tasks.named('check') { dependsOn 'archCheck' }
+
 bootJar { enabled = true }
 jar { enabled = false }

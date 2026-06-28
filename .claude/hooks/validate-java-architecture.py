@@ -191,7 +191,73 @@ def _check_swallow(content: str):
     return out
 
 
+def violations_for(path: str, contexts: set):
+    """단일 .java 파일을 검사해 위반 리스트를 반환. 대상 외 파일은 []."""
+    norm = path.replace("\\", "/")
+    if "/build/" in norm or not norm.endswith(".java"):
+        return []
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            content = fh.read()
+    except OSError:
+        return []
+
+    m = PKG_RE.search(content)
+    if not m or not m.group(1).startswith(BASE):
+        return []
+    pkg = m.group(1)
+
+    imports = []
+    for i, ln in enumerate(content.splitlines(), 1):
+        im = IMP_RE.match(ln)
+        if im:
+            imports.append((i, im.group(1)))
+
+    return check(pkg, imports, content, contexts)
+
+
+def scan_all(project_dir: str) -> int:
+    """src/main/java 전체를 검사한다. CI/Gradle 게이트용 배치 모드.
+    위반이 있으면 파일별로 출력하고 종료코드 1, 없으면 0."""
+    root = os.path.join(project_dir, "src", "main", "java")
+    if not os.path.isdir(root):
+        print("[arch-check] 검사 대상 없음: %s" % root)
+        return 0
+
+    contexts = discover_contexts(project_dir)
+    files_with_issues = 0
+    total = 0
+    for dirpath, _dirs, files in os.walk(root):
+        for fn in sorted(files):
+            if not fn.endswith(".java"):
+                continue
+            fp = os.path.join(dirpath, fn)
+            vio = violations_for(fp, contexts)
+            if vio:
+                files_with_issues += 1
+                total += len(vio)
+                rel = os.path.relpath(fp, project_dir)
+                print("\n✗ %s" % rel)
+                for v in vio:
+                    print("    - %s" % v)
+
+    if total:
+        print("\n[arch-check] 헥사고날/0-import 위반 %d건 (%d개 파일). "
+              "위 항목을 수정하세요. 규칙 SSOT: .claude/ondemand-rules/*"
+              % (total, files_with_issues))
+        return 1
+    print("[arch-check] 통과 — 아키텍처 위반 없음.")
+    return 0
+
+
 def main() -> None:
+    # 배치 모드: Gradle/CI 게이트. 전체 src/main/java 를 검사하고 종료코드로 신호.
+    if "--scan" in sys.argv:
+        project_dir = (
+            os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+        )
+        sys.exit(scan_all(project_dir))
+
     try:
         data = json.load(sys.stdin)
     except Exception:
