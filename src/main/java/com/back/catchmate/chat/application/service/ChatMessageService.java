@@ -12,6 +12,7 @@ import com.back.catchmate.chat.application.port.out.external.UserFetchPort;
 import com.back.catchmate.chat.application.port.out.persistence.ChatMessageRepository;
 import com.back.catchmate.chat.application.port.out.persistence.ChatRoomMemberRepository;
 import com.back.catchmate.chat.application.port.out.persistence.ChatRoomRepository;
+import com.back.catchmate.chat.application.port.out.persistence.ReadSequenceUpdate;
 import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
@@ -95,19 +96,21 @@ public class ChatMessageService {
     @Transactional
     public void flushReadSequences() {
         Map<String, Long> buffered = readSequenceBufferPort.drainAll();
-
-        for (Map.Entry<String, Long> entry : buffered.entrySet()) {
-            String[] parts = entry.getKey().split(":");
-            Long chatRoomId = Long.parseLong(parts[0]);
-            Long userId = Long.parseLong(parts[1]);
-            Long sequence = entry.getValue();
-
-            chatRoomMemberRepository.updateLastReadSequenceDirectly(chatRoomId, userId, sequence);
+        if (buffered.isEmpty()) {
+            return;
         }
 
-        if (!buffered.isEmpty()) {
-            log.debug("읽음 시퀀스 {} 건 DB 반영 완료", buffered.size());
-        }
+        List<ReadSequenceUpdate> updates = buffered.entrySet().stream()
+                .map(entry -> {
+                    String[] parts = entry.getKey().split(":");
+                    Long chatRoomId = Long.parseLong(parts[0]);
+                    Long userId = Long.parseLong(parts[1]);
+                    return new ReadSequenceUpdate(chatRoomId, userId, entry.getValue());
+                })
+                .toList();
+
+        chatRoomMemberRepository.updateLastReadSequencesBatch(updates);
+        log.debug("읽음 시퀀스 {} 건 DB 반영 완료", updates.size());
     }
 
     @Transactional
