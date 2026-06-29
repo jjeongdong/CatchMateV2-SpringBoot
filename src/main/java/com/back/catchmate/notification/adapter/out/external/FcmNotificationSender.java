@@ -1,5 +1,7 @@
 package com.back.catchmate.notification.adapter.out.external;
 
+import com.back.catchmate.common.error.ErrorCode;
+import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.notification.application.port.out.external.NotificationSenderPort;
 import com.back.catchmate.notification.application.port.out.exception.PermanentNotificationFailureException;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -75,7 +77,7 @@ public class FcmNotificationSender implements NotificationSenderPort {
             }
             log.warn("FCM 전송 실패 (재시도 예정) - errorCode: {}, 에러 메시지: {}, 토큰: {}",
                     e.getMessagingErrorCode(), e.getMessage(), token);
-            throw new RuntimeException("FCM 전송 실패: " + e.getMessage(), e);
+            throw new BaseException(ErrorCode.FCM_SEND_FAILED);
         } catch (Exception e) {
             log.error("FCM 전송 중 예상치 못한 에러 발생 - Token: {}, Message: {}", token, e.getMessage(), e);
             throw e;
