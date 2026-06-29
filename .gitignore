@@ -46,3 +46,13 @@ out/
 ### Claude Code ###
 # 개인 로컬 설정만 무시. CLAUDE.md / settings.json / hooks / ondemand-rules 는 팀 공유 자산이므로 추적한다.
 .claude/settings.local.json
+# 훅 실행 시 생성되는 파이썬 바이트코드 캐시 (커밋 대상 아님)
+.claude/hooks/__pycache__/
+
+### 로컬 전용 (커밋 대상 아님) ###
+# 실제 FCM 서버를 왕복하는 로컬 수동 지연 측정 테스트 (local 프로필·firebase 인증 필요, CI 미지원)
+/src/test/java/com/back/catchmate/notification/FcmRealMeasurementTest.java
+# 부하 테스트 스크립트 (k6) 및 시드 데이터 — 로컬 실험용
+/load-test/
+# Prometheus/Grafana 로컬 관측 스택
+/monitoring/
