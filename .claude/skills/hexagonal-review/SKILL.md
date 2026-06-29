@@ -12,7 +12,7 @@ description: >-
 # Hexagonal Review (의미론 리뷰)
 
 이 스킬은 **사람이 읽어야 판단되는** 규칙만 본다. import 방향·도메인 순수성·cross-context import·
-예외삼킴은 `validate-java-architecture.py`(PostToolUse 훅)와 `./gradlew archCheck` 가 결정론적으로
+예외삼킴은 `posttooluse-validate-arch.py`(PostToolUse 훅)와 `./gradlew archCheck` 가 결정론적으로
 이미 막으므로 **여기서 중복 지적하지 않는다.** 의도/계약/경계만 검토한다.
 
 ## 0. 스코프 잡기

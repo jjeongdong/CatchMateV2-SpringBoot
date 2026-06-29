@@ -82,7 +82,7 @@ test {
 }
 
 // ── 아키텍처 검증 게이트 ──────────────────────────────────────────────
-// 규칙 SSOT 는 .claude/hooks/validate-java-architecture.py (Claude 편집 시 PostToolUse 훅과
+// 규칙 SSOT 는 .claude/hooks/posttooluse-validate-arch.py (Claude 편집 시 PostToolUse 훅과
 // 동일 로직). --scan 배치 모드로 src/main/java 전체를 검사해 사람·CI 도 동일하게 게이트한다.
 // python3 미설치 환경에선 빌드를 깨지 않고 경고 후 스킵, 위반 발견 시에만 실패.
 def findPython = {
@@ -98,7 +98,7 @@ tasks.register('archCheck') {
     group = 'verification'
     description = '헥사고날 의존성·0-import 규칙 검사 (.claude/hooks SSOT)'
     doLast {
-        def script = file('.claude/hooks/validate-java-architecture.py')
+        def script = file('.claude/hooks/posttooluse-validate-arch.py')
         if (!script.exists()) {
             logger.warn('[archCheck] 검증 스크립트 없음, 건너뜀: ' + script)
             return

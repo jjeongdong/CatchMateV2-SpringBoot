@@ -16,13 +16,23 @@
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/sessionstart-guardrails.py\""
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit|Read",
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/inject-java-rules.py\""
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/pretooluse-inject-rules.py\""
           }
         ]
       }
@@ -33,7 +43,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/validate-java-architecture.py\""
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/posttooluse-validate-arch.py\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-build-gate.py\""
           }
         ]
       }

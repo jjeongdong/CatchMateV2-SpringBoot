@@ -2,10 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **이 파일은 매 세션 항상 로드되는 얇은 인덱스입니다.** 상세 규칙은 `.claude/ondemand-rules/*.md`가 단일 출처(SSOT)이며, **Java 파일을 Read/Edit/Write 할 때 PreToolUse 훅(`.claude/hooks/inject-java-rules.py`)이 세션당 1회 자동 주입**합니다 (Java 작업이 없는 세션엔 로드 안 됨 → 토큰 절약). 훅 등록은 `.claude/settings.json`:
+> **이 파일은 매 세션 항상 로드되는 얇은 인덱스입니다.** 상세 규칙은 `.claude/ondemand-rules/*.md`가 단일 출처(SSOT)이며, **Java 파일을 Read/Edit/Write 할 때 PreToolUse 훅(`.claude/hooks/pretooluse-inject-rules.py`)이 세션당 1회 자동 주입**합니다 (Java 작업이 없는 세션엔 로드 안 됨 → 토큰 절약). 단, '절대 변경 금지' 핵심 3개는 `SessionStart` 훅(`.claude/hooks/sessionstart-guardrails.py`)이 **모든 세션 시작 시 항상** 주입합니다. 훅 등록은 `.claude/settings.json`:
 > - `backend-architecture.md` — 헥사고날 의존성·UseCase 정문·Fetch Port·DTO 격리(0-import)
 > - `backend-coding-conventions.md` — 네이밍·예외·트랜잭션·필드 순서·import 방향
 > - `backend-patterns.md` — 이벤트 2단계 리스너·Outbox·AOP 권한·QueryDSL·Redis
+>
+> **보조 자산**: `.claude/skills/`(add-notification·cross-context-access·hexagonal-review), `.claude/agents/hexagonal-reviewer.md`, 그리고 작업 종료 시 빌드를 자동 검증하는 `Stop` 훅(`stop-build-gate.py`).
 
 ## Build & Run Commands
 
@@ -13,6 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./gradlew build          # 빌드
 ./gradlew bootJar        # 실행 가능 JAR
 ./gradlew test           # 전체 테스트
+./gradlew archCheck      # 헥사고날 아키텍처 규칙 검사 (check 에 포함)
 docker-compose up -d     # 로컬 개발 (Docker Compose)
 ```
 
@@ -39,14 +42,15 @@ com.back.catchmate
 │   └── adapter/
 │       ├── in/{web,websocket,event}/   # Controller / STOMP / 이벤트 구독 리스너
 │       └── out/{persistence,external}/ # JPA·QueryDSL / FCM·S3·OAuth + FetchPort 구현
-├── global/                     # config, authorization(AOP), redis, idempotency, scheduler, error
+├── global/                     # config(cloud/data/security/web), authorization(AOP), persistence, error
+│                               # (redis·idempotency·scheduler 는 컨텍스트별 adapter 로 분산)
 └── common/                     # error(ErrorCode, BaseException), page
 ```
 
 ## ⚠️ 절대 변경 금지 (단순화 X)
 
 - **이중 단계 이벤트 리스너 (Transactional Outbox)**: `@EventListener`(커밋 전 DB 저장) + `@TransactionalEventListener(AFTER_COMMIT)`(커밋 후 FCM) + `NotificationScheduler`(60초 재시도). 합치거나 단순화 금지. (상세 → `backend-patterns.md`)
-- **RedisPublisher 분리**: `RedisPublisher`(`NotificationDispatchPort` 구현)와 `ChatMessageRedisPublisher`(`@TransactionalEventListener`)는 의도적 분리. 합치면 JDK 동적 프록시에서 메서드가 사라져 Spring 부팅이 깨짐.
+- **RedisNotificationPublisher 분리**: `RedisNotificationPublisher`(`NotificationDispatchPort` 구현)와 `ChatMessageRedisPublisher`(`@TransactionalEventListener`)는 의도적 분리. 합치면 JDK 동적 프록시에서 메서드가 사라져 Spring 부팅이 깨짐.
 - **Soft Delete (엔티티 성격별)**: 핵심 애그리거트(`User`·`Board`·`ChatRoom`·`ChatMessage`)만 `deletedAt`+`@SQLRestriction("deleted_at IS NULL")`+도메인 `delete()`(deletedAt 세팅)→`save()`. **이 엔티티들엔 `deleteById`/물리 삭제 금지.** 조인·토글·토큰·아웃박스 엔티티(`Bookmark`·`Block`·`Enroll`·`ChatRoomMember`·`RefreshToken`·`NotificationOutbox` 등)는 유니크 제약·보안·볼륨 때문에 **물리 삭제가 정상**. ("모든 엔티티 soft-delete" 아님 — 상세·분류표 → `backend-patterns.md`)
 
 ## Configuration Profiles
@@ -75,11 +79,11 @@ EC2 단일 인스턴스 Nginx Blue/Green. `.github/workflows/deploy.yml` 이 `ma
 | 에러 코드 | `common/error/ErrorCode.java` |
 | 전역 예외 핸들러 | `global/error/GlobalExceptionHandler.java` |
 | JWT 인증 필터 | `global/config/security/JwtAuthenticationFilter.java` |
-| 비동기 설정 | `global/config/infrastructure/AsyncConfig.java` |
-| FCM 발신 | `notification/adapter/out/sender/FcmNotificationSender.java` |
-| 알림 스케줄러 | `global/scheduler/NotificationScheduler.java` |
-| Outbox 상태 관리 | `notification/application/service/NotificationOutboxUpdater.java` |
+| 비동기 설정 | `global/config/web/AsyncConfig.java` |
+| FCM 발신 | `notification/adapter/out/external/FcmNotificationSender.java` |
+| 알림 스케줄러 | `notification/adapter/in/scheduler/NotificationScheduler.java` |
+| Outbox 상태 관리 | `notification/application/service/OutboxStateTransitioner.java` |
 | 알림 템플릿 | `notification/domain/model/NotificationTemplate.java` |
-| Redis Pub/Sub | `global/redis/` |
-| WebSocket 설정 | `global/config/WebSocketConfig.java` |
+| Redis 설정 / Pub/Sub | `global/config/data/RedisConfig.java`, `notification/adapter/out/external/RedisNotificationPublisher.java`, `chat/adapter/out/external/ChatMessageRedisPublisher.java` |
+| WebSocket 설정 | `global/config/web/WebSocketConfig.java` |
 | Fetch Port 예시 | `board/application/port/out/*FetchPort.java`, `board/adapter/out/external/Board*FetchAdapter.java` |

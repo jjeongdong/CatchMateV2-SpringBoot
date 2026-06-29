@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-아키텍처 휴리스틱 감사 (advisory) — validate-java-architecture.py 의 자매 스크립트.
+아키텍처 휴리스틱 감사 (advisory) — posttooluse-validate-arch.py 의 자매 스크립트.
 
 위치/역할:
-  - validate-java-architecture.py = 결정론 게이트(①). import 방향·0-import·예외삼킴만,
+  - posttooluse-validate-arch.py = 결정론 게이트(①). import 방향·0-import·예외삼킴만,
     오탐 0, 빌드 차단(decision=block / archCheck 실패).
   - 이 스크립트 = 휴리스틱 리포트(②). 코드 의미를 봐야 확정되는 규칙을 텍스트 패턴으로
     "용의자"만 추려낸다. **오탐이 있을 수 있고, 빌드를 막지 않는다(advisory).**
