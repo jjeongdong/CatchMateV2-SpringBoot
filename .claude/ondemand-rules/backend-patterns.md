@@ -118,34 +118,6 @@ public void on(OrderPlacedEvent e) {
 - `NotificationDispatchPort.dispatch(Long, Map)` — 실시간 STOMP fan-out (RedisPublisher 구현)
 - `OfflineFallbackPort.dispatchIfOffline(Long, NotificationOutbox)` — 오프라인 사용자 FCM
 
----
-
-## AOP 권한 체크
-
-```java
-// 1. 어노테이션
-@CheckDataPermission(finder = BoardPermissionFinder.class)
-@Target(ElementType.METHOD) @Retention(RetentionPolicy.RUNTIME)
-public @interface CheckBoardPermission {}
-
-// 2. Finder (global/) — 정문은 UseCase 인터페이스
-@Component
-@RequiredArgsConstructor
-public class BoardPermissionFinder implements DomainFinder {
-    private final BoardInternalQueryUseCase boardInternalQueryUseCase;
-    @Override public ResourceOwnership find(Long resourceId) { return boardInternalQueryUseCase.getBoard(resourceId); }
-}
-
-// 3. Controller
-@DeleteMapping("/boards/{boardId}")
-public ResponseEntity<Void> deleteBoard(@AuthUser Long userId,
-        @CheckBoardPermission @PermissionId @PathVariable Long boardId) {
-    boardClientCommandUseCase.deleteBoard(userId, boardId);
-    return ResponseEntity.noContent().build();
-}
-```
-
-`DataPermissionAspect.@Before` 절에 새 어노테이션 추가도 필요.
 
 ## QueryDSL 복잡 쿼리
 
@@ -193,10 +165,3 @@ soft-delete 는 **핵심 도메인 애그리거트에만** 적용한다. 조인/
 3. `{publisher-ctx}/application/event/{Fact}Event` — 발행 컨텍스트 소유, 페이로드는 식별자 + primitive 만
 4. `notification/adapter/in/event/{Publisher}{Fact}EventListener` — 구독자(notification)에 위치, 2단계 패턴, 대상자 조회는 여기서
 5. 발행 컨텍스트 Service 에서 `applicationEventPublisher.publishEvent(...)` — 사실만 발행
-
-## 권한 체크 추가 순서
-
-1. `global/authorization/annotation` 에 새 어노테이션
-2. `global/authorization/finder` 에 `DomainFinder` 구현체 (정문은 InternalQueryUseCase)
-3. `DataPermissionAspect` 의 `@Before` 절에 어노테이션 추가
-4. Controller 메서드에 적용

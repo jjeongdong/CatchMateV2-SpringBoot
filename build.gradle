@@ -66,6 +66,12 @@ dependencies {
     // FCM
     implementation 'com.google.firebase:firebase-admin:9.3.0'
 
+    // Spring AI (RAG: OpenAI chat(gpt-4.1) + embedding(text-embedding-3-small))
+    // 1.0.x 라인이 Spring Boot 3.4.x 호환 (1.1.x 는 3.5.x 필요)
+    implementation platform('org.springframework.ai:spring-ai-bom:1.0.9')
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+    implementation 'org.springframework.ai:spring-ai-vector-store'  // SimpleVectorStore(인메모리). 운영 Redis 전환 시 starter 교체
+
     // Retry & JSON
     implementation 'org.springframework.retry:spring-retry'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
