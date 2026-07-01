@@ -55,3 +55,9 @@ chat:
 enroll:
   idempotency:
     ttl-seconds: 10
+
+# 문의 답변 RAG 어시스트
+assist:
+  search:
+    top-k: 3
+    similarity-threshold: 0.4

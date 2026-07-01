@@ -13,6 +13,7 @@ public record AdminInquiryDetailResponse(
         String userProfileImage,
         String type,
         String content,
+        String answer,
         String status,
         LocalDateTime createdAt
 ) {
@@ -25,6 +26,7 @@ public record AdminInquiryDetailResponse(
                 user.profileImageUrl(),
                 inquiry.type(),
                 inquiry.content(),
+                inquiry.answer(),
                 inquiry.status(),
                 inquiry.createdAt()
         );

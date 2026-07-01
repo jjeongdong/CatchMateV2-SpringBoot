@@ -1,5 +1,6 @@
 package com.back.catchmate.admin.application.service;
 
+import com.back.catchmate.admin.application.dto.response.AdminAnswerDraftResponse;
 import com.back.catchmate.admin.application.dto.response.AdminBoardDetailResponse;
 import com.back.catchmate.admin.application.dto.response.AdminBoardResponse;
 import com.back.catchmate.admin.application.dto.response.AdminDashboardResponse;
@@ -21,6 +22,7 @@ import com.back.catchmate.admin.application.port.out.dto.AdminClubInfo;
 import com.back.catchmate.admin.application.port.out.dto.AdminEnrollInfo;
 import com.back.catchmate.admin.application.port.out.dto.AdminGameInfo;
 import com.back.catchmate.admin.application.port.out.dto.AdminUserInfo;
+import com.back.catchmate.admin.application.port.out.external.AnswerAssistFetchPort;
 import com.back.catchmate.admin.application.port.out.external.BoardFetchPort;
 import com.back.catchmate.admin.application.port.out.external.ClubFetchPort;
 import com.back.catchmate.admin.application.port.out.external.EnrollFetchPort;
@@ -58,6 +60,7 @@ public class AdminClientQueryService implements AdminClientQueryUseCase {
     private final EnrollFetchPort enrollFetchPort;
     private final ReportFetchPort reportFetchPort;
     private final InquiryFetchPort inquiryFetchPort;
+    private final AnswerAssistFetchPort answerAssistFetchPort;
 
     @Override
     public AdminDashboardResponse getDashboardStats() {
@@ -216,6 +219,11 @@ public class AdminClientQueryService implements AdminClientQueryUseCase {
                 .toList();
 
         return new PagedResponse<>(inquiryPage, responses);
+    }
+
+    @Override
+    public AdminAnswerDraftResponse getInquiryAnswerDraft(Long inquiryId) {
+        return AdminAnswerDraftResponse.from(answerAssistFetchPort.getAnswerDraft(inquiryId));
     }
 
     @Override

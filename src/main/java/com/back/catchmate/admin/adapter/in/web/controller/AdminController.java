@@ -6,6 +6,8 @@ import com.back.catchmate.admin.adapter.in.web.dto.request.NoticeUpdateRequest;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.admin.application.port.in.AdminClientCommandUseCase;
 import com.back.catchmate.admin.application.port.in.AdminClientQueryUseCase;
+import com.back.catchmate.admin.application.dto.response.AdminAnswerDraftResponse;
+import com.back.catchmate.admin.application.dto.response.AdminCorpusReindexResponse;
 import com.back.catchmate.admin.application.dto.response.AdminBoardDetailResponse;
 import com.back.catchmate.admin.application.dto.response.AdminBoardResponse;
 import com.back.catchmate.admin.application.dto.response.AdminDashboardResponse;
@@ -53,6 +55,18 @@ public class AdminController {
     public ResponseEntity<AdminInquiryAnswerResponse> createInquiryAnswer(@PathVariable Long inquiryId,
                                                                           @RequestBody @Valid InquiryAnswerRequest request) {
         return ResponseEntity.ok(adminClientCommandUseCase.createInquiryAnswer(request.toCommand(inquiryId)));
+    }
+
+    @PostMapping("/inquiries/{inquiryId}/answer-draft")
+    @Operation(summary = "문의 답변 초안 생성(AI)", description = "공지·과거 답변을 근거로 RAG 답변 초안을 생성합니다. 근거가 없으면 직접 작성을 안내합니다.")
+    public ResponseEntity<AdminAnswerDraftResponse> getInquiryAnswerDraft(@PathVariable Long inquiryId) {
+        return ResponseEntity.ok(adminClientQueryUseCase.getInquiryAnswerDraft(inquiryId));
+    }
+
+    @PostMapping("/inquiries/reindex")
+    @Operation(summary = "RAG 코퍼스 수동 재색인", description = "공지·답변완료 문의를 벡터 스토어에 즉시 재적재합니다. (테스트/운영용)")
+    public ResponseEntity<AdminCorpusReindexResponse> reindexInquiryCorpus() {
+        return ResponseEntity.ok(adminClientCommandUseCase.reindexInquiryCorpus());
     }
 
     @GetMapping("/dashboard/stats")

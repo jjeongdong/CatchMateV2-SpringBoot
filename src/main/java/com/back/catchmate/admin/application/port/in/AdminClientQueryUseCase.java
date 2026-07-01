@@ -1,5 +1,6 @@
 package com.back.catchmate.admin.application.port.in;
 
+import com.back.catchmate.admin.application.dto.response.AdminAnswerDraftResponse;
 import com.back.catchmate.admin.application.dto.response.AdminBoardDetailResponse;
 import com.back.catchmate.admin.application.dto.response.AdminBoardResponse;
 import com.back.catchmate.admin.application.dto.response.AdminDashboardResponse;
@@ -33,6 +34,8 @@ public interface AdminClientQueryUseCase {
     AdminInquiryDetailResponse getInquiry(Long inquiryId);
 
     PagedResponse<AdminInquiryResponse> getInquiryList(int page, int size);
+
+    AdminAnswerDraftResponse getInquiryAnswerDraft(Long inquiryId);
 
     AdminNoticeDetailResponse getNotice(Long noticeId);
 

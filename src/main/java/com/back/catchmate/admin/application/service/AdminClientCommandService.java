@@ -3,6 +3,7 @@ package com.back.catchmate.admin.application.service;
 import com.back.catchmate.admin.application.dto.command.InquiryRegisterAnswerCommand;
 import com.back.catchmate.admin.application.dto.command.NoticeCreateCommand;
 import com.back.catchmate.admin.application.dto.command.NoticeUpdateCommand;
+import com.back.catchmate.admin.application.dto.response.AdminCorpusReindexResponse;
 import com.back.catchmate.admin.application.dto.response.AdminInquiryAnswerResponse;
 import com.back.catchmate.admin.application.port.out.dto.AdminInquiryInfo;
 import com.back.catchmate.admin.application.dto.response.AdminNoticeActionResponse;
@@ -15,6 +16,7 @@ import com.back.catchmate.admin.application.event.InquiryAnswerRegisteredEvent;
 import com.back.catchmate.admin.application.event.NoticeCreatedEvent;
 import com.back.catchmate.admin.application.port.in.AdminClientCommandUseCase;
 import com.back.catchmate.admin.application.port.out.dto.AdminUserInfo;
+import com.back.catchmate.admin.application.port.out.external.AssistIndexCommandPort;
 import com.back.catchmate.admin.application.port.out.external.InquiryCommandPort;
 import com.back.catchmate.admin.application.port.out.external.InquiryFetchPort;
 import com.back.catchmate.admin.application.port.out.external.NoticeCommandPort;
@@ -40,6 +42,7 @@ public class AdminClientCommandService implements AdminClientCommandUseCase {
     private final NoticeCommandPort noticeCommandPort;
     private final ReportCommandPort reportCommandPort;
     private final InquiryCommandPort inquiryCommandPort;
+    private final AssistIndexCommandPort assistIndexCommandPort;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
@@ -63,6 +66,11 @@ public class AdminClientCommandService implements AdminClientCommandUseCase {
         );
 
         return AdminInquiryAnswerResponse.of(updatedInquiry.inquiryId(), updatedInquiry.userId());
+    }
+
+    @Override
+    public AdminCorpusReindexResponse reindexInquiryCorpus() {
+        return AdminCorpusReindexResponse.of(assistIndexCommandPort.reindex());
     }
 
     @Override
