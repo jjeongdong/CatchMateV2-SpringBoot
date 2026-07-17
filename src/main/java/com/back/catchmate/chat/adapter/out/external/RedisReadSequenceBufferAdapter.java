@@ -1,16 +1,16 @@
 package com.back.catchmate.chat.adapter.out.external;
 
 import com.back.catchmate.chat.application.port.out.ReadSequenceBufferPort;
+import com.back.catchmate.chat.application.port.out.persistence.ReadSequenceUpdate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -46,18 +46,20 @@ public class RedisReadSequenceBufferAdapter implements ReadSequenceBufferPort {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Map<String, Long> drainAll() {
+    public List<ReadSequenceUpdate> drainAll() {
         List<String> entries = redisTemplate.execute(DRAIN_SCRIPT, Collections.singletonList(BUFFER_KEY));
 
         if (entries == null || entries.isEmpty()) {
-            return Map.of();
+            return List.of();
         }
 
-        Map<String, Long> result = new HashMap<>();
+        List<ReadSequenceUpdate> result = new ArrayList<>(entries.size() / 2);
         for (int i = 0; i < entries.size(); i += 2) {
-            String field = entries.get(i);
+            String[] parts = entries.get(i).split(":");
+            Long chatRoomId = Long.parseLong(parts[0]);
+            Long userId = Long.parseLong(parts[1]);
             Long sequence = Long.parseLong(entries.get(i + 1));
-            result.put(field, sequence);
+            result.add(new ReadSequenceUpdate(chatRoomId, userId, sequence));
         }
 
         return result;

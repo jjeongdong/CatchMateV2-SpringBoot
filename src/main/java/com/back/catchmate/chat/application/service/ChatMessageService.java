@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ public class ChatMessageService {
     private final ReadSequenceBufferPort readSequenceBufferPort;
 
     private final UserFetchPort userFetchPort;
+    private final ChatBufferFlushExecutor chatBufferFlushExecutor;
 
     public ChatMessage saveMessage(Long chatRoomId, Long senderId, String content, MessageType messageType) {
         if (messageType == MessageType.TEXT) {
@@ -93,42 +95,26 @@ public class ChatMessageService {
         }
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void flushReadSequences() {
-        Map<String, Long> buffered = readSequenceBufferPort.drainAll();
-        if (buffered.isEmpty()) {
+        List<ReadSequenceUpdate> updates = readSequenceBufferPort.drainAll();
+        if (updates.isEmpty()) {
             return;
         }
 
-        List<ReadSequenceUpdate> updates = buffered.entrySet().stream()
-                .map(entry -> {
-                    String[] parts = entry.getKey().split(":");
-                    Long chatRoomId = Long.parseLong(parts[0]);
-                    Long userId = Long.parseLong(parts[1]);
-                    return new ReadSequenceUpdate(chatRoomId, userId, entry.getValue());
-                })
-                .toList();
-
-        chatRoomMemberRepository.updateLastReadSequencesBatch(updates);
-        log.debug("읽음 시퀀스 {} 건 DB 반영 완료", updates.size());
+        chatBufferFlushExecutor.flushReadSequences(updates);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void flushMessages() {
         List<ChatMessage> messages = chatMessageBufferPort.drainAll();
-        if (!messages.isEmpty()) {
-            chatMessageRepository.saveAll(messages);
-            log.debug("채팅 메시지 {} 건 배치 DB 반영 완료", messages.size());
-        }
-
         Map<Long, Long> sequences = chatRoomSequenceBufferPort.drainAll();
-        for (Map.Entry<Long, Long> entry : sequences.entrySet()) {
-            chatRoomRepository.updateMaxSequence(entry.getKey(), entry.getValue());
+
+        if (messages.isEmpty() && sequences.isEmpty()) {
+            return;
         }
 
-        if (!sequences.isEmpty()) {
-            log.debug("채팅방 시퀀스 {} 건 DB 반영 완료", sequences.size());
-        }
+        chatBufferFlushExecutor.flushMessages(messages, sequences);
     }
 
     @Cacheable(
