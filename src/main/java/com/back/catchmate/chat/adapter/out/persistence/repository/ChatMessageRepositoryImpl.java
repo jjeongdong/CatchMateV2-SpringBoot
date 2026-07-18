@@ -15,7 +15,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     private final JpaChatMessageRepository jpaChatMessageRepository;
-    private final JdbcChatMessageBatchWriter jdbcChatMessageBatchWriter;
     private final QueryDslChatMessageRepository queryDslChatMessageRepository;
 
     @Override
@@ -49,10 +48,5 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     @Override
     public List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size) {
         return queryDslChatMessageRepository.findSyncMessages(roomId, lastMessageId, size);
-    }
-
-    @Override
-    public void saveAll(List<ChatMessage> chatMessages) {
-        jdbcChatMessageBatchWriter.batchInsert(chatMessages);
     }
 }

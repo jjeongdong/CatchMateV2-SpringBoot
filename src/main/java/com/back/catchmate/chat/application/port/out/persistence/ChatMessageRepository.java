@@ -21,6 +21,4 @@ public interface ChatMessageRepository {
     List<ChatMessage> findChatHistory(Long roomId, Long lastMessageId, int size);
 
     List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size);
-
-    void saveAll(List<ChatMessage> chatMessages);
 }

@@ -47,7 +47,7 @@ async:
     queue-capacity: 5000
 
 chat:
-  message:
+  room-sequence:
     flush-delay-ms: 1000
   read-sequence:
     flush-delay-ms: 5000

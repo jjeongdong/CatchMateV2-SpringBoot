@@ -3,7 +3,6 @@ package com.back.catchmate.chat.application.service;
 import com.back.catchmate.chat.application.dto.ChatMessageCacheDto;
 import com.back.catchmate.chat.application.dto.ChatMessageListDto;
 import com.back.catchmate.chat.application.port.out.ChatHistoryCachePort;
-import com.back.catchmate.chat.application.port.out.ChatMessageBufferPort;
 import com.back.catchmate.chat.application.port.out.ChatRoomSequenceBufferPort;
 import com.back.catchmate.chat.application.port.out.ChatSequencePort;
 import com.back.catchmate.chat.application.port.out.ReadSequenceBufferPort;
@@ -25,8 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,7 +41,6 @@ public class ChatMessageService {
     private final ChatRoomRepository chatRoomRepository;
 
     private final ChatHistoryCachePort chatHistoryCachePort;
-    private final ChatMessageBufferPort chatMessageBufferPort;
     private final ChatRoomSequenceBufferPort chatRoomSequenceBufferPort;
     private final ChatSequencePort chatSequencePort;
     private final ReadSequenceBufferPort readSequenceBufferPort;
@@ -52,6 +48,7 @@ public class ChatMessageService {
     private final UserFetchPort userFetchPort;
     private final ChatBufferFlushExecutor chatBufferFlushExecutor;
 
+    @Transactional
     public ChatMessage saveMessage(Long chatRoomId, Long senderId, String content, MessageType messageType) {
         if (messageType == MessageType.TEXT) {
             ChatRoomMember member = chatRoomMemberRepository
@@ -81,7 +78,7 @@ public class ChatMessageService {
                 sequence
         );
 
-        chatMessageBufferPort.buffer(chatMessage);
+        chatMessage = chatMessageRepository.save(chatMessage);
         chatHistoryCachePort.evictLatestPage(chatRoomId);
         return chatMessage;
     }
@@ -106,15 +103,14 @@ public class ChatMessageService {
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void flushMessages() {
-        List<ChatMessage> messages = chatMessageBufferPort.drainAll();
+    public void flushRoomSequences() {
         Map<Long, Long> sequences = chatRoomSequenceBufferPort.drainAll();
 
-        if (messages.isEmpty() && sequences.isEmpty()) {
+        if (sequences.isEmpty()) {
             return;
         }
 
-        chatBufferFlushExecutor.flushMessages(messages, sequences);
+        chatBufferFlushExecutor.flushRoomSequences(sequences);
     }
 
     @Cacheable(
@@ -124,11 +120,8 @@ public class ChatMessageService {
     )
     public ChatMessageListDto getChatHistory(Long roomId, Long lastMessageId, int size) {
         List<ChatMessage> dbMessages = chatMessageRepository.findChatHistory(roomId, lastMessageId, size);
-        List<ChatMessage> bufferedMessages = chatMessageBufferPort.readByRoomId(roomId);
 
-        List<ChatMessage> merged = mergeHistoryMessages(dbMessages, bufferedMessages, lastMessageId, size);
-
-        List<Long> senderIds = merged.stream()
+        List<Long> senderIds = dbMessages.stream()
                 .map(ChatMessage::getSenderId)
                 .distinct()
                 .toList();
@@ -137,7 +130,7 @@ public class ChatMessageService {
                 : userFetchPort.getUsers(senderIds).stream()
                         .collect(Collectors.toMap(ChatUserInfo::userId, Function.identity()));
 
-        List<ChatMessageCacheDto> chatMessageCacheDtoList = merged.stream()
+        List<ChatMessageCacheDto> chatMessageCacheDtoList = dbMessages.stream()
                 .map(msg -> ChatMessageCacheDto.from(msg, senderById.get(msg.getSenderId())))
                 .toList();
 
@@ -145,47 +138,7 @@ public class ChatMessageService {
     }
 
     public List<ChatMessage> getSyncMessages(Long roomId, Long lastMessageId, int size) {
-        List<ChatMessage> dbMessages = chatMessageRepository.findSyncMessages(roomId, lastMessageId, size);
-        List<ChatMessage> bufferedMessages = chatMessageBufferPort.readByRoomId(roomId);
-
-        if (bufferedMessages.isEmpty()) {
-            return dbMessages;
-        }
-
-        List<ChatMessage> filtered = bufferedMessages.stream()
-                .filter(msg -> lastMessageId == null || msg.getSequence() > lastMessageId)
-                .toList();
-
-        if (filtered.isEmpty()) {
-            return dbMessages;
-        }
-
-        List<ChatMessage> merged = new ArrayList<>(dbMessages);
-        merged.addAll(filtered);
-        merged.sort(Comparator.comparing(ChatMessage::getSequence));
-
-        return merged.size() > size ? merged.subList(0, size) : merged;
-    }
-
-    private List<ChatMessage> mergeHistoryMessages(List<ChatMessage> dbMessages, List<ChatMessage> bufferedMessages,
-                                                   Long lastMessageId, int size) {
-        if (bufferedMessages.isEmpty()) {
-            return dbMessages;
-        }
-
-        List<ChatMessage> filtered = bufferedMessages.stream()
-                .filter(msg -> lastMessageId == null || msg.getSequence() < lastMessageId)
-                .toList();
-
-        if (filtered.isEmpty()) {
-            return dbMessages;
-        }
-
-        List<ChatMessage> merged = new ArrayList<>(dbMessages);
-        merged.addAll(filtered);
-        merged.sort(Comparator.comparing(ChatMessage::getSequence).reversed());
-
-        return merged.size() > size ? merged.subList(0, size) : merged;
+        return chatMessageRepository.findSyncMessages(roomId, lastMessageId, size);
     }
 
     public Optional<ChatMessage> getLastMessage(Long chatRoomId) {

@@ -52,7 +52,7 @@ public class ChatInternalCommandService implements ChatInternalCommandUseCase {
     }
 
     @Override
-    public void flushMessages() {
-        chatMessageService.flushMessages();
+    public void flushRoomSequences() {
+        chatMessageService.flushRoomSequences();
     }
 }

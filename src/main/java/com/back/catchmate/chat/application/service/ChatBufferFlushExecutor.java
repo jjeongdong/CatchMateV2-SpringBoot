@@ -1,10 +1,8 @@
 package com.back.catchmate.chat.application.service;
 
-import com.back.catchmate.chat.application.port.out.persistence.ChatMessageRepository;
 import com.back.catchmate.chat.application.port.out.persistence.ChatRoomMemberRepository;
 import com.back.catchmate.chat.application.port.out.persistence.ChatRoomRepository;
 import com.back.catchmate.chat.application.port.out.persistence.ReadSequenceUpdate;
-import com.back.catchmate.chat.domain.model.ChatMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,7 +17,6 @@ import java.util.Map;
 public class ChatBufferFlushExecutor {
 
     private final ChatRoomRepository chatRoomRepository;
-    private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
 
     @Transactional
@@ -29,18 +26,11 @@ public class ChatBufferFlushExecutor {
     }
 
     @Transactional
-    public void flushMessages(List<ChatMessage> messages, Map<Long, Long> sequences) {
-        if (!messages.isEmpty()) {
-            chatMessageRepository.saveAll(messages);
-            log.debug("채팅 메시지 {} 건 배치 DB 반영 완료", messages.size());
-        }
-
+    public void flushRoomSequences(Map<Long, Long> sequences) {
         for (Map.Entry<Long, Long> entry : sequences.entrySet()) {
             chatRoomRepository.updateMaxSequence(entry.getKey(), entry.getValue());
         }
 
-        if (!sequences.isEmpty()) {
-            log.debug("채팅방 시퀀스 {} 건 DB 반영 완료", sequences.size());
-        }
+        log.debug("채팅방 시퀀스 {} 건 DB 반영 완료", sequences.size());
     }
 }

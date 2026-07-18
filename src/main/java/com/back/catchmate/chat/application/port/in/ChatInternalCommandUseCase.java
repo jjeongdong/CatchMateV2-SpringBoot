@@ -22,5 +22,5 @@ public interface ChatInternalCommandUseCase {
 
     void flushReadSequences();
 
-    void flushMessages();
+    void flushRoomSequences();
 }

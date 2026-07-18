@@ -7,11 +7,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ChatMessageFlushScheduler {
+public class ChatRoomSequenceFlushScheduler {
     private final ChatInternalCommandUseCase chatInternalCommandUseCase;
 
-    @Scheduled(fixedDelayString = "${chat.message.flush-delay-ms:1000}")
-    public void flushMessages() {
-        chatInternalCommandUseCase.flushMessages();
+    @Scheduled(fixedDelayString = "${chat.room-sequence.flush-delay-ms:1000}")
+    public void flushRoomSequences() {
+        chatInternalCommandUseCase.flushRoomSequences();
     }
 }

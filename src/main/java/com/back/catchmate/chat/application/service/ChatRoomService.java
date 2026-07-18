@@ -1,12 +1,12 @@
 package com.back.catchmate.chat.application.service;
 
 import com.back.catchmate.chat.application.port.out.ChatHistoryCachePort;
-import com.back.catchmate.chat.application.port.out.ChatMessageBufferPort;
 import com.back.catchmate.chat.application.port.out.ChatSequencePort;
 import com.back.catchmate.chat.application.port.out.dto.ChatBoardInfo;
 import com.back.catchmate.chat.application.port.out.dto.ChatUserInfo;
 import com.back.catchmate.chat.application.port.out.external.BoardFetchPort;
 import com.back.catchmate.chat.application.port.out.external.UserFetchPort;
+import com.back.catchmate.chat.application.port.out.persistence.ChatMessageRepository;
 import com.back.catchmate.chat.application.port.out.persistence.ChatRoomMemberRepository;
 import com.back.catchmate.chat.application.port.out.persistence.ChatRoomRepository;
 import com.back.catchmate.chat.domain.enums.MessageType;
@@ -33,9 +33,9 @@ public class ChatRoomService {
 
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
     private final ChatHistoryCachePort chatHistoryCachePort;
-    private final ChatMessageBufferPort chatMessageBufferPort;
     private final ChatSequencePort chatSequencePort;
 
     private final BoardFetchPort boardFetchPort;
@@ -86,7 +86,7 @@ public class ChatRoomService {
                 sequence
         );
 
-        chatMessageBufferPort.buffer(chatMessage);
+        chatMessage = chatMessageRepository.save(chatMessage);
         chatHistoryCachePort.evictLatestPage(chatRoomId);
         return chatMessage;
     }
@@ -112,7 +112,7 @@ public class ChatRoomService {
                 sequence
         );
 
-        chatMessageBufferPort.buffer(chatMessage);
+        chatMessage = chatMessageRepository.save(chatMessage);
         chatHistoryCachePort.evictLatestPage(chatRoomId);
         return chatMessage;
     }
@@ -178,7 +178,7 @@ public class ChatRoomService {
                 sequence
         );
 
-        chatMessageBufferPort.buffer(chatMessage);
+        chatMessage = chatMessageRepository.save(chatMessage);
         chatHistoryCachePort.evictLatestPage(chatRoomId);
         return chatMessage;
     }

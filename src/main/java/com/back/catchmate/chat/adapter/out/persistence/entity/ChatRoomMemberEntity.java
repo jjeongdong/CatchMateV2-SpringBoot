@@ -39,6 +39,7 @@ public class ChatRoomMemberEntity extends BaseTimeEntity {
     private Long lastReadSequence;
 
     @Column(name = "is_notification_on", nullable = false)
+    @Builder.Default
     private boolean isNotificationOn = true;
 
     public static ChatRoomMemberEntity from(ChatRoomMember member) {
