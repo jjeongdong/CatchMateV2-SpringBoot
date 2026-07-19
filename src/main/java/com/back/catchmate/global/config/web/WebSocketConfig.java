@@ -1,11 +1,14 @@
 package com.back.catchmate.global.config.web;
 
 import com.back.catchmate.global.config.security.StompAuthChannelInterceptor;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -15,23 +18,28 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final StompAuthChannelInterceptor stompAuthChannelInterceptor;
+    private final MeterRegistry meterRegistry;
 
     @Value("${cors.allowed-origins}")
     private String[] allowedOrigins;
+    @Value("${websocket.inbound.pool-size:16}")
+    private int inboundPoolSize;
+    @Value("${websocket.outbound.core-pool-size:8}")
+    private int outboundCorePoolSize;
+    @Value("${websocket.outbound.max-pool-size:32}")
+    private int outboundMaxPoolSize;
+    @Value("${websocket.outbound.queue-capacity:10000}")
+    private int outboundQueueCapacity;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // 클라이언트가 구독할 prefix 설정 (서버 -> 클라이언트)
         registry.enableSimpleBroker("/sub", "/queue");
-        // 클라이언트가 메시지를 보낼 prefix 설정 (클라이언트 -> 서버)
         registry.setApplicationDestinationPrefixes("/pub");
-        // 특정 사용자에게 메시지를 보낼 때 사용하는 prefix 설정
         registry.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // WebSocket 연결 엔드포인트
         registry.addEndpoint("/ws/chat")
                 .setAllowedOrigins(allowedOrigins)
                 .withSockJS();
@@ -43,5 +51,26 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(stompAuthChannelInterceptor);
+        registration.taskExecutor()
+                .corePoolSize(inboundPoolSize)
+                .maxPoolSize(inboundPoolSize);
+    }
+
+    @Override
+    public void configureClientOutboundChannel(ChannelRegistration registration) {
+        registration.taskExecutor(wsClientOutboundExecutor());
+    }
+
+    @Bean
+    public ThreadPoolTaskExecutor wsClientOutboundExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(outboundCorePoolSize);
+        executor.setMaxPoolSize(outboundMaxPoolSize);
+        executor.setQueueCapacity(outboundQueueCapacity);
+        executor.setThreadNamePrefix("WsOutbound-");
+        executor.setRejectedExecutionHandler((runnable, exec) ->
+                meterRegistry.counter("websocket.outbound.dropped").increment());
+        executor.initialize();
+        return executor;
     }
 }

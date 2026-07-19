@@ -26,9 +26,10 @@ COPY --from=builder /app/build/libs/*.jar app.jar
 RUN mkdir -p /app/logs
 
 EXPOSE 8080
+# 힙은 런타임 env(JVM_HEAP)로 오버라이드 가능. 기본 512m 유지(단일호스트 배포=app+redis+nginx 한 대라 OOM 방지).
+# 스케일아웃 App EC2(앱 컨테이너만 실행, 2GB)에서는 compose 로 JVM_HEAP=1g 등으로 상향 → 수천 WS 세션 대비.
+ENV JVM_HEAP="512m"
 ENV JAVA_OPTS="\
-  -Xms512m \
-  -Xmx512m \
   -XX:MaxMetaspaceSize=192m \
   -Xss512k \
   -XX:+UseG1GC \
@@ -39,4 +40,4 @@ ENV JAVA_OPTS="\
   -XX:+UseContainerSupport \
   -Xlog:gc*:file=/app/logs/gc.log:time,uptime,level,tags:filecount=5,filesize=10m"
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Xms$JVM_HEAP -Xmx$JVM_HEAP $JAVA_OPTS -jar app.jar"]

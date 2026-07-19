@@ -58,7 +58,7 @@ com.back.catchmate
 | Profile | 파일 | 용도 |
 |---|---|---|
 | `local` | `application-local.yml` | 로컬 개발용 하드코딩 값 |
-| `dev` | `application-dev.yml` | CI/CD 환경변수 주입 (GitHub Secrets → `deploy.yml`) |
+| `dev` | `application-dev.yml` | 운영 환경값 (서버에 직접 배치, `.gitignore`) |
 
 ## Technology Stack
 
@@ -70,7 +70,7 @@ com.back.catchmate
 
 ## Deployment
 
-EC2 단일 인스턴스 Nginx Blue/Green. `.github/workflows/deploy.yml` 이 `main` 푸시 시 Docker 이미지 빌드/푸시 후 SSH 로 `deploy.sh` 실행.
+EC2 단일 인스턴스. Nginx(리버스 프록시·SSL) 뒤에 단일 `catchmate-app` 컨테이너. EC2 서버에서 소스를 직접 빌드해 재기동하는 수동 배포(`deploy-local.sh`: `docker-compose up -d --build`).
 
 ## 주요 파일 위치
 
