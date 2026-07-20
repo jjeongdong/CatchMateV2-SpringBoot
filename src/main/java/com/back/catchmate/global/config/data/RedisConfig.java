@@ -20,8 +20,10 @@ import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.time.Duration;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @EnableCaching
 @Configuration
@@ -87,12 +89,25 @@ public class RedisConfig {
     ) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
+        container.setTaskExecutor(redisListenerTaskExecutor());
 
         // 1. 채팅 메시지
         container.addMessageListener(chatListenerAdapter, chatTopic);
         // 2. 알림 메시지
         container.addMessageListener(notificationListenerAdapter, notificationTopic);
         return container;
+    }
+
+    @Bean
+    public ThreadPoolTaskExecutor redisListenerTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(8);
+        executor.setMaxPoolSize(16);
+        executor.setQueueCapacity(1000);
+        executor.setThreadNamePrefix("RedisMsg-");
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.initialize();
+        return executor;
     }
 
     /**

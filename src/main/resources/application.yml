@@ -1,21 +1,16 @@
 server:
   shutdown: graceful
   tomcat:
-    # WebSocket 연결은 커넥션을 상시 점유한다. 기본 max-connections=8192 를 상향해 수천~수만 동시 연결 대비.
     max-connections: 50000
     accept-count: 500
 
-# STOMP 채널 스레드풀 (WebSocketConfig).
-#  - inbound: 큐 무제한(수신 유실 방지) → pool-size 가 실효 병렬도(core=max).
-#  - outbound: 유한 큐로 maxPoolSize 를 실제 발동시키고, 포화 시 드롭+카운트(websocket.outbound.dropped).
-#    부하 테스트에서 이 카운터가 0→1 이 되는 지점이 "라이브 전달 천장". queue-capacity 는 버스트 허용 버퍼.
 websocket:
   inbound:
     pool-size: 16
   outbound:
     core-pool-size: 8
     max-pool-size: 32
-    queue-capacity: 10000
+    queue-capacity: 1000
 
 spring:
   profiles:

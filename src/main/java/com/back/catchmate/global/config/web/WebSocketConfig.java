@@ -28,7 +28,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private int outboundCorePoolSize;
     @Value("${websocket.outbound.max-pool-size:32}")
     private int outboundMaxPoolSize;
-    @Value("${websocket.outbound.queue-capacity:10000}")
+    @Value("${websocket.outbound.queue-capacity:1000}")
     private int outboundQueueCapacity;
 
     @Override
