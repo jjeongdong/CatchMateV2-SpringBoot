@@ -1,6 +1,7 @@
 package com.back.catchmate.chat.adapter.out.persistence.repository;
 
 import com.back.catchmate.chat.domain.model.ChatRoomMember;
+import com.back.catchmate.chat.application.port.out.ChatMembershipCachePort;
 import com.back.catchmate.chat.application.port.out.persistence.ChatRoomMemberRepository;
 import com.back.catchmate.chat.application.port.out.persistence.ReadSequenceUpdate;
 import com.back.catchmate.chat.adapter.out.persistence.entity.ChatRoomMemberEntity;
@@ -27,11 +28,15 @@ public class ChatRoomMemberRepositoryImpl implements ChatRoomMemberRepository {
 
     private final JpaChatRoomMemberRepository jpaChatRoomMemberRepository;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final ChatMembershipCachePort chatMembershipCachePort;
 
     @Override
     public ChatRoomMember save(ChatRoomMember member) {
         ChatRoomMemberEntity entity = ChatRoomMemberEntity.from(member);
-        return jpaChatRoomMemberRepository.save(entity).toDomain();
+        ChatRoomMember saved = jpaChatRoomMemberRepository.save(entity).toDomain();
+        // 멤버십 상태 변경(add/leave/kick/read-only) → 인증 캐시 무효화 (choke point)
+        chatMembershipCachePort.evict(saved.getChatRoomId(), saved.getUserId());
+        return saved;
     }
 
     @Override

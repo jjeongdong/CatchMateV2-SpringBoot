@@ -1,6 +1,7 @@
 package com.back.catchmate.chat.application.service;
 
 import com.back.catchmate.chat.application.port.out.ChatHistoryCachePort;
+import com.back.catchmate.chat.application.port.out.ChatMembershipCachePort;
 import com.back.catchmate.chat.application.port.out.ChatSequencePort;
 import com.back.catchmate.chat.application.port.out.dto.ChatBoardInfo;
 import com.back.catchmate.chat.application.port.out.dto.ChatUserInfo;
@@ -36,6 +37,7 @@ public class ChatRoomService {
     private final ChatMessageRepository chatMessageRepository;
 
     private final ChatHistoryCachePort chatHistoryCachePort;
+    private final ChatMembershipCachePort chatMembershipCachePort;
     private final ChatSequencePort chatSequencePort;
 
     private final BoardFetchPort boardFetchPort;
@@ -123,16 +125,27 @@ public class ChatRoomService {
             cacheManager = "redisCacheManager"
     )
     public boolean validateUserInChatRoom(Long userId, Long roomId) {
-        boolean isMember = chatRoomMemberRepository
-                .findByChatRoomIdAndUserId(roomId, userId)
-                .filter(ChatRoomMember::isActive)
-                .isPresent();
-
-        if (!isMember) {
+        if (!isActiveMember(roomId, userId)) {
             throw new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND);
         }
 
         return true;
+    }
+
+    // 멤버십 인증 캐시(read-through). miss 시에만 DB 조회 후 캐시 적재.
+    private boolean isActiveMember(Long roomId, Long userId) {
+        return chatMembershipCachePort.find(roomId, userId)
+                .map(ChatMembershipCachePort.MembershipSnapshot::active)
+                .orElseGet(() -> {
+                    Optional<ChatRoomMember> member = chatRoomMemberRepository.findByChatRoomIdAndUserId(roomId, userId);
+                    if (member.isEmpty()) {
+                        return false;
+                    }
+                    ChatRoomMember found = member.get();
+                    chatMembershipCachePort.put(roomId, userId,
+                            new ChatMembershipCachePort.MembershipSnapshot(found.isActive(), found.isReadOnly()));
+                    return found.isActive();
+                });
     }
 
     @Transactional

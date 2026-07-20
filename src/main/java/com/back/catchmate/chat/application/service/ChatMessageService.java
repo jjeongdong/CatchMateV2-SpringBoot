@@ -2,7 +2,11 @@ package com.back.catchmate.chat.application.service;
 
 import com.back.catchmate.chat.application.dto.ChatMessageCacheDto;
 import com.back.catchmate.chat.application.dto.ChatMessageListDto;
+import com.back.catchmate.chat.application.event.ChatMessageEvent;
+import com.back.catchmate.chat.application.event.ChatMessageSentEvent;
 import com.back.catchmate.chat.application.port.out.ChatHistoryCachePort;
+import com.back.catchmate.chat.application.port.out.ChatMembershipCachePort;
+import com.back.catchmate.chat.application.port.out.ChatMembershipCachePort.MembershipSnapshot;
 import com.back.catchmate.chat.application.port.out.ChatRoomSequenceBufferPort;
 import com.back.catchmate.chat.application.port.out.ChatSequencePort;
 import com.back.catchmate.chat.application.port.out.ReadSequenceBufferPort;
@@ -20,6 +24,7 @@ import com.back.catchmate.common.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,46 +46,78 @@ public class ChatMessageService {
     private final ChatRoomRepository chatRoomRepository;
 
     private final ChatHistoryCachePort chatHistoryCachePort;
+    private final ChatMembershipCachePort chatMembershipCachePort;
     private final ChatRoomSequenceBufferPort chatRoomSequenceBufferPort;
     private final ChatSequencePort chatSequencePort;
     private final ReadSequenceBufferPort readSequenceBufferPort;
 
     private final UserFetchPort userFetchPort;
     private final ChatBufferFlushExecutor chatBufferFlushExecutor;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    @Transactional
-    public ChatMessage saveMessage(Long chatRoomId, Long senderId, String content, MessageType messageType) {
+    /**
+     * [트랜잭션 밖] 멤버십 인증(캐시) + 시퀀스 발행(Redis). DB 커넥션을 잡지 않도록 NOT_SUPPORTED.
+     * TEXT 만 새 시퀀스를 INCR 하고, 그 외(이미지 등)는 현재 시퀀스를 읽는다.
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public Long prepareSequence(Long chatRoomId, Long senderId, MessageType messageType) {
         if (messageType == MessageType.TEXT) {
-            ChatRoomMember member = chatRoomMemberRepository
-                    .findByChatRoomIdAndUserId(chatRoomId, senderId)
-                    .filter(ChatRoomMember::isActive)
-                    .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
-
-            if (member.isReadOnly()) {
+            MembershipSnapshot membership = resolveMembership(chatRoomId, senderId);
+            if (!membership.active()) {
+                throw new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND);
+            }
+            if (membership.readOnly()) {
                 throw new BaseException(ErrorCode.CHATROOM_READ_ONLY);
             }
+            return chatSequencePort.generateSequence(chatRoomId);
         }
+        return chatSequencePort.getCurrentSequence(chatRoomId);
+    }
 
-        Long sequence;
+    /**
+     * [좁은 트랜잭션] 메시지 INSERT + 이벤트 발행.
+     * Outbox 2단계(절대 변경 금지)를 위해 INSERT 와 ChatMessageSentEvent 발행은 반드시 같은 트랜잭션이어야
+     * @EventListener(커밋 전 Outbox 저장)가 원자적으로 커밋된다. 브로드캐스트/알림 dispatch 는 AFTER_COMMIT.
+     */
+    @Transactional
+    public ChatMessage persistAndPublish(Long chatRoomId, Long senderId, String content,
+                                         MessageType messageType, Long sequence, ChatUserInfo sender) {
+        ChatMessage chatMessage = ChatMessage.createMessage(chatRoomId, senderId, content, messageType, sequence);
+        chatMessage = chatMessageRepository.save(chatMessage);
+
+        applicationEventPublisher.publishEvent(ChatMessageEvent.from(chatMessage, sender));
+        applicationEventPublisher.publishEvent(ChatMessageSentEvent.of(
+                chatMessage.getChatRoomId(),
+                chatMessage.getId(),
+                senderId,
+                chatMessage.getContent()
+        ));
+        return chatMessage;
+    }
+
+    /**
+     * [트랜잭션 밖] 커밋 후 후처리(Redis): 시퀀스 버퍼링 + 히스토리 캐시 evict. DB 커넥션 불필요.
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void bufferAfterSend(Long chatRoomId, Long senderId, Long sequence, MessageType messageType) {
         if (messageType == MessageType.TEXT) {
-            sequence = chatSequencePort.generateSequence(chatRoomId);
             chatRoomSequenceBufferPort.buffer(chatRoomId, sequence);
             readSequenceBufferPort.buffer(chatRoomId, senderId, sequence);
-        } else {
-            sequence = chatSequencePort.getCurrentSequence(chatRoomId);
         }
-
-        ChatMessage chatMessage = ChatMessage.createMessage(
-                chatRoomId,
-                senderId,
-                content,
-                messageType,
-                sequence
-        );
-
-        chatMessage = chatMessageRepository.save(chatMessage);
         chatHistoryCachePort.evictLatestPage(chatRoomId);
-        return chatMessage;
+    }
+
+    // 멤버십 인증 캐시(read-through). miss 시에만 DB 조회 후 캐시 적재. 멤버 행이 없으면 예외.
+    private MembershipSnapshot resolveMembership(Long chatRoomId, Long userId) {
+        return chatMembershipCachePort.find(chatRoomId, userId)
+                .orElseGet(() -> {
+                    ChatRoomMember member = chatRoomMemberRepository
+                            .findByChatRoomIdAndUserId(chatRoomId, userId)
+                            .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
+                    MembershipSnapshot snapshot = new MembershipSnapshot(member.isActive(), member.isReadOnly());
+                    chatMembershipCachePort.put(chatRoomId, userId, snapshot);
+                    return snapshot;
+                });
     }
 
     public void markAsRead(Long chatRoomId, Long userId) {

@@ -2,7 +2,6 @@ package com.back.catchmate.chat.application.service;
 
 import com.back.catchmate.chat.application.dto.command.ChatMessageCommand;
 import com.back.catchmate.chat.application.event.ChatMessageEvent;
-import com.back.catchmate.chat.application.event.ChatMessageSentEvent;
 import com.back.catchmate.chat.application.port.in.ChatClientCommandUseCase;
 import com.back.catchmate.chat.application.port.out.dto.ChatUserInfo;
 import com.back.catchmate.chat.application.port.out.external.ImageUploaderPort;
@@ -12,6 +11,7 @@ import com.back.catchmate.common.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -25,24 +25,22 @@ public class ChatClientCommandService implements ChatClientCommandUseCase {
     private final ImageUploaderPort imageUploaderPort;
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    // DB 커넥션을 메시지 INSERT(+Outbox 저장)에만 잡히게 하려고 트랜잭션을 걸지 않는다(NOT_SUPPORTED).
+    // 준비(멤버십 캐시·시퀀스)와 후처리(버퍼링·캐시 evict)는 Redis 로 트랜잭션 밖에서 처리하고,
+    // INSERT + 이벤트 발행만 chatMessageService.persistAndPublish 의 좁은 트랜잭션에서 수행한다.
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void sendMessage(Long senderId, ChatMessageCommand command) {
         ChatUserInfo sender = userFetchPort.getUser(senderId);
 
-        ChatMessage savedMessage = chatMessageService.saveMessage(
-                command.chatRoomId(),
-                senderId,
-                command.content(),
-                command.messageType()
-        );
+        Long sequence = chatMessageService.prepareSequence(
+                command.chatRoomId(), senderId, command.messageType());
 
-        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage, sender));
-        applicationEventPublisher.publishEvent(ChatMessageSentEvent.of(
-                savedMessage.getChatRoomId(),
-                savedMessage.getId(),
-                senderId,
-                savedMessage.getContent()
-        ));
+        chatMessageService.persistAndPublish(
+                command.chatRoomId(), senderId, command.content(), command.messageType(), sequence, sender);
+
+        chatMessageService.bufferAfterSend(
+                command.chatRoomId(), senderId, sequence, command.messageType());
     }
 
     @Override
