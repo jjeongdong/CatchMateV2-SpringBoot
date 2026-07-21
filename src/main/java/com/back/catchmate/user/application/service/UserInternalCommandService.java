@@ -8,6 +8,7 @@ import com.back.catchmate.user.application.port.in.UserInternalCommandUseCase;
 import com.back.catchmate.user.application.port.out.persistence.UserRepository;
 import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +48,7 @@ public class UserInternalCommandService implements UserInternalCommandUseCase {
     }
 
     @Override
+    @CacheEvict(value = "userInternal", key = "#userId", cacheManager = "redisCacheManager")
     public void clearFcmToken(Long userId) {
         User user = userReader.getUser(userId);
         user.deleteFcmToken();

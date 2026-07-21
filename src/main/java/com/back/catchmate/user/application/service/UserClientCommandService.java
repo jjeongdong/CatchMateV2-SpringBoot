@@ -13,6 +13,7 @@ import com.back.catchmate.user.application.port.out.persistence.UserRepository;
 import com.back.catchmate.user.domain.model.UserAlarmType;
 import com.back.catchmate.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ public class UserClientCommandService implements UserClientCommandUseCase {
     private final ImageUploaderPort imageUploaderPort;
 
     @Override
+    @CacheEvict(value = "userInternal", key = "#userId", cacheManager = "redisCacheManager")
     public UserUpdateResponse updateUserProfile(Long userId, UserProfileUpdateCommand command, UploadFile uploadFile) {
         User user = userReader.getUser(userId);
 
@@ -47,6 +49,7 @@ public class UserClientCommandService implements UserClientCommandUseCase {
     }
 
     @Override
+    @CacheEvict(value = "userInternal", key = "#userId", cacheManager = "redisCacheManager")
     public UserAlarmUpdateResponse updateUserAlarm(Long userId, UserAlarmType alarmType, boolean isEnabled) {
         User user = userReader.getUser(userId);
         user.updateAlarm(alarmType, isEnabled);
@@ -55,6 +58,7 @@ public class UserClientCommandService implements UserClientCommandUseCase {
     }
 
     @Override
+    @CacheEvict(value = "userInternal", key = "#command.userId()", cacheManager = "redisCacheManager")
     public void updateUserFcmToken(UserFcmTokenUpdateCommand command) {
         User user = userReader.getUser(command.userId());
         user.updateFcmToken(command.fcmToken());

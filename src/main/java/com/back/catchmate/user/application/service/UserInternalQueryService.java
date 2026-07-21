@@ -4,6 +4,7 @@ import com.back.catchmate.user.application.dto.response.UserInternalResponse;
 import com.back.catchmate.user.application.port.in.UserAdminQueryUseCase;
 import com.back.catchmate.user.application.port.in.UserInternalQueryUseCase;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,8 @@ public class UserInternalQueryService implements UserInternalQueryUseCase, UserA
     private final UserReader userReader;
 
     @Override
+    @Cacheable(value = "userInternal", key = "#userId",
+            cacheManager = "redisCacheManager", unless = "#result == null")
     public UserInternalResponse getUser(Long userId) {
         return UserInternalResponse.from(userReader.getUser(userId));
     }
