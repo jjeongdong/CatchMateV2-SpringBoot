@@ -17,7 +17,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
+import com.back.catchmate.chat.application.dto.ChatMessageListDto;
+import com.back.catchmate.user.application.dto.response.UserInternalResponse;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -59,21 +62,26 @@ public class RedisConfig {
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        PolymorphicTypeValidator typeValidator = BasicPolymorphicTypeValidator
-                .builder()
-                .allowIfSubType(Object.class)
-                .build();
-        objectMapper.activateDefaultTyping(typeValidator, ObjectMapper.DefaultTyping.NON_FINAL);
-
-        RedisCacheConfiguration cacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofHours(1)) // 캐시 수명: 1시간
+        RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofHours(1))
                 .disableCachingNullValues()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(objectMapper)));
 
         return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(cacheConfiguration)
+                .cacheDefaults(defaultCacheConfig)
+                .withCacheConfiguration("userInternal", createCacheConfig(objectMapper, UserInternalResponse.class))
+                .withCacheConfiguration("chatRoomMemberAuth", createCacheConfig(objectMapper, Boolean.class))
+                .withCacheConfiguration("chatHistory", createCacheConfig(objectMapper, ChatMessageListDto.class))
                 .build();
+    }
+
+    private RedisCacheConfiguration createCacheConfig(ObjectMapper objectMapper, Class<?> clazz) {
+        return RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofHours(1))
+                .disableCachingNullValues()
+                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(objectMapper, clazz)));
     }
 
     /**
