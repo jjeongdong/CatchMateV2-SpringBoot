@@ -24,6 +24,7 @@ public enum ErrorCode {
     ENROLL_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 직관 신청입니다."),
     ENROLL_BAD_REQUEST(HttpStatus.BAD_REQUEST, "자신의 게시글에는 직관 신청을 할 수 없습니다."),
     DUPLICATE_ENROLL_ACCEPT_REQUEST(HttpStatus.BAD_REQUEST, "이미 처리 중인 수락 요청입니다."),
+    ENROLL_ACCEPT_CONFLICT(HttpStatus.CONFLICT, "동시 요청이 많아 수락 처리에 실패했습니다. 잠시 후 다시 시도해주세요."),
 
     // 게시글
     BOARD_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다."),

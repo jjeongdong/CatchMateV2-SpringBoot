@@ -8,7 +8,6 @@ import com.back.catchmate.enroll.application.dto.response.EnrollAcceptResponse;
 import com.back.catchmate.enroll.application.dto.response.EnrollCancelResponse;
 import com.back.catchmate.enroll.application.dto.response.EnrollCreateResponse;
 import com.back.catchmate.enroll.application.dto.response.EnrollRejectResponse;
-import com.back.catchmate.enroll.application.event.EnrollAcceptedEvent;
 import com.back.catchmate.enroll.application.event.EnrollCancelledEvent;
 import com.back.catchmate.enroll.application.event.EnrollRejectedEvent;
 import com.back.catchmate.enroll.application.event.EnrollRequestedEvent;
@@ -23,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -34,6 +34,7 @@ public class EnrollClientCommandService implements EnrollClientCommandUseCase {
     private final UserFetchPort userFetchPort;
     private final BoardFetchPort boardFetchPort;
     private final IdempotencyPort idempotencyPort;
+    private final EnrollAcceptExecutor enrollAcceptExecutor;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Value("${enroll.idempotency.ttl-seconds:10}")
@@ -57,35 +58,22 @@ public class EnrollClientCommandService implements EnrollClientCommandUseCase {
     }
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public EnrollAcceptResponse updateEnrollAccept(Long userId, Long enrollId) {
         String idempotencyKey = "idempotent:enroll:accept:" + enrollId;
         if (!idempotencyPort.acquireIfAbsent(idempotencyKey, idempotencyTtlSeconds)) {
             throw new BaseException(ErrorCode.DUPLICATE_ENROLL_ACCEPT_REQUEST);
         }
 
-        Enroll enroll = enrollReader.getEnroll(enrollId);
-        verifyBoardHost(enroll, userId);
-        EnrollBoardInfo board = boardFetchPort.getBoardWithLock(enroll.getBoardId());
-        EnrollUserInfo applicant = userFetchPort.getUser(enroll.getUserId());
-
-        enroll.accept();
-        updateEnroll(enroll);
-
-        applicationEventPublisher.publishEvent(EnrollAcceptedEvent.of(
-                enrollId,
-                board.boardId(),
-                applicant.userId(),
-                board.userId()
-        ));
-
-        return EnrollAcceptResponse.of(enrollId);
+        // 멱등성(SETNX)은 재시도 밖에서 1회만. 트랜잭션 + 낙관적 락 재시도는 Executor 가 담당한다.
+        return enrollAcceptExecutor.accept(userId, enrollId);
     }
 
     @Override
     public EnrollRejectResponse updateEnrollReject(Long userId, Long enrollId) {
         Enroll enroll = enrollReader.getEnroll(enrollId);
         verifyBoardHost(enroll, userId);
-        EnrollBoardInfo board = boardFetchPort.getBoardWithLock(enroll.getBoardId());
+        EnrollBoardInfo board = boardFetchPort.getBoard(enroll.getBoardId());
         EnrollUserInfo applicant = userFetchPort.getUser(enroll.getUserId());
 
         enroll.reject();

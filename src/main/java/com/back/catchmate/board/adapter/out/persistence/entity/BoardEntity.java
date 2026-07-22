@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -68,6 +69,11 @@ public class BoardEntity extends BaseTimeEntity {
 
     private LocalDateTime deletedAt;
 
+    // 낙관적 락: 마지막 잔여석 동시 수락 시 currentPerson 갱신 충돌을 감지한다.
+    // primitive long(NOT NULL) — ddl-auto:update 로 컬럼 추가 시 기존 행이 0으로 채워져 NULL-version 오동작을 피한다.
+    @Version
+    private long version;
+
     public static BoardEntity fromDomain(Board board) {
         return BoardEntity.builder()
                 .id(board.getId())
@@ -83,6 +89,7 @@ public class BoardEntity extends BaseTimeEntity {
                 .completed(board.isCompleted())
                 .liftUpDate(board.getLiftUpDate())
                 .deletedAt(board.getDeletedAt())
+                .version(board.getVersion())
                 .build();
     }
 
@@ -101,6 +108,7 @@ public class BoardEntity extends BaseTimeEntity {
                 .completed(this.completed)
                 .createdAt(this.getCreatedAt())
                 .liftUpDate(this.liftUpDate)
+                .version(this.version)
                 .build();
     }
 }

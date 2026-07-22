@@ -20,11 +20,6 @@ public class EnrollBoardFetchAdapter implements BoardFetchPort {
     }
 
     @Override
-    public EnrollBoardInfo getBoardWithLock(Long boardId) {
-        return toEnrollBoardInfo(boardInternalQueryUseCase.getBoardWithLock(boardId));
-    }
-
-    @Override
     public EnrollBoardInfo getCompletedBoard(Long boardId) {
         return toEnrollBoardInfo(boardInternalQueryUseCase.getCompletedBoard(boardId));
     }

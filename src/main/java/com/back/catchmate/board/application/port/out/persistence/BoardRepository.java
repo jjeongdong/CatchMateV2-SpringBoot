@@ -19,7 +19,6 @@ public interface BoardRepository {
     /**
      * 동시성 제어가 필요한 경우(예: 신청 수락 시 인원 증가) Board를 비관적 락으로 조회합니다.
      */
-    Optional<Board> findByIdWithLock(Long id);
 
     Optional<Board> findCompletedById(Long id);
 

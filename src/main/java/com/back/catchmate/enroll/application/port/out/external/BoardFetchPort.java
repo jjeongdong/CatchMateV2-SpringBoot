@@ -7,8 +7,6 @@ import java.util.List;
 public interface BoardFetchPort {
     EnrollBoardInfo getBoard(Long boardId);
 
-    EnrollBoardInfo getBoardWithLock(Long boardId);
-
     EnrollBoardInfo getCompletedBoard(Long boardId);
 
     List<EnrollBoardInfo> getBoards(List<Long> boardIds);

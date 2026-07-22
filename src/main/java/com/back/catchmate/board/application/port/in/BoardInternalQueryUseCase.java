@@ -9,7 +9,6 @@ public interface BoardInternalQueryUseCase {
 
     List<BoardInternalResponse> getBoards(List<Long> boardIds);
 
-    BoardInternalResponse getBoardWithLock(Long boardId);
 
     BoardInternalResponse getCompletedBoard(Long boardId);
 }

@@ -45,12 +45,6 @@ public class BoardRepositoryImpl implements BoardRepository {
     }
 
     @Override
-    public Optional<Board> findByIdWithLock(Long id) {
-        return jpaBoardRepository.findByIdWithPessimisticLock(id)
-                .map(BoardEntity::toDomain);
-    }
-
-    @Override
     public Optional<Board> findCompletedById(Long id) {
         return jpaBoardRepository.findByIdAndCompletedTrue(id)
                 .map(BoardEntity::toDomain);

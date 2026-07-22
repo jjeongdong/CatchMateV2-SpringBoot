@@ -31,6 +31,7 @@ public class Board {
     private LocalDateTime createdAt;
     private LocalDateTime liftUpDate;
     private LocalDateTime deletedAt;
+    private long version;
 
     // 게시글 생성 메서드
     public static Board createBoard(String title, String content, int maxPerson, Long userId,

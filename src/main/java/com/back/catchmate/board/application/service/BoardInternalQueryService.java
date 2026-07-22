@@ -32,11 +32,6 @@ public class BoardInternalQueryService implements BoardInternalQueryUseCase, Boa
     }
 
     @Override
-    public BoardInternalResponse getBoardWithLock(Long boardId) {
-        return toInternalResponse(boardReader.getBoardWithLock(boardId));
-    }
-
-    @Override
     public BoardInternalResponse getCompletedBoard(Long boardId) {
         return toInternalResponse(boardReader.getCompletedBoard(boardId));
     }

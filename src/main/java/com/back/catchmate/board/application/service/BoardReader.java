@@ -28,11 +28,6 @@ public class BoardReader {
         return boardRepository.findAllByIds(boardIds);
     }
 
-    public Board getBoardWithLock(Long boardId) {
-        return boardRepository.findByIdWithLock(boardId)
-                .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
-    }
-
     public Board getCompletedBoard(Long boardId) {
         return boardRepository.findCompletedById(boardId)
                 .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
