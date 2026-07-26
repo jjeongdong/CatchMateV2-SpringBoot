@@ -1,6 +1,6 @@
 package com.back.catchmate.chat.adapter.in.event;
 
-import com.back.catchmate.chat.application.event.ChatMessageEvent;
+import com.back.catchmate.chat.application.event.ChatMessageBroadcastEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ public class ChatRedisSubscriber {
 
     public void onMessage(String messageJson) {
         try {
-            ChatMessageEvent chatMessage = objectMapper.readValue(messageJson, ChatMessageEvent.class);
+            ChatMessageBroadcastEvent chatMessage = objectMapper.readValue(messageJson, ChatMessageBroadcastEvent.class);
             messagingTemplate.convertAndSend("/sub/chat/room/" + chatMessage.roomId(), chatMessage);
             log.info("Redis Sub -> WebSocket Sent: roomId={}", chatMessage.roomId());
         } catch (Exception e) {

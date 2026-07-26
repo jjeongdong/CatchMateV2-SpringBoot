@@ -1,6 +1,6 @@
 package com.back.catchmate.chat.adapter.out.external;
 
-import com.back.catchmate.chat.application.event.ChatMessageEvent;
+import com.back.catchmate.chat.application.event.ChatMessageBroadcastEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,7 +19,7 @@ public class ChatMessageRedisPublisher {
 
     @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void publishChat(ChatMessageEvent event) {
+    public void publishChat(ChatMessageBroadcastEvent event) {
         try {
             redisTemplate.convertAndSend(chatTopic.getTopic(), event);
         } catch (Exception e) {

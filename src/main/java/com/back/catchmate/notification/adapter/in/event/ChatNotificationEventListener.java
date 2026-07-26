@@ -1,6 +1,6 @@
 package com.back.catchmate.notification.adapter.in.event;
 
-import com.back.catchmate.chat.application.event.ChatMessageSentEvent;
+import com.back.catchmate.chat.application.event.ChatMessageNotificationEvent;
 import com.back.catchmate.notification.application.port.in.ChatNotificationDispatchUseCase;
 import com.back.catchmate.notification.application.port.in.ChatNotificationUseCase;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ public class ChatNotificationEventListener {
     private final ChatNotificationDispatchUseCase chatNotificationDispatchUseCase;
 
     @EventListener
-    public void onSave(ChatMessageSentEvent event) {
+    public void onSave(ChatMessageNotificationEvent event) {
         chatNotificationUseCase.saveOnChatMessageSent(
                 event.chatRoomId(), event.messageId(), event.senderId(), event.content()
         );
@@ -25,7 +25,7 @@ public class ChatNotificationEventListener {
 
     @Async("notificationDispatchExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onDispatch(ChatMessageSentEvent event) {
+    public void onDispatch(ChatMessageNotificationEvent event) {
         chatNotificationDispatchUseCase.dispatchOnChatMessageSent(
                 event.chatRoomId(), event.messageId(), event.senderId(), event.content()
         );

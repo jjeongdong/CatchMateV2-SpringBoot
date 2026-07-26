@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * Redis Pub/Sub을 통해 전송되는 메시지 포맷
  */
 @Builder
-public record ChatMessageEvent(
+public record ChatMessageBroadcastEvent(
         Long messageId,
         Long roomId,
         Long senderId,
@@ -24,8 +24,8 @@ public record ChatMessageEvent(
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
         LocalDateTime createdAt
 ) {
-    public static ChatMessageEvent from(ChatMessage domain, ChatUserInfo sender) {
-        return ChatMessageEvent.builder()
+    public static ChatMessageBroadcastEvent from(ChatMessage domain, ChatUserInfo sender) {
+        return ChatMessageBroadcastEvent.builder()
                 .messageId(domain.getId())
                 .roomId(domain.getChatRoomId())
                 .senderId(domain.getSenderId())

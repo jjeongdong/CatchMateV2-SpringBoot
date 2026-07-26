@@ -2,8 +2,8 @@ package com.back.catchmate.chat.application.service;
 
 import com.back.catchmate.chat.application.dto.ChatMessageCacheDto;
 import com.back.catchmate.chat.application.dto.ChatMessageListDto;
-import com.back.catchmate.chat.application.event.ChatMessageEvent;
-import com.back.catchmate.chat.application.event.ChatMessageSentEvent;
+import com.back.catchmate.chat.application.event.ChatMessageBroadcastEvent;
+import com.back.catchmate.chat.application.event.ChatMessageNotificationEvent;
 import com.back.catchmate.chat.application.port.out.ChatHistoryCachePort;
 import com.back.catchmate.chat.application.port.out.ChatMembershipCachePort;
 import com.back.catchmate.chat.application.port.out.ChatMembershipCachePort.MembershipSnapshot;
@@ -76,7 +76,7 @@ public class ChatMessageService {
 
     /**
      * [좁은 트랜잭션] 메시지 INSERT + 이벤트 발행.
-     * Outbox 2단계(절대 변경 금지)를 위해 INSERT 와 ChatMessageSentEvent 발행은 반드시 같은 트랜잭션이어야
+     * Outbox 2단계(절대 변경 금지)를 위해 INSERT 와 ChatMessageNotificationEvent 발행은 반드시 같은 트랜잭션이어야
      * @EventListener(커밋 전 Outbox 저장)가 원자적으로 커밋된다. 브로드캐스트/알림 dispatch 는 AFTER_COMMIT.
      */
     @Transactional
@@ -85,8 +85,8 @@ public class ChatMessageService {
         ChatMessage chatMessage = ChatMessage.createMessage(chatRoomId, senderId, content, messageType, sequence);
         chatMessage = chatMessageRepository.save(chatMessage);
 
-        applicationEventPublisher.publishEvent(ChatMessageEvent.from(chatMessage, sender));
-        applicationEventPublisher.publishEvent(ChatMessageSentEvent.of(
+        applicationEventPublisher.publishEvent(ChatMessageBroadcastEvent.from(chatMessage, sender));
+        applicationEventPublisher.publishEvent(ChatMessageNotificationEvent.of(
                 chatMessage.getChatRoomId(),
                 chatMessage.getId(),
                 senderId,

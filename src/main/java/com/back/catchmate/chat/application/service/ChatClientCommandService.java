@@ -1,7 +1,7 @@
 package com.back.catchmate.chat.application.service;
 
 import com.back.catchmate.chat.application.dto.command.ChatMessageCommand;
-import com.back.catchmate.chat.application.event.ChatMessageEvent;
+import com.back.catchmate.chat.application.event.ChatMessageBroadcastEvent;
 import com.back.catchmate.chat.application.port.in.ChatClientCommandUseCase;
 import com.back.catchmate.chat.application.port.out.dto.ChatUserInfo;
 import com.back.catchmate.chat.application.port.out.external.ImageUploaderPort;
@@ -52,7 +52,7 @@ public class ChatClientCommandService implements ChatClientCommandUseCase {
     public void leaveChatRoom(Long userId, Long chatRoomId) {
         ChatUserInfo user = userFetchPort.getUser(userId);
         ChatMessage savedMessage = chatRoomService.leaveChatRoom(chatRoomId, user);
-        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage, user));
+        applicationEventPublisher.publishEvent(ChatMessageBroadcastEvent.from(savedMessage, user));
     }
 
     @Override
@@ -86,6 +86,6 @@ public class ChatClientCommandService implements ChatClientCommandUseCase {
         ChatMessage savedMessage = chatRoomService.kickChatRoomMember(chatRoomId, hostId, targetUserId);
 
         ChatUserInfo targetUser = userFetchPort.getUser(savedMessage.getSenderId());
-        applicationEventPublisher.publishEvent(ChatMessageEvent.from(savedMessage, targetUser));
+        applicationEventPublisher.publishEvent(ChatMessageBroadcastEvent.from(savedMessage, targetUser));
     }
 }

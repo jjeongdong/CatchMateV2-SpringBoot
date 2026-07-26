@@ -1,6 +1,6 @@
 package com.back.catchmate.chat.application.service;
 
-import com.back.catchmate.chat.application.event.ChatMessageEvent;
+import com.back.catchmate.chat.application.event.ChatMessageBroadcastEvent;
 import com.back.catchmate.chat.application.port.in.ChatInternalCommandUseCase;
 import com.back.catchmate.chat.application.port.out.dto.ChatUserInfo;
 import com.back.catchmate.chat.application.port.out.external.UserFetchPort;
@@ -36,7 +36,7 @@ public class ChatInternalCommandService implements ChatInternalCommandUseCase {
     public void welcomeNewMember(Long chatRoomId, Long userId) {
         ChatUserInfo user = userFetchPort.getUser(userId);
         ChatMessage joinMessage = chatRoomService.enterChatRoom(chatRoomId, user);
-        applicationEventPublisher.publishEvent(ChatMessageEvent.from(joinMessage, user));
+        applicationEventPublisher.publishEvent(ChatMessageBroadcastEvent.from(joinMessage, user));
     }
 
     @Override
