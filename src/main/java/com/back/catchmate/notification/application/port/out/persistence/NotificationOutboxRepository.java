@@ -8,6 +8,8 @@ import java.util.Optional;
 public interface NotificationOutboxRepository {
     NotificationOutbox save(NotificationOutbox outbox);
 
+    void saveAll(List<NotificationOutbox> outboxes);
+
     List<NotificationOutbox> findAllPending(int maxRetryCount, int batchSize);
 
     List<NotificationOutbox> findAllPendingByRecipientId(Long recipientId);

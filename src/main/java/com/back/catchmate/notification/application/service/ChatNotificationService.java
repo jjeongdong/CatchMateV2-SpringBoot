@@ -1,6 +1,7 @@
 package com.back.catchmate.notification.application.service;
 
 import com.back.catchmate.notification.application.port.in.ChatNotificationUseCase;
+import com.back.catchmate.notification.application.port.in.OutboxRecipient;
 import com.back.catchmate.notification.application.port.in.OutboxSaveUseCase;
 import com.back.catchmate.notification.application.port.out.dto.NotificationChatRecipientInfo;
 import com.back.catchmate.notification.application.port.out.dto.NotificationUserInfo;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -44,6 +46,7 @@ public class ChatNotificationService implements ChatNotificationUseCase {
                 .collect(Collectors.toMap(NotificationChatRecipientInfo::userId, Function.identity()));
 
         List<NotificationUserInfo> recipients = userFetchPort.getUsers(recipientsInfo.stream().map(NotificationChatRecipientInfo::userId).toList());
+        List<OutboxRecipient> outboxRecipients = new ArrayList<>();
         for (NotificationUserInfo recipient : recipients) {
             // 해당 채팅방 알림이 꺼져있으면 아웃박스 저장 안함
             if (!infoMap.get(recipient.userId()).isNotificationOn()) continue;
@@ -54,14 +57,11 @@ public class ChatNotificationService implements ChatNotificationUseCase {
             Long focusRoomId = userOnlineStatusFetchPort.getUserFocusRoom(recipient.userId());
             if (chatRoomId.equals(focusRoomId)) continue;
 
-            outboxSaveUseCase.saveOutbox(
-                    recipient.userId(),
-                    recipient.fcmToken(),
-                    title,
-                    body,
-                    payload
-            );
+            outboxRecipients.add(new OutboxRecipient(recipient.userId(), recipient.fcmToken()));
         }
+
+        // 필터 통과한 수신자 전원을 단일 멀티로우 INSERT 로 적재한다.
+        outboxSaveUseCase.saveOutboxBatch(outboxRecipients, title, body, payload);
     }
 
     private static Map<String, String> createNotificationData(
