@@ -7,6 +7,7 @@ server:
 websocket:
   inbound:
     pool-size: 16
+    queue-capacity: 500
   outbound:
     core-pool-size: 8
     max-pool-size: 32
@@ -59,7 +60,7 @@ async:
 
 chat:
   room-sequence:
-    flush-delay-ms: 1000
+    flush-delay-ms: 5000
   read-sequence:
     flush-delay-ms: 5000
 
