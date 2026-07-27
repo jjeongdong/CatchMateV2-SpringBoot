@@ -20,6 +20,6 @@ public interface JpaNotificationOutboxRepository extends JpaRepository<Notificat
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2")})
-    @Query("SELECT n FROM NotificationOutboxEntity n WHERE n.recipientId = :recipientId AND n.status = :status")
+    @Query("SELECT n FROM NotificationOutboxEntity n WHERE n.recipientId = :recipientId AND n.status = :status ORDER BY n.id ASC")
     List<NotificationOutboxEntity> findAllByRecipientIdAndStatusForProcessing(Long recipientId, OutboxStatus status);
 }

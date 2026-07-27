@@ -24,7 +24,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "notification_outbox", indexes = {
-        @Index(name = "idx_outbox_status_retry", columnList = "status, retry_count")
+        @Index(name = "idx_outbox_status_retry", columnList = "status, retry_count"),
+        @Index(name = "idx_outbox_recipient_status", columnList = "recipient_id, status")
 })
 public class NotificationOutboxEntity extends BaseTimeEntity {
 
