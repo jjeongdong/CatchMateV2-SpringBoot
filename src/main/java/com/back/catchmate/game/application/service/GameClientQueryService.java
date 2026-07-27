@@ -1,6 +1,6 @@
 package com.back.catchmate.game.application.service;
 
-import com.back.catchmate.game.application.dto.GameClubInfo;
+import com.back.catchmate.game.application.port.out.dto.GameClubInfo;
 import com.back.catchmate.game.application.dto.response.GameResponse;
 import com.back.catchmate.game.application.port.in.GameClientQueryUseCase;
 import com.back.catchmate.game.application.port.out.external.ClubFetchPort;

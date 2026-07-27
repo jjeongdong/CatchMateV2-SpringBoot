@@ -1,6 +1,6 @@
 package com.back.catchmate.game.application.dto.response;
 
-import com.back.catchmate.game.application.dto.GameClubInfo;
+import com.back.catchmate.game.application.port.out.dto.GameClubInfo;
 import com.back.catchmate.game.domain.model.Game;
 
 import java.time.LocalDateTime;

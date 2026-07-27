@@ -2,7 +2,7 @@ package com.back.catchmate.game.adapter.out.external;
 
 import com.back.catchmate.club.application.dto.response.ClubInternalResponse;
 import com.back.catchmate.club.application.port.in.ClubInternalQueryUseCase;
-import com.back.catchmate.game.application.dto.GameClubInfo;
+import com.back.catchmate.game.application.port.out.dto.GameClubInfo;
 import com.back.catchmate.game.application.port.out.external.ClubFetchPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

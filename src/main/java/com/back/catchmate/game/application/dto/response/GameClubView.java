@@ -1,6 +1,6 @@
 package com.back.catchmate.game.application.dto.response;
 
-import com.back.catchmate.game.application.dto.GameClubInfo;
+import com.back.catchmate.game.application.port.out.dto.GameClubInfo;
 
 /**
  * 경기 선택 응답에 임베드되는 구단 요약.
