@@ -136,7 +136,15 @@ public class ChatMessageService {
             return;
         }
 
-        chatBufferFlushExecutor.flushReadSequences(updates);
+        try {
+            chatBufferFlushExecutor.flushReadSequences(updates);
+        } catch (Exception e) {
+            // DB 반영 실패(Hikari 타임아웃·데드락·DB 장애 등) → 이미 drain(DEL)된 읽음 시퀀스를 버퍼로 되돌려 다음 tick 이 재시도한다.
+            // buffer()는 (room,user)별 monotonic HSET 이라, 되돌리는 사이 유저가 더 읽었으면 그 큰 값이 유지된다.
+            // UPDATE 도 monotonic guard(last_read_sequence < :sequence) 라 재적용은 멱등하다.
+            updates.forEach(u -> readSequenceBufferPort.buffer(u.chatRoomId(), u.userId(), u.sequence()));
+            log.error("읽음 시퀀스 DB 반영 실패 — 버퍼로 롤백해 재시도 예약 ({}건)", updates.size(), e);
+        }
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -147,7 +155,15 @@ public class ChatMessageService {
             return;
         }
 
-        chatBufferFlushExecutor.flushRoomSequences(sequences);
+        try {
+            chatBufferFlushExecutor.flushRoomSequences(sequences);
+        } catch (Exception e) {
+            // DB 반영 실패(Hikari 타임아웃·데드락·DB 장애 등) → 이미 drain(DEL)된 시퀀스를 버퍼로 되돌려 다음 tick 이 재시도한다.
+            // buffer()는 방별 monotonic HSET 이라, 되돌리는 사이 새 메시지가 더 큰 값을 넣었으면 그 값이 유지된다.
+            // UPDATE 도 monotonic guard(last_message_sequence < :sequence) 라 재적용은 멱등하다.
+            sequences.forEach(chatRoomSequenceBufferPort::buffer);
+            log.error("채팅방 시퀀스 DB 반영 실패 — 버퍼로 롤백해 재시도 예약 ({}건)", sequences.size(), e);
+        }
     }
 
     @Cacheable(
