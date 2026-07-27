@@ -27,10 +27,7 @@ public class ChatBufferFlushExecutor {
 
     @Transactional
     public void flushRoomSequences(Map<Long, Long> sequences) {
-        for (Map.Entry<Long, Long> entry : sequences.entrySet()) {
-            chatRoomRepository.updateMaxSequence(entry.getKey(), entry.getValue());
-        }
-
+        chatRoomRepository.updateMaxSequencesBatch(sequences);
         log.debug("채팅방 시퀀스 {} 건 DB 반영 완료", sequences.size());
     }
 }

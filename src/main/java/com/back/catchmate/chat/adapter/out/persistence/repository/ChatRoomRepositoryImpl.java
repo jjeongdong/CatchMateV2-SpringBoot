@@ -8,15 +8,27 @@ import org.springframework.data.domain.Pageable;
 import com.back.catchmate.chat.adapter.out.persistence.entity.ChatRoomEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
 public class ChatRoomRepositoryImpl implements ChatRoomRepository {
+    private static final String BATCH_UPDATE_MAX_SEQUENCE = """
+            UPDATE chat_rooms
+            SET last_message_sequence = :sequence
+            WHERE chat_room_id = :roomId
+              AND (last_message_sequence IS NULL OR last_message_sequence < :sequence)
+            """;
+
     private final JpaChatRoomRepository jpaChatRoomRepository;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     @Override
     public ChatRoom save(ChatRoom chatRoom) {
@@ -62,7 +74,17 @@ public class ChatRoomRepositoryImpl implements ChatRoomRepository {
     }
 
     @Override
-    public void updateMaxSequence(Long roomId, Long sequence) {
-        jpaChatRoomRepository.updateMaxSequence(roomId, sequence);
+    public void updateMaxSequencesBatch(Map<Long, Long> sequences) {
+        if (sequences.isEmpty()) {
+            return;
+        }
+
+        SqlParameterSource[] batch = sequences.entrySet().stream()
+                .map(entry -> new MapSqlParameterSource()
+                        .addValue("roomId", entry.getKey())
+                        .addValue("sequence", entry.getValue()))
+                .toArray(SqlParameterSource[]::new);
+
+        namedParameterJdbcTemplate.batchUpdate(BATCH_UPDATE_MAX_SEQUENCE, batch);
     }
 }

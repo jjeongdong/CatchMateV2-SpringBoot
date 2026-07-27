@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface ChatRoomRepository {
@@ -20,5 +21,5 @@ public interface ChatRoomRepository {
 
     List<ChatRoom> findAllByUserId(Long userId);
 
-    void updateMaxSequence(Long roomId, Long sequence);
+    void updateMaxSequencesBatch(Map<Long, Long> sequences);
 }
