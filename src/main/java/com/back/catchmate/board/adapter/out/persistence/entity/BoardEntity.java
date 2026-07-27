@@ -24,7 +24,8 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @Table(name = "boards", indexes = {
-        @Index(name = "idx_boards_cursor", columnList = "lift_up_date, board_id")
+        @Index(name = "idx_boards_cursor", columnList = "lift_up_date, board_id"),
+        @Index(name = "idx_boards_user_liftupdate", columnList = "user_id, lift_up_date")
 })
 @SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
