@@ -12,7 +12,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class RedisChatMembershipCacheAdapter implements ChatMembershipCachePort {
     private static final String KEY_PREFIX = "chat:member:";
-    // 인증 캐시라 evict 가 원칙이지만, 누락 대비 안전망 TTL(강퇴/퇴장 지연 노출 상한).
     private static final Duration TTL = Duration.ofMinutes(10);
 
     private final StringRedisTemplate redisTemplate;

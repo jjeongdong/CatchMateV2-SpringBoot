@@ -71,7 +71,6 @@ public class RedisConfig {
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultCacheConfig)
                 .withCacheConfiguration("userInternal", createCacheConfig(objectMapper, UserInternalResponse.class))
-                .withCacheConfiguration("chatRoomMemberAuth", createCacheConfig(objectMapper, Boolean.class))
                 .withCacheConfiguration("chatHistory", createCacheConfig(objectMapper, ChatMessageListDto.class))
                 .build();
     }

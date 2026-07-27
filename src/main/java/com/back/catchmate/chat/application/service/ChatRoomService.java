@@ -17,8 +17,6 @@ import com.back.catchmate.chat.domain.model.ChatRoomMember;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -93,7 +91,6 @@ public class ChatRoomService {
         return chatMessage;
     }
 
-    @CacheEvict(value = "chatRoomMemberAuth", key = "#chatRoomId + '_' + #user.userId()", cacheManager = "redisCacheManager")
     @Transactional
     public ChatMessage leaveChatRoom(Long chatRoomId, ChatUserInfo user) {
         Long sequence = chatSequencePort.getCurrentSequence(chatRoomId);
@@ -119,11 +116,6 @@ public class ChatRoomService {
         return chatMessage;
     }
 
-    @Cacheable(
-            value = "chatRoomMemberAuth",
-            key = "#roomId + '_' + #userId",
-            cacheManager = "redisCacheManager"
-    )
     public boolean validateUserInChatRoom(Long userId, Long roomId) {
         if (!isActiveMember(roomId, userId)) {
             throw new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND);
@@ -158,7 +150,6 @@ public class ChatRoomService {
         chatRoomRepository.save(chatRoom);
     }
 
-    @CacheEvict(value = "chatRoomMemberAuth", key = "#chatRoomId + '_' + #targetUserId", cacheManager = "redisCacheManager")
     @Transactional
     public ChatMessage kickChatRoomMember(Long chatRoomId, Long hostId, Long targetUserId) {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
