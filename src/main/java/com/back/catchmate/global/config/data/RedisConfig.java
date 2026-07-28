@@ -138,11 +138,15 @@ public class RedisConfig {
     }
 
     /**
-     * 채팅 방 내부에 있을 경우에 사용하는 채팅용 메시지 리스너 어댑터
+     * 채팅 방 내부에 있을 경우에 사용하는 채팅용 메시지 리스너 어댑터.
+     * 구독 측에서 String 으로 역직렬화하지 않고 Redis 원본 바이트를 그대로 넘기도록 serializer 를 비운다
+     * (ChatRedisSubscriber 가 JSON 재직렬화 없이 raw 바이트를 STOMP 로 그대로 전달하기 위함).
      */
     @Bean
     public MessageListenerAdapter chatListenerAdapter(ChatRedisSubscriber subscriber) {
-        return new MessageListenerAdapter(subscriber, "onMessage");
+        MessageListenerAdapter adapter = new MessageListenerAdapter(subscriber, "onMessage");
+        adapter.setSerializer(null);
+        return adapter;
     }
 
     /**
