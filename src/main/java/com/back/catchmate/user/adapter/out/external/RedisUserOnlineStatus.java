@@ -6,6 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Redis 기반 사용자 온라인/오프라인 상태 추적 서비스
  * 고가용성(HA) 확보: Redis 장애 발생 시 시스템 전체로 장애가 전파되지 않도록 예외를 잡고 안전한 기본값을 반환합니다.
@@ -84,6 +88,32 @@ public class RedisUserOnlineStatus implements UserOnlineStatusPort {
             log.error("Redis 장애: 사용자 {} 포커스 방 조회 실패. 기본값(null) 반환 - {}", userId, e.getMessage());
             // 포커스 중인 방이 없다고 간주하여 일반적인 알림 발송 로직을 타게 함
             return null;
+        }
+    }
+
+    /**
+     * 수신자별로 GET 을 반복하는 대신 MGET 한 번으로 묶는다.
+     * MGET 응답은 요청한 키 순서대로 오고 없는 키 자리에는 null 이 들어오므로, 인덱스로 userIds 와 짝을 맞춘다.
+     */
+    @Override
+    public Map<Long, Long> getUserFocusRooms(List<Long> userIds) {
+        if (userIds.isEmpty()) return Map.of();
+
+        try {
+            List<String> keys = userIds.stream().map(id -> USER_ROOM_FOCUS_KEY_PREFIX + id).toList();
+            List<String> values = redisTemplate.opsForValue().multiGet(keys);
+            if (values == null) return Map.of();
+
+            Map<Long, Long> focusRooms = new HashMap<>();
+            for (int i = 0; i < userIds.size(); i++) {
+                String val = values.get(i);
+                if (val != null) focusRooms.put(userIds.get(i), Long.parseLong(val));
+            }
+            return focusRooms;
+        } catch (Exception e) {
+            log.error("Redis 장애: 사용자 {}명 포커스 방 일괄 조회 실패. 기본값(빈 Map) 반환 - {}", userIds.size(), e.getMessage());
+            // 단건 조회와 같은 방향: 아무도 포커스 중이 아니라고 간주하여 알림이 계속 나가게 함
+            return Map.of();
         }
     }
 }

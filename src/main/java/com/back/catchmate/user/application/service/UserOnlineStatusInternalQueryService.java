@@ -5,6 +5,9 @@ import com.back.catchmate.user.application.port.out.external.UserOnlineStatusPor
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class UserOnlineStatusInternalQueryService implements UserOnlineStatusInternalQueryUseCase {
@@ -18,5 +21,10 @@ public class UserOnlineStatusInternalQueryService implements UserOnlineStatusInt
     @Override
     public Long getUserFocusRoom(Long userId) {
         return userOnlineStatusPort.getUserFocusRoom(userId);
+    }
+
+    @Override
+    public Map<Long, Long> getUserFocusRooms(List<Long> userIds) {
+        return userOnlineStatusPort.getUserFocusRooms(userIds);
     }
 }

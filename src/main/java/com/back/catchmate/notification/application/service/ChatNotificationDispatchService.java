@@ -48,10 +48,14 @@ public class ChatNotificationDispatchService implements ChatNotificationDispatch
                 .collect(Collectors.toMap(NotificationChatRecipientInfo::userId, Function.identity()));
 
         List<NotificationUserInfo> recipients = userFetchPort.getUsers(recipientsInfo.stream().map(NotificationChatRecipientInfo::userId).toList());
+
+        // 알림 설정과 무관하게 전원의 포커스 여부를 봐야 하므로 수신자 전체를 MGET 한 번으로 모아온다.
+        Map<Long, Long> focusRooms = userOnlineStatusFetchPort.getUserFocusRooms(
+                recipients.stream().map(NotificationUserInfo::userId).toList());
+
         for (NotificationUserInfo recipient : recipients) {
             // 현재 보고 있는 방이면 실시간 알림 스킵
-            Long focusRoomId = userOnlineStatusFetchPort.getUserFocusRoom(recipient.userId());
-            if (chatRoomId.equals(focusRoomId)) continue;
+            if (chatRoomId.equals(focusRooms.get(recipient.userId()))) continue;
 
             // 알림 설정 여부와 상관없이 STOMP 메시지는 항상 전송 (목록 업데이트 등 UI 동기화용)
             notificationDispatchUseCase.dispatch(recipient.userId(), payload);

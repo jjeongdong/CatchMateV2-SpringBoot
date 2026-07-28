@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -46,19 +45,24 @@ public class ChatNotificationService implements ChatNotificationUseCase {
                 .collect(Collectors.toMap(NotificationChatRecipientInfo::userId, Function.identity()));
 
         List<NotificationUserInfo> recipients = userFetchPort.getUsers(recipientsInfo.stream().map(NotificationChatRecipientInfo::userId).toList());
-        List<OutboxRecipient> outboxRecipients = new ArrayList<>();
-        for (NotificationUserInfo recipient : recipients) {
-            // 해당 채팅방 알림이 꺼져있으면 아웃박스 저장 안함
-            if (!infoMap.get(recipient.userId()).isNotificationOn()) continue;
-            // 글로벌 채팅 알림이 꺼져있거나 토큰이 없으면 저장 안함
-            if (!recipient.chatAlarmEnabled() || recipient.fcmToken() == null) continue;
 
-            // 현재 보고 있는 방이면 아웃박스 저장 안함 (FCM 발송 원천 방지)
-            Long focusRoomId = userOnlineStatusFetchPort.getUserFocusRoom(recipient.userId());
-            if (chatRoomId.equals(focusRoomId)) continue;
+        // 알림 설정으로 먼저 걸러 Redis 조회 대상 자체를 줄인다.
+        List<NotificationUserInfo> candidates = recipients.stream()
+                // 해당 채팅방 알림이 꺼져있으면 아웃박스 저장 안함
+                .filter(recipient -> infoMap.get(recipient.userId()).isNotificationOn())
+                // 글로벌 채팅 알림이 꺼져있거나 토큰이 없으면 저장 안함
+                .filter(recipient -> recipient.chatAlarmEnabled() && recipient.fcmToken() != null)
+                .toList();
 
-            outboxRecipients.add(new OutboxRecipient(recipient.userId(), recipient.fcmToken()));
-        }
+        // 수신자별 왕복 대신 MGET 한 번으로 포커스 방을 모아온다.
+        Map<Long, Long> focusRooms = userOnlineStatusFetchPort.getUserFocusRooms(
+                candidates.stream().map(NotificationUserInfo::userId).toList());
+
+        // 현재 보고 있는 방이면 아웃박스 저장 안함 (FCM 발송 원천 방지)
+        List<OutboxRecipient> outboxRecipients = candidates.stream()
+                .filter(recipient -> !chatRoomId.equals(focusRooms.get(recipient.userId())))
+                .map(recipient -> new OutboxRecipient(recipient.userId(), recipient.fcmToken()))
+                .toList();
 
         // 필터 통과한 수신자 전원을 단일 멀티로우 INSERT 로 적재한다.
         outboxSaveUseCase.saveOutboxBatch(outboxRecipients, title, body, payload);

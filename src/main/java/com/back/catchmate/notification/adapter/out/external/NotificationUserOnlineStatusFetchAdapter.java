@@ -5,6 +5,9 @@ import com.back.catchmate.user.application.port.in.UserOnlineStatusInternalQuery
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Map;
+
 @Component
 @RequiredArgsConstructor
 public class NotificationUserOnlineStatusFetchAdapter implements UserOnlineStatusFetchPort {
@@ -18,5 +21,10 @@ public class NotificationUserOnlineStatusFetchAdapter implements UserOnlineStatu
     @Override
     public Long getUserFocusRoom(Long userId) {
         return userOnlineStatusInternalQueryUseCase.getUserFocusRoom(userId);
+    }
+
+    @Override
+    public Map<Long, Long> getUserFocusRooms(List<Long> userIds) {
+        return userOnlineStatusInternalQueryUseCase.getUserFocusRooms(userIds);
     }
 }
