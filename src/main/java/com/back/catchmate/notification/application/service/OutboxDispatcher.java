@@ -33,13 +33,13 @@ public class OutboxDispatcher implements OutboxDispatchUseCase {
 
     @Override
     public void sendPendingOutboxImmediately(Long recipientId) {
-        log.info("[아웃박스] sendPendingOutboxImmediately 호출 - 수신자 ID: {}", recipientId);
+        log.debug("[아웃박스] sendPendingOutboxImmediately 호출 - 수신자 ID: {}", recipientId);
         List<NotificationOutbox> claimedOutboxes = outboxStateTransitioner.claimPendingByRecipientId(recipientId);
         if (claimedOutboxes.isEmpty()) {
-            log.info("[아웃박스] 수신자 ID {}에 대해 대기 중인(Pending) 아웃박스가 존재하지 않습니다.", recipientId);
+            log.debug("[아웃박스] 수신자 ID {}에 대해 대기 중인(Pending) 아웃박스가 존재하지 않습니다.", recipientId);
             return;
         }
-        log.info("[아웃박스] 수신자 ID {}에 대해 {}건의 대기 중인 아웃박스를 확보했습니다. 발송을 처리합니다.", recipientId, claimedOutboxes.size());
+        log.debug("[아웃박스] 수신자 ID {}에 대해 {}건의 대기 중인 아웃박스를 확보했습니다. 발송을 처리합니다.", recipientId, claimedOutboxes.size());
         for (NotificationOutbox outbox : claimedOutboxes) {
             processIndividualNotification(outbox);
         }
@@ -67,7 +67,7 @@ public class OutboxDispatcher implements OutboxDispatchUseCase {
                     Long chatRoomId = Long.parseLong(roomIdStr);
                     Long focusRoomId = userOnlineStatusFetchPort.getUserFocusRoom(outbox.getRecipientId());
                     if (chatRoomId.equals(focusRoomId)) {
-                        log.info("[아웃박스] 수신자 {}가 현재 채팅방 {}을 보고 있으므로 FCM 발송을 생략하고 성공 처리합니다.",
+                        log.debug("[아웃박스] 수신자 {}가 현재 채팅방 {}을 보고 있으므로 FCM 발송을 생략하고 성공 처리합니다.",
                                 outbox.getRecipientId(), chatRoomId);
                         outboxStateTransitioner.updateStatusSuccess(outbox);
                         return;

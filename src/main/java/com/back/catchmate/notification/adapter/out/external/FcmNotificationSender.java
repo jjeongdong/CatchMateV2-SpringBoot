@@ -43,7 +43,7 @@ public class FcmNotificationSender implements NotificationSenderPort {
     public void sendNotification(Long userId, String token, String title, String body, Map<String, String> data) {
         Map<String, String> safeData = data != null ? data : Collections.emptyMap();
 
-        log.info("FCM 발송 시도 - User: {}, Token: {}, Title: {}, Body: {}, Data: {}", userId, token, title, body, safeData);
+        log.debug("FCM 발송 시도 - User: {}, Token: {}, Title: {}, Body: {}, Data: {}", userId, token, title, body, safeData);
 
         // Web Push 설정을 포함한 메시지 빌드
         WebpushConfig webpushConfig = WebpushConfig.builder()
@@ -66,7 +66,7 @@ public class FcmNotificationSender implements NotificationSenderPort {
 
         try {
             String response = FirebaseMessaging.getInstance().send(message);
-            log.info("FCM 메시지 전송 성공! Response ID: {}", response);
+            log.debug("FCM 메시지 전송 성공! Response ID: {}", response);
         } catch (FirebaseMessagingException e) {
             log.error("FCM 전송 실패 (FirebaseMessagingException) - Token: {}, ErrorCode: {}, Message: {}",
                     token, e.getMessagingErrorCode(), e.getMessage(), e);
