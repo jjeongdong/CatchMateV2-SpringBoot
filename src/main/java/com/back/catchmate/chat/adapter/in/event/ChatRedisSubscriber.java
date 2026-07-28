@@ -18,7 +18,7 @@ public class ChatRedisSubscriber {
         try {
             ChatMessageBroadcastEvent chatMessage = objectMapper.readValue(messageJson, ChatMessageBroadcastEvent.class);
             messagingTemplate.convertAndSend("/sub/chat/room/" + chatMessage.roomId(), chatMessage);
-            log.info("Redis Sub -> WebSocket Sent: roomId={}", chatMessage.roomId());
+            log.debug("Redis Sub -> WebSocket Sent: roomId={}", chatMessage.roomId());
         } catch (Exception e) {
             log.error("Redis Chat Message Processing Error", e);
         }

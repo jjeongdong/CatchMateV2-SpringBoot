@@ -25,11 +25,11 @@ public class ChatController {
     public void sendMessage(@Payload ChatMessageRequest request, Principal principal) {
         Long senderId = extractUserId(principal);
 
-        log.info("채팅 메시지 수신 - chatRoomId: {}, senderId: {}, content: {}",
+        log.debug("채팅 메시지 수신 - chatRoomId: {}, senderId: {}, content: {}",
                 request.chatRoomId(), senderId, request.content());
 
         chatClientCommandUseCase.sendMessage(senderId, request.toCommand(senderId));
-        log.info("채팅 메시지 처리 위임 완료 (Redis Pub/Sub 동작 중)");
+        log.debug("채팅 메시지 처리 위임 완료 (Redis Pub/Sub 동작 중)");
     }
 
     @MessageMapping("/chat/enter")
