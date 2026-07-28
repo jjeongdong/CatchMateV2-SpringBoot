@@ -18,6 +18,7 @@ import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import com.back.catchmate.chat.application.dto.ChatMessageListDto;
+import com.back.catchmate.chat.application.event.ChatMessageBroadcastEvent;
 import com.back.catchmate.user.application.dto.response.UserInternalResponse;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
@@ -52,6 +53,25 @@ public class RedisConfig {
 
         template.setHashKeySerializer(new StringRedisSerializer());
         template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
+
+        return template;
+    }
+
+    /*
+     * 채팅 Pub/Sub 전용 RedisTemplate.
+     * 공용 템플릿의 GenericJackson2Json 은 @class 타입 메타를 매 메시지에 심어(리플렉션 기반) 무겁다.
+     * 채팅 브로드캐스트는 타입이 ChatMessageBroadcastEvent 로 고정이므로 Jackson2JsonRedisSerializer 로 @class 없이 직렬화한다.
+     */
+    @Bean
+    public RedisTemplate<String, ChatMessageBroadcastEvent> chatPubSubRedisTemplate(RedisConnectionFactory connectionFactory) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        RedisTemplate<String, ChatMessageBroadcastEvent> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(objectMapper, ChatMessageBroadcastEvent.class));
 
         return template;
     }

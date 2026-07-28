@@ -14,14 +14,14 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 @RequiredArgsConstructor
 public class ChatMessageRedisPublisher {
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, ChatMessageBroadcastEvent> chatPubSubRedisTemplate;
     private final ChannelTopic chatTopic;
 
     @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishChat(ChatMessageBroadcastEvent event) {
         try {
-            redisTemplate.convertAndSend(chatTopic.getTopic(), event);
+            chatPubSubRedisTemplate.convertAndSend(chatTopic.getTopic(), event);
         } catch (Exception e) {
             log.error("Redis Pub/Sub 장애: 채팅 메시지 전송 실패", e);
         }
