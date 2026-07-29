@@ -4,6 +4,8 @@ import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.notification.application.port.out.external.NotificationSenderPort;
 import com.back.catchmate.notification.application.port.out.exception.PermanentNotificationFailureException;
+import com.google.firebase.messaging.AndroidConfig;
+import com.google.firebase.messaging.AndroidNotification;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MessagingErrorCode;
@@ -45,21 +47,31 @@ public class FcmNotificationSender implements NotificationSenderPort {
 
         log.debug("FCM 발송 시도 - User: {}, Token: {}, Title: {}, Body: {}, Data: {}", userId, token, title, body, safeData);
 
-        // Web Push 설정을 포함한 메시지 빌드
-        WebpushConfig webpushConfig = WebpushConfig.builder()
-                .setNotification(WebpushNotification.builder()
-                        .setTitle(title)
-                        .setBody(body)
-                        .setIcon("/catchmate-logo.svg")
-                        .build())
-                .build();
+        // 같은 outbox 행의 재발송(FCM 타임아웃 재시도·PROCESSING 회수)이면 tag 가 동일하므로
+        // OS 가 배너를 새로 쌓지 않고 기존 것을 교체한다. 수신 측이 아무 처리를 하지 않아도 중복이 보이지 않는다.
+        String dedupKey = safeData.get(DEDUP_KEY);
+
+        WebpushNotification.Builder webpushNotification = WebpushNotification.builder()
+                .setTitle(title)
+                .setBody(body)
+                .setIcon("/catchmate-logo.svg");
+        AndroidNotification.Builder androidNotification = AndroidNotification.builder();
+        if (dedupKey != null) {
+            webpushNotification.setTag(dedupKey);
+            androidNotification.setTag(dedupKey);
+        }
 
         Message message = Message.builder()
                 .setNotification(Notification.builder()
                         .setTitle(title)
                         .setBody(body)
                         .build())
-                .setWebpushConfig(webpushConfig)
+                .setWebpushConfig(WebpushConfig.builder()
+                        .setNotification(webpushNotification.build())
+                        .build())
+                .setAndroidConfig(AndroidConfig.builder()
+                        .setNotification(androidNotification.build())
+                        .build())
                 .putAllData(safeData)
                 .setToken(token)
                 .build();
@@ -96,10 +108,19 @@ public class FcmNotificationSender implements NotificationSenderPort {
     /**
      * [복구 메서드]
      * 3번의 재시도(Retry)가 모두 실패했을 때 실행됩니다.
+     * 계측만 하고 예외는 반드시 다시 던진다 — 여기서 삼키면 OutboxDispatcher 가 성공으로 오인해
+     * Outbox 가 SUCCESS 로 확정되고 스케줄러 재시도 대상에서 영구 제외된다.
      */
     @Recover
     public void recover(RuntimeException e, Long userId, String token, String title, String body, Map<String, String> data) {
+        // PermanentNotificationFailureException 은 noRetryFor 라 재시도되지 않지만 Spring Retry 는
+        // non-retryable 예외도 이 복구 메서드로 넘긴다. 재시도 소진 지표와 섞이지 않게 그대로 전파한다.
+        // (영구 실패 계측은 OutboxStateTransitioner 의 notification.outbox.failure{type=permanent} 담당)
+        if (e instanceof PermanentNotificationFailureException) {
+            throw e;
+        }
         log.error("FCM 푸시 전송 최종 실패 (User: {}) - {}", userId, e.getMessage());
         meterRegistry.counter("notification.fcm.send.failure", "type", "retry_exhausted").increment();
+        throw e;
     }
 }

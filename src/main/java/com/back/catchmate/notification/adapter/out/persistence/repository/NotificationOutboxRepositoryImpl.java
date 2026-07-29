@@ -85,6 +85,13 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
     }
 
     @Override
+    public List<NotificationOutbox> findAllStuckProcessing(LocalDateTime threshold, int batchSize) {
+        return jpaRepository.findAllStuckForRecovery(OutboxStatus.PROCESSING, threshold, Pageable.ofSize(batchSize)).stream()
+                .map(NotificationOutboxEntity::toDomain)
+                .toList();
+    }
+
+    @Override
     public Optional<NotificationOutbox> findById(Long id) {
         return jpaRepository.findById(id)
                 .map(NotificationOutboxEntity::toDomain);

@@ -12,7 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +31,10 @@ public class OutboxDispatcher implements OutboxDispatchUseCase {
 
     @Value("${notification.outbox.batch-size:50}")
     private int batchSize;
+
+    // FCM 발송(@Retryable 3회 + backoff)이 끝나고도 남을 만큼 넉넉해야 정상 처리 중인 행을 뺏지 않는다.
+    @Value("${notification.outbox.processing-timeout-seconds:300}")
+    private int processingTimeoutSeconds;
 
     @Override
     public void sendPendingOutboxImmediately(Long recipientId) {
@@ -57,9 +62,20 @@ public class OutboxDispatcher implements OutboxDispatchUseCase {
         }
     }
 
+    @Override
+    public void recoverStuckProcessing() {
+        LocalDateTime threshold = LocalDateTime.now().minusSeconds(processingTimeoutSeconds);
+        int recovered = outboxStateTransitioner.recoverStuckProcessing(threshold, maxRetryCount, batchSize);
+        if (recovered > 0) {
+            log.warn("[아웃박스] PROCESSING 상태로 {}초 이상 정체된 알림 {}건을 회수했습니다.", processingTimeoutSeconds, recovered);
+        }
+    }
+
     private void processIndividualNotification(NotificationOutbox outbox) {
         try {
             Map<String, String> payload = parsePayload(outbox.getPayload());
+            // 배치 INSERT 시점엔 id 를 알 수 없어(JDBC 멀티로우) DB payload 컬럼 대신 발송 직전에 싣는다.
+            payload.put(NotificationSenderPort.DEDUP_KEY, String.valueOf(outbox.getId()));
             String type = payload.get("type");
             if ("CHAT".equals(type)) {
                 String roomIdStr = payload.get("roomId");
@@ -97,7 +113,7 @@ public class OutboxDispatcher implements OutboxDispatchUseCase {
             return objectMapper.readValue(payload, new TypeReference<>() {});
         } catch (Exception e) {
             log.warn("페이로드 파싱 실패 - 빈 Map으로 대체: {}", e.getMessage());
-            return Collections.emptyMap();
+            return new HashMap<>();
         }
     }
 }

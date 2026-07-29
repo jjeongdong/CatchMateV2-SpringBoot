@@ -67,6 +67,29 @@ public class OutboxStateTransitioner {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateStatusFailure(NotificationOutbox outbox, int maxRetryCount, String errorMessage) {
+        applyFailure(outbox, maxRetryCount, errorMessage);
+        outboxRepository.save(outbox);
+    }
+
+    /**
+     * 선점(PROCESSING) 후 발송 결과를 기록하지 못하고 정체된 행을 재시도 대상으로 되돌린다.
+     * 발송이 실제로 나갔는지 알 수 없으므로 실패 1회로 계상해(retryCount++) 무한 회수를 막는다.
+     * 회수는 곧 재발송이라 중복 푸시가 가능하며, 수신 측은 FCM data 의 dedupKey 로 이를 걸러낸다.
+     *
+     * @return 회수한 건수
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public int recoverStuckProcessing(LocalDateTime threshold, int maxRetryCount, int batchSize) {
+        List<NotificationOutbox> stuckList = outboxRepository.findAllStuckProcessing(threshold, batchSize);
+        for (NotificationOutbox outbox : stuckList) {
+            applyFailure(outbox, maxRetryCount, "PROCESSING 상태 정체로 회수됨");
+            outboxRepository.save(outbox);
+            meterRegistry.counter("notification.outbox.recovered").increment();
+        }
+        return stuckList.size();
+    }
+
+    private void applyFailure(NotificationOutbox outbox, int maxRetryCount, String errorMessage) {
         outbox.incrementRetryCount();
         outbox.recordError(errorMessage);
         if (outbox.getRetryCount() >= maxRetryCount) {
@@ -75,6 +98,5 @@ public class OutboxStateTransitioner {
         } else {
             outbox.pending();
         }
-        outboxRepository.save(outbox);
     }
 }

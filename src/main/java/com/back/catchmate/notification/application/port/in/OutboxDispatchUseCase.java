@@ -4,4 +4,6 @@ public interface OutboxDispatchUseCase {
     void sendPendingOutboxImmediately(Long recipientId);
 
     void processPendingNotifications();
+
+    void recoverStuckProcessing();
 }
