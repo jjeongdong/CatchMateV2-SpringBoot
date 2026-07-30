@@ -5,6 +5,7 @@ import com.back.catchmate.notification.application.port.out.external.Notificatio
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -15,5 +16,10 @@ public class NotificationDispatchService implements NotificationDispatchUseCase 
     @Override
     public void dispatch(Long userId, Map<String, String> payload) {
         notificationDispatchPort.dispatch(userId, payload);
+    }
+
+    @Override
+    public void dispatchAll(List<Long> userIds, Map<String, String> payload) {
+        notificationDispatchPort.dispatchAll(userIds, payload);
     }
 }

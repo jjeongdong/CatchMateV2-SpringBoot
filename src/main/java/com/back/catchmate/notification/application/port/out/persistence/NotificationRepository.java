@@ -4,10 +4,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.back.catchmate.notification.domain.model.Notification;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface NotificationRepository {
     Notification save(Notification notification);
+
+    void saveAll(List<Notification> notifications);
 
     Optional<Notification> findById(Long id);
 

@@ -11,6 +11,9 @@ public interface NotificationOutboxRepository {
 
     void saveAll(List<NotificationOutbox> outboxes);
 
+    // 이미 적재된 행들의 상태 전이(선점·성공·실패)를 일괄 반영한다. 건별 save 왕복을 줄이기 위한 경로다.
+    void updateAll(List<NotificationOutbox> outboxes);
+
     List<NotificationOutbox> findAllPending(int maxRetryCount, int batchSize);
 
     List<NotificationOutbox> findAllPendingByRecipientId(Long recipientId);

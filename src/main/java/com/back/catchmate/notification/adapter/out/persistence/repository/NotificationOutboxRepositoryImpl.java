@@ -29,6 +29,13 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
+    // 상태 전이로 바뀌는 컬럼만 갱신한다. 나머지(수신자·본문·payload)는 적재 후 불변이다.
+    private static final String BATCH_UPDATE_SQL = """
+            UPDATE notification_outbox
+               SET status = ?, retry_count = ?, error_message = ?, modified_at = ?
+             WHERE id = ?
+            """;
+
     private final JpaNotificationOutboxRepository jpaRepository;
     private final JdbcTemplate jdbcTemplate;
 
@@ -60,6 +67,32 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
                 ps.setString(8, outbox.getErrorMessage());
                 ps.setTimestamp(9, now);
                 ps.setTimestamp(10, now);
+            }
+
+            @Override
+            public int getBatchSize() {
+                return outboxes.size();
+            }
+        });
+    }
+
+    // 선점·성공·실패 확정을 건별 save 대신 한 번의 배치로 반영한다. 배치가 커질수록(스케줄러 batch-size)
+    // 건별 왕복 비용이 그대로 지연으로 쌓이기 때문이다.
+    @Override
+    public void updateAll(List<NotificationOutbox> outboxes) {
+        if (outboxes.isEmpty()) {
+            return;
+        }
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        jdbcTemplate.batchUpdate(BATCH_UPDATE_SQL, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                NotificationOutbox outbox = outboxes.get(i);
+                ps.setString(1, outbox.getStatus().name());
+                ps.setInt(2, outbox.getRetryCount());
+                ps.setString(3, outbox.getErrorMessage());
+                ps.setTimestamp(4, now);
+                ps.setLong(5, outbox.getId());
             }
 
             @Override

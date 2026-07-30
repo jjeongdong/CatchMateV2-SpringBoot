@@ -53,14 +53,18 @@ public class ChatNotificationDispatchService implements ChatNotificationDispatch
         Map<Long, Long> focusRooms = userOnlineStatusFetchPort.getUserFocusRooms(
                 recipients.stream().map(NotificationUserInfo::userId).toList());
 
-        for (NotificationUserInfo recipient : recipients) {
-            // 현재 보고 있는 방이면 실시간 알림 스킵
-            if (chatRoomId.equals(focusRooms.get(recipient.userId()))) continue;
+        // 현재 보고 있는 방이면 실시간 알림 스킵
+        List<NotificationUserInfo> targets = recipients.stream()
+                .filter(recipient -> !chatRoomId.equals(focusRooms.get(recipient.userId())))
+                .toList();
 
-            // 알림 설정 여부와 상관없이 STOMP 메시지는 항상 전송 (목록 업데이트 등 UI 동기화용)
-            notificationDispatchUseCase.dispatch(recipient.userId(), payload);
+        // 알림 설정 여부와 상관없이 STOMP 메시지는 항상 전송 (목록 업데이트 등 UI 동기화용).
+        // 방 인원 전원이 같은 payload 를 받으므로 수신자별 publish 대신 한 건으로 묶는다.
+        notificationDispatchUseCase.dispatchAll(
+                targets.stream().map(NotificationUserInfo::userId).toList(), payload);
 
-            // 알림이 켜져있으면 즉시 발송 시도 (Outbox Dispatch)
+        // 알림이 켜져있으면 즉시 발송 시도 (Outbox Dispatch)
+        for (NotificationUserInfo recipient : targets) {
             if (infoMap.get(recipient.userId()).isNotificationOn() && recipient.chatAlarmEnabled()) {
                 outboxDispatchUseCase.sendPendingOutboxImmediately(recipient.userId());
             }

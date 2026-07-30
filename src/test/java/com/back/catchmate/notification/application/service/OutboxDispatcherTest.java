@@ -1,5 +1,7 @@
 package com.back.catchmate.notification.application.service;
 
+import com.back.catchmate.notification.application.port.out.dto.NotificationMessage;
+import com.back.catchmate.notification.application.port.out.dto.NotificationSendResult;
 import com.back.catchmate.notification.application.port.out.external.NotificationSenderPort;
 import com.back.catchmate.notification.application.port.out.external.UserOnlineStatusFetchPort;
 import com.back.catchmate.notification.domain.model.NotificationOutbox;
@@ -35,6 +37,14 @@ class OutboxDispatcherTest {
 
     @Captor
     private ArgumentCaptor<Map<String, String>> dataCaptor;
+    @Captor
+    private ArgumentCaptor<List<NotificationMessage>> messagesCaptor;
+    @Captor
+    private ArgumentCaptor<List<NotificationOutbox>> successCaptor;
+    @Captor
+    private ArgumentCaptor<List<NotificationOutbox>> permanentCaptor;
+    @Captor
+    private ArgumentCaptor<List<NotificationOutbox>> retryableCaptor;
 
     private OutboxDispatcher sut;
 
@@ -59,17 +69,23 @@ class OutboxDispatcherTest {
                 .build();
         given(outboxStateTransitioner.claimPendingNotifications(anyInt(), anyInt()))
                 .willReturn(List.of(outbox));
+        given(notificationSenderPort.sendNotifications(any()))
+                .willReturn(List.of(NotificationSendResult.ofSuccess()));
 
         // when
         sut.processPendingNotifications();
 
         // then
-        then(notificationSenderPort).should()
-                .sendNotification(eq(1L), eq("token"), eq("title"), eq("body"), dataCaptor.capture());
-        Map<String, String> sentData = dataCaptor.getValue();
-        assertThat(sentData).containsEntry("dedupKey", "123"); // 재시도 간 불변인 dedup 키
-        assertThat(sentData).containsEntry("type", "ENROLL");  // 원본 payload 는 보존
-        then(outboxStateTransitioner).should().updateStatusSuccess(outbox);
+        then(notificationSenderPort).should().sendNotifications(messagesCaptor.capture());
+        assertThat(messagesCaptor.getValue()).hasSize(1);
+        NotificationMessage sent = messagesCaptor.getValue().get(0);
+        assertThat(sent.userId()).isEqualTo(1L);
+        assertThat(sent.token()).isEqualTo("token");
+        assertThat(sent.title()).isEqualTo("title");
+        assertThat(sent.body()).isEqualTo("body");
+        assertThat(sent.data()).containsEntry("dedupKey", "123"); // 재시도 간 불변인 dedup 키
+        assertThat(sent.data()).containsEntry("type", "ENROLL");  // 원본 payload 는 보존
+        assertThat(thenDispatchResults().success()).containsExactly(outbox);
     }
 
     @Test
@@ -110,14 +126,66 @@ class OutboxDispatcherTest {
                 .build();
         given(outboxStateTransitioner.claimPendingNotifications(anyInt(), anyInt()))
                 .willReturn(List.of(outbox));
+        given(notificationSenderPort.sendNotifications(any()))
+                .willReturn(List.of(NotificationSendResult.ofSuccess()));
 
         // when
         sut.processPendingNotifications();
 
         // then
-        then(notificationSenderPort).should()
-                .sendNotification(eq(2L), eq("token2"), any(), any(), dataCaptor.capture());
-        assertThat(dataCaptor.getValue()).containsEntry("dedupKey", "789");
-        then(outboxStateTransitioner).should().updateStatusSuccess(outbox);
+        then(notificationSenderPort).should().sendNotifications(messagesCaptor.capture());
+        NotificationMessage sent = messagesCaptor.getValue().get(0);
+        assertThat(sent.token()).isEqualTo("token2");
+        assertThat(sent.data()).containsEntry("dedupKey", "789");
+        assertThat(thenDispatchResults().success()).containsExactly(outbox);
+    }
+
+    @Test
+    @DisplayName("배치 발송 결과를 성공/영구실패/재시도 세 갈래로 나눠 아웃박스에 확정한다")
+    void processPendingNotifications_classifiesBatchResults() {
+        // given - 한 배치 안에 성패가 섞여도 건별로 올바른 상태가 확정돼야 한다
+        NotificationOutbox succeeded = outboxWithId(1L);
+        NotificationOutbox permanentlyFailed = outboxWithId(2L);
+        NotificationOutbox retryable = outboxWithId(3L);
+        given(outboxStateTransitioner.claimPendingNotifications(anyInt(), anyInt()))
+                .willReturn(List.of(succeeded, permanentlyFailed, retryable));
+        given(notificationSenderPort.sendNotifications(any())).willReturn(List.of(
+                NotificationSendResult.ofSuccess(),
+                NotificationSendResult.ofPermanentFailure("토큰 만료"),
+                NotificationSendResult.ofRetryableFailure("일시적 오류")
+        ));
+
+        // when
+        sut.processPendingNotifications();
+
+        // then
+        DispatchResults results = thenDispatchResults();
+        assertThat(results.success()).containsExactly(succeeded);
+        assertThat(results.permanent()).containsExactly(permanentlyFailed);
+        assertThat(results.retryable()).containsExactly(retryable);
+    }
+
+    private NotificationOutbox outboxWithId(Long id) {
+        return NotificationOutbox.builder()
+                .id(id)
+                .recipientId(id)
+                .recipientAddress("token" + id)
+                .title("title")
+                .body("body")
+                .payload("{}")
+                .build();
+    }
+
+    // applyDispatchResults 는 세 갈래 목록을 한 번에 받으므로, 캡처한 인자를 갈래별로 꺼내 쓰도록 묶는다.
+    private DispatchResults thenDispatchResults() {
+        then(outboxStateTransitioner).should().applyDispatchResults(
+                successCaptor.capture(), permanentCaptor.capture(), retryableCaptor.capture(), any(), anyInt());
+        return new DispatchResults(
+                successCaptor.getValue(), permanentCaptor.getValue(), retryableCaptor.getValue());
+    }
+
+    private record DispatchResults(List<NotificationOutbox> success,
+                                   List<NotificationOutbox> permanent,
+                                   List<NotificationOutbox> retryable) {
     }
 }

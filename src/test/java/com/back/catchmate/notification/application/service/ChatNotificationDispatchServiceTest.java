@@ -21,7 +21,6 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.never;
 import static org.mockito.BDDMockito.then;
@@ -96,9 +95,11 @@ class ChatNotificationDispatchServiceTest {
         // when
         sut.dispatchOnChatMessageSent(ROOM_ID, 100L, SENDER_ID, "안녕하세요");
 
-        // then
-        then(notificationDispatchUseCase).should(never()).dispatch(eq(2L), any());
-        then(notificationDispatchUseCase).should().dispatch(eq(3L), any());
+        // then - 방 인원 전체가 한 건으로 묶여 나가되, 포커스 중인 2번은 목록에서 빠진다
+        ArgumentCaptor<List<Long>> dispatchedIds = ArgumentCaptor.captor();
+        then(notificationDispatchUseCase).should().dispatchAll(dispatchedIds.capture(), any());
+        assertThat(dispatchedIds.getValue()).containsExactly(3L);
+
         then(outboxDispatchUseCase).should(never()).sendPendingOutboxImmediately(2L);
         then(outboxDispatchUseCase).should().sendPendingOutboxImmediately(3L);
     }
@@ -121,9 +122,11 @@ class ChatNotificationDispatchServiceTest {
         // when
         sut.dispatchOnChatMessageSent(ROOM_ID, 100L, SENDER_ID, "안녕하세요");
 
-        // then
-        then(notificationDispatchUseCase).should().dispatch(eq(2L), any());
-        then(notificationDispatchUseCase).should().dispatch(eq(3L), any());
+        // then - 알림 설정과 무관하게 둘 다 STOMP 대상에 포함된다
+        ArgumentCaptor<List<Long>> dispatchedIds = ArgumentCaptor.captor();
+        then(notificationDispatchUseCase).should().dispatchAll(dispatchedIds.capture(), any());
+        assertThat(dispatchedIds.getValue()).containsExactly(2L, 3L);
+
         then(outboxDispatchUseCase).should(never()).sendPendingOutboxImmediately(any());
     }
 

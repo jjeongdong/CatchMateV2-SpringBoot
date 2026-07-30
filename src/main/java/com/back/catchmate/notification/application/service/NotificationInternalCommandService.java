@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -18,5 +20,16 @@ public class NotificationInternalCommandService implements NotificationInternalC
     public void createNotification(Long userId, Long senderId, Long boardId, String title, AlarmType type, Long targetId) {
         Notification notification = Notification.createNotification(userId, senderId, boardId, title, type, targetId);
         notificationRepository.save(notification);
+    }
+
+    @Override
+    public void createNotifications(List<Long> userIds, Long senderId, Long boardId, String title, AlarmType type, Long targetId) {
+        if (userIds.isEmpty()) {
+            return;
+        }
+        List<Notification> notifications = userIds.stream()
+                .map(userId -> Notification.createNotification(userId, senderId, boardId, title, type, targetId))
+                .toList();
+        notificationRepository.saveAll(notifications);
     }
 }

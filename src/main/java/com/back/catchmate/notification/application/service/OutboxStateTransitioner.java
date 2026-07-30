@@ -10,7 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -21,10 +23,11 @@ public class OutboxStateTransitioner {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<NotificationOutbox> claimPendingNotifications(int maxRetryCount, int batchSize) {
         List<NotificationOutbox> pendingList = outboxRepository.findAllPending(maxRetryCount, batchSize);
-        for (NotificationOutbox outbox : pendingList) {
-            outbox.startProcessing();
-            outboxRepository.save(outbox);
+        if (pendingList.isEmpty()) {
+            return pendingList;
         }
+        pendingList.forEach(NotificationOutbox::startProcessing);
+        outboxRepository.updateAll(pendingList);
         return pendingList;
     }
 
@@ -69,6 +72,41 @@ public class OutboxStateTransitioner {
     public void updateStatusFailure(NotificationOutbox outbox, int maxRetryCount, String errorMessage) {
         applyFailure(outbox, maxRetryCount, errorMessage);
         outboxRepository.save(outbox);
+    }
+
+    /**
+     * 배치 발송 결과를 한 트랜잭션에서 일괄 확정한다.
+     * <p>
+     * 건별 {@code REQUIRES_NEW} 전이를 반복하면 배치 크기만큼 커넥션 획득·커밋이 발생하므로,
+     * 성공/영구실패/재시도 세 갈래를 모아 한 번에 반영한다.
+     *
+     * @param errorMessages 아웃박스 id → 실패 사유(성공 건은 없음)
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void applyDispatchResults(List<NotificationOutbox> successes,
+                                     List<NotificationOutbox> permanentFailures,
+                                     List<NotificationOutbox> retryableFailures,
+                                     Map<Long, String> errorMessages,
+                                     int maxRetryCount) {
+        List<NotificationOutbox> updated = new ArrayList<>(
+                successes.size() + permanentFailures.size() + retryableFailures.size());
+
+        for (NotificationOutbox outbox : successes) {
+            outbox.success();
+            recordSuccessMetrics(outbox);
+            updated.add(outbox);
+        }
+        for (NotificationOutbox outbox : permanentFailures) {
+            outbox.permanentFail(errorMessages.get(outbox.getId()));
+            meterRegistry.counter("notification.outbox.failure", "type", "permanent").increment();
+            updated.add(outbox);
+        }
+        for (NotificationOutbox outbox : retryableFailures) {
+            applyFailure(outbox, maxRetryCount, errorMessages.get(outbox.getId()));
+            updated.add(outbox);
+        }
+
+        outboxRepository.updateAll(updated);
     }
 
     /**
