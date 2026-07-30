@@ -70,7 +70,7 @@ com.back.catchmate
 
 ## Deployment
 
-EC2 단일 인스턴스. Nginx(리버스 프록시·SSL) 뒤에 단일 `catchmate-app` 컨테이너. EC2 서버에서 소스를 직접 빌드해 재기동하는 수동 배포(`deploy-local.sh`: `docker-compose up -d --build`).
+**ALB 뒤 EC2 2대** 스케일아웃 구성. ALB가 HTTPS/WSS(`wss://…/ws/chat`) SSL 을 종단하고 2개 `catchmate-app` 컨테이너로 분산한다(**stickiness ON** — WebSocket 세션이 한 인스턴스에 고정돼야 함). 인스턴스 간 실시간 전달은 **Redis Pub/Sub 브리지**로 팬아웃한다(각 인스턴스가 토픽을 구독해 자기에게 붙은 STOMP 세션에만 relay → 세션은 한 인스턴스에만 붙으므로 중복 없음). HikariCP 는 인스턴스당 pool=15(2×15=30). 각 EC2 에서 소스를 직접 빌드해 재기동하는 수동 배포(`deploy-local.sh`: `docker-compose up -d --build`).
 
 ## 주요 파일 위치
 
