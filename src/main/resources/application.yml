@@ -19,11 +19,20 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
+# OAuth 공급자(카카오·구글) 호출 타임아웃. 무제한이면 공급자 장애가 Tomcat 스레드 고갈로 번진다.
+# 로그인 1회당 토큰 교환 + 사용자 조회를 순차 호출하므로, 최악 지연은 (connect + read) × 2 로 잡힌다.
+oauth:
+  client:
+    connect-timeout-ms: 2000
+    read-timeout-ms: 5000
+
 notification:
   outbox:
     max-retry-count: 5
     scheduler-delay-ms: 60000
-    batch-size: 50
+    # 한 주기에 선점·발송하는 건수. FCM 배치 발송(sendEach) 1회 상한이 500 이라 그에 맞춘다.
+    # 공지 브로드캐스트처럼 한 번에 수만 건이 쌓이는 경우 이 값이 곧 배출 속도가 된다.
+    batch-size: 500
   # 알림 즉시발송 전용 executor. 과부하 시 즉시발송을 버리고(CallerRuns 금지) 스케줄러가 회수 → 웹 스레드 커넥션 데드락 방지.
   dispatch:
     executor:
