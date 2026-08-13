@@ -169,6 +169,7 @@ class EnrollClientCommandServiceTest {
                 .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
                         .isEqualTo(ErrorCode.DUPLICATE_ENROLL_ACCEPT_REQUEST));
         then(enrollAcceptExecutor).shouldHaveNoInteractions();
+        then(idempotencyPort).should(never()).release(any());
     }
 
     @Test
@@ -186,6 +187,41 @@ class EnrollClientCommandServiceTest {
         // then
         assertThat(response.enrollId()).isEqualTo(enrollId);
         then(enrollAcceptExecutor).should().accept(userId, enrollId);
+    }
+
+    @Test
+    @DisplayName("수락에 성공하면 멱등성 키를 즉시 해제한다")
+    void 수락_성공하면_멱등성_키를_즉시_해제() {
+        // given
+        Long userId = 2L, enrollId = 100L;
+        String idempotencyKey = "idempotent:enroll:accept:" + enrollId;
+        given(idempotencyPort.acquireIfAbsent(anyString(), anyLong())).willReturn(true);
+        given(enrollAcceptExecutor.accept(userId, enrollId))
+                .willReturn(EnrollAcceptResponse.of(enrollId));
+
+        // when
+        sut.updateEnrollAccept(userId, enrollId);
+
+        // then
+        then(idempotencyPort).should().release(idempotencyKey);
+    }
+
+    @Test
+    @DisplayName("실행기가 예외를 던져도 멱등성 키를 해제해 재시도 안내 후 다시 시도할 수 있게 한다")
+    void 실행기_예외여도_멱등성_키를_해제() {
+        // given
+        Long userId = 2L, enrollId = 100L;
+        String idempotencyKey = "idempotent:enroll:accept:" + enrollId;
+        given(idempotencyPort.acquireIfAbsent(anyString(), anyLong())).willReturn(true);
+        willThrow(new BaseException(ErrorCode.ENROLL_ACCEPT_CONFLICT))
+                .given(enrollAcceptExecutor).accept(userId, enrollId);
+
+        // when & then
+        assertThatThrownBy(() -> sut.updateEnrollAccept(userId, enrollId))
+                .isInstanceOf(BaseException.class)
+                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
+                        .isEqualTo(ErrorCode.ENROLL_ACCEPT_CONFLICT));
+        then(idempotencyPort).should().release(idempotencyKey);
     }
 
     // ── 테스트 데이터 헬퍼 ──────────────────────────────────────────

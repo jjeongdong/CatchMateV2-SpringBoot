@@ -66,7 +66,13 @@ public class EnrollClientCommandService implements EnrollClientCommandUseCase {
         }
 
         // 멱등성(SETNX)은 재시도 밖에서 1회만. 트랜잭션 + 낙관적 락 재시도는 Executor 가 담당한다.
-        return enrollAcceptExecutor.accept(userId, enrollId);
+        // 처리가 끝나면(성공/실패 무관) 즉시 해제해, 재시도 안내(409) 뒤 곧바로 다시 시도해도
+        // "이미 처리 중"이 아니라 실제 결과에 맞는 응답을 받게 한다.
+        try {
+            return enrollAcceptExecutor.accept(userId, enrollId);
+        } finally {
+            idempotencyPort.release(idempotencyKey);
+        }
     }
 
     @Override

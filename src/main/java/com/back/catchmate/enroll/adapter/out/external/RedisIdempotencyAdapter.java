@@ -25,4 +25,13 @@ public class RedisIdempotencyAdapter implements IdempotencyPort {
             return true;
         }
     }
+
+    @Override
+    public void release(String key) {
+        try {
+            redisTemplate.delete(key);
+        } catch (Exception e) {
+            log.warn("[Idempotency] 키 해제 실패, TTL 만료까지 대기. key={}", key, e);
+        }
+    }
 }
