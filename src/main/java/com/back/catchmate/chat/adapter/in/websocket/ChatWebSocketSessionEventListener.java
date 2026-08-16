@@ -13,9 +13,6 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -24,7 +21,9 @@ public class ChatWebSocketSessionEventListener {
     private final UserOnlineStatusCommandPort userOnlineStatusCommandPort;
 
     /**
-     * WebSocket 연결 성공
+     * WebSocket 연결 (브라우저 접속)
+     * 앱을 처음 켰을 때, 혹은 브라우저를 새로고침했을 때 발생하는 이벤트
+     * 이전 세션의 비정상 종료로 인해 남아있는 stale focus room 을 초기화하고, 온라인 상태를 설정한다.
      */
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
@@ -33,8 +32,6 @@ public class ChatWebSocketSessionEventListener {
 
         if (userId != null) {
             userOnlineStatusCommandPort.setUserOnline(userId);
-            // 이전 세션에서 비정상 종료로 남은 stale focus room 을 새 연결 시점에 초기화한다.
-            // 채팅방 안이면 직후의 SUBSCRIBE 가 다시 focus 를 설정한다.
             userOnlineStatusCommandPort.removeUserFocusRoom(userId);
             log.info("WebSocket connected - User {} set to ONLINE (focus reset)", userId);
         }
@@ -42,6 +39,8 @@ public class ChatWebSocketSessionEventListener {
 
     /**
      * WebSocket 연결 해제 (브라우저 종료 등)
+     * 앱을 종료하거나 브라우저를 닫았을 때 발생하는 이벤트
+     * 온라인 상태를 해제하고, 포커스 룸 정보를 제거한다.
      */
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
@@ -49,9 +48,7 @@ public class ChatWebSocketSessionEventListener {
         Long userId = extractUserId(headerAccessor);
 
         if (userId != null) {
-            // 온라인 상태 해제
             userOnlineStatusCommandPort.setUserOffline(userId);
-            // 포커스 룸 정보 제거
             userOnlineStatusCommandPort.removeUserFocusRoom(userId);
             log.info("WebSocket disconnected - User {} set to OFFLINE", userId);
         }

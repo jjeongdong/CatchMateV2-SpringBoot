@@ -8,7 +8,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -34,12 +36,33 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private int outboundMaxPoolSize;
     @Value("${websocket.outbound.queue-capacity:1000}")
     private int outboundQueueCapacity;
+    @Value("${websocket.heartbeat.interval-ms:25000}")
+    private long heartbeatIntervalMs;
 
+    // 하트비트는 두 가지를 동시에 해결한다(둘 다 끄면 안 되는 이유).
+    // ① 죽은 커넥션 감지 — 클라가 heartbeatIntervalMs 넘게 조용하면 브로커가 세션을 정리해
+    //    SessionDisconnectEvent 가 발생한다. 이게 없으면 half-open 커넥션(비행기모드·앱 강제종료)에서
+    //    user:online:{id}·user:focus:{id}(둘 다 TTL 없음)가 영구히 남아 그 유저의 채팅 푸시가 계속 억제된다.
+    // ② idle 커넥션 유지 — ALB idle timeout(기본 60초) 안에 최소 2회는 프레임이 오가야 끊기지 않는다.
+    // raw WebSocket 엔드포인트는 SockJS 하트비트(25초)를 못 받으므로 STOMP 레벨에서 걸어야 한다.
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/sub", "/queue");
+        registry.enableSimpleBroker("/sub", "/queue")
+                .setTaskScheduler(wsHeartbeatScheduler())
+                .setHeartbeatValue(new long[]{heartbeatIntervalMs, heartbeatIntervalMs});
         registry.setApplicationDestinationPrefixes("/pub");
         registry.setUserDestinationPrefix("/user");
+    }
+
+    // 전 세션을 순회하며 만료 검사 + 하트비트 프레임 발행만 하는 가벼운 작업이라 단일 스레드로 충분하다.
+    // 실제 전송은 clientOutboundChannel(wsClientOutboundExecutor)이 담당한다.
+    @Bean
+    public TaskScheduler wsHeartbeatScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(1);
+        scheduler.setThreadNamePrefix("WsHeartbeat-");
+        scheduler.initialize();
+        return scheduler;
     }
 
     @Override
