@@ -150,19 +150,19 @@ public class RedisConfig {
     }
 
     /**
-     * 채팅용 단일 Topic 생성
-     */
-    @Bean
-    public ChannelTopic chatTopic() {
-        return new ChannelTopic("catchmate-chat-topic");
-    }
-
-    /**
      * 앱 안에 있는데 실시간 반영을 위한 알림용 메시지 리스너 어댑터
      */
     @Bean
     public MessageListenerAdapter notificationListenerAdapter(NotificationRedisSubscriber subscriber) {
         return new MessageListenerAdapter(subscriber, "onNotification");
+    }
+
+    /**
+     * 채팅용 단일 Topic 생성
+     */
+    @Bean
+    public ChannelTopic chatTopic() {
+        return new ChannelTopic("catchmate-chat-topic");
     }
 
     /**

@@ -39,6 +39,25 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Value("${websocket.heartbeat.interval-ms:25000}")
     private long heartbeatIntervalMs;
 
+    /**
+     * STOMP 엔드포인트 등록
+     * 어느 경로로 WebSocket 연결을 수립할지 지정한다.
+     * 예를 들어 클라이언트가 /ws/chat 경로로 연결을 시도하면 이 엔드포인트가 매핑된다.
+     */
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws/chat")
+                .setAllowedOrigins(allowedOrigins)
+                .withSockJS();
+
+        registry.addEndpoint("/ws/chat")
+                .setAllowedOrigins(allowedOrigins);
+    }
+
+    // STOMP 브로커 설정
+    // /sub, /queue 로 시작하는 목적지에 대해 SimpleBroker를 활성화한다.
+    // /pub 로 시작하는 목적지는 @MessageMapping 메서드로 라우팅된다.
+    // /user 로 시작하는 목적지는 특정 사용자에게 메시지를 보내는 데 사용된다.
     // 하트비트는 두 가지를 동시에 해결한다(둘 다 끄면 안 되는 이유).
     // ① 죽은 커넥션 감지 — 클라가 heartbeatIntervalMs 넘게 조용하면 브로커가 세션을 정리해
     //    SessionDisconnectEvent 가 발생한다. 이게 없으면 half-open 커넥션(비행기모드·앱 강제종료)에서
@@ -63,16 +82,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         scheduler.setThreadNamePrefix("WsHeartbeat-");
         scheduler.initialize();
         return scheduler;
-    }
-
-    @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws/chat")
-                .setAllowedOrigins(allowedOrigins)
-                .withSockJS();
-
-        registry.addEndpoint("/ws/chat")
-                .setAllowedOrigins(allowedOrigins);
     }
 
     @Override

@@ -34,6 +34,15 @@ public class ChatNotificationDispatchService implements ChatNotificationDispatch
     private final OutboxDispatchUseCase outboxDispatchUseCase;
     private final NotificationDispatchUseCase notificationDispatchUseCase;
 
+    /**
+     * 채팅 메시지 전송 시, 수신자별 알림 설정과 포커스 여부를 확인하여 알림을 발송한다.
+     * <p>
+     * 1. 수신자 목록 조회 (보낸 사람 제외)
+     * 2. 수신자별 알림 설정 조회
+     * 3. 수신자별 포커스 여부 조회
+     * 4. STOMP 메시지 전송 (포커스 여부와 상관없이 전송)
+     * 5. 알림 설정이 켜져있고, 포커스가 없는 경우 Outbox Dispatch 즉시 발송
+     */
     @Override
     public void dispatchOnChatMessageSent(Long chatRoomId, Long messageId, Long senderId, String content) {
         List<NotificationChatRecipientInfo> recipientsInfo = chatRoomFetchPort.getChatRoomRecipients(chatRoomId, senderId);
