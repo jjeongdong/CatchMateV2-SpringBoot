@@ -57,18 +57,22 @@ public class ChatMessageService {
 
     /**
      * [트랜잭션 밖] 멤버십 인증(캐시) + 시퀀스 발행(Redis). DB 커넥션을 잡지 않도록 NOT_SUPPORTED.
-     * TEXT 만 새 시퀀스를 INCR 하고, 그 외(이미지 등)는 현재 시퀀스를 읽는다.
+     * TEXT 만 새 시퀀스를 INCR 하고, 그 외(SYSTEM)는 현재 시퀀스를 읽는다.
+     * <p>
+     * 멤버십 검사는 messageType 과 무관하게 항상 먼저 수행한다. 타입 분기 안으로 넣으면 그 분기를 타지 않는
+     * 메시지가 인가를 건너뛰어, 참여하지 않은 방으로도 전송이 가능해진다.
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public Long prepareSequence(Long chatRoomId, Long senderId, MessageType messageType) {
+        MembershipSnapshot membership = resolveMembership(chatRoomId, senderId);
+        if (!membership.active()) {
+            throw new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND);
+        }
+        if (membership.readOnly()) {
+            throw new BaseException(ErrorCode.CHATROOM_READ_ONLY);
+        }
+
         if (messageType == MessageType.TEXT) {
-            MembershipSnapshot membership = resolveMembership(chatRoomId, senderId);
-            if (!membership.active()) {
-                throw new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND);
-            }
-            if (membership.readOnly()) {
-                throw new BaseException(ErrorCode.CHATROOM_READ_ONLY);
-            }
             return chatSequencePort.generateSequence(chatRoomId);
         }
         return chatSequencePort.getCurrentSequence(chatRoomId);

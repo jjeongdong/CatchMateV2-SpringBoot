@@ -6,7 +6,10 @@ import com.back.catchmate.chat.application.port.in.ChatClientCommandUseCase;
 import com.back.catchmate.chat.application.port.out.dto.ChatUserInfo;
 import com.back.catchmate.chat.application.port.out.external.ImageUploaderPort;
 import com.back.catchmate.chat.application.port.out.external.UserFetchPort;
+import com.back.catchmate.chat.domain.enums.MessageType;
 import com.back.catchmate.chat.domain.model.ChatMessage;
+import com.back.catchmate.common.error.ErrorCode;
+import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,6 +34,12 @@ public class ChatClientCommandService implements ChatClientCommandUseCase {
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void sendMessage(Long senderId, ChatMessageCommand command) {
+        // messageType 은 클라이언트가 보낸 값이다. SYSTEM(입장·퇴장)은 ChatRoomService 가 직접 생성하는
+        // 서버 전용 타입이라, 클라이언트발 전송은 TEXT 만 허용한다(시스템 메시지 사칭 차단).
+        if (command.messageType() != MessageType.TEXT) {
+            throw new BaseException(ErrorCode.BAD_REQUEST);
+        }
+
         ChatUserInfo sender = userFetchPort.getUser(senderId);
 
         Long sequence = chatMessageService.prepareSequence(
