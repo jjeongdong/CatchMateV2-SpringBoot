@@ -87,3 +87,27 @@ com.back.catchmate
 | Redis 설정 / Pub/Sub | `global/config/data/RedisConfig.java`, `notification/adapter/out/external/RedisNotificationPublisher.java`, `chat/adapter/out/external/ChatMessageRedisPublisher.java` |
 | WebSocket 설정 | `global/config/web/WebSocketConfig.java` |
 | Fetch Port 예시 | `board/application/port/out/*FetchPort.java`, `board/adapter/out/external/Board*FetchAdapter.java` |
+
+## 하네스: 리뷰어 에이전트 팀
+
+**목표:** 변경분을 아키텍처·동시성·성능·보안 4개 축으로 동시에 리뷰하고, 교차 검증·중복 제거를 거친 리포트 1장으로 수렴시킨다. 리뷰어는 전원 읽기 전용 — 수정 여부는 항상 사용자가 결정한다.
+
+**트리거:** "리뷰어 팀", "전방위 리뷰", "제대로 리뷰해줘", 커밋·PR 전 점검, 컨텍스트 단위 감사 요청 시 `review-board` 스킬을 사용하라. 축 하나만 필요하면 해당 축 스킬(`hexagonal-review`·`concurrency-review`·`persistence-perf-review`·`auth-security-review`)을 직접 쓴다. 단순 질문은 직접 응답 가능.
+
+**변경 이력:**
+| 날짜 | 변경 내용 | 대상 | 사유 |
+|---|---|---|---|
+| 2026-08-18 | 리뷰어 팀 구성 (harness v2) — 에이전트 4개(concurrency/persistence-perf/auth-security/synthesizer) + 스킬 4개(3축 + review-board 오케스트레이터) 신설, 기존 `hexagonal-reviewer` 편입 | `.claude/agents/*`, `.claude/skills/*` | 리뷰 축이 아키텍처 하나뿐이라 런타임·비용·인가 결함이 사각지대였음 |
+| 2026-08-19 | Phase 0 '축 지정 단발' 안내 정정 — 스킬(체크리스트)/에이전트(격리 실행자) 선택 기준 명시 | `skills/review-board` | 축 하나여도 스코프가 크면 격리가 필요한데 "스킬만 사용"으로 오안내 (실행 중 발견) |
+
+## 하네스: 테스트 작성 팀
+
+**목표:** 테스트를 계획→작성→검증 루프로 만든다. 케이스 도출과 품질 비평을 작성자와 분리해, 통과만 하고 아무것도 증명하지 않는 테스트가 남지 않게 한다.
+
+**트리거:** "테스트 팀", "{컨텍스트} 테스트 채워줘", "테스트 제대로 짜줘", 여러 클래스에 테스트가 필요하거나 테스트 공백을 진단할 때 `test-team` 스킬을 사용하라. 클래스 하나에 테스트 몇 개만 붙이는 단발 작업은 `write-tests` 스킬로 직접 작성한다. 작성 범위는 `src/test` 로 제한되며, 프로덕션 코드 수정은 이 팀의 권한 밖이다.
+
+**변경 이력:**
+| 날짜 | 변경 내용 | 대상 | 사유 |
+|---|---|---|---|
+| 2026-08-18 | 테스트 팀 구성 (harness v2) — 에이전트 3개(test-planner/test-writer/test-verifier) + 스킬 3개(test-planning·test-quality-check·test-team 오케스트레이터) 신설, 기존 `write-tests` 를 작성 규약 SSOT 로 편입 | `.claude/agents/*`, `.claude/skills/*` | 작성 규약은 있었으나 케이스 도출·품질 검증이 작성자와 분리돼 있지 않았음 |
+| 2026-08-19 | 병렬 writer 시 빌드 명령을 오케스트레이터가 직렬 1회 실행하도록 변경 + writer 에 계획서 시그니처 실검증 의무 추가 | `skills/test-team`, `agents/test-writer` | enroll 라운드에서 병렬 writer 3명이 각자 gradle 을 부르면 데몬 lock 이 충돌 / 계획서는 스냅샷이라 실제 소스와 어긋날 수 있음 |
