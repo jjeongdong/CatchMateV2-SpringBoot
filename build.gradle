@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'jacoco'
     id 'org.springframework.boot' version '3.4.2'
     id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -85,6 +86,40 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport   // 테스트가 실패해도 실행분까지의 리포트는 생성된다
+}
+
+// ── 테스트 커버리지 (JaCoCo) ──────────────────────────────────────────
+// 리포트: build/reports/jacoco/test/html/index.html (XML: .../jacocoTestReport.xml)
+//
+// 전체 실행:      ./gradlew test jacocoTestReport
+// 컨텍스트 한정:  ./gradlew test --tests "com.back.catchmate.enroll.*" jacocoTestReport
+//   (필터 실행 시 리포트는 '그 테스트가 커버한 범위'만 반영한다)
+//
+// ⚠️ 수치를 인용할 땐 아래 제외 목록을 함께 밝힌다. 제외는 '로직이 없어 테스트 대상이 아닌 것'
+//    으로 한정했고, 판단이 갈릴 수 있는 Controller·FetchAdapter 는 **제외하지 않았다**
+//    (얇은 위임이라 미커버로 잡히지만, 숫자를 부풀리지 않기 위해 남겨둔다).
+jacoco {
+    toolVersion = '0.8.12'   // Java 21 지원
+}
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+    reports {
+        html.required = true
+        xml.required = true      // CI·뱃지 연동용
+        csv.required = false
+    }
+    classDirectories.setFrom(files(sourceSets.main.output.classesDirs.collect {
+        fileTree(dir: it, exclude: [
+            '**/Q[A-Z]*.class',        // QueryDSL 생성 클래스
+            '**/CatchmateApplication.class',
+            '**/config/**',            // 빈 설정 (global/config, 각 컨텍스트 Config)
+            '**/dto/**',               // Command/Response/View record (필드 복사)
+            '**/entity/**',            // JPA 엔티티 (매핑 전용)
+            '**/port/**',              // 포트 인터페이스
+        ])
+    }))
 }
 
 // ── 아키텍처 검증 게이트 ──────────────────────────────────────────────
