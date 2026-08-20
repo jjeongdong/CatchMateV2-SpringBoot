@@ -101,20 +101,30 @@ public class ChatMessageService {
 
     /**
      * [트랜잭션 밖] 커밋 후 후처리(Redis): 시퀀스 버퍼링 + 히스토리 캐시 evict. DB 커넥션 불필요.
+     * <p>
+     * 커밋이 끝난 뒤라 여기서 실패해도 메시지는 이미 확정이다. 예외를 올리면 발신자가 "재전송 유효" 로
+     * 통보받아 같은 메시지를 중복 저장하게 되므로, markAsRead 와 동일하게 삼키고 로그만 남긴다.
+     * 버퍼는 monotonic 이라 다음 메시지나 스케줄러 tick 이 자가치유한다.
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void bufferAfterSend(Long chatRoomId, Long senderId, Long sequence, MessageType messageType) {
-        if (messageType == MessageType.TEXT) {
-            chatRoomSequenceBufferPort.buffer(chatRoomId, sequence);
-            readSequenceBufferPort.buffer(chatRoomId, senderId, sequence);
+        try {
+            if (messageType == MessageType.TEXT) {
+                chatRoomSequenceBufferPort.buffer(chatRoomId, sequence);
+                readSequenceBufferPort.buffer(chatRoomId, senderId, sequence);
+            }
+            chatHistoryCachePort.evictLatestPage(chatRoomId);
+        } catch (Exception e) {
+            log.error("메시지 전송 후처리 실패 (roomId: {}, senderId: {}, sequence: {})",
+                    chatRoomId, senderId, sequence, e);
         }
-        chatHistoryCachePort.evictLatestPage(chatRoomId);
     }
 
     // 멤버십 인증 캐시(read-through). miss 시에만 DB 조회 후 캐시 적재. 멤버 행이 없으면 예외.
     private MembershipSnapshot resolveMembership(Long chatRoomId, Long userId) {
         return chatMembershipCachePort.find(chatRoomId, userId)
                 .orElseGet(() -> {
+                    // 캐시 miss → DB 조회 후 캐시에 적재
                     ChatRoomMember member = chatRoomMemberRepository
                             .findByChatRoomIdAndUserId(chatRoomId, userId)
                             .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
