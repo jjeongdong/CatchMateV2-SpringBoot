@@ -1,7 +1,7 @@
 package com.back.catchmate.enroll.adapter.out.external;
 
-import com.back.catchmate.club.application.dto.response.ClubInternalResponse;
-import com.back.catchmate.club.application.port.in.ClubInternalQueryUseCase;
+import com.back.catchmate.club.dto.response.ClubSummary;
+import com.back.catchmate.club.service.ClubService;
 import com.back.catchmate.enroll.application.port.out.dto.EnrollClubInfo;
 import com.back.catchmate.enroll.application.port.out.external.ClubFetchPort;
 import lombok.RequiredArgsConstructor;
@@ -12,21 +12,21 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class EnrollClubFetchAdapter implements ClubFetchPort {
-    private final ClubInternalQueryUseCase clubInternalQueryUseCase;
+    private final ClubService clubService;
 
     @Override
     public EnrollClubInfo getClub(Long clubId) {
-        return toEnrollClubInfo(clubInternalQueryUseCase.getClub(clubId));
+        return toEnrollClubInfo(clubService.getClubSummary(clubId));
     }
 
     @Override
     public List<EnrollClubInfo> getClubs(List<Long> clubIds) {
-        return clubInternalQueryUseCase.getClubs(clubIds).stream()
+        return clubService.getClubSummaries(clubIds).stream()
                 .map(this::toEnrollClubInfo)
                 .toList();
     }
 
-    private EnrollClubInfo toEnrollClubInfo(ClubInternalResponse response) {
+    private EnrollClubInfo toEnrollClubInfo(ClubSummary response) {
         return new EnrollClubInfo(response.clubId(), response.name(), response.homeStadium(), response.region());
     }
 }

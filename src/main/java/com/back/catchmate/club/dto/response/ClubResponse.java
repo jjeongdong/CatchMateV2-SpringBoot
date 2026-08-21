@@ -1,6 +1,6 @@
-package com.back.catchmate.club.application.dto.response;
+package com.back.catchmate.club.dto.response;
 
-import com.back.catchmate.club.domain.model.Club;
+import com.back.catchmate.club.entity.Club;
 
 public record ClubResponse(
         Long clubId,

@@ -1,6 +1,6 @@
-package com.back.catchmate.club.application.dto.response;
+package com.back.catchmate.club.dto.response;
 
-public record ClubInternalResponse(
+public record ClubSummary(
         Long clubId,
         String name,
         String homeStadium,

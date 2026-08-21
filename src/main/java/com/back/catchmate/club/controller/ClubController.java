@@ -1,7 +1,7 @@
-package com.back.catchmate.club.adapter.in.web.controller;
+package com.back.catchmate.club.controller;
 
-import com.back.catchmate.club.application.port.in.ClubClientQueryUseCase;
-import com.back.catchmate.club.application.dto.response.ClubResponse;
+import com.back.catchmate.club.dto.response.ClubResponse;
+import com.back.catchmate.club.service.ClubService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +17,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/clubs")
 public class ClubController {
-    private final ClubClientQueryUseCase clubClientQueryUseCase;
+    private final ClubService clubService;
 
     @GetMapping("/list")
     @Operation(summary = "구단 정보 리스트 조회 API", description = "구단 정보를 리스트로 조회하는 API 입니다.")
     public ResponseEntity<List<ClubResponse>> getClubList() {
-        return ResponseEntity.ok(clubClientQueryUseCase.getClubList());
+        return ResponseEntity.ok(clubService.getClubList());
     }
 }

@@ -213,6 +213,38 @@ BookmarkService → BoardService.getBoardSummaries(ids)  // 직접 주입
 직접 import 한다. 그 대신 지켜야 할 선이 둘 남는다 — 남의 `repository` 와 남의 `controller` 는
 import 하지 않는다. (MVC 검증 훅이 이 둘을 막는다.)
 
+### 전환 중 — 아직 안 옮긴 컨텍스트가 호출자일 때
+
+**한 라운드 작업량의 절반은 옮기는 컨텍스트가 아니라 그것을 부르던 컨텍스트다.** club 은
+피의존 9개, `user` 는 10개다. 이 호출자들은 아직 헥사고날이므로 **자기 FetchPort/FetchAdapter
+체인을 그대로 유지한다.** 어댑터 안에서 바꾸는 것은 **정확히 3가지**뿐이다:
+
+```java
+// admin/adapter/out/external/AdminClubFetchAdapter.java  (admin 은 아직 헥사고날)
+-import com.back.catchmate.club.application.port.in.ClubInternalQueryUseCase;   // 1
+-import com.back.catchmate.club.application.dto.response.ClubInternalResponse;  // 2
++import com.back.catchmate.club.service.ClubService;
++import com.back.catchmate.club.dto.response.ClubSummary;
+
+-    private final ClubInternalQueryUseCase clubInternalQueryUseCase;           // 3
++    private final ClubService clubService;
+```
+그리고 호출 메서드명 정정 (`getClub` → `getClubSummary` 등).
+
+**그 외에는 한 글자도 바꾸지 않는다.** `XxxFetchPort` 인터페이스, `Xxx{Ctx}Info` DTO,
+어댑터의 `map()` 필드 매핑, 방어용 널 가드, private 헬퍼 이름 — 전부 그대로 둔다.
+**호출자 컨텍스트의 service 코드는 한 줄도 바뀌지 않아야 한다.** 파라미터 타입과 반환
+컨테이너(단건/`List`/`Optional`)가 동일하면 변경이 어댑터 안에서 전부 흡수되기 때문이다.
+service 가 바뀌었다면 시그니처를 잘못 바꿨다는 신호다.
+
+어댑터·포트·`*Info` 제거는 **그 컨텍스트 자신의 라운드**에서 한다. 지금 걷어내면 아직
+헥사고날인 컨텍스트의 구조가 절반만 무너진 상태가 된다.
+
+> 검증기는 이 상황을 알고 있다 — 미전환 컨텍스트의 `adapter/out/external`·`adapter/in/event`
+> 에서 전환된 컨텍스트의 `service`·`dto`·`entity`·`event` 를 부르는 것만 허용하고,
+> 미전환 컨텍스트의 **service** 가 전환된 상대를 직접 부르면 차단한다 (자기 어댑터를 창구로
+> 써야 한다). 상세 → `mvc-guardrail-switch` 스킬.
+
 ---
 
 ## §DTO — 병합과 이름 충돌

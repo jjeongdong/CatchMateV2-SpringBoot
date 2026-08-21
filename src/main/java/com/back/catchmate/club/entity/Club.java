@@ -1,6 +1,5 @@
-package com.back.catchmate.club.adapter.out.persistence.entity;
+package com.back.catchmate.club.entity;
 
-import com.back.catchmate.club.domain.model.Club;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,7 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "clubs")
-public class ClubEntity {
+public class Club {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "club_id")
@@ -33,13 +32,4 @@ public class ClubEntity {
 
     @Column(nullable = false)
     private String region;
-
-    public Club toDomain() {
-        return Club.builder()
-                .id(id)
-                .name(name)
-                .homeStadium(homeStadium)
-                .region(region)
-                .build();
-    }
 }
