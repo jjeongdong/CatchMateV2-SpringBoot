@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.simp.stomp.StompCommand;
+import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
@@ -49,12 +49,13 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             return message;
         }
 
-        StompCommand command = accessor.getCommand();
-        if (StompCommand.CONNECT.equals(command)) {
+        SimpMessageType type = accessor.getMessageType();
+
+        if (SimpMessageType.CONNECT.equals(type)) {
             authenticate(accessor);
-        } else if (StompCommand.SUBSCRIBE.equals(command)) {
+        } else if (SimpMessageType.SUBSCRIBE.equals(type)) {
             authorizeSubscribe(accessor);
-        } else if (StompCommand.SEND.equals(command)) {
+        } else if (SimpMessageType.MESSAGE.equals(type)) {
             authorizeSend(accessor);
         }
 
