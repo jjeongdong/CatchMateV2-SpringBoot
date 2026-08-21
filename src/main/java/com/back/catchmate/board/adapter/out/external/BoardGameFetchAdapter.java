@@ -2,8 +2,8 @@ package com.back.catchmate.board.adapter.out.external;
 
 import com.back.catchmate.board.application.port.out.external.GameFetchPort;
 import com.back.catchmate.board.application.port.out.dto.BoardGameInfo;
-import com.back.catchmate.game.application.dto.response.GameInternalResponse;
-import com.back.catchmate.game.application.port.in.GameInternalQueryUseCase;
+import com.back.catchmate.game.dto.response.GameSummary;
+import com.back.catchmate.game.service.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,27 +14,27 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class BoardGameFetchAdapter implements GameFetchPort {
-    private final GameInternalQueryUseCase gameInternalQueryUseCase;
+    private final GameService gameService;
 
     @Override
     public BoardGameInfo getGame(Long gameId) {
-        GameInternalResponse response = gameInternalQueryUseCase.getGame(gameId);
+        GameSummary response = gameService.getGameSummary(gameId);
         return toBoardGameInfo(response);
     }
 
     @Override
     public List<BoardGameInfo> getGames(List<Long> gameIds) {
-        return gameInternalQueryUseCase.getGames(gameIds).stream()
+        return gameService.getGameSummaries(gameIds).stream()
                 .map(this::toBoardGameInfo)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Long> findGameIdsByDate(LocalDate gameDate) {
-        return gameInternalQueryUseCase.findIdsByGameStartDateOn(gameDate);
+        return gameService.findIdsByGameStartDateOn(gameDate);
     }
 
-    private BoardGameInfo toBoardGameInfo(GameInternalResponse response) {
+    private BoardGameInfo toBoardGameInfo(GameSummary response) {
         if (response == null) return null;
         return new BoardGameInfo(
                 response.gameId(),

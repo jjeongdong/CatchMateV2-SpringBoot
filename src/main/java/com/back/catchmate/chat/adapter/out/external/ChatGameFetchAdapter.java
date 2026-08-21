@@ -2,8 +2,8 @@ package com.back.catchmate.chat.adapter.out.external;
 
 import com.back.catchmate.chat.application.port.out.dto.ChatGameInfo;
 import com.back.catchmate.chat.application.port.out.external.GameFetchPort;
-import com.back.catchmate.game.application.dto.response.GameInternalResponse;
-import com.back.catchmate.game.application.port.in.GameInternalQueryUseCase;
+import com.back.catchmate.game.dto.response.GameSummary;
+import com.back.catchmate.game.service.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,11 +13,11 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class ChatGameFetchAdapter implements GameFetchPort {
-    private final GameInternalQueryUseCase gameInternalQueryUseCase;
+    private final GameService gameService;
 
     @Override
     public List<ChatGameInfo> getGames(List<Long> gameIds) {
-        List<GameInternalResponse> responses = gameInternalQueryUseCase.getGames(gameIds);
+        List<GameSummary> responses = gameService.getGameSummaries(gameIds);
         return responses.stream()
                 .map(response -> new ChatGameInfo(
                         response.gameId(),

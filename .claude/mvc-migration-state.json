@@ -1,7 +1,9 @@
 {
   "mode": "migrating",
   "migrated": [
-    "club"
+    "club",
+    "report",
+    "game"
   ],
   "pilot": "club",
   "note": "migrated 에 올라간 컨텍스트만 MVC 규칙. 나머지는 헥사고날 규칙 유지."
