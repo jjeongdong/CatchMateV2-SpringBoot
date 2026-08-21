@@ -139,7 +139,7 @@ tasks.register('archCheck') {
     group = 'verification'
     description = '헥사고날 의존성·0-import 규칙 검사 (.claude/hooks SSOT)'
     doLast {
-        def script = file('.claude/hooks/posttooluse-validate-arch.py')
+        def script = file('.claude/hooks/mvc-validate-arch.py')
         if (!script.exists()) {
             logger.warn('[archCheck] 검증 스크립트 없음, 건너뜀: ' + script)
             return

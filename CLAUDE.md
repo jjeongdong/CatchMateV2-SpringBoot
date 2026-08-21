@@ -111,3 +111,18 @@ com.back.catchmate
 |---|---|---|---|
 | 2026-08-18 | 테스트 팀 구성 (harness v2) — 에이전트 3개(test-planner/test-writer/test-verifier) + 스킬 3개(test-planning·test-quality-check·test-team 오케스트레이터) 신설, 기존 `write-tests` 를 작성 규약 SSOT 로 편입 | `.claude/agents/*`, `.claude/skills/*` | 작성 규약은 있었으나 케이스 도출·품질 검증이 작성자와 분리돼 있지 않았음 |
 | 2026-08-19 | 병렬 writer 시 빌드 명령을 오케스트레이터가 직렬 1회 실행하도록 변경 + writer 에 계획서 시그니처 실검증 의무 추가 | `skills/test-team`, `agents/test-writer` | enroll 라운드에서 병렬 writer 3명이 각자 gradle 을 부르면 데몬 lock 이 충돌 / 계획서는 스냅샷이라 실제 소스와 어긋날 수 있음 |
+
+## 하네스: MVC 마이그레이션 팀
+
+**목표:** 헥사고날(포트·어댑터·UseCase 정문)을 **기능별 패키지 3계층 MVC**(`{ctx}/controller·service·repository·entity·dto`)로 옮긴다. 파일럿 1개로 변환 규칙을 확정한 뒤 의존 역순으로 확산하며, 매 라운드가 컴파일·검증을 통과한 커밋 가능 상태로 끝난다.
+
+**⚠️ 전환 중 규칙 이원화:** `.claude/mvc-migration-state.json` 의 `migrated` 목록에 있는 컨텍스트만 MVC 규칙(`ondemand-rules/mvc-architecture.md`)이고, 나머지는 **헥사고날 규칙 그대로**다. Java 를 고치기 전에 그 컨텍스트가 어느 쪽인지 확인하라. `mvc-validate-arch.py` 훅이 컨텍스트별로 갈라 검사한다. 상태 파일이 없으면 전부 헥사고날이다.
+
+**트리거:** "MVC 로 바꿔줘", "헥사고날 걷어내줘", "UseCase 없애줘", "{컨텍스트} 옮겨줘", "마이그레이션 시작", "다음 컨텍스트", "전환 상태" 요청 시 `mvc-migration` 스킬을 사용하라. 파일 배치만 궁금하면 `hexagonal-to-mvc-mapping`, 가드레일 문제면 `mvc-guardrail-switch`, 전환 결과 동작 검증이면 `mvc-invariant-check` 를 직접 쓴다.
+
+**절대 변경 금지 3개는 전환 후에도 그대로다.** Outbox 2단계 리스너 · Redis 퍼블리셔 분리 · soft delete 는 아키텍처가 아니라 런타임 동작이므로 MVC 로 와도 형태를 유지한다.
+
+**변경 이력:**
+| 날짜 | 변경 내용 | 대상 | 사유 |
+|---|---|---|---|
+| 2026-08-21 | 초기 구성 (harness v2) — 에이전트 4개(planner/converter/invariant-guard/build-verifier) + 스킬 4개(mvc-migration 오케스트레이터 · hexagonal-to-mvc-mapping 규칙 SSOT · mvc-invariant-check · mvc-guardrail-switch) + `mvc-validate-arch.py` 검증기 + `dep-graph.py` 순환 예측기 | `.claude/agents/mvc-*`, `.claude/skills/mvc-*`, `.claude/hooks/mvc-validate-arch.py`, `.claude/ondemand-rules/mvc-architecture.md` | 저장소가 헥사고날을 5중으로 강제(훅·archCheck·Stop 게이트·룰 주입)하고 있어 코드 변환만으로는 전환이 불가능. 가드레일 전환을 하네스에 포함 |

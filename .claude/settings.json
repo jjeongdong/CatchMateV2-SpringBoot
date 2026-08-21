@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/posttooluse-validate-arch.py\""
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/mvc-validate-arch.py\""
           }
         ]
       }
