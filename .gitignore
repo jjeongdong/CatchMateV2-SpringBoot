@@ -56,3 +56,5 @@ out/
 /load-test/
 # Prometheus/Grafana 로컬 관측 스택
 /monitoring/
+# 부하 테스트 실행 기록·분석 문서 — /load-test/ 의 산출물이라 함께 로컬 전용
+/docs/
