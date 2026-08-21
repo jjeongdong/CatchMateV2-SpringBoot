@@ -10,6 +10,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "notifications")
+@Table(name = "notifications", indexes = {
+        // 알림 목록 조회(user_id 필터 + created_at DESC 정렬)와 안 읽음 여부 확인 용.
+        @Index(name = "idx_notifications_user_created",
+                columnList = "user_id, created_at DESC"
+        )
+})
 public class NotificationEntity extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

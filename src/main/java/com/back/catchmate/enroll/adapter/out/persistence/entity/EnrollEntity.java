@@ -10,6 +10,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -28,6 +29,16 @@ import lombok.NoArgsConstructor;
                 @UniqueConstraint(
                         name = "uk_enroll_user_board",
                         columnNames = {"user_id", "board_id"}
+                )
+        },
+        indexes = {
+                // 받은 신청 목록·대기 건수 뱃지(board_owner_id + accept_status) 용.
+                @Index(name = "idx_enrolls_owner_status",
+                        columnList = "board_owner_id, accept_status"
+                ),
+                // 게시글별 신청 조회용. uk_enroll_user_board 는 선행 컬럼이 user_id 라 board_id 단독 조회엔 못 쓴다.
+                @Index(name = "idx_enrolls_board_status",
+                        columnList = "board_id, accept_status"
                 )
         }
 )

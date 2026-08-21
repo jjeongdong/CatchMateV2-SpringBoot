@@ -251,7 +251,8 @@ class EnrollClientQueryServiceTest {
                         enroll(100L, 1L, boardId, writerId, AcceptStatus.PENDING, true),
                         enroll(101L, 3L, boardId, writerId, AcceptStatus.PENDING, true)
                 ));
-        given(boardFetchPort.getBoard(boardId)).willReturn(board(boardId, writerId));
+        given(boardFetchPort.getBoards(List.of(boardId, emptyBoardId)))
+                .willReturn(List.of(board(boardId, writerId), board(emptyBoardId, writerId)));
         given(userFetchPort.getUsers(List.of(1L, 3L))).willReturn(List.of(user(1L, null), user(3L, null)));
         given(userFetchPort.getUsers(List.of(writerId))).willReturn(List.of(user(writerId, null)));
 
@@ -266,7 +267,9 @@ class EnrollClientQueryServiceTest {
         assertThat(receive.enrollResponses()).extracting(EnrollResponse::enrollId)
                 .containsExactly(100L, 101L);
         assertThat(response.getTotalElements()).isEqualTo(2);
-        then(boardFetchPort).should(never()).getBoard(emptyBoardId);
+        // 게시글 수와 무관하게 보드 조회는 1회 (N+1 회귀 방지)
+        then(boardFetchPort).should().getBoards(List.of(boardId, emptyBoardId));
+        then(boardFetchPort).should(never()).getBoard(any());
     }
 
     // ── 테스트 데이터 헬퍼 ──────────────────────────────────────────

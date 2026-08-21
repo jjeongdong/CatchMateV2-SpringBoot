@@ -27,6 +27,7 @@ import com.back.catchmate.enroll.application.port.out.dto.EnrollGameInfo;
 import com.back.catchmate.enroll.application.port.out.dto.EnrollUserInfo;
 import com.back.catchmate.enroll.domain.model.AcceptStatus;
 import com.back.catchmate.enroll.domain.model.Enroll;
+import com.google.common.math.LongMath;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -121,6 +122,7 @@ public class EnrollClientQueryService implements EnrollClientQueryUseCase {
 
     @Override
     public PagedResponse<EnrollReceiveResponse> getEnrollReceiveList(Long userId, int page, int size) {
+        // 사용자가 작성한 게시글 중에서 신청이 보류 중인 게시글의 ID를 가져온다.
         Page<Long> boardIdPage = enrollReader.getBoardIdsWithPendingEnrolls(userId, PageRequest.of(page, size));
         List<Long> boardIds = boardIdPage.getContent();
 
@@ -129,9 +131,34 @@ public class EnrollClientQueryService implements EnrollClientQueryUseCase {
         }
 
         List<Enroll> allEnrolls = enrollReader.getEnrollListByBoardIds(boardIds);
+        Map<Long, List<Enroll>> enrollsByBoardId = allEnrolls.stream()
+                .collect(Collectors.groupingBy(Enroll::getBoardId));
+
+        // 페이지 전체를 한 번에 조립 — 보드 1회 + (작성자·경기·구단) 각 1회
+        Map<Long, EnrollBoardSummary> summaryByBoardId =
+                buildBoardSummaries(boardFetchPort.getBoards(boardIds), id -> false).stream()
+                        .collect(Collectors.toMap(EnrollBoardSummary::boardId, Function.identity()));
+
+        // 신청자·신청자 구단도 페이지 전체를 한 번에
+        Map<Long, EnrollUserInfo> applicantById = resolveEnrollApplicants(allEnrolls);
+        Map<Long, EnrollClubInfo> applicantClubById = resolveClubs(applicantById.values());
 
         List<EnrollReceiveResponse> content = boardIds.stream()
-                .map(boardId -> mapToEnrollReceiveResponse(boardId, allEnrolls))
+                .map(boardId -> {
+                    List<Enroll> enrolls = enrollsByBoardId.get(boardId);
+                    EnrollBoardSummary boardSummary = summaryByBoardId.get(boardId);
+                    if (enrolls == null || boardSummary == null) return null;
+
+                    List<EnrollResponse> enrollList = enrolls.stream()
+                            .map(e -> {
+                                EnrollUserInfo u = applicantById.get(e.getUserId());
+                                EnrollClubInfo c = u != null && u.clubId() != null ? applicantClubById.get(u.clubId()) : null;
+                                return toEnrollResponse(e, u, c);
+                            })
+                            .toList();
+
+                    return EnrollReceiveResponse.of(boardSummary, enrollList);
+                })
                 .filter(Objects::nonNull)
                 .toList();
 
@@ -175,29 +202,6 @@ public class EnrollClientQueryService implements EnrollClientQueryUseCase {
                 enroll.getRequestedAt(),
                 ApplicantResponse.from(user, club)
         );
-    }
-
-    private EnrollReceiveResponse mapToEnrollReceiveResponse(Long boardId, List<Enroll> allEnrolls) {
-        List<Enroll> enrolls = allEnrolls.stream()
-                .filter(e -> e.getBoardId().equals(boardId))
-                .toList();
-
-        if (enrolls.isEmpty()) return null;
-
-        EnrollBoardInfo board = boardFetchPort.getBoard(boardId);
-        EnrollBoardSummary boardSummary = buildBoardSummary(board, false);
-
-        Map<Long, EnrollUserInfo> userById = resolveEnrollApplicants(enrolls);
-        Map<Long, EnrollClubInfo> clubById = resolveClubs(userById.values());
-        List<EnrollResponse> enrollList = enrolls.stream()
-                .map(e -> {
-                    EnrollUserInfo u = userById.get(e.getUserId());
-                    EnrollClubInfo c = u != null && u.clubId() != null ? clubById.get(u.clubId()) : null;
-                    return toEnrollResponse(e, u, c);
-                })
-                .toList();
-
-        return EnrollReceiveResponse.of(boardSummary, enrollList);
     }
 
     private Map<Long, EnrollUserInfo> resolveEnrollApplicants(List<Enroll> enrolls) {
