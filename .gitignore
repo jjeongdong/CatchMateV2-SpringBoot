@@ -58,3 +58,5 @@ out/
 /monitoring/
 # 부하 테스트 실행 기록·분석 문서 — /load-test/ 의 산출물이라 함께 로컬 전용
 /docs/
+# MVC 전환 진행 중 마커 — Stop 빌드 게이트가 중간 상태를 검사하지 않도록 (런타임 산출물)
+.claude/.mvc-conversion-in-flight

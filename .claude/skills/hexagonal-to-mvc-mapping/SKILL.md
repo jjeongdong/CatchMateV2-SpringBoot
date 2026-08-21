@@ -97,6 +97,20 @@ MVC 에선 `entity/Club` 한 벌이다.
 로직이 조용히 사라진다. 병합 후 반드시 확인한다 — 도메인 모델의 public 메서드 중
 getter/builder 가 아닌 것이 전부 엔티티에 있는가?
 
+**정적 팩토리와 불변식은 엔티티에 남긴다.** `static Report createReport(...)` 가 내부에서
+`BaseException(ErrorCode.CANNOT_REPORT_SELF)` 를 던지는 식이면 그대로 엔티티로 옮긴다.
+MVC 로 간다고 도메인 로직을 서비스로 끌어낼 이유는 없다 — 옮기는 것은 패키지 구조지 설계 철학이
+아니다. 로직 이동을 최소화할수록 "동작이 같다" 를 증명하기 쉽다.
+
+**⚠️ `BaseTimeEntity` 를 상속하는 엔티티의 빌더 함정.** 도메인 정적 팩토리에 
+`.createdAt(LocalDateTime.now())` 같은 줄이 있으면 **그대로 옮기면 컴파일이 깨진다.** Lombok
+`@Builder` 는 자기 클래스 필드만 포함하는데 `createdAt` 은 상위 클래스(`BaseTimeEntity`)의
+`@CreatedDate` 필드이기 때문이다. 그 줄을 **삭제하고 JPA Auditing 에 맡긴다.**
+
+이건 동작 변경이 아니다 — 전환 전에도 `{X}Entity.from(domain)` 이 `createdAt` 을 복사하지 않아
+도메인이 찍은 `now()` 는 저장 시점에 이미 버려지고 있었다. 다만 전환 후 응답 DTO 의 `createdAt`
+이 null 로 나가지 않는지 **실호출로 한 번 확인**하라 (`save()` 직후 `@PrePersist` 가 채운다).
+
 **soft delete 는 그대로 간다.** `deletedAt` 필드, `@SQLRestriction("deleted_at IS NULL")`,
 `delete()` 메서드는 엔티티에 그대로 살아있어야 한다. 대상은 `User`·`Board`·`ChatRoom`·
 `ChatMessage` 넷뿐이고, 나머지 조인·토글·토큰·아웃박스 엔티티는 물리 삭제가 정상이다.
@@ -287,6 +301,22 @@ user/application/dto/response/UserResponse
 
 `{Ctx}InternalResponse` 는 `{Ctx}Summary` 로 개명한다. "Internal" 은 헥사고날 정문 구분에서
 온 이름이라 MVC 에선 의미가 없다.
+
+**`{Ctx}Response` 는 실제 사용처가 있을 때만 만든다.** 컨트롤러에 조회 경로가 없는 컨텍스트
+(예: 생성 엔드포인트만 있는 `report`)에 `{Ctx}Response` 를 선제적으로 만들면 사용처 0인 죽은
+타입이 된다. "Response 와 Summary 를 둘 다 둔다" 는 **양쪽 사용처가 실재할 때** 적용된다.
+
+**개명 규약이 적용되는 범위.** cross-context 노출 메서드의 개명(`getX` → `getXSummary`)은
+**`{Ctx}Summary` 를 반환할 때만** 쓴다. `long`·`void`·`boolean` 을 반환하는 메서드
+(`getPendingReportCount()`, `processReport()`)는 반환 타입이라는 표식 자체가 없으므로 **이름을
+그대로 둔다.** 억지로 `Summary` 를 붙이면 이름이 거짓말을 하고, 호출부 변경도 "정확히 3가지" 를
+넘는다.
+
+### enum 배치
+
+컨텍스트의 enum 이 **2개 이하면 `entity/` 에 평탄하게**, **3개 이상이면 `entity/enums/`** 로 묶는다.
+enum 하나 때문에 디렉토리를 파면 대부분의 컨텍스트에서 파일 하나짜리 폴더가 생기고, 반대로
+`board`·`enroll` 처럼 여럿인 곳은 엔티티가 enum 에 묻힌다.
 
 ---
 

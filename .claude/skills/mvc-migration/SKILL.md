@@ -74,8 +74,6 @@ mvc-converter({ctx}, 계획서)           → 코드 변환
       ↓
 [오케스트레이터] ./gradlew compileJava  ← 직렬 1회
       ↓
-[오케스트레이터] mvc-guardrail-switch Step 2 로 migrated 에 등록  ← ⚠️ 검증 **전**
-      ↓
 mvc-invariant-guard({ctx}) ∥ mvc-build-verifier({ctx})   ← 한 메시지에 동시 호출
       ↓
 🔴 발견 있으면 → mvc-converter 재호출 (같은 에이전트, 발견 목록 첨부) → 다시 검증
@@ -86,10 +84,34 @@ mvc-invariant-guard({ctx}) ∥ mvc-build-verifier({ctx})   ← 한 메시지에 
 **계획서 확인을 건너뛰지 마라.** §2 는 "옮기다 잃기 쉬운 것" 목록이고, 여기서 놓친 로직은
 컴파일도 테스트도 잡지 못한다. 사용자가 봐야 하는 유일한 지점이다.
 
-**`migrated` 등록은 검증 앞에 온다.** 검증기는 `migrated` 목록을 보고 규칙을 가르므로,
-등록 전에 검증하면 이미 MVC 로 옮긴 파일을 헥사고날 규칙으로 검사해 전부 위반으로 잡는다.
-등록은 "검증을 통과했다는 표시"가 아니라 **"이제 이 규칙으로 봐 달라는 선언"**이다.
-검증이 실패하면 목록에서 이름을 빼면 그만이다 (파일 한 줄).
+### `migrated` 등록은 라운드 **시작 전**, 오케스트레이터가 **한 번에**
+
+```bash
+# converter 를 띄우기 전에 이번 라운드 대상을 전부 등록한다
+python3 - <<'PY'
+import json, pathlib
+p = pathlib.Path('.claude/mvc-migration-state.json')
+st = json.loads(p.read_text())
+for ctx in ['report', 'game']:          # ← 이번 라운드 대상 전부
+    if ctx not in st['migrated']:
+        st['migrated'].append(ctx)
+p.write_text(json.dumps(st, ensure_ascii=False, indent=2) + '\n')
+PY
+```
+
+**converter 에게 상태 파일을 만지게 하지 마라.** 병렬 converter 가 각자
+read-modify-write 하면 나중 쓰기가 앞의 것을 덮어써서 한쪽이 목록에서 사라진다
+(라운드 2에서 실제로 발생할 뻔했다). 파일 하나에 여러 필자가 붙는 구조를 만들지 않는다.
+
+**왜 시작 전인가.** 라운드의 작업량 절반은 **호출자 어댑터**를 고치는 일이다. 대상이
+`migrated` 에 없으면 검증기가 그 어댑터의 `{ctx}.service.XxxService` import 를 헥사고날
+0-import 위반으로 잡는다. 등록이 늦으면 라운드 내내 이 잡음이 깔린다.
+
+대신 등록 직후부터 **아직 안 옮긴 대상 컨텍스트 자기 파일들**이 "헥사고날 잔재" 로 잡힌다.
+이건 converter 가 파일을 옮기면서 저절로 해소되고, 그동안 Stop 게이트는 in-flight 마커가
+막아준다. 두 잡음 중 **자기 해소되는 쪽**을 고르는 것이다.
+
+라운드가 실패하면 목록에서 이름을 빼면 그만이다 (파일 한 줄).
 
 파일럿이 끝나면 **규칙 반영 회고**를 한다:
 - 계획서에 없었는데 변환 중 나온 상황이 있었나? → `hexagonal-to-mvc-mapping` 에 추가
@@ -118,6 +140,22 @@ mvc-invariant-guard({ctx}) ∥ mvc-build-verifier({ctx})   ← 한 메시지에 
 라운드 6 은 하나만 옮기면 나머지 셋이 아직 UseCase 를 노출하고 있어 중간 상태가 컴파일되지
 않는다. **planner 를 4개 병렬로 돌리고, converter 도 4개 병렬로 돌린 뒤, 컴파일은 4개가 다
 끝난 뒤에 한 번** 돌린다.
+
+### ⚠️ converter 를 띄우기 전에 마커를 써라
+
+```bash
+touch .claude/.mvc-conversion-in-flight      # 변환 시작 전
+# ... converter 실행 → 컴파일 초록 확인 ...
+rm -f .claude/.mvc-conversion-in-flight      # 컴파일이 초록이 된 뒤
+```
+
+`stop-build-gate.py` 는 턴이 끝날 때마다 `./gradlew compileJava archCheck` 를 돌린다. 그런데
+converter 가 도는 동안에는 **파일이 절반쯤 이동한 정상 중간 상태**가 존재한다 — 포트는 지웠는데
+호출부는 아직, `git mv` 는 했는데 `package` 선언은 아직. 마커가 없으면 게이트가 이 중간 상태를
+실패로 보고하고, 메인은 고칠 수도 없다 (그 파일들은 다른 에이전트가 쓰고 있다).
+
+마커는 45분이 지나면 무시된다. 세션이 죽어 마커가 남아도 게이트가 영구히 꺼지지는 않는다.
+**컴파일이 초록이 되면 반드시 지워라** — 그 뒤부터는 게이트가 정상적으로 지켜야 한다.
 
 ### 병렬 호출 규칙
 
