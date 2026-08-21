@@ -203,6 +203,17 @@ BookmarkClientQueryService
 BookmarkService → BoardService.getBoardSummaries(ids)  // 직접 주입
 ```
 
+**어느 쪽이 옮겨지느냐로 처리가 정반대다.** 헷갈리면 라운드가 망가진다:
+
+| 상황 | 내 FetchPort·FetchAdapter·`*Info` |
+|---|---|
+| **내가** 옮겨진다 (상대는 아직 헥사고날) | **삭제** — 내 Service 가 상대 UseCase 를 직접 주입 |
+| **내가** 옮겨진다 (상대도 이미 MVC) | **삭제** — 내 Service 가 상대 `{Ctx}Service` 를 직접 주입 |
+| **상대가** 옮겨진다 (나는 아직 헥사고날) | **존치** — 어댑터 안의 주입 타입·반환 타입·메서드명만 교체 (아래 §전환 중) |
+
+즉 **어댑터는 그 소유자가 옮겨질 때 사라진다.** 상대가 먼저 옮겨졌다고 내 어댑터를 걷어내면,
+아직 헥사고날인 내 구조가 절반만 무너진다.
+
 1. `FetchPort` 인터페이스, `FetchAdapter` 구현, `port/out/dto/*Info` 세 개를 모두 삭제한다.
 2. 호출부는 상대 `{Ctx}Service` 를 생성자 주입하고, 상대의 `dto/response` 타입을 직접 쓴다.
 3. FetchAdapter 안에 있던 **필드 매핑 로직은 버려진다** — 같은 필드를 이름만 바꿔 담던 코드라

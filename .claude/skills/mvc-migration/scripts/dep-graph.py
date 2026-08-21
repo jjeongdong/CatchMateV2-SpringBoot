@@ -67,13 +67,16 @@ def classify(symbol, path):
     타입 참조는 순환처럼 보여도 빈 그래프에 순환을 만들지 않으므로, 이 셋을
     섞어서 순환을 판정하면 있지도 않은 순환을 보고하게 된다.
 
-      injection — 상대 컨텍스트의 정문(UseCase)을 주입받는다.
-                  MVC 에선 `private final XxxService` 가 되므로 **순환 판정 대상**.
+      injection — 상대 컨텍스트의 빈을 주입받는다. **순환 판정 대상.**
+                  헥사고날이면 정문 `XxxUseCase`, MVC 로 전환됐으면 `XxxService` 다.
+                  전환이 진행될수록 후자가 늘어나므로 **둘 다** 잡아야 한다.
+                  (`UseCase` 만 보면 전환된 컨텍스트 사이의 간선이 통째로
+                  안 보이고, 하필 순환이 실제 문제인 라운드에서 눈이 먼다.)
       event     — 이벤트 클래스를 참조하는 구독자.
                   ApplicationEventPublisher 를 사이에 두므로 빈 순환이 아니다.
-      type      — DTO/enum 등 타입만 참조. 컴파일 의존이지 빈 의존이 아니다.
+      type      — DTO/enum/엔티티 등 타입만 참조. 컴파일 의존이지 빈 의존이 아니다.
     """
-    if symbol.endswith("UseCase"):
+    if symbol.endswith("UseCase") or symbol.endswith("Service"):
         return "injection"
     if symbol.endswith("Event") and os.path.basename(path).endswith("EventListener.java"):
         return "event"
