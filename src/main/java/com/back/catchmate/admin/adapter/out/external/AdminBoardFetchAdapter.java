@@ -2,10 +2,9 @@ package com.back.catchmate.admin.adapter.out.external;
 
 import com.back.catchmate.admin.application.port.out.dto.AdminBoardInfo;
 import com.back.catchmate.admin.application.port.out.external.BoardFetchPort;
-import com.back.catchmate.board.application.dto.response.BoardAdminView;
-import com.back.catchmate.board.application.dto.response.BoardInternalResponse;
-import com.back.catchmate.board.application.port.in.BoardAdminQueryUseCase;
-import com.back.catchmate.board.application.port.in.BoardInternalQueryUseCase;
+import com.back.catchmate.board.dto.response.BoardAdminView;
+import com.back.catchmate.board.dto.response.BoardSummary;
+import com.back.catchmate.board.service.BoardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,30 +13,29 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class AdminBoardFetchAdapter implements BoardFetchPort {
-    private final BoardAdminQueryUseCase boardAdminQueryUseCase;
-    private final BoardInternalQueryUseCase boardInternalQueryUseCase;
+    private final BoardService boardService;
 
     @Override
     public Page<AdminBoardInfo> getBoardList(Pageable pageable) {
-        return boardAdminQueryUseCase.getBoardList(pageable).map(this::fromAdminView);
+        return boardService.getBoardAdminViews(pageable).map(this::fromAdminView);
     }
 
     @Override
     public Page<AdminBoardInfo> getBoardListByUserId(Long userId, Pageable pageable) {
-        return boardAdminQueryUseCase.getBoardListByUserId(userId, pageable).map(this::fromAdminView);
+        return boardService.getBoardAdminViewsByUserId(userId, pageable).map(this::fromAdminView);
     }
 
     @Override
     public AdminBoardInfo getCompletedBoard(Long boardId) {
-        return fromInternalResponse(boardInternalQueryUseCase.getCompletedBoard(boardId));
+        return fromInternalResponse(boardService.getCompletedBoardSummary(boardId));
     }
 
     @Override
     public long getTotalBoardCount() {
-        return boardAdminQueryUseCase.getTotalBoardCount();
+        return boardService.getTotalBoardCount();
     }
 
-    private AdminBoardInfo fromInternalResponse(BoardInternalResponse response) {
+    private AdminBoardInfo fromInternalResponse(BoardSummary response) {
         return new AdminBoardInfo(
                 response.boardId(),
                 response.title(),
