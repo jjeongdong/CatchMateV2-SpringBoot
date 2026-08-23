@@ -1,10 +1,9 @@
-package com.back.catchmate.bookmark.adapter.in.web.controller;
+package com.back.catchmate.bookmark.controller;
 
 import com.back.catchmate.global.authorization.annotation.AuthUser;
-import com.back.catchmate.bookmark.application.port.in.BookmarkClientCommandUseCase;
-import com.back.catchmate.bookmark.application.port.in.BookmarkClientQueryUseCase;
-import com.back.catchmate.bookmark.application.dto.response.BookmarkUpdateResponse;
-import com.back.catchmate.bookmark.application.dto.response.BookmarkedBoardSummary;
+import com.back.catchmate.bookmark.service.BookmarkService;
+import com.back.catchmate.bookmark.dto.response.BookmarkUpdateResponse;
+import com.back.catchmate.bookmark.dto.response.BookmarkedBoardSummary;
 import com.back.catchmate.common.response.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,14 +22,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/bookmarks")
 @RequiredArgsConstructor
 public class BookMarkController {
-    private final BookmarkClientCommandUseCase bookmarkClientCommandUseCase;
-    private final BookmarkClientQueryUseCase bookmarkClientQueryUseCase;
+    private final BookmarkService bookmarkService;
 
     @PostMapping("/{boardId}")
     @Operation(summary = "찜 등록/취소 API", description = "게시글을 찜하거나 찜을 취소합니다.")
     public ResponseEntity<BookmarkUpdateResponse> updateBookmark(@AuthUser Long userId,
                                                                  @PathVariable Long boardId) {
-        return ResponseEntity.ok(bookmarkClientCommandUseCase.updateBookmark(userId, boardId));
+        return ResponseEntity.ok(bookmarkService.updateBookmark(userId, boardId));
     }
 
     @GetMapping
@@ -38,6 +36,6 @@ public class BookMarkController {
     public ResponseEntity<PagedResponse<BookmarkedBoardSummary>> getBookmarkedBoards(@Parameter(hidden = true) @AuthUser Long userId,
                                                                             @RequestParam(defaultValue = "0") int page,
                                                                             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(bookmarkClientQueryUseCase.getBookmarkedBoards(userId, page, size));
+        return ResponseEntity.ok(bookmarkService.getBookmarkedBoards(userId, page, size));
     }
 }

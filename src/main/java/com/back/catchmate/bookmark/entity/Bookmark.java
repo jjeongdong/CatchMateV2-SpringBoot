@@ -1,6 +1,5 @@
-package com.back.catchmate.bookmark.adapter.out.persistence.entity;
+package com.back.catchmate.bookmark.entity;
 
-import com.back.catchmate.bookmark.domain.model.Bookmark;
 import com.back.catchmate.global.persistence.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,7 +23,7 @@ import lombok.NoArgsConstructor;
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"user_id", "board_id"})
         })
-public class BookmarkEntity extends BaseTimeEntity {
+public class Bookmark extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,20 +34,10 @@ public class BookmarkEntity extends BaseTimeEntity {
     @Column(name = "board_id", nullable = false)
     private Long boardId;
 
-    public static BookmarkEntity from(Bookmark bookmark) {
-        return BookmarkEntity.builder()
-                .id(bookmark.getId())
-                .userId(bookmark.getUserId())
-                .boardId(bookmark.getBoardId())
-                .build();
-    }
-
-    public Bookmark toDomain() {
+    public static Bookmark createBookmark(Long userId, Long boardId) {
         return Bookmark.builder()
-                .id(id)
                 .userId(userId)
                 .boardId(boardId)
-                .createdAt(getCreatedAt())
                 .build();
     }
 }

@@ -1,4 +1,4 @@
-package com.back.catchmate.bookmark.application.dto.response;
+package com.back.catchmate.bookmark.dto.response;
 
 
 public record BookmarkUpdateResponse(

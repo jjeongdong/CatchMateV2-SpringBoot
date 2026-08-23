@@ -1,9 +1,9 @@
-package com.back.catchmate.bookmark.application.dto.response;
+package com.back.catchmate.bookmark.dto.response;
 
-import com.back.catchmate.bookmark.application.port.out.dto.BookmarkBoardInfo;
-import com.back.catchmate.bookmark.application.port.out.dto.BookmarkClubInfo;
-import com.back.catchmate.bookmark.application.port.out.dto.BookmarkGameInfo;
-import com.back.catchmate.bookmark.application.port.out.dto.BookmarkUserInfo;
+import com.back.catchmate.board.dto.response.BoardSummary;
+import com.back.catchmate.club.dto.response.ClubSummary;
+import com.back.catchmate.game.dto.response.GameSummary;
+import com.back.catchmate.user.dto.response.UserSummary;
 
 public record BookmarkedBoardSummary(
         Long boardId,
@@ -17,14 +17,14 @@ public record BookmarkedBoardSummary(
         BookmarkUserResponse userInfo
 ) {
     public static BookmarkedBoardSummary from(
-            BookmarkBoardInfo board,
+            BoardSummary board,
             boolean bookMarked,
-            BookmarkUserInfo user,
-            BookmarkClubInfo userClub,
-            BookmarkClubInfo cheerClub,
-            BookmarkGameInfo game,
-            BookmarkClubInfo homeClub,
-            BookmarkClubInfo awayClub
+            UserSummary user,
+            ClubSummary userClub,
+            ClubSummary cheerClub,
+            GameSummary game,
+            ClubSummary homeClub,
+            ClubSummary awayClub
     ) {
         return new BookmarkedBoardSummary(
                 board.boardId(),
@@ -40,13 +40,13 @@ public record BookmarkedBoardSummary(
     }
 
     public record BookmarkClubResponse(Long clubId, String name) {
-        public static BookmarkClubResponse from(BookmarkClubInfo info) {
+        public static BookmarkClubResponse from(ClubSummary info) {
             return new BookmarkClubResponse(info.clubId(), info.name());
         }
     }
 
     public record BookmarkGameResponse(Long gameId, String homeClubName, String awayClubName, String location) {
-        public static BookmarkGameResponse from(BookmarkGameInfo game, BookmarkClubInfo home, BookmarkClubInfo away) {
+        public static BookmarkGameResponse from(GameSummary game, ClubSummary home, ClubSummary away) {
             return new BookmarkGameResponse(
                     game.gameId(),
                     home != null ? home.name() : null,
@@ -57,7 +57,7 @@ public record BookmarkedBoardSummary(
     }
 
     public record BookmarkUserResponse(Long userId, String nickName, String profileImageUrl, String clubName) {
-        public static BookmarkUserResponse from(BookmarkUserInfo user, BookmarkClubInfo userClub) {
+        public static BookmarkUserResponse from(UserSummary user, ClubSummary userClub) {
             return new BookmarkUserResponse(
                     user.userId(),
                     user.nickName(),
