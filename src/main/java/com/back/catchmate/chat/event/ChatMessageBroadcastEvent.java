@@ -1,0 +1,39 @@
+package com.back.catchmate.chat.event;
+
+import com.back.catchmate.chat.entity.ChatMessage;
+import com.back.catchmate.chat.entity.MessageType;
+import com.back.catchmate.user.dto.response.UserSummary;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Builder;
+
+import java.time.LocalDateTime;
+
+/**
+ * 채팅 메시지 이벤트 DTO
+ * Redis Pub/Sub을 통해 전송되는 메시지 포맷
+ */
+@Builder
+public record ChatMessageBroadcastEvent(
+        Long messageId,
+        Long roomId,
+        Long senderId,
+        String senderNickname,
+        String senderProfileImage,
+        String content,
+        MessageType messageType,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
+        LocalDateTime createdAt
+) {
+    public static ChatMessageBroadcastEvent from(ChatMessage domain, UserSummary sender) {
+        return ChatMessageBroadcastEvent.builder()
+                .messageId(domain.getId())
+                .roomId(domain.getChatRoom().getId())
+                .senderId(domain.getSenderId())
+                .senderNickname(sender != null ? sender.nickName() : null)
+                .senderProfileImage(sender != null ? sender.profileImageUrl() : null)
+                .content(domain.getContent())
+                .messageType(domain.getMessageType())
+                .createdAt(domain.getCreatedAt())
+                .build();
+    }
+}

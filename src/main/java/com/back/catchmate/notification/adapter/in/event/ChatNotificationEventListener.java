@@ -1,6 +1,6 @@
 package com.back.catchmate.notification.adapter.in.event;
 
-import com.back.catchmate.chat.application.event.ChatMessageNotificationEvent;
+import com.back.catchmate.chat.event.ChatMessageNotificationEvent;
 import com.back.catchmate.notification.application.port.in.ChatNotificationDispatchUseCase;
 import com.back.catchmate.notification.application.port.in.ChatNotificationUseCase;
 import lombok.RequiredArgsConstructor;

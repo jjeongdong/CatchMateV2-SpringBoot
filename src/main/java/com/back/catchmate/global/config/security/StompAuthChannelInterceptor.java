@@ -1,7 +1,7 @@
 package com.back.catchmate.global.config.security;
 
-import com.back.catchmate.auth.application.port.in.AuthInternalQueryUseCase;
-import com.back.catchmate.chat.application.port.in.ChatClientQueryUseCase;
+import com.back.catchmate.auth.service.AuthService;
+import com.back.catchmate.chat.service.ChatQueryService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -39,8 +39,8 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             "/user/queue/errors"
     );
 
-    private final AuthInternalQueryUseCase authInternalQueryUseCase;
-    private final ChatClientQueryUseCase chatClientQueryUseCase;
+    private final AuthService authService;
+    private final ChatQueryService chatQueryService;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -70,8 +70,8 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         }
 
         try {
-            Long userId = authInternalQueryUseCase.getUserId(token);
-            String role = authInternalQueryUseCase.getUserRole(token);
+            Long userId = authService.getUserId(token);
+            String role = authService.getUserRole(token);
 
             accessor.setUser(new UsernamePasswordAuthenticationToken(
                     userId,
@@ -121,7 +121,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         Long chatRoomId = parseChatRoomId(dest);
         Long userId = requireAuthenticatedUserId(accessor, dest);
 
-        if (!chatClientQueryUseCase.canAccessChatRoom(userId, chatRoomId)) {
+        if (!chatQueryService.canAccessChatRoom(userId, chatRoomId)) {
             log.warn("User {} tried to subscribe to chatRoom {} without participation", userId, chatRoomId);
             throw new BaseException(ErrorCode.USER_CHATROOM_NOT_FOUND);
         }
