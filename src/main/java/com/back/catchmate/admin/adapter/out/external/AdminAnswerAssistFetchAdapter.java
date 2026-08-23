@@ -2,8 +2,8 @@ package com.back.catchmate.admin.adapter.out.external;
 
 import com.back.catchmate.admin.application.port.out.dto.AdminAnswerDraftInfo;
 import com.back.catchmate.admin.application.port.out.external.AnswerAssistFetchPort;
-import com.back.catchmate.inquiry.application.dto.response.AnswerDraftResponse;
-import com.back.catchmate.inquiry.application.port.in.InquiryAnswerAssistUseCase;
+import com.back.catchmate.inquiry.dto.response.AnswerDraftResponse;
+import com.back.catchmate.inquiry.service.InquiryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,11 +14,11 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class AdminAnswerAssistFetchAdapter implements AnswerAssistFetchPort {
-    private final InquiryAnswerAssistUseCase inquiryAnswerAssistUseCase;
+    private final InquiryService inquiryService;
 
     @Override
     public AdminAnswerDraftInfo getAnswerDraft(Long inquiryId) {
-        AnswerDraftResponse draft = inquiryAnswerAssistUseCase.draftAnswer(inquiryId);
+        AnswerDraftResponse draft = inquiryService.draftAnswer(inquiryId);
         return new AdminAnswerDraftInfo(draft.grounded(), draft.draft(), draft.sources());
     }
 }

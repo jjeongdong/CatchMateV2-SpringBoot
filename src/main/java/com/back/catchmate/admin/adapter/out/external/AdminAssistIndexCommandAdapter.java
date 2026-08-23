@@ -1,7 +1,7 @@
 package com.back.catchmate.admin.adapter.out.external;
 
 import com.back.catchmate.admin.application.port.out.external.AssistIndexCommandPort;
-import com.back.catchmate.inquiry.application.port.in.InquiryAssistIndexUseCase;
+import com.back.catchmate.inquiry.service.InquiryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -12,10 +12,10 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class AdminAssistIndexCommandAdapter implements AssistIndexCommandPort {
-    private final InquiryAssistIndexUseCase inquiryAssistIndexUseCase;
+    private final InquiryService inquiryService;
 
     @Override
     public int reindex() {
-        return inquiryAssistIndexUseCase.reindex();
+        return inquiryService.reindex();
     }
 }
