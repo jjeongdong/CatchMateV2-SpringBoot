@@ -2,8 +2,8 @@ package com.back.catchmate.admin.adapter.out.external;
 
 import com.back.catchmate.admin.application.port.out.dto.AdminEnrollInfo;
 import com.back.catchmate.admin.application.port.out.external.EnrollFetchPort;
-import com.back.catchmate.enroll.application.dto.response.EnrollInternalResponse;
-import com.back.catchmate.enroll.application.port.in.EnrollInternalQueryUseCase;
+import com.back.catchmate.enroll.dto.response.EnrollSummary;
+import com.back.catchmate.enroll.service.EnrollQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -12,16 +12,16 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class AdminEnrollFetchAdapter implements EnrollFetchPort {
-    private final EnrollInternalQueryUseCase enrollInternalQueryUseCase;
+    private final EnrollQueryService enrollQueryService;
 
     @Override
     public List<AdminEnrollInfo> getEnrollListByBoardIds(List<Long> boardIds) {
-        return enrollInternalQueryUseCase.getEnrollListByBoardIds(boardIds).stream()
+        return enrollQueryService.getEnrollListByBoardIds(boardIds).stream()
                 .map(this::fromInternalResponse)
                 .toList();
     }
 
-    private AdminEnrollInfo fromInternalResponse(EnrollInternalResponse response) {
+    private AdminEnrollInfo fromInternalResponse(EnrollSummary response) {
         return new AdminEnrollInfo(
                 response.enrollId(),
                 response.userId(),
