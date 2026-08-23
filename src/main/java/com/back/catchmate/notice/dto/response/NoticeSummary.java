@@ -1,8 +1,8 @@
-package com.back.catchmate.notice.application.dto.response;
+package com.back.catchmate.notice.dto.response;
 
 import java.time.LocalDateTime;
 
-public record NoticeInternalResponse(
+public record NoticeSummary(
         Long noticeId,
         Long writerId,
         String title,

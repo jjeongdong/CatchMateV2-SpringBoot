@@ -2,8 +2,8 @@ package com.back.catchmate.admin.adapter.out.external;
 
 import com.back.catchmate.admin.application.port.out.dto.AdminNoticeInfo;
 import com.back.catchmate.admin.application.port.out.external.NoticeFetchPort;
-import com.back.catchmate.notice.application.dto.response.NoticeInternalResponse;
-import com.back.catchmate.notice.application.port.in.NoticeAdminQueryUseCase;
+import com.back.catchmate.notice.dto.response.NoticeSummary;
+import com.back.catchmate.notice.service.NoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,19 +12,19 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class AdminNoticeFetchAdapter implements NoticeFetchPort {
-    private final NoticeAdminQueryUseCase noticeAdminQueryUseCase;
+    private final NoticeService noticeService;
 
     @Override
     public AdminNoticeInfo getNotice(Long noticeId) {
-        return fromInternalResponse(noticeAdminQueryUseCase.getNotice(noticeId));
+        return fromInternalResponse(noticeService.getNoticeSummary(noticeId));
     }
 
     @Override
     public Page<AdminNoticeInfo> getNoticeList(Pageable pageable) {
-        return noticeAdminQueryUseCase.getNoticeList(pageable).map(this::fromInternalResponse);
+        return noticeService.getNoticeSummaries(pageable).map(this::fromInternalResponse);
     }
 
-    private AdminNoticeInfo fromInternalResponse(NoticeInternalResponse response) {
+    private AdminNoticeInfo fromInternalResponse(NoticeSummary response) {
         return new AdminNoticeInfo(
                 response.noticeId(),
                 response.writerId(),

@@ -1,9 +1,9 @@
-package com.back.catchmate.notice.adapter.in.web.controller;
+package com.back.catchmate.notice.controller;
 
 import com.back.catchmate.common.response.PagedResponse;
-import com.back.catchmate.notice.application.dto.response.NoticeDetailResponse;
-import com.back.catchmate.notice.application.dto.response.NoticeResponse;
-import com.back.catchmate.notice.application.port.in.NoticeClientQueryUseCase;
+import com.back.catchmate.notice.dto.response.NoticeDetailResponse;
+import com.back.catchmate.notice.dto.response.NoticeResponse;
+import com.back.catchmate.notice.service.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -19,18 +19,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/notices")
 @RequiredArgsConstructor
 public class NoticeController {
-    private final NoticeClientQueryUseCase noticeClientQueryUseCase;
+    private final NoticeService noticeService;
 
     @GetMapping("/{noticeId}")
     @Operation(summary = "공지사항 상세 조회", description = "특정 공지사항의 상세 내용을 조회합니다.")
     public ResponseEntity<NoticeDetailResponse> getNotice(@PathVariable Long noticeId) {
-        return ResponseEntity.ok(noticeClientQueryUseCase.getNoticeDetail(noticeId));
+        return ResponseEntity.ok(noticeService.getNoticeDetail(noticeId));
     }
 
     @GetMapping
     @Operation(summary = "공지사항 목록 조회", description = "공지사항 목록을 페이징하여 조회합니다. (page는 0부터 시작)")
     public ResponseEntity<PagedResponse<NoticeResponse>> getNoticeList(@RequestParam(defaultValue = "0") int page,
                                                                        @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(noticeClientQueryUseCase.getNoticeList(page, size));
+        return ResponseEntity.ok(noticeService.getNoticeList(page, size));
     }
 }

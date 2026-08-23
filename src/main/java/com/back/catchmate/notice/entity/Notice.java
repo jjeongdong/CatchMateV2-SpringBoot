@@ -1,7 +1,6 @@
-package com.back.catchmate.notice.adapter.out.persistence.entity;
+package com.back.catchmate.notice.entity;
 
 import com.back.catchmate.global.persistence.BaseTimeEntity;
-import com.back.catchmate.notice.domain.model.Notice;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -20,7 +19,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "notices")
-public class NoticeEntity extends BaseTimeEntity {
+public class Notice extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -34,22 +33,16 @@ public class NoticeEntity extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    public static NoticeEntity from(Notice notice) {
-        return NoticeEntity.builder()
-                .id(notice.getId())
-                .writerId(notice.getWriterId())
-                .title(notice.getTitle())
-                .content(notice.getContent())
+    public static Notice createNotice(Long writerId, String title, String content) {
+        return Notice.builder()
+                .writerId(writerId)
+                .title(title)
+                .content(content)
                 .build();
     }
 
-    public Notice toDomain() {
-        return Notice.builder()
-                .id(this.id)
-                .writerId(this.writerId)
-                .title(this.title)
-                .content(this.content)
-                .createdAt(this.getCreatedAt())
-                .build();
+    public void updateNotice(String title, String content) {
+        this.title = title;
+        this.content = content;
     }
 }
