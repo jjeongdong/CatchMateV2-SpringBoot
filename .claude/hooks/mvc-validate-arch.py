@@ -47,8 +47,15 @@ SWALLOW = re.compile(r"catch\s*\(\s*[\w.]*Exception\s+ignored\s*\)\s*\{\s*\}")
 # 옮긴 컨텍스트에 남아있으면 안 되는 헥사고날 잔재 최상위 계층
 LEGACY_LAYERS = ("adapter", "application", "domain")
 
-# MVC 3계층에서 인정하는 레이어 (패키지 첫 segment)
-LAYERS = ("controller", "service", "repository", "entity", "dto", "event", "config", "exception")
+# MVC 구조에서 인정하는 최상위 계층 (패키지 첫 segment).
+# 3계층(controller/service/repository/entity/dto) 외에, 계층이 아니라 **성격**으로
+# 분리되는 것들이 있다 — 이들을 3계층 안에 억지로 넣으면 오히려 규칙이 무너진다:
+#   event     이벤트와 리스너 (진입점이지 계층이 아님)
+#   scheduler 스케줄러 (진입점)
+#   infra     FCM·S3·Redis·외부 API 등 진짜 외부 연동. cross-context 어댑터와 다르다
+# SSOT: .claude/skills/hexagonal-to-mvc-mapping/SKILL.md 의 목표 구조와 반드시 일치시킬 것.
+LAYERS = ("controller", "service", "repository", "entity", "dto",
+          "event", "scheduler", "infra", "config", "exception")
 
 
 def project_dir(data=None):
@@ -94,7 +101,28 @@ def split_pkg(pkg):
     return ctx, layer, ".".join(parts[1:])
 
 
-def check_mvc(pkg, imports, content, contexts, migrated):
+def is_enum_type(pdir, fqcn):
+    """import 대상이 enum 인지 소스를 읽어 판별한다.
+
+    "controller 가 entity 를 import 하면 안 된다" 는 규칙의 목적은 **JPA 엔티티가
+    HTTP 경계로 새는 것**을 막는 데 있다 — 지연 로딩이 직렬화 중에 터지고, 스키마
+    변경이 곧 API 변경이 되기 때문이다. enum 은 값 타입이라 둘 중 어느 것도
+    해당하지 않는다. `@RequestParam UserAlarmType` 같은 정상 코드를 막지 않도록
+    실제 선언을 읽어 확인한다 (이름 규칙으로 추측하지 않는다).
+    """
+    if not pdir or not fqcn.startswith(BASE + "."):
+        return False
+    rel = fqcn.split(".")
+    fp = os.path.join(pdir, "src", "main", "java", *rel) + ".java"
+    try:
+        with open(fp, encoding="utf-8", errors="replace") as fh:
+            text = fh.read()
+    except OSError:
+        return False
+    return re.search(r"\benum\s+" + re.escape(rel[-1]) + r"\b", text) is not None
+
+
+def check_mvc(pkg, imports, content, contexts, migrated, pdir=None):
     """MVC 규칙 위반 목록을 돌려준다. 각 항목은 사람이 읽고 바로 고칠 수 있는 문장."""
     ctx, layer, rest = split_pkg(pkg)
     if ctx is None or ctx in SHARED:
@@ -127,10 +155,12 @@ def check_mvc(pkg, imports, content, contexts, migrated):
                     % (lineno, ilayer, imp)
                 )
             elif layer == "controller" and ilayer == "entity":
-                violations.append(
-                    "L%d: controller 가 entity 를 직접 import — 엔티티가 HTTP 경계로 샌다. "
-                    "dto 로 변환해서 주고받아라. (%s)" % (lineno, imp)
-                )
+                # enum 은 값 타입이라 HTTP 경계로 나가도 무해하다 (is_enum_type 주석 참조).
+                if not is_enum_type(pdir, imp):
+                    violations.append(
+                        "L%d: controller 가 entity 를 직접 import — 엔티티가 HTTP 경계로 샌다. "
+                        "dto 로 변환해서 주고받아라. (%s)" % (lineno, imp)
+                    )
             elif layer == "controller" and ilayer == "repository":
                 violations.append(
                     "L%d: controller 가 repository 를 직접 import — service 를 건너뛴다. "
@@ -159,8 +189,8 @@ def check_mvc(pkg, imports, content, contexts, migrated):
         if layer in LEGACY_LAYERS:
             violations.append(
                 "패키지 %s 가 헥사고날 잔재다. %s 는 이미 MVC 로 전환된 컨텍스트이므로 "
-                "이 파일은 %s/{controller|service|repository|entity|dto} 아래로 옮겨야 한다."
-                % (rest, ctx, ctx)
+                "이 파일은 %s/{%s} 아래로 옮겨야 한다."
+                % (rest, ctx, ctx, "|".join(LAYERS))
             )
         elif layer and layer not in LAYERS:
             violations.append(
@@ -350,7 +380,7 @@ def scan_all(pdir):
                     if (im := IMP_RE.match(ln))
                 ]
                 if is_migrated:
-                    vio = check_mvc(m.group(1), imports, content, contexts, migrated)
+                    vio = check_mvc(m.group(1), imports, content, contexts, migrated, pdir)
                 else:
                     vio = check_transitional(
                         m.group(1), imports, content, contexts, migrated, legacy)
@@ -431,7 +461,7 @@ def main():
     ]
 
     if ctx in migrated:
-        violations = check_mvc(pkg, imports, content, contexts, migrated)
+        violations = check_mvc(pkg, imports, content, contexts, migrated, pdir)
         rule = ("이 컨텍스트(%s)는 이미 MVC 로 전환됐으므로 헥사고날이 아니라 "
                 "MVC 규칙(.claude/ondemand-rules/mvc-architecture.md)이 적용됩니다" % ctx)
     else:

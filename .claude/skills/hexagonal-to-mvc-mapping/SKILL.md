@@ -150,11 +150,38 @@ repository/ClubRepositoryImpl    (QueryDSL 구현, 있는 경우만)
 `{Ctx}ClientQueryService` · `{Ctx}ClientCommandService` · `{Ctx}InternalQueryService` ·
 `{Ctx}InternalCommandService` · `{Ctx}AdminQueryService` → **`{Ctx}Service` 하나**.
 
-분리 기준은 규모다:
-- 기본: `{Ctx}Service` 하나로 합친다.
-- 합친 결과가 **public 메서드 20개 초과 또는 400줄 초과**면 축 하나로만 쪼갠다 —
-  `{Ctx}CommandService` / `{Ctx}QueryService`. Client/Internal 축으로는 쪼개지 않는다.
-- `{Ctx}Assembler` 는 합치지 말고 그대로 둔다. 응답 조립은 별개 관심사다.
+분리 기준은 **애그리거트 먼저, 그다음 규모**다.
+
+**1단계 — 애그리거트별로 가른다.** 한 컨텍스트에 애그리거트가 여럿이면 `{Ctx}Service` 하나로
+합치지 않는다. 예: `user` 에는 `User`·`Block`·`UserOnlineStatus` 셋이 있고 서비스가 11개다.
+전부 합치면 god class 가 되고, 서로 다른 테이블·수명주기·트랜잭션 특성이 한 클래스에 섞인다.
+→ `UserService` · `BlockService` · `UserOnlineStatusService`.
+
+애그리거트 판별은 **엔티티 기준**이다. `{ctx}/entity/` 에 남을 엔티티(조인·토글 엔티티 포함)마다
+그것을 주로 다루는 서비스가 하나씩 있으면 그 경계로 가른다. 엔티티 하나에 서비스 하나가
+기계적으로 대응한다는 뜻은 아니고, **원래 `{Aggregate}ClientQueryService` 처럼 접두사가
+갈려 있던 것을 그 접두사대로 묶으라**는 것이다.
+
+**2단계 — 애그리거트 안에서 Client/Internal/Admin 을 합친다.**
+`{Agg}ClientQueryService` + `{Agg}ClientCommandService` + `{Agg}InternalQueryService` +
+`{Agg}InternalCommandService` + `{Agg}AdminQueryService` → **`{Agg}Service` 하나.**
+`{Agg}Reader` 는 그 안의 private 로 흡수한다.
+
+**3단계 — 그래도 크면 규모로 쪼갠다.**
+합친 결과가 **public 메서드 20개 초과 또는 400줄 초과**면 축 하나로만 쪼갠다 —
+`{Agg}CommandService` / `{Agg}QueryService`. Client/Internal 축으로는 쪼개지 않는다.
+
+`{Ctx}Assembler` 는 합치지 말고 그대로 둔다. 응답 조립은 별개 관심사다.
+
+### 자기 컨텍스트 안의 포트도 지운다
+
+`application/port/out/external/` 에는 다른 컨텍스트를 부르는 FetchPort 말고 **자기 인프라를
+가리키는 포트**도 있다 (예: `auth` 의 `TokenProvider` → `adapter/out/provider/JwtTokenProvider`).
+이것도 의존 역전을 위한 간접층이므로 **포트를 지우고 구현체를 `infra/` 로 옮겨 직접 주입**한다.
+
+구현이 하나뿐인 인터페이스는 MVC 에서 남길 이유가 없다. 다만 **구현이 실제로 둘 이상이거나
+`@Profile`·`@ConditionalOnProperty` 로 갈아끼우고 있다면 인터페이스를 남긴다** — 그건 의존
+역전이 아니라 실제 다형성이다. 지우기 전에 구현체 개수를 세어라.
 
 **호출자 구분이 사라지는 문제를 이름으로 막는다.** 통합 서비스에서 다른 컨텍스트가 부르라고
 남긴 메서드는 이름 끝에 의도를 남긴다:
@@ -311,6 +338,31 @@ user/application/dto/response/UserResponse
 (`getPendingReportCount()`, `processReport()`)는 반환 타입이라는 표식 자체가 없으므로 **이름을
 그대로 둔다.** 억지로 `Summary` 를 붙이면 이름이 거짓말을 하고, 호출부 변경도 "정확히 3가지" 를
 넘는다.
+
+### 양방향 DTO 는 `dto/` 평탄 배치
+
+`request/`·`response/` 는 **HTTP 방향**을 가리키는 이름이다. 컨텍스트 간에 **인자로도 반환으로도**
+쓰이는 타입(예: `auth` 의 `SignupTokenPayload` — oauth 가 넘기기도 하고 받기도 한다)은 어느
+쪽에 넣어도 이름이 절반은 거짓말이 된다. **`dto/` 바로 아래**에 둔다.
+
+`dto/command/` 는 컨트롤러에서 서비스로 내려가는 것에만 쓴다. cross-context 인자는 command 가
+아니다.
+
+### JPA 가 아닌 영속성은 `infra/`
+
+`repository/` 는 **Spring Data JPA 전용**이다. Redis·외부 저장소를 다루는 클래스는 이름에
+`Repository` 가 들어가더라도 `infra/` 로 보낸다.
+
+이건 취향이 아니라 부팅 안전 문제다. `repository/{X}RepositoryImpl` 이라는 조합을 만들면
+Spring Data 가 그것을 `{X}Repository` 의 custom fragment 로 스캔하는데, 대응하는
+`{X}RepositoryCustom` 이 없으면 **부팅이 깨진다.** 이름도 함께 바꿔 오해를 없앤다 —
+`RefreshTokenRepositoryImpl` → `infra/RefreshTokenRedisRepository`.
+
+### 주석이 전환으로 거짓이 되면 고친다
+
+"데드코드는 옮기되 삭제 금지" 는 **코드**에 대한 규칙이다. 주석이 사라진 클래스를 가리키거나
+폐기된 규칙(0-import 등)을 설명하고 있으면, 그 문장은 **적극적으로 오해를 유발**하므로
+사실에 맞게 고친다. 주석 전체를 지우지는 말고 틀린 문장만 고친다.
 
 ### enum 배치
 
