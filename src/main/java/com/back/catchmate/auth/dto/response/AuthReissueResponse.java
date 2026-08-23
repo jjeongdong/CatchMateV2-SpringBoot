@@ -1,4 +1,4 @@
-package com.back.catchmate.auth.application.dto.response;
+package com.back.catchmate.auth.dto.response;
 
 
 public record AuthReissueResponse(

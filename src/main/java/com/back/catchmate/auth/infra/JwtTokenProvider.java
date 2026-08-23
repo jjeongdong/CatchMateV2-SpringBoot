@@ -1,7 +1,6 @@
-package com.back.catchmate.auth.adapter.out.provider;
+package com.back.catchmate.auth.infra;
 
-import com.back.catchmate.auth.application.port.out.external.TokenProvider;
-import com.back.catchmate.auth.application.dto.SignupTokenPayload;
+import com.back.catchmate.auth.dto.SignupTokenPayload;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import io.jsonwebtoken.Claims;
@@ -20,7 +19,7 @@ import java.util.Date;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class JwtTokenProvider implements TokenProvider {
+public class JwtTokenProvider {
     @Value("${jwt.secretKey}")
     private String secretKey;
     @Value("${jwt.access.expiration}")
@@ -43,17 +42,14 @@ public class JwtTokenProvider implements TokenProvider {
     private static final String EMAIL_CLAIM = "email";
     private static final String PROFILE_IMAGE_URL_CLAIM = "profileImageUrl";
 
-    @Override
     public String createAccessToken(Long userId, String role) {
         return BEARER + createToken(userId, ACCESS_TOKEN_SUBJECT, accessTokenExpirationPeriod, role);
     }
 
-    @Override
     public String createRefreshToken(Long userId, String role) {
         return createToken(userId, REFRESH_TOKEN_SUBJECT, refreshTokenExpirationPeriod, role);
     }
 
-    @Override
     public Long getUserId(String token) {
         try {
             Claims claims = parseClaims(token);
@@ -64,7 +60,6 @@ public class JwtTokenProvider implements TokenProvider {
         }
     }
 
-    @Override
     public String getUserRole(String token) {
         try {
             Claims claims = parseClaims(token);
@@ -74,12 +69,10 @@ public class JwtTokenProvider implements TokenProvider {
         }
     }
 
-    @Override
     public Long getRefreshTokenExpirationTime() {
         return refreshTokenExpirationPeriod;
     }
 
-    @Override
     public String createSignupToken(SignupTokenPayload payload) {
         Date now = new Date();
         Date expirationTime = new Date(now.getTime() + signupTokenExpirationPeriod);
@@ -99,7 +92,6 @@ public class JwtTokenProvider implements TokenProvider {
                 .compact();
     }
 
-    @Override
     public SignupTokenPayload parseSignupToken(String signupToken) {
         try {
             Claims claims = parseClaims(signupToken);

@@ -1,10 +1,10 @@
-package com.back.catchmate.auth.adapter.in.web.controller;
+package com.back.catchmate.auth.controller;
 
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.global.config.security.CookieFactory;
-import com.back.catchmate.auth.application.port.in.AuthClientCommandUseCase;
-import com.back.catchmate.auth.application.dto.response.AuthReissueResponse;
+import com.back.catchmate.auth.service.AuthService;
+import com.back.catchmate.auth.dto.response.AuthReissueResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class AuthController {
-    private final AuthClientCommandUseCase authClientCommandUseCase;
+    private final AuthService authService;
     private final CookieFactory cookieFactory;
 
     @PostMapping("/reissue")
@@ -30,7 +30,7 @@ public class AuthController {
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new BaseException(ErrorCode.MISSING_REFRESH_COOKIE);
         }
-        return ResponseEntity.ok(authClientCommandUseCase.updateToken(refreshToken));
+        return ResponseEntity.ok(authService.updateToken(refreshToken));
     }
 
     @PostMapping("/logout")
@@ -38,7 +38,7 @@ public class AuthController {
     public ResponseEntity<Void> deleteToken(
             @CookieValue(name = "refresh_token", required = false) String refreshToken) {
         if (refreshToken != null && !refreshToken.isBlank()) {
-            authClientCommandUseCase.deleteToken(refreshToken);
+            authService.deleteToken(refreshToken);
         }
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, cookieFactory.clearRefresh().toString())

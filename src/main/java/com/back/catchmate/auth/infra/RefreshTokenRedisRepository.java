@@ -1,6 +1,5 @@
-package com.back.catchmate.auth.adapter.out.persistence.repository;
+package com.back.catchmate.auth.infra;
 
-import com.back.catchmate.auth.application.port.out.persistence.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -12,10 +11,9 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
+public class RefreshTokenRedisRepository {
     private final RedisTemplate<String, String> redisTemplate;
 
-    @Override
     public void save(String refreshToken, Long userId, Long ttl) {
         try {
             redisTemplate.opsForValue().set(refreshToken, String.valueOf(userId), ttl, TimeUnit.MILLISECONDS);
@@ -24,7 +22,6 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         }
     }
 
-    @Override
     public Optional<String> findById(String refreshToken) {
         try {
             String value = redisTemplate.opsForValue().get(refreshToken);
@@ -35,7 +32,6 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         }
     }
 
-    @Override
     public void deleteById(String refreshToken) {
         try {
             redisTemplate.delete(refreshToken);

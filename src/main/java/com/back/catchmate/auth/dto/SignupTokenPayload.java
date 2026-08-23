@@ -1,4 +1,4 @@
-package com.back.catchmate.auth.application.dto;
+package com.back.catchmate.auth.dto;
 
 public record SignupTokenPayload(
         String provider,
