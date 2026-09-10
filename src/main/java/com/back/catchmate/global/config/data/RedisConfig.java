@@ -1,7 +1,7 @@
 package com.back.catchmate.global.config.data;
 
-import com.back.catchmate.chat.adapter.in.event.ChatRedisSubscriber;
-import com.back.catchmate.notification.adapter.in.event.NotificationRedisSubscriber;
+import com.back.catchmate.chat.event.ChatRedisSubscriber;
+import com.back.catchmate.notification.event.NotificationRedisSubscriber;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
@@ -17,9 +17,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
-import com.back.catchmate.chat.application.dto.ChatMessageListDto;
-import com.back.catchmate.chat.application.event.ChatMessageBroadcastEvent;
-import com.back.catchmate.user.application.dto.response.UserInternalResponse;
+import com.back.catchmate.chat.dto.ChatMessageListDto;
+import com.back.catchmate.chat.event.ChatMessageBroadcastEvent;
+import com.back.catchmate.user.dto.response.UserSummary;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
@@ -90,7 +90,7 @@ public class RedisConfig {
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultCacheConfig)
-                .withCacheConfiguration("userInternal", createCacheConfig(objectMapper, UserInternalResponse.class))
+                .withCacheConfiguration("userInternal", createCacheConfig(objectMapper, UserSummary.class))
                 .withCacheConfiguration("chatHistory", createCacheConfig(objectMapper, ChatMessageListDto.class))
                 .build();
     }

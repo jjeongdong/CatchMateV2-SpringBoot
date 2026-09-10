@@ -1,7 +1,7 @@
 package com.back.catchmate.global.config.security;
 
-import com.back.catchmate.auth.application.port.in.AuthInternalQueryUseCase;
-import com.back.catchmate.chat.application.port.in.ChatClientQueryUseCase;
+import com.back.catchmate.auth.service.AuthService;
+import com.back.catchmate.chat.service.ChatQueryService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import org.junit.jupiter.api.DisplayName;
@@ -38,10 +38,10 @@ class StompAuthChannelInterceptorTest {
     private static final String NOTIFICATION_DESTINATION = "/user/queue/notifications";
 
     @Mock
-    private AuthInternalQueryUseCase authInternalQueryUseCase;
+    private AuthService authService;
 
     @Mock
-    private ChatClientQueryUseCase chatClientQueryUseCase;
+    private ChatQueryService chatQueryService;
 
     @Mock
     private MessageChannel channel;
@@ -88,7 +88,7 @@ class StompAuthChannelInterceptorTest {
                 .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
                         .isEqualTo(ErrorCode.BAD_REQUEST));
 
-        then(chatClientQueryUseCase).shouldHaveNoInteractions();
+        then(chatQueryService).shouldHaveNoInteractions();
     }
 
     @Test
@@ -108,7 +108,7 @@ class StompAuthChannelInterceptorTest {
     @DisplayName("참여 중인 채팅방 구독은 통과한다")
     void 참여중인_채팅방_구독은_통과한다() {
         // given
-        given(chatClientQueryUseCase.canAccessChatRoom(USER_ID, ROOM_ID)).willReturn(true);
+        given(chatQueryService.canAccessChatRoom(USER_ID, ROOM_ID)).willReturn(true);
         Message<byte[]> message = subscribeMessage(CHAT_ROOM_DESTINATION, authenticated());
 
         // when
@@ -122,7 +122,7 @@ class StompAuthChannelInterceptorTest {
     @DisplayName("참여하지 않은 채팅방 구독은 USER_CHATROOM_NOT_FOUND 로 차단한다")
     void 미참여_채팅방_구독은_차단된다() {
         // given
-        given(chatClientQueryUseCase.canAccessChatRoom(USER_ID, ROOM_ID)).willReturn(false);
+        given(chatQueryService.canAccessChatRoom(USER_ID, ROOM_ID)).willReturn(false);
         Message<byte[]> message = subscribeMessage(CHAT_ROOM_DESTINATION, authenticated());
 
         // when & then
@@ -143,7 +143,7 @@ class StompAuthChannelInterceptorTest {
 
         // then
         assertThat(result).isSameAs(message);
-        then(chatClientQueryUseCase).shouldHaveNoInteractions();
+        then(chatQueryService).shouldHaveNoInteractions();
     }
 
     @Test
