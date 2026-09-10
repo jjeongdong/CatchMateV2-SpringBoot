@@ -1,0 +1,316 @@
+package com.back.catchmate.admin.service;
+
+import com.back.catchmate.admin.dto.command.InquiryRegisterAnswerCommand;
+import com.back.catchmate.admin.dto.request.NoticeCreateRequest;
+import com.back.catchmate.admin.dto.request.NoticeUpdateRequest;
+import com.back.catchmate.admin.dto.response.AdminAnswerDraftResponse;
+import com.back.catchmate.admin.dto.response.AdminBoardDetailResponse;
+import com.back.catchmate.admin.dto.response.AdminBoardResponse;
+import com.back.catchmate.admin.dto.response.AdminCorpusReindexResponse;
+import com.back.catchmate.admin.dto.response.AdminDashboardResponse;
+import com.back.catchmate.admin.dto.response.AdminEnrollmentDetailResponse;
+import com.back.catchmate.admin.dto.response.AdminInquiryAnswerResponse;
+import com.back.catchmate.admin.dto.response.AdminInquiryDetailResponse;
+import com.back.catchmate.admin.dto.response.AdminInquiryResponse;
+import com.back.catchmate.admin.dto.response.AdminNoticeActionResponse;
+import com.back.catchmate.admin.dto.response.AdminNoticeCreateResponse;
+import com.back.catchmate.admin.dto.response.AdminNoticeDetailResponse;
+import com.back.catchmate.admin.dto.response.AdminNoticeResponse;
+import com.back.catchmate.admin.dto.response.AdminNoticeUpdateResponse;
+import com.back.catchmate.admin.dto.response.AdminReportActionResponse;
+import com.back.catchmate.admin.dto.response.AdminReportDetailResponse;
+import com.back.catchmate.admin.dto.response.AdminReportResponse;
+import com.back.catchmate.admin.dto.response.AdminUserDetailResponse;
+import com.back.catchmate.admin.dto.response.AdminUserResponse;
+import com.back.catchmate.admin.event.InquiryAnswerRegisteredEvent;
+import com.back.catchmate.admin.event.NoticeCreatedEvent;
+import com.back.catchmate.board.dto.response.BoardAdminView;
+import com.back.catchmate.board.dto.response.BoardSummary;
+import com.back.catchmate.board.service.BoardService;
+import com.back.catchmate.club.dto.response.ClubSummary;
+import com.back.catchmate.club.service.ClubService;
+import com.back.catchmate.common.response.PagedResponse;
+import com.back.catchmate.enroll.dto.response.EnrollSummary;
+import com.back.catchmate.enroll.service.EnrollQueryService;
+import com.back.catchmate.game.dto.response.GameSummary;
+import com.back.catchmate.game.service.GameService;
+import com.back.catchmate.inquiry.dto.response.InquirySummary;
+import com.back.catchmate.inquiry.service.InquiryService;
+import com.back.catchmate.notice.dto.response.NoticeCreateResponse;
+import com.back.catchmate.notice.dto.response.NoticeSummary;
+import com.back.catchmate.notice.service.NoticeService;
+import com.back.catchmate.report.dto.response.ReportSummary;
+import com.back.catchmate.report.service.ReportService;
+import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
+public class AdminService {
+    private final ClubService clubService;
+    private final GameService gameService;
+    private final UserService userService;
+    private final BoardService boardService;
+    private final NoticeService noticeService;
+    private final EnrollQueryService enrollQueryService;
+    private final ReportService reportService;
+    private final InquiryService inquiryService;
+    private final ApplicationEventPublisher applicationEventPublisher;
+
+    public AdminDashboardResponse getDashboardStats() {
+        return AdminDashboardResponse.of(
+                userService.getTotalUserCount(),
+                AdminDashboardResponse.GenderRatio.of(
+                        userService.getUserCountByGender('M'),
+                        userService.getUserCountByGender('F')
+                ),
+                boardService.getTotalBoardCount(),
+                resolveUserCountByClubName(),
+                userService.getUserCountByWatchStyle(),
+                reportService.getTotalReportCount(),
+                reportService.getPendingReportCount(),
+                inquiryService.getTotalInquiryCount(),
+                inquiryService.getWaitingInquiryCount()
+        );
+    }
+
+    private Map<String, Long> resolveUserCountByClubName() {
+        Map<Long, Long> countByClubId = userService.getUserCountByClubId();
+        if (countByClubId.isEmpty()) return Map.of();
+        Map<Long, ClubSummary> clubById = clubService.getClubSummaries(List.copyOf(countByClubId.keySet())).stream()
+                .collect(Collectors.toMap(ClubSummary::clubId, Function.identity()));
+        return countByClubId.entrySet().stream()
+                .filter(e -> clubById.get(e.getKey()) != null)
+                .collect(Collectors.toMap(e -> clubById.get(e.getKey()).name(), Map.Entry::getValue));
+    }
+
+    public AdminUserDetailResponse getUser(Long userId) {
+        UserSummary user = userService.getUserSummary(userId);
+        ClubSummary club = user.clubId() != null ? clubService.getClubSummary(user.clubId()) : null;
+        return AdminUserDetailResponse.from(user, club != null ? club.name() : null);
+    }
+
+    public PagedResponse<AdminUserResponse> getUserList(String clubName, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Long clubId = null;
+        if (clubName != null && !clubName.isBlank()) {
+            Optional<ClubSummary> club = clubService.findClubSummaryByName(clubName);
+            if (club.isEmpty()) {
+                return new PagedResponse<>(Page.empty(pageable), List.of());
+            }
+            clubId = club.get().clubId();
+        }
+
+        Page<UserSummary> userPage = userService.getUserSummariesByClubId(clubId, pageable);
+
+        Map<Long, ClubSummary> clubById = resolveUserClubs(userPage.getContent());
+
+        List<AdminUserResponse> responses = userPage.getContent().stream()
+                .map(u -> AdminUserResponse.from(u, u.clubId() != null && clubById.get(u.clubId()) != null ? clubById.get(u.clubId()).name() : null))
+                .toList();
+
+        return new PagedResponse<>(userPage, responses);
+    }
+
+    public AdminBoardDetailResponse getBoardWithEnrollList(Long boardId) {
+        BoardSummary board = boardService.getCompletedBoardSummary(boardId);
+        List<EnrollSummary> enrolls = enrollQueryService.getEnrollListByBoardIds(Collections.singletonList(boardId));
+
+        List<Long> enrollUserIds = enrolls.stream()
+                .map(EnrollSummary::userId)
+                .distinct()
+                .toList();
+        Map<Long, UserSummary> enrollUserById = enrollUserIds.isEmpty()
+                ? Map.of()
+                : userService.getUserSummaries(enrollUserIds).stream()
+                .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+        Map<Long, ClubSummary> enrollUserClubById = resolveUserClubs(enrollUserById.values());
+
+        List<AdminEnrollmentDetailResponse> enrollmentInfos = enrolls.stream()
+                .map(enroll -> {
+                    UserSummary u = enrollUserById.get(enroll.userId());
+                    ClubSummary c = u != null && u.clubId() != null ? enrollUserClubById.get(u.clubId()) : null;
+                    return AdminEnrollmentDetailResponse.from(enroll, u, c != null ? c.name() : null);
+                })
+                .toList();
+
+        UserSummary writer = board.userId() != null ? userService.getUserSummary(board.userId()) : null;
+        GameSummary game = board.gameId() != null ? gameService.getGameSummary(board.gameId()) : null;
+
+        return AdminBoardDetailResponse.from(board, writer, game, enrollmentInfos);
+    }
+
+    public PagedResponse<AdminBoardResponse> getBoardListByUserId(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<BoardAdminView> boardPage = boardService.getBoardAdminViewsByUserId(userId, pageable);
+
+        List<AdminBoardResponse> responses = boardPage.getContent().stream()
+                .map(AdminBoardResponse::from)
+                .toList();
+
+        return new PagedResponse<>(boardPage, responses);
+    }
+
+    public PagedResponse<AdminBoardResponse> getBoardList(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<BoardAdminView> boardPage = boardService.getBoardAdminViews(pageable);
+
+        List<AdminBoardResponse> responses = boardPage.getContent().stream()
+                .map(AdminBoardResponse::from)
+                .toList();
+
+        return new PagedResponse<>(boardPage, responses);
+    }
+
+    public AdminReportDetailResponse getReport(Long reportId) {
+        ReportSummary report = reportService.getReportSummary(reportId);
+        UserSummary reporter = userService.getUserSummary(report.reporterId());
+        UserSummary reportedUser = userService.getUserSummary(report.reportedUserId());
+        return AdminReportDetailResponse.from(report, reporter, reportedUser);
+    }
+
+    public PagedResponse<AdminReportResponse> getReportList(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ReportSummary> reportPage = reportService.getReportSummaries(pageable);
+
+        Map<Long, UserSummary> reporterById = userService.getUserSummaries(
+                reportPage.getContent().stream().map(ReportSummary::reporterId).distinct().toList()
+        ).stream().collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+
+        List<AdminReportResponse> responses = reportPage.getContent().stream()
+                .map(r -> AdminReportResponse.from(r, reporterById.get(r.reporterId())))
+                .toList();
+
+        return new PagedResponse<>(reportPage, responses);
+    }
+
+    public AdminInquiryDetailResponse getInquiry(Long inquiryId) {
+        InquirySummary inquiry = inquiryService.getInquirySummary(inquiryId);
+        UserSummary user = userService.getUserSummary(inquiry.userId());
+        return AdminInquiryDetailResponse.from(inquiry, user);
+    }
+
+    public PagedResponse<AdminInquiryResponse> getInquiryList(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<InquirySummary> inquiryPage = inquiryService.getInquirySummaries(pageable);
+
+        Map<Long, UserSummary> userById = userService.getUserSummaries(
+                inquiryPage.getContent().stream().map(InquirySummary::userId).distinct().toList()
+        ).stream().collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+
+        List<AdminInquiryResponse> responses = inquiryPage.getContent().stream()
+                .map(i -> AdminInquiryResponse.from(i, userById.get(i.userId())))
+                .toList();
+
+        return new PagedResponse<>(inquiryPage, responses);
+    }
+
+    public AdminAnswerDraftResponse getInquiryAnswerDraft(Long inquiryId) {
+        return AdminAnswerDraftResponse.from(inquiryService.draftAnswer(inquiryId));
+    }
+
+    public AdminNoticeDetailResponse getNotice(Long noticeId) {
+        NoticeSummary notice = noticeService.getNoticeSummary(noticeId);
+        UserSummary writer = userService.getUserSummary(notice.writerId());
+        return AdminNoticeDetailResponse.from(notice, writer.nickName());
+    }
+
+    public PagedResponse<AdminNoticeResponse> getNoticeList(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<NoticeSummary> noticePage = noticeService.getNoticeSummaries(pageable);
+
+        Map<Long, String> writerNicknameById = userService.getUserSummaries(
+                noticePage.getContent().stream().map(NoticeSummary::writerId).distinct().toList()
+        ).stream().collect(Collectors.toMap(UserSummary::userId, UserSummary::nickName));
+
+        List<AdminNoticeResponse> responses = noticePage.getContent().stream()
+                .map(n -> AdminNoticeResponse.from(n, writerNicknameById.getOrDefault(n.writerId(), "")))
+                .toList();
+
+        return new PagedResponse<>(noticePage, responses);
+    }
+
+    private Map<Long, ClubSummary> resolveUserClubs(Collection<UserSummary> users) {
+        List<Long> clubIds = users.stream()
+                .map(UserSummary::clubId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (clubIds.isEmpty()) return Map.of();
+        return clubService.getClubSummaries(clubIds).stream()
+                .collect(Collectors.toMap(ClubSummary::clubId, Function.identity()));
+    }
+
+    @Transactional
+    public AdminNoticeCreateResponse createNotice(Long userId, NoticeCreateRequest request) {
+        NoticeCreateResponse created = noticeService.createNotice(userId, request.title(), request.content());
+        AdminNoticeCreateResponse response = AdminNoticeCreateResponse.from(created);
+
+        applicationEventPublisher.publishEvent(
+                NoticeCreatedEvent.of(response.noticeId(), request.title())
+        );
+
+        return response;
+    }
+
+    @Transactional
+    public AdminInquiryAnswerResponse createInquiryAnswer(InquiryRegisterAnswerCommand command) {
+        inquiryService.registerAnswer(command.inquiryId(), command.content());
+
+        InquirySummary updatedInquiry = inquiryService.getInquirySummary(command.inquiryId());
+        applicationEventPublisher.publishEvent(
+                InquiryAnswerRegisteredEvent.of(updatedInquiry.inquiryId(), updatedInquiry.userId())
+        );
+
+        return AdminInquiryAnswerResponse.of(updatedInquiry.inquiryId(), updatedInquiry.userId());
+    }
+
+    @Transactional
+    public AdminCorpusReindexResponse reindexInquiryCorpus() {
+        return AdminCorpusReindexResponse.of(inquiryService.reindex());
+    }
+
+    @Transactional
+    public AdminReportActionResponse updateReportProcess(Long reportId) {
+        ReportSummary report = reportService.getReportSummary(reportId);
+        Long reportedUserId = report.reportedUserId();
+
+        userService.markUserAsReported(reportedUserId);
+        reportService.processReport(reportId);
+
+        return AdminReportActionResponse.of(reportId, reportedUserId);
+    }
+
+    @Transactional
+    public AdminNoticeUpdateResponse updateNotice(Long noticeId, NoticeUpdateRequest request) {
+        noticeService.updateNotice(noticeId, request.title(), request.content());
+
+        NoticeSummary updatedNotice = noticeService.getNoticeSummary(noticeId);
+        UserSummary writer = userService.getUserSummary(updatedNotice.writerId());
+        return AdminNoticeUpdateResponse.from(updatedNotice, writer.nickName());
+    }
+
+    @Transactional
+    public AdminNoticeActionResponse deleteNotice(Long noticeId) {
+        noticeService.deleteNotice(noticeId);
+        return AdminNoticeActionResponse.of(noticeId, "공지사항이 삭제되었습니다.");
+    }
+}
