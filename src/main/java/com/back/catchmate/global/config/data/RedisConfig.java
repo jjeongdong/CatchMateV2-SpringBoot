@@ -1,7 +1,7 @@
 package com.back.catchmate.global.config.data;
 
 import com.back.catchmate.chat.event.ChatRedisSubscriber;
-import com.back.catchmate.notification.adapter.in.event.NotificationRedisSubscriber;
+import com.back.catchmate.notification.event.NotificationRedisSubscriber;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
