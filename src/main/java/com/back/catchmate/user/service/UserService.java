@@ -19,6 +19,9 @@ import com.back.catchmate.user.entity.User;
 import com.back.catchmate.user.entity.UserAlarmType;
 import com.back.catchmate.user.infra.S3ImageUploader;
 import com.back.catchmate.user.repository.UserRepository;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,10 +29,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
@@ -73,8 +72,7 @@ public class UserService {
                     uploadFile.originalFilename(),
                     uploadFile.contentType(),
                     uploadFile.inputStream(),
-                    uploadFile.size()
-            );
+                    uploadFile.size());
         }
 
         user.updateProfile(request.nickName(), request.watchStyle(), request.favoriteClubId(), profileImageUrl);
@@ -102,8 +100,7 @@ public class UserService {
     }
 
     // 다른 컨텍스트용
-    @Cacheable(value = "userInternal", key = "#userId",
-            cacheManager = "redisCacheManager", unless = "#result == null")
+    @Cacheable(value = "userInternal", key = "#userId", cacheManager = "redisCacheManager", unless = "#result == null")
     public UserSummary getUserSummary(Long userId) {
         return UserSummary.from(getUserOrThrow(userId));
     }
@@ -115,8 +112,7 @@ public class UserService {
     }
 
     public Optional<UserSummary> findUserSummaryByProviderId(String providerIdWithProvider) {
-        return userRepository.findByProviderId(providerIdWithProvider)
-                .map(UserSummary::from);
+        return userRepository.findByProviderId(providerIdWithProvider).map(UserSummary::from);
     }
 
     public List<UserSummary> getEventAlarmEnabledUserSummaries() {
@@ -160,8 +156,7 @@ public class UserService {
                 command.favoriteClubId(),
                 command.profileImageUrl(),
                 null,
-                command.watchStyle()
-        );
+                command.watchStyle());
         User savedUser = userRepository.save(user);
         return CreatedUserResponse.from(savedUser);
     }
@@ -182,7 +177,6 @@ public class UserService {
     }
 
     private User getUserOrThrow(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+        return userRepository.findById(userId).orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
     }
 }

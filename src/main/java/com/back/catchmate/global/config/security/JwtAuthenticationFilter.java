@@ -5,6 +5,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,9 +16,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.Collections;
 
 @Slf4j
 @Component
@@ -29,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        
+
         String token = resolveToken(request);
 
         if (StringUtils.hasText(token)) {
@@ -42,13 +41,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 여기서는 간단히 ROLE_USER로 고정하거나, DB에서 조회하여 설정 가능
                 Authentication authentication = new UsernamePasswordAuthenticationToken(
                         userId, // Principal (User ID)
-                        null,   // Credentials (보통 null)
+                        null, // Credentials (보통 null)
                         Collections.singletonList(new SimpleGrantedAuthority(role)) // Authorities
-                );
+                        );
 
                 // 3. SecurityContext에 저장
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                
+
             } catch (Exception e) {
                 // 토큰이 유효하지 않은 경우, SecurityContext를 비우고 로그만 남김 (이후 EntryPoint에서 처리)
                 log.warn("Invalid JWT Token: {}", e.getMessage());

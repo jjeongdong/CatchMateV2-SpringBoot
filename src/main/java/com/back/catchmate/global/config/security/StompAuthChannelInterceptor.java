@@ -4,6 +4,8 @@ import com.back.catchmate.auth.service.AuthService;
 import com.back.catchmate.chat.service.ChatQueryService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
+import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
@@ -18,9 +20,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
-import java.util.Set;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -34,10 +33,8 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
     // 서버가 개인 큐로 보내는 목적지. 실시간 알림(NotificationRedisSubscriber)과
     // 채팅 전송 실패 통보(ChatController 의 @MessageExceptionHandler) 두 가지다.
-    private static final Set<String> ALLOWED_USER_DESTINATIONS = Set.of(
-            "/user/queue/notifications",
-            "/user/queue/errors"
-    );
+    private static final Set<String> ALLOWED_USER_DESTINATIONS =
+            Set.of("/user/queue/notifications", "/user/queue/errors");
 
     private final AuthService authService;
     private final ChatQueryService chatQueryService;
@@ -73,11 +70,8 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             Long userId = authService.getUserId(token);
             String role = authService.getUserRole(token);
 
-            accessor.setUser(new UsernamePasswordAuthenticationToken(
-                    userId,
-                    null,
-                    List.of(new SimpleGrantedAuthority(role))
-            ));
+            accessor.setUser(
+                    new UsernamePasswordAuthenticationToken(userId, null, List.of(new SimpleGrantedAuthority(role))));
             log.debug("WebSocket user authenticated: {}", userId);
         } catch (Exception e) {
             log.warn("WebSocket token validation failed: {}", e.getMessage());

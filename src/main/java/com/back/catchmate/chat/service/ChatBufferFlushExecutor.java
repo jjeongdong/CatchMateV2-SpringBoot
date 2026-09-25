@@ -3,13 +3,12 @@ package com.back.catchmate.chat.service;
 import com.back.catchmate.chat.dto.ReadSequenceUpdate;
 import com.back.catchmate.chat.repository.ChatRoomMemberRepository;
 import com.back.catchmate.chat.repository.ChatRoomRepository;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Component

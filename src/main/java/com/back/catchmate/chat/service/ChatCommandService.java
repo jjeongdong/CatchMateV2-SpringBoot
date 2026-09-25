@@ -41,14 +41,12 @@ public class ChatCommandService {
 
         UserSummary sender = userService.getUserSummary(senderId);
 
-        Long sequence = chatMessageService.prepareSequence(
-                command.chatRoomId(), senderId, command.messageType());
+        Long sequence = chatMessageService.prepareSequence(command.chatRoomId(), senderId, command.messageType());
 
         chatMessageService.persistAndPublish(
                 command.chatRoomId(), senderId, command.content(), command.messageType(), sequence, sender);
 
-        chatMessageService.bufferAfterSend(
-                command.chatRoomId(), senderId, sequence, command.messageType());
+        chatMessageService.bufferAfterSend(command.chatRoomId(), senderId, sequence, command.messageType());
     }
 
     public void enterChatRoom(Long userId, Long chatRoomId) {
@@ -77,8 +75,7 @@ public class ChatCommandService {
                     uploadFile.originalFilename(),
                     uploadFile.contentType(),
                     uploadFile.inputStream(),
-                    uploadFile.size()
-            );
+                    uploadFile.size());
         }
 
         chatRoomService.updateChatRoomImage(roomId, userId, imageUrl);

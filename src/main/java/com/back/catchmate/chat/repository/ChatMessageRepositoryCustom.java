@@ -1,7 +1,6 @@
 package com.back.catchmate.chat.repository;
 
 import com.back.catchmate.chat.entity.ChatMessage;
-
 import java.util.List;
 import java.util.Map;
 

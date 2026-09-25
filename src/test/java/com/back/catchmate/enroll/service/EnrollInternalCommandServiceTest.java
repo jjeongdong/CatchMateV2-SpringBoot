@@ -1,21 +1,20 @@
 package com.back.catchmate.enroll.service;
 
-import com.back.catchmate.enroll.repository.EnrollRepository;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.never;
+import static org.mockito.BDDMockito.then;
+
 import com.back.catchmate.enroll.entity.AcceptStatus;
 import com.back.catchmate.enroll.entity.Enroll;
+import com.back.catchmate.enroll.repository.EnrollRepository;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.never;
-import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class EnrollInternalCommandServiceTest {
@@ -34,7 +33,8 @@ class EnrollInternalCommandServiceTest {
         Long blockedId = 2L;
         Enroll enrollA = Enroll.createEnroll(blockedId, 10L, blockerId, "직관 같이가요");
         Enroll enrollB = Enroll.createEnroll(blockedId, 11L, blockerId, "하나 더");
-        given(enrollRepository.findAllByApplicantIdAndBoardOwnerIdAndStatus(blockerId, blockedId, AcceptStatus.ACCEPTED))
+        given(enrollRepository.findAllByApplicantIdAndBoardOwnerIdAndStatus(
+                        blockerId, blockedId, AcceptStatus.ACCEPTED))
                 .willReturn(List.of(enrollA, enrollB));
 
         // when
@@ -51,7 +51,8 @@ class EnrollInternalCommandServiceTest {
         // given
         Long blockerId = 1L;
         Long blockedId = 2L;
-        given(enrollRepository.findAllByApplicantIdAndBoardOwnerIdAndStatus(blockerId, blockedId, AcceptStatus.ACCEPTED))
+        given(enrollRepository.findAllByApplicantIdAndBoardOwnerIdAndStatus(
+                        blockerId, blockedId, AcceptStatus.ACCEPTED))
                 .willReturn(List.of());
 
         // when

@@ -3,8 +3,8 @@ package com.back.catchmate.board.entity;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.global.persistence.BaseTimeEntity;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,6 +12,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,17 +22,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.Objects;
-
 @Entity
 @Getter
 @Builder
-@Table(name = "boards", indexes = {
-        @Index(name = "idx_boards_cursor", columnList = "lift_up_date, board_id"),
-        @Index(name = "idx_boards_user_liftupdate", columnList = "user_id, lift_up_date")
-})
+@Table(
+        name = "boards",
+        indexes = {
+            @Index(name = "idx_boards_cursor", columnList = "lift_up_date, board_id"),
+            @Index(name = "idx_boards_user_liftupdate", columnList = "user_id, lift_up_date")
+        })
 @SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -80,10 +81,17 @@ public class Board extends BaseTimeEntity {
     private long version;
 
     // 게시글 생성 메서드
-    public static Board createBoard(String title, String content, int maxPerson, Long userId,
-                                    Long cheerClubId, Long gameId, boolean gameComplete,
-                                    String preferredGender,
-                                    PreferredAgeRange preferredAgeRange, boolean completed) {
+    public static Board createBoard(
+            String title,
+            String content,
+            int maxPerson,
+            Long userId,
+            Long cheerClubId,
+            Long gameId,
+            boolean gameComplete,
+            String preferredGender,
+            PreferredAgeRange preferredAgeRange,
+            boolean completed) {
 
         Board board = Board.builder()
                 .title(title)
@@ -104,10 +112,16 @@ public class Board extends BaseTimeEntity {
     }
 
     // 게시글 수정 메서드
-    public void updateBoard(String title, String content, int maxPerson,
-                            Long cheerClubId, Long gameId, boolean gameComplete,
-                            String preferredGender,
-                            PreferredAgeRange preferredAgeRange, boolean completed) {
+    public void updateBoard(
+            String title,
+            String content,
+            int maxPerson,
+            Long cheerClubId,
+            Long gameId,
+            boolean gameComplete,
+            String preferredGender,
+            PreferredAgeRange preferredAgeRange,
+            boolean completed) {
 
         PreferredAgeRange normalized = preferredAgeRange != null ? preferredAgeRange : PreferredAgeRange.empty();
 
@@ -131,8 +145,13 @@ public class Board extends BaseTimeEntity {
     }
 
     // 핵심 조건 변경 여부를 체크하는 내부 메서드
-    private boolean isCriticalFieldChanged(int newMaxPerson, Long newCheerClubId, Long newGameId,
-                                           String newPreferredGender, PreferredAgeRange newPreferredAgeRange, boolean newCompleted) {
+    private boolean isCriticalFieldChanged(
+            int newMaxPerson,
+            Long newCheerClubId,
+            Long newGameId,
+            String newPreferredGender,
+            PreferredAgeRange newPreferredAgeRange,
+            boolean newCompleted) {
 
         if (this.maxPerson != newMaxPerson) return true;
         if (this.completed != newCompleted) return true;

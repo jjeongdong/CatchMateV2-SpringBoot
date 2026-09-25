@@ -2,19 +2,18 @@ package com.back.catchmate.notification.service;
 
 import com.back.catchmate.chat.dto.response.ChatRecipientSummary;
 import com.back.catchmate.chat.service.ChatQueryService;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
-import com.back.catchmate.user.service.UserOnlineStatusService;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
 import com.back.catchmate.notification.infra.RedisNotificationPublisher;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
+import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.service.UserOnlineStatusService;
+import com.back.catchmate.user.service.UserService;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 /**
  * 채팅 알림의 비동기 발송 전용 서비스(비트랜잭션).
@@ -42,18 +41,21 @@ public class ChatNotificationDispatchService {
      * 5. 알림 설정이 켜져있고, 포커스가 없는 경우 Outbox Dispatch 즉시 발송
      */
     public void dispatchOnChatMessageSent(Long chatRoomId, Long messageId, Long senderId, String content) {
-        List<ChatRecipientSummary> recipientsInfo = chatQueryService.getChatRoomRecipientSummaries(chatRoomId, senderId);
+        List<ChatRecipientSummary> recipientsInfo =
+                chatQueryService.getChatRoomRecipientSummaries(chatRoomId, senderId);
         if (recipientsInfo.isEmpty()) return;
 
         UserSummary sender = userService.getUserSummary(senderId);
         String title = NotificationTemplate.CHAT_NEW_MESSAGE.formatTitle(sender.nickName());
         String body = NotificationTemplate.CHAT_NEW_MESSAGE.formatBody(content);
-        Map<String, String> payload = createNotificationData(chatRoomId, senderId, sender.nickName(), content, title, body);
+        Map<String, String> payload =
+                createNotificationData(chatRoomId, senderId, sender.nickName(), content, title, body);
 
-        Map<Long, ChatRecipientSummary> infoMap = recipientsInfo.stream()
-                .collect(Collectors.toMap(ChatRecipientSummary::userId, Function.identity()));
+        Map<Long, ChatRecipientSummary> infoMap =
+                recipientsInfo.stream().collect(Collectors.toMap(ChatRecipientSummary::userId, Function.identity()));
 
-        List<UserSummary> recipients = userService.getUserSummaries(recipientsInfo.stream().map(ChatRecipientSummary::userId).toList());
+        List<UserSummary> recipients = userService.getUserSummaries(
+                recipientsInfo.stream().map(ChatRecipientSummary::userId).toList());
 
         // 알림 설정과 무관하게 전원의 포커스 여부를 봐야 하므로 수신자 전체를 MGET 한 번으로 모아온다.
         Map<Long, Long> focusRooms = userOnlineStatusService.getUserFocusRooms(
@@ -78,8 +80,7 @@ public class ChatNotificationDispatchService {
     }
 
     private static Map<String, String> createNotificationData(
-            Long chatRoomId, Long senderId, String senderNickname, String content, String title, String body
-    ) {
+            Long chatRoomId, Long senderId, String senderNickname, String content, String title, String body) {
         return Map.of(
                 "type", NOTIFICATION_TYPE,
                 "roomId", chatRoomId.toString(),
@@ -87,7 +88,6 @@ public class ChatNotificationDispatchService {
                 "senderNickname", senderNickname,
                 "content", content,
                 "title", title,
-                "body", body
-        );
+                "body", body);
     }
 }

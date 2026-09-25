@@ -2,7 +2,6 @@ package com.back.catchmate.admin.dto.response;
 
 import com.back.catchmate.inquiry.dto.response.InquirySummary;
 import com.back.catchmate.user.dto.response.UserSummary;
-
 import java.time.LocalDateTime;
 
 public record AdminInquiryDetailResponse(
@@ -15,8 +14,7 @@ public record AdminInquiryDetailResponse(
         String content,
         String answer,
         String status,
-        LocalDateTime createdAt
-) {
+        LocalDateTime createdAt) {
     public static AdminInquiryDetailResponse from(InquirySummary inquiry, UserSummary user) {
         return new AdminInquiryDetailResponse(
                 inquiry.inquiryId(),
@@ -28,7 +26,6 @@ public record AdminInquiryDetailResponse(
                 inquiry.content(),
                 inquiry.answer(),
                 inquiry.status(),
-                inquiry.createdAt()
-        );
+                inquiry.createdAt());
     }
 }

@@ -1,5 +1,6 @@
 package com.back.catchmate.oauth.infra;
 
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
@@ -7,8 +8,6 @@ import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
-
-import java.time.Duration;
 
 @Configuration
 @EnableConfigurationProperties(OAuthProperties.class)
@@ -27,8 +26,7 @@ public class OAuthConfig {
     @Bean
     public RestClient oauthRestClient(
             @Value("${oauth.client.connect-timeout-ms:2000}") long connectTimeoutMs,
-            @Value("${oauth.client.read-timeout-ms:5000}") long readTimeoutMs
-    ) {
+            @Value("${oauth.client.read-timeout-ms:5000}") long readTimeoutMs) {
         ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.defaults()
                 .withConnectTimeout(Duration.ofMillis(connectTimeoutMs))
                 .withReadTimeout(Duration.ofMillis(readTimeoutMs));

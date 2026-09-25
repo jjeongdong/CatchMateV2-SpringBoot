@@ -9,6 +9,4 @@ public record ReportSummary(
         String reason,
         String description,
         LocalDateTime createdAt,
-        boolean completed
-) {
-}
+        boolean completed) {}

@@ -2,10 +2,9 @@ package com.back.catchmate.oauth.entity;
 
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
+import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-
-import java.util.stream.Stream;
 
 /**
  * OAuth 인증 제공자. oauth 컨텍스트의 도메인 enum — user 컨텍스트는 String 으로만 저장한다.

@@ -2,10 +2,11 @@ package com.back.catchmate.oauth.infra;
 
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
+import com.back.catchmate.oauth.dto.OAuthUserInfo;
+import com.back.catchmate.oauth.entity.Provider;
 import com.back.catchmate.oauth.infra.dto.GoogleTokenResponse;
 import com.back.catchmate.oauth.infra.dto.GoogleUserResponse;
-import com.back.catchmate.oauth.entity.Provider;
-import com.back.catchmate.oauth.dto.OAuthUserInfo;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -16,8 +17,6 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriUtils;
-
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Component
@@ -36,9 +35,12 @@ public class GoogleOAuthClient implements OAuthClient {
         OAuthProperties.ProviderProps google = properties.getGoogle();
         StringBuilder sb = new StringBuilder(google.getAuthorizeUrl())
                 .append("?response_type=code")
-                .append("&client_id=").append(UriUtils.encode(google.getClientId(), StandardCharsets.UTF_8))
-                .append("&redirect_uri=").append(UriUtils.encode(google.getRedirectUri(), StandardCharsets.UTF_8))
-                .append("&state=").append(UriUtils.encode(state, StandardCharsets.UTF_8));
+                .append("&client_id=")
+                .append(UriUtils.encode(google.getClientId(), StandardCharsets.UTF_8))
+                .append("&redirect_uri=")
+                .append(UriUtils.encode(google.getRedirectUri(), StandardCharsets.UTF_8))
+                .append("&state=")
+                .append(UriUtils.encode(state, StandardCharsets.UTF_8));
         if (google.getScope() != null && !google.getScope().isBlank()) {
             sb.append("&scope=").append(UriUtils.encode(google.getScope(), StandardCharsets.UTF_8));
         }
@@ -72,10 +74,14 @@ public class GoogleOAuthClient implements OAuthClient {
         form.add("redirect_uri", google.getRedirectUri());
         form.add("code", code);
 
-        log.info("Google token 요청: url={}, client_id={}, redirect_uri={}",
-                google.getTokenUrl(), google.getClientId(), google.getRedirectUri());
+        log.info(
+                "Google token 요청: url={}, client_id={}, redirect_uri={}",
+                google.getTokenUrl(),
+                google.getClientId(),
+                google.getRedirectUri());
         try {
-            GoogleTokenResponse response = oauthRestClient.post()
+            GoogleTokenResponse response = oauthRestClient
+                    .post()
                     .uri(google.getTokenUrl())
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .body(form)
@@ -87,8 +93,7 @@ public class GoogleOAuthClient implements OAuthClient {
             }
             return response;
         } catch (RestClientResponseException e) {
-            log.error("Google token 요청 실패: status={}, body={}",
-                    e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Google token 요청 실패: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new BaseException(ErrorCode.OAUTH_PROVIDER_ERROR);
         } catch (RestClientException e) {
             log.error("Google token 요청 실패: {}", e.getMessage());
@@ -99,7 +104,8 @@ public class GoogleOAuthClient implements OAuthClient {
     private GoogleUserResponse requestUserInfo(String accessToken) {
         OAuthProperties.ProviderProps google = properties.getGoogle();
         try {
-            GoogleUserResponse response = oauthRestClient.get()
+            GoogleUserResponse response = oauthRestClient
+                    .get()
                     .uri(google.getUserInfoUrl())
                     .header("Authorization", "Bearer " + accessToken)
                     .retrieve()
@@ -109,8 +115,7 @@ public class GoogleOAuthClient implements OAuthClient {
             }
             return response;
         } catch (RestClientResponseException e) {
-            log.error("Google userinfo 요청 실패: status={}, body={}",
-                    e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Google userinfo 요청 실패: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new BaseException(ErrorCode.OAUTH_PROVIDER_ERROR);
         } catch (RestClientException e) {
             log.error("Google userinfo 요청 실패: {}", e.getMessage());

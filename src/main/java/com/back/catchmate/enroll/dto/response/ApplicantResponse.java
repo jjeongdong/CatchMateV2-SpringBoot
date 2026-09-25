@@ -10,8 +10,7 @@ public record ApplicantResponse(
         String gender,
         String ageRange,
         String favoriteClub,
-        String watchStyle
-) {
+        String watchStyle) {
     public static ApplicantResponse from(UserSummary user, ClubSummary club) {
         return new ApplicantResponse(
                 user.userId(),
@@ -20,7 +19,6 @@ public record ApplicantResponse(
                 String.valueOf(user.gender()),
                 String.valueOf(user.birthDate()),
                 club != null ? club.name() : null,
-                user.watchStyle()
-        );
+                user.watchStyle());
     }
 }

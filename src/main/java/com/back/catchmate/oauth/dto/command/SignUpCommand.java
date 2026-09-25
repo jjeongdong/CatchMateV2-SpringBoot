@@ -8,6 +8,4 @@ public record SignUpCommand(
         String nickName,
         LocalDate birthDate,
         Long favoriteClubId,
-        String watchStyle
-) {
-}
+        String watchStyle) {}

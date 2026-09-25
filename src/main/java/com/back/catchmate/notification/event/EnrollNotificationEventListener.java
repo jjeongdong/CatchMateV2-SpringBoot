@@ -22,60 +22,52 @@ public class EnrollNotificationEventListener {
     @EventListener
     public void onSaveRequested(EnrollRequestedEvent event) {
         enrollNotificationService.saveOnEnrollRequested(
-                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId()
-        );
+                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId());
     }
 
     @EventListener
     public void onSaveAccepted(EnrollAcceptedEvent event) {
         enrollNotificationService.saveOnEnrollAccepted(
-                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId()
-        );
+                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId());
     }
 
     @EventListener
     public void onSaveRejected(EnrollRejectedEvent event) {
         enrollNotificationService.saveOnEnrollRejected(
-                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId()
-        );
+                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId());
     }
 
     @EventListener
     public void onSaveCancelled(EnrollCancelledEvent event) {
         enrollNotificationService.saveOnEnrollCancelled(
-                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId()
-        );
+                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId());
     }
 
     @Async("notificationDispatchExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onDispatchRequested(EnrollRequestedEvent event) {
         enrollNotificationDispatchService.dispatchOnEnrollRequested(
-                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId()
-        );
+                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId());
     }
 
     @Async("notificationDispatchExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onDispatchAccepted(EnrollAcceptedEvent event) {
         enrollNotificationDispatchService.dispatchOnEnrollAccepted(
-                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId()
-        );
+                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId());
     }
 
     @Async("notificationDispatchExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onDispatchRejected(EnrollRejectedEvent event) {
         enrollNotificationDispatchService.dispatchOnEnrollRejected(
-                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId()
-        );
+                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId());
     }
 
     @Async("notificationDispatchExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onDispatchCancelled(EnrollCancelledEvent event) {
         enrollNotificationDispatchService.dispatchOnEnrollCancelled(
-                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId()
-        );
+                event.enrollId(), event.boardId(), event.applicantId(), event.boardOwnerId());
     }
 }

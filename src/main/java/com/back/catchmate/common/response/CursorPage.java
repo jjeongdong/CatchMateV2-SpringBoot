@@ -1,9 +1,8 @@
 package com.back.catchmate.common.response;
 
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.Getter;
 
 @Getter
 public class CursorPage<T> {

@@ -1,10 +1,6 @@
 package com.back.catchmate.board.dto.response;
 
-
-public record BoardLiftUpResponse(
-        boolean state,
-        String remainTime
-) {
+public record BoardLiftUpResponse(boolean state, String remainTime) {
     public static BoardLiftUpResponse of(boolean state, String remainTime) {
         return new BoardLiftUpResponse(state, remainTime);
     }

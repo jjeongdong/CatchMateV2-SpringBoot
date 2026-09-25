@@ -29,8 +29,8 @@ public class NoticeController {
 
     @GetMapping
     @Operation(summary = "공지사항 목록 조회", description = "공지사항 목록을 페이징하여 조회합니다. (page는 0부터 시작)")
-    public ResponseEntity<PagedResponse<NoticeResponse>> getNoticeList(@RequestParam(defaultValue = "0") int page,
-                                                                       @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<PagedResponse<NoticeResponse>> getNoticeList(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(noticeService.getNoticeList(page, size));
     }
 }

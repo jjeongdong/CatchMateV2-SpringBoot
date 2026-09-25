@@ -1,9 +1,9 @@
 package com.back.catchmate.notification.controller;
 
-import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.common.response.PagedResponse;
-import com.back.catchmate.notification.dto.response.ReadAllNotificationsResponse;
+import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.notification.dto.response.NotificationResponse;
+import com.back.catchmate.notification.dto.response.ReadAllNotificationsResponse;
 import com.back.catchmate.notification.dto.response.UnreadNotificationResponse;
 import com.back.catchmate.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,34 +28,30 @@ public class NotificationController {
 
     @Operation(summary = "알림 상세 조회", description = "알림 상세 데이터를 조회합니다. 읽음 처리는 별도 API 로 요청하세요.")
     @GetMapping("/{notificationId}")
-    public NotificationResponse getNotification(@Parameter(hidden = true) @AuthUser Long userId,
-                                                @PathVariable Long notificationId
-    ) {
+    public NotificationResponse getNotification(
+            @Parameter(hidden = true) @AuthUser Long userId, @PathVariable Long notificationId) {
         return notificationService.getNotification(userId, notificationId);
     }
 
     @Operation(summary = "알림 읽음 처리", description = "특정 알림을 읽음 상태로 변경합니다.")
     @PatchMapping("/{notificationId}/read")
-    public void markNotificationAsRead(@Parameter(hidden = true) @AuthUser Long userId,
-                                       @PathVariable Long notificationId
-    ) {
+    public void markNotificationAsRead(
+            @Parameter(hidden = true) @AuthUser Long userId, @PathVariable Long notificationId) {
         notificationService.markNotificationAsRead(userId, notificationId);
     }
 
     @Operation(summary = "내 알림 목록 조회", description = "로그인한 사용자의 알림 목록을 페이징하여 조회합니다.")
     @GetMapping
-    public PagedResponse<NotificationResponse> getNotificationList(@Parameter(hidden = true) @AuthUser Long userId,
-                                                                   @RequestParam(defaultValue = "0") int page,
-                                                                   @RequestParam(defaultValue = "10") int size
-    ) {
+    public PagedResponse<NotificationResponse> getNotificationList(
+            @Parameter(hidden = true) @AuthUser Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         return notificationService.getNotificationList(userId, page, size);
     }
 
     @Operation(summary = "알림 삭제", description = "특정 알림을 삭제합니다.")
     @DeleteMapping("/{notificationId}")
-    public void deleteNotification(@Parameter(hidden = true) @AuthUser Long userId,
-                                   @PathVariable Long notificationId
-    ) {
+    public void deleteNotification(@Parameter(hidden = true) @AuthUser Long userId, @PathVariable Long notificationId) {
         notificationService.deleteNotification(userId, notificationId);
     }
 

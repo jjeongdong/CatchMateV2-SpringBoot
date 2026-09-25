@@ -1,8 +1,8 @@
 package com.back.catchmate.common.response;
 
-import org.springframework.data.domain.Page;
-import lombok.Getter;
 import java.util.List;
+import lombok.Getter;
+import org.springframework.data.domain.Page;
 
 @Getter
 public class PagedResponse<T> {

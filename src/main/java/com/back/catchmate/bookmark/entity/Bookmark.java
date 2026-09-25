@@ -19,10 +19,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "bookmarks",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"user_id", "board_id"})
-        })
+@Table(
+        name = "bookmarks",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "board_id"})})
 public class Bookmark extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,9 +34,6 @@ public class Bookmark extends BaseTimeEntity {
     private Long boardId;
 
     public static Bookmark createBookmark(Long userId, Long boardId) {
-        return Bookmark.builder()
-                .userId(userId)
-                .boardId(boardId)
-                .build();
+        return Bookmark.builder().userId(userId).boardId(boardId).build();
     }
 }

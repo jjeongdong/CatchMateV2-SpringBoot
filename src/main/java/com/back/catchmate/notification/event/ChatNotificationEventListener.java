@@ -19,8 +19,7 @@ public class ChatNotificationEventListener {
     @EventListener
     public void onSave(ChatMessageNotificationEvent event) {
         chatNotificationService.saveOnChatMessageSent(
-                event.chatRoomId(), event.messageId(), event.senderId(), event.content()
-        );
+                event.chatRoomId(), event.messageId(), event.senderId(), event.content());
     }
 
     // @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) 를 사용하여 트랜잭션 커밋 후에 비동기적으로 알림 발송을 처리합니다.
@@ -29,7 +28,6 @@ public class ChatNotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onDispatch(ChatMessageNotificationEvent event) {
         chatNotificationDispatchService.dispatchOnChatMessageSent(
-                event.chatRoomId(), event.messageId(), event.senderId(), event.content()
-        );
+                event.chatRoomId(), event.messageId(), event.senderId(), event.content());
     }
 }

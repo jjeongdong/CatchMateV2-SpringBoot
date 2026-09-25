@@ -1,10 +1,10 @@
 package com.back.catchmate.bookmark.controller;
 
-import com.back.catchmate.global.authorization.annotation.AuthUser;
-import com.back.catchmate.bookmark.service.BookmarkService;
 import com.back.catchmate.bookmark.dto.response.BookmarkUpdateResponse;
 import com.back.catchmate.bookmark.dto.response.BookmarkedBoardSummary;
+import com.back.catchmate.bookmark.service.BookmarkService;
 import com.back.catchmate.common.response.PagedResponse;
+import com.back.catchmate.global.authorization.annotation.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,16 +26,16 @@ public class BookMarkController {
 
     @PostMapping("/{boardId}")
     @Operation(summary = "찜 등록/취소 API", description = "게시글을 찜하거나 찜을 취소합니다.")
-    public ResponseEntity<BookmarkUpdateResponse> updateBookmark(@AuthUser Long userId,
-                                                                 @PathVariable Long boardId) {
+    public ResponseEntity<BookmarkUpdateResponse> updateBookmark(@AuthUser Long userId, @PathVariable Long boardId) {
         return ResponseEntity.ok(bookmarkService.updateBookmark(userId, boardId));
     }
 
     @GetMapping
     @Operation(summary = "찜한 목록 조회 API", description = "내가 찜한 게시글 목록을 조회합니다.")
-    public ResponseEntity<PagedResponse<BookmarkedBoardSummary>> getBookmarkedBoards(@Parameter(hidden = true) @AuthUser Long userId,
-                                                                            @RequestParam(defaultValue = "0") int page,
-                                                                            @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<PagedResponse<BookmarkedBoardSummary>> getBookmarkedBoards(
+            @Parameter(hidden = true) @AuthUser Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(bookmarkService.getBookmarkedBoards(userId, page, size));
     }
 }

@@ -2,6 +2,7 @@ package com.back.catchmate.global.config.web;
 
 import com.back.catchmate.global.config.security.StompAuthChannelInterceptor;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.concurrent.ThreadPoolExecutor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -15,8 +16,6 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
-import java.util.concurrent.ThreadPoolExecutor;
-
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
@@ -26,16 +25,22 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Value("${cors.allowed-origins}")
     private String[] allowedOrigins;
+
     @Value("${websocket.inbound.pool-size:16}")
     private int inboundPoolSize;
+
     @Value("${websocket.inbound.queue-capacity:500}")
     private int inboundQueueCapacity;
+
     @Value("${websocket.outbound.core-pool-size:8}")
     private int outboundCorePoolSize;
+
     @Value("${websocket.outbound.max-pool-size:32}")
     private int outboundMaxPoolSize;
+
     @Value("${websocket.outbound.queue-capacity:1000}")
     private int outboundQueueCapacity;
+
     @Value("${websocket.heartbeat.interval-ms:25000}")
     private long heartbeatIntervalMs;
 
@@ -46,12 +51,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
      */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws/chat")
-                .setAllowedOrigins(allowedOrigins)
-                .withSockJS();
+        registry.addEndpoint("/ws/chat").setAllowedOrigins(allowedOrigins).withSockJS();
 
-        registry.addEndpoint("/ws/chat")
-                .setAllowedOrigins(allowedOrigins);
+        registry.addEndpoint("/ws/chat").setAllowedOrigins(allowedOrigins);
     }
 
     // STOMP 브로커 설정
@@ -68,7 +70,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/sub", "/queue")
                 .setTaskScheduler(wsHeartbeatScheduler())
-                .setHeartbeatValue(new long[]{heartbeatIntervalMs, heartbeatIntervalMs});
+                .setHeartbeatValue(new long[] {heartbeatIntervalMs, heartbeatIntervalMs});
         registry.setApplicationDestinationPrefixes("/pub");
         registry.setUserDestinationPrefix("/user");
     }
@@ -102,8 +104,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         executor.setThreadNamePrefix("WsInbound-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.initialize();
-        meterRegistry.gauge("websocket.inbound.queue.size", executor,
-                e -> e.getThreadPoolExecutor().getQueue().size());
+        meterRegistry.gauge("websocket.inbound.queue.size", executor, e -> e.getThreadPoolExecutor()
+                .getQueue()
+                .size());
         return executor;
     }
 

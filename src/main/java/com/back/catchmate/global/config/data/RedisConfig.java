@@ -1,12 +1,15 @@
 package com.back.catchmate.global.config.data;
 
+import com.back.catchmate.chat.dto.ChatMessageListDto;
+import com.back.catchmate.chat.event.ChatMessageBroadcastEvent;
 import com.back.catchmate.chat.event.ChatRedisSubscriber;
 import com.back.catchmate.notification.event.NotificationRedisSubscriber;
+import com.back.catchmate.user.dto.response.UserSummary;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
-import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.time.Duration;
+import java.util.concurrent.ThreadPoolExecutor;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,17 +20,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
-import com.back.catchmate.chat.dto.ChatMessageListDto;
-import com.back.catchmate.chat.event.ChatMessageBroadcastEvent;
-import com.back.catchmate.user.dto.response.UserSummary;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-
-import java.time.Duration;
-import java.util.concurrent.ThreadPoolExecutor;
 
 @EnableCaching
 @Configuration
@@ -63,7 +60,8 @@ public class RedisConfig {
      * 채팅 브로드캐스트는 타입이 ChatMessageBroadcastEvent 로 고정이므로 Jackson2JsonRedisSerializer 로 @class 없이 직렬화한다.
      */
     @Bean
-    public RedisTemplate<String, ChatMessageBroadcastEvent> chatPubSubRedisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, ChatMessageBroadcastEvent> chatPubSubRedisTemplate(
+            RedisConnectionFactory connectionFactory) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -85,8 +83,10 @@ public class RedisConfig {
         RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofHours(1))
                 .disableCachingNullValues()
-                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(objectMapper)));
+                .serializeKeysWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
+                        new GenericJackson2JsonRedisSerializer(objectMapper)));
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultCacheConfig)
@@ -99,8 +99,10 @@ public class RedisConfig {
         return RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofHours(1))
                 .disableCachingNullValues()
-                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new Jackson2JsonRedisSerializer<>(objectMapper, clazz)));
+                .serializeKeysWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
+                        new Jackson2JsonRedisSerializer<>(objectMapper, clazz)));
     }
 
     /**
@@ -112,8 +114,7 @@ public class RedisConfig {
             MessageListenerAdapter chatListenerAdapter,
             MessageListenerAdapter notificationListenerAdapter,
             ChannelTopic chatTopic,
-            ChannelTopic notificationTopic
-    ) {
+            ChannelTopic notificationTopic) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.setTaskExecutor(redisListenerTaskExecutor());

@@ -1,11 +1,10 @@
 package com.back.catchmate.global.config.security;
 
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
-
-import java.time.Duration;
 
 @Component
 @EnableConfigurationProperties({CookieProperties.class, OAuthFrontendProperties.class})

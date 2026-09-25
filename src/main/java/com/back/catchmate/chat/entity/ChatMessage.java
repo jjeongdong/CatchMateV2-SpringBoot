@@ -13,6 +13,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,19 +21,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Getter
 @Builder
-@Table(name = "chat_messages", indexes = {
-        @Index(name = "idx_chat_messages_room_deleted_id",
-                columnList = "chat_room_id, deleted_at, chat_message_id DESC"
-        ),
-        @Index(name = "idx_chat_messages_room_type_deleted_id",
-                columnList = "chat_room_id, message_type, deleted_at, chat_message_id DESC"
-        )
-})
+@Table(
+        name = "chat_messages",
+        indexes = {
+            @Index(
+                    name = "idx_chat_messages_room_deleted_id",
+                    columnList = "chat_room_id, deleted_at, chat_message_id DESC"),
+            @Index(
+                    name = "idx_chat_messages_room_type_deleted_id",
+                    columnList = "chat_room_id, message_type, deleted_at, chat_message_id DESC")
+        })
 @SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -62,7 +63,8 @@ public class ChatMessage extends BaseTimeEntity {
     private LocalDateTime deletedAt;
 
     // 채팅 메시지 생성 메서드
-    public static ChatMessage createMessage(Long chatRoomId, Long senderId, String content, MessageType messageType, Long sequence) {
+    public static ChatMessage createMessage(
+            Long chatRoomId, Long senderId, String content, MessageType messageType, Long sequence) {
         return ChatMessage.builder()
                 .chatRoom(ChatRoom.builder().id(chatRoomId).build())
                 .senderId(senderId)

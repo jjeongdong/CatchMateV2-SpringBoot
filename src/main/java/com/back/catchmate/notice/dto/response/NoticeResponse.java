@@ -2,10 +2,4 @@ package com.back.catchmate.notice.dto.response;
 
 import java.time.LocalDateTime;
 
-public record NoticeResponse(
-        Long noticeId,
-        String title,
-        String writerNickname,
-        LocalDateTime createdAt
-) {
-}
+public record NoticeResponse(Long noticeId, String title, String writerNickname, LocalDateTime createdAt) {}

@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum NotificationTemplate {
-    
+
     // [모임 신청 관련]
     ENROLL_REQUEST("%s님이 참여 신청을 보냈습니다", "'%s' 모임에 새로운 참여 신청이 도착했습니다."),
     ENROLL_ACCEPT("신청 수락 완료", "축하합니다! '%s' 모임 참여가 수락되었습니다. 채팅방을 확인해보세요."),

@@ -11,6 +11,4 @@ public record CreateUserCommand(
         LocalDate birthDate,
         Long favoriteClubId,
         String profileImageUrl,
-        String watchStyle
-) {
-}
+        String watchStyle) {}

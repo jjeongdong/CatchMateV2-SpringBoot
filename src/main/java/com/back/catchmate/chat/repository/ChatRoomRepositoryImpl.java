@@ -1,15 +1,15 @@
 package com.back.catchmate.chat.repository;
 
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
-import java.util.Map;
-
 @RequiredArgsConstructor
 public class ChatRoomRepositoryImpl implements ChatRoomRepositoryCustom {
-    private static final String BATCH_UPDATE_MAX_SEQUENCE = """
+    private static final String BATCH_UPDATE_MAX_SEQUENCE =
+            """
             UPDATE chat_rooms
             SET last_message_sequence = :sequence
             WHERE chat_room_id = :roomId

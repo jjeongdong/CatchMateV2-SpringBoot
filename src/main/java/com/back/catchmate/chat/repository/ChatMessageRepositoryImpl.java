@@ -1,17 +1,16 @@
 package com.back.catchmate.chat.repository;
 
+import static com.back.catchmate.chat.entity.QChatMessage.chatMessage;
+
 import com.back.catchmate.chat.entity.ChatMessage;
 import com.back.catchmate.chat.entity.MessageType;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.back.catchmate.chat.entity.QChatMessage.chatMessage;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
@@ -24,8 +23,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
                 .from(chatMessage)
                 .where(
                         chatMessage.chatRoom.id.eq(roomId),
-                        lastMessageId != null ? chatMessage.id.lt(lastMessageId) : null
-                )
+                        lastMessageId != null ? chatMessage.id.lt(lastMessageId) : null)
                 .orderBy(chatMessage.id.desc())
                 .limit(size)
                 .fetch();
@@ -45,10 +43,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
     public List<ChatMessage> findSyncMessages(Long roomId, Long lastMessageId, int size) {
         return jpaQueryFactory
                 .selectFrom(chatMessage)
-                .where(
-                        chatMessage.chatRoom.id.eq(roomId),
-                        gtMessageId(lastMessageId)
-                )
+                .where(chatMessage.chatRoom.id.eq(roomId), gtMessageId(lastMessageId))
                 .orderBy(chatMessage.id.asc())
                 .limit(size)
                 .fetch();
@@ -64,10 +59,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
         List<Long> messageIds = jpaQueryFactory
                 .select(chatMessage.id.max())
                 .from(chatMessage)
-                .where(
-                        chatMessage.chatRoom.id.in(chatRoomIds),
-                        chatMessage.messageType.eq(MessageType.TEXT)
-                )
+                .where(chatMessage.chatRoom.id.in(chatRoomIds), chatMessage.messageType.eq(MessageType.TEXT))
                 .groupBy(chatMessage.chatRoom.id)
                 .fetch();
 
@@ -77,15 +69,13 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
 
         List<ChatMessage> messages = jpaQueryFactory
                 .selectFrom(chatMessage)
-                .join(chatMessage.chatRoom).fetchJoin()
+                .join(chatMessage.chatRoom)
+                .fetchJoin()
                 .where(chatMessage.id.in(messageIds))
                 .fetch();
 
         return messages.stream()
-                .collect(Collectors.toMap(
-                        msg -> msg.getChatRoom().getId(),
-                        msg -> msg
-                ));
+                .collect(Collectors.toMap(msg -> msg.getChatRoom().getId(), msg -> msg));
     }
 
     private BooleanExpression gtMessageId(Long lastMessageId) {

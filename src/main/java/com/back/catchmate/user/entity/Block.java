@@ -21,10 +21,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "blocks",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"blocker_id", "blocked_id"})
-        })
+@Table(
+        name = "blocks",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"blocker_id", "blocked_id"})})
 public class Block extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,9 +39,6 @@ public class Block extends BaseTimeEntity {
         if (blockerId.equals(blockedId)) {
             throw new BaseException(ErrorCode.SELF_BLOCK_FAILED);
         }
-        return Block.builder()
-                .blockerId(blockerId)
-                .blockedId(blockedId)
-                .build();
+        return Block.builder().blockerId(blockerId).blockedId(blockedId).build();
     }
 }

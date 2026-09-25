@@ -2,6 +2,12 @@ package com.back.catchmate.inquiry.infra;
 
 import com.back.catchmate.inquiry.infra.dto.AnswerDraft;
 import com.back.catchmate.inquiry.infra.dto.CorpusDoc;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -10,13 +16,6 @@ import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * RAG 질의·색인의 실제 구현. {@link AnswerAssistPort}(검색+생성)와 {@link AssistCorpusPort}(임베딩+적재)를
@@ -35,9 +34,11 @@ public class SpringAiAssistClient {
     private static final String CLOSING = "추가로 궁금하신 점이 있으시면 언제든 문의해 주세요.\n감사합니다.";
 
     // 관련성 판정은 분류(yes/no)라 결정적이어야 한다 → 동일 문의에 매번 같은 결과를 위해 temperature 0.
-    private static final ChatOptions DETERMINISTIC = ChatOptions.builder().temperature(0.0).build();
+    private static final ChatOptions DETERMINISTIC =
+            ChatOptions.builder().temperature(0.0).build();
 
-    private static final String SYSTEM_PROMPT = """
+    private static final String SYSTEM_PROMPT =
+            """
             당신은 catchmate 고객지원 담당자입니다. 한국어로 답변 초안을 작성합니다.
             [참고자료]에는 공지사항(NOTICE)과 과거 답변 사례(ANSWERED_INQUIRY)가 있습니다.
 
@@ -65,8 +66,7 @@ public class SpringAiAssistClient {
             ChatClient chatClient,
             VectorStore vectorStore,
             @Value("${assist.search.top-k:4}") int topK,
-            @Value("${assist.search.similarity-threshold:0.6}") double similarityThreshold
-    ) {
+            @Value("${assist.search.similarity-threshold:0.6}") double similarityThreshold) {
         this.chatClient = chatClient;
         this.vectorStore = vectorStore;
         this.topK = topK;
@@ -74,35 +74,40 @@ public class SpringAiAssistClient {
     }
 
     public AnswerDraft draftAnswer(String question) {
-        List<Document> hits = vectorStore.similaritySearch(
-                SearchRequest.builder()
-                        .query(question)
-                        .topK(topK)
-                        .similarityThreshold(similarityThreshold)
-                        .build()
-        );
+        List<Document> hits = vectorStore.similaritySearch(SearchRequest.builder()
+                .query(question)
+                .topK(topK)
+                .similarityThreshold(similarityThreshold)
+                .build());
 
         // threshold 미달(=근거 없음) → LLM 호출 없이 fallback
         if (hits == null || hits.isEmpty()) {
             // 왜 하나도 안 걸렸는지 보이도록, threshold 미적용 후보 점수를 함께 찍는다.
             if (log.isInfoEnabled()) {
-                List<Document> candidates = vectorStore.similaritySearch(
-                        SearchRequest.builder().query(question).topK(topK).similarityThreshold(0.0).build());
-                log.info("[assist] q='{}' threshold={} 통과=0건 → fallback | 후보점수: {}",
-                        question, similarityThreshold, scoresOf(candidates));
+                List<Document> candidates = vectorStore.similaritySearch(SearchRequest.builder()
+                        .query(question)
+                        .topK(topK)
+                        .similarityThreshold(0.0)
+                        .build());
+                log.info(
+                        "[assist] q='{}' threshold={} 통과=0건 → fallback | 후보점수: {}",
+                        question,
+                        similarityThreshold,
+                        scoresOf(candidates));
             }
             return new AnswerDraft(false, FALLBACK_MESSAGE, List.of());
         }
 
-        log.info("[assist] q='{}' threshold={} 통과={}건 | {}",
-                question, similarityThreshold, hits.size(), scoresOf(hits));
+        log.info(
+                "[assist] q='{}' threshold={} 통과={}건 | {}", question, similarityThreshold, hits.size(), scoresOf(hits));
 
         String context = hits.stream()
                 .map(doc -> "- [" + sourceLabel(doc) + "] " + doc.getText())
                 .collect(Collectors.joining("\n"));
 
         // 2단계 게이팅: 검색은 후보만 좁히고, 실제 답변 가능 여부는 LLM 이 판정한다.
-        LlmDraft result = chatClient.prompt()
+        LlmDraft result = chatClient
+                .prompt()
                 .options(DETERMINISTIC)
                 .system(SYSTEM_PROMPT)
                 .user("[문의]\n" + question + "\n\n[참고자료]\n" + context)
@@ -117,10 +122,7 @@ public class SpringAiAssistClient {
             return new AnswerDraft(false, FALLBACK_MESSAGE, List.of());
         }
 
-        List<String> sources = hits.stream()
-                .map(this::sourceLabel)
-                .distinct()
-                .toList();
+        List<String> sources = hits.stream().map(this::sourceLabel).distinct().toList();
 
         // 고정 인사말 + LLM 본문 + 고정 맺음말
         String body = result.answer() == null ? "" : result.answer().strip();
@@ -130,13 +132,10 @@ public class SpringAiAssistClient {
     }
 
     /** LLM 구조화 출력 — 참고자료가 문의에 실제로 답이 되는지(relevant) + 답변 초안(answer). */
-    public record LlmDraft(boolean relevant, String answer) {
-    }
+    public record LlmDraft(boolean relevant, String answer) {}
 
     public void upsert(List<CorpusDoc> docs) {
-        List<Document> documents = docs.stream()
-                .map(this::toDocument)
-                .toList();
+        List<Document> documents = docs.stream().map(this::toDocument).toList();
         documents.forEach(doc -> indexedIds.add(doc.getId()));
         vectorStore.add(documents);
     }
@@ -157,8 +156,7 @@ public class SpringAiAssistClient {
                 .text(doc.text())
                 .metadata(Map.of(
                         META_SOURCE_TYPE, doc.sourceType(),
-                        META_SOURCE_ID, doc.sourceId()
-                ))
+                        META_SOURCE_ID, doc.sourceId()))
                 .build();
     }
 

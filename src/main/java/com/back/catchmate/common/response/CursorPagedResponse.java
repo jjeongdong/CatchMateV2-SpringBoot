@@ -1,9 +1,8 @@
 package com.back.catchmate.common.response;
 
-import lombok.Getter;
-
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import lombok.Getter;
 
 @Getter
 public class CursorPagedResponse<T> {

@@ -4,8 +4,6 @@ import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.global.persistence.BaseTimeEntity;
 import jakarta.persistence.Column;
-
-import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -15,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,24 +25,19 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "enrolls",
+@Table(
+        name = "enrolls",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_enroll_user_board",
-                        columnNames = {"user_id", "board_id"}
-                )
+            @UniqueConstraint(
+                    name = "uk_enroll_user_board",
+                    columnNames = {"user_id", "board_id"})
         },
         indexes = {
-                // 받은 신청 목록·대기 건수 뱃지(board_owner_id + accept_status) 용.
-                @Index(name = "idx_enrolls_owner_status",
-                        columnList = "board_owner_id, accept_status"
-                ),
-                // 게시글별 신청 조회용. uk_enroll_user_board 는 선행 컬럼이 user_id 라 board_id 단독 조회엔 못 쓴다.
-                @Index(name = "idx_enrolls_board_status",
-                        columnList = "board_id, accept_status"
-                )
-        }
-)
+            // 받은 신청 목록·대기 건수 뱃지(board_owner_id + accept_status) 용.
+            @Index(name = "idx_enrolls_owner_status", columnList = "board_owner_id, accept_status"),
+            // 게시글별 신청 조회용. uk_enroll_user_board 는 선행 컬럼이 user_id 라 board_id 단독 조회엔 못 쓴다.
+            @Index(name = "idx_enrolls_board_status", columnList = "board_id, accept_status")
+        })
 public class Enroll extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -113,7 +107,9 @@ public class Enroll extends BaseTimeEntity {
             case PENDING -> throw new BaseException(ErrorCode.ALREADY_ENROLL_PENDING);
             case REJECTED -> throw new BaseException(ErrorCode.ALREADY_ENROLL_REJECTED);
             case ACCEPTED -> throw new BaseException(ErrorCode.ALREADY_ENROLL_ACCEPTED);
-            default -> { /* 통과 */ }
+            default -> {
+                /* 통과 */
+            }
         }
     }
 

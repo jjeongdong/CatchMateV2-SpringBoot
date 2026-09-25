@@ -1,14 +1,13 @@
 package com.back.catchmate.notification.infra;
 
 import com.back.catchmate.notification.event.NotificationEvent;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service

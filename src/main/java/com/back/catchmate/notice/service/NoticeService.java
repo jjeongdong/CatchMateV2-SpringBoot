@@ -11,6 +11,9 @@ import com.back.catchmate.notice.entity.Notice;
 import com.back.catchmate.notice.repository.NoticeRepository;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,10 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -89,52 +88,34 @@ public class NoticeService {
     }
 
     private Notice getNoticeOrThrow(Long noticeId) {
-        return noticeRepository.findById(noticeId)
-                .orElseThrow(() -> new BaseException(ErrorCode.NOTICE_NOT_FOUND));
+        return noticeRepository.findById(noticeId).orElseThrow(() -> new BaseException(ErrorCode.NOTICE_NOT_FOUND));
     }
 
     // 목록 조회는 호출자가 넘긴 정렬을 무시하고 항상 최신순으로 고정한다.
     // (기존 NoticeRepositoryImpl.findAll 이 pageable 의 sort 를 덮어쓰던 동작을 그대로 옮긴 것)
     private Page<Notice> findNoticePage(Pageable pageable) {
         PageRequest sortedPageRequest = PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
+                pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
         return noticeRepository.findAll(sortedPageRequest);
     }
 
     private NoticeDetailResponse toDetailResponse(Notice notice, String writerNickname) {
         return new NoticeDetailResponse(
-                notice.getId(),
-                notice.getTitle(),
-                notice.getContent(),
-                writerNickname,
-                notice.getCreatedAt()
-        );
+                notice.getId(), notice.getTitle(), notice.getContent(), writerNickname, notice.getCreatedAt());
     }
 
     private NoticeResponse toNoticeResponse(Notice notice, String writerNickname) {
-        return new NoticeResponse(
-                notice.getId(),
-                notice.getTitle(),
-                writerNickname,
-                notice.getCreatedAt()
-        );
+        return new NoticeResponse(notice.getId(), notice.getTitle(), writerNickname, notice.getCreatedAt());
     }
 
     private NoticeSummary toSummary(Notice notice) {
         return new NoticeSummary(
-                notice.getId(),
-                notice.getWriterId(),
-                notice.getTitle(),
-                notice.getContent(),
-                notice.getCreatedAt()
-        );
+                notice.getId(), notice.getWriterId(), notice.getTitle(), notice.getContent(), notice.getCreatedAt());
     }
 
     private Map<Long, String> fetchWriterNicknames(List<Notice> notices) {
-        List<Long> writerIds = notices.stream().map(Notice::getWriterId).distinct().toList();
+        List<Long> writerIds =
+                notices.stream().map(Notice::getWriterId).distinct().toList();
         if (writerIds.isEmpty()) return Map.of();
         return userService.getUserSummaries(writerIds).stream()
                 .collect(Collectors.toMap(UserSummary::userId, UserSummary::nickName));

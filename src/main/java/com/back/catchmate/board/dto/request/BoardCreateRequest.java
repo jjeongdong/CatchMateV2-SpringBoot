@@ -2,7 +2,6 @@ package com.back.catchmate.board.dto.request;
 
 import com.back.catchmate.board.dto.command.BoardCreateCommand;
 import jakarta.validation.constraints.NotNull;
-
 import java.util.List;
 
 public record BoardCreateRequest(
@@ -13,8 +12,7 @@ public record BoardCreateRequest(
         String preferredGender,
         List<String> preferredAgeRange,
         @NotNull(message = "임시저장 여부는 필수입니다.") Boolean completed,
-        Long gameId
-) {
+        Long gameId) {
     public BoardCreateCommand toCommand() {
         return new BoardCreateCommand(
                 null,
@@ -25,7 +23,6 @@ public record BoardCreateRequest(
                 preferredGender,
                 preferredAgeRange,
                 gameId,
-                completed
-        );
+                completed);
     }
 }

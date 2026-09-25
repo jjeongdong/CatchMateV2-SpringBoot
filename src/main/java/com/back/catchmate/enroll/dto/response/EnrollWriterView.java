@@ -11,6 +11,4 @@ public record EnrollWriterView(
         LocalDate birthDate,
         String watchStyle,
         EnrollClubView club,
-        String authority
-) {
-}
+        String authority) {}

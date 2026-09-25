@@ -29,23 +29,23 @@ public class InquiryController {
 
     @PostMapping
     @Operation(summary = "문의 등록", description = "새로운 1:1 문의를 등록합니다.")
-    public ResponseEntity<InquiryCreateResponse> createInquiry(@AuthUser Long userId,
-                                                               @RequestBody @Valid InquiryCreateRequest request) {
+    public ResponseEntity<InquiryCreateResponse> createInquiry(
+            @AuthUser Long userId, @RequestBody @Valid InquiryCreateRequest request) {
         return ResponseEntity.ok(inquiryService.createInquiry(userId, request));
     }
 
     @GetMapping("/{inquiryId}")
     @Operation(summary = "문의 상세 조회", description = "문의 내용과 답변을 상세 조회합니다.")
-    public ResponseEntity<InquiryDetailResponse> getInquiry(@AuthUser Long userId,
-                                                            @PathVariable Long inquiryId) {
+    public ResponseEntity<InquiryDetailResponse> getInquiry(@AuthUser Long userId, @PathVariable Long inquiryId) {
         return ResponseEntity.ok(inquiryService.getInquiryDetail(userId, inquiryId));
     }
 
     @GetMapping
     @Operation(summary = "내 문의 목록 조회", description = "로그인한 사용자의 1:1 문의 내역을 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<InquiryDetailResponse>> getInquiryList(@Parameter(hidden = true) @AuthUser Long userId,
-                                                                               @RequestParam(defaultValue = "0") int page,
-                                                                               @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<PagedResponse<InquiryDetailResponse>> getInquiryList(
+            @Parameter(hidden = true) @AuthUser Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(inquiryService.getInquiryListByUser(userId, page, size));
     }
 }

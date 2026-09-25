@@ -6,13 +6,12 @@ import com.back.catchmate.notification.dto.OutboxRecipient;
 import com.back.catchmate.notification.entity.NotificationOutbox;
 import com.back.catchmate.notification.repository.NotificationOutboxRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -22,14 +21,12 @@ public class OutboxSaver {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public void saveOutbox(Long recipientId,
-                           String recipientAddress,
-                           String title,
-                           String body,
-                           Map<String, String> data) {
+    public void saveOutbox(
+            Long recipientId, String recipientAddress, String title, String body, Map<String, String> data) {
         try {
             String payloadJson = objectMapper.writeValueAsString(data);
-            NotificationOutbox outbox = NotificationOutbox.create(recipientId, recipientAddress, title, body, payloadJson);
+            NotificationOutbox outbox =
+                    NotificationOutbox.create(recipientId, recipientAddress, title, body, payloadJson);
             outboxRepository.save(outbox);
         } catch (Exception e) {
             log.error("아웃박스 저장 중 에러 발생", e);
@@ -38,10 +35,7 @@ public class OutboxSaver {
     }
 
     @Transactional
-    public void saveOutboxBatch(List<OutboxRecipient> recipients,
-                                String title,
-                                String body,
-                                Map<String, String> data) {
+    public void saveOutboxBatch(List<OutboxRecipient> recipients, String title, String body, Map<String, String> data) {
         if (recipients.isEmpty()) {
             return;
         }

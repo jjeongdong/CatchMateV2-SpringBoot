@@ -1,19 +1,26 @@
 package com.back.catchmate.chat.event;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.back.catchmate.CatchmateApplication;
 import com.back.catchmate.auth.infra.JwtTokenProvider;
 import com.back.catchmate.board.entity.Board;
 import com.back.catchmate.board.repository.BoardRepository;
-import com.back.catchmate.chat.event.ChatMessageRedisPublisher;
 import com.back.catchmate.chat.entity.ChatRoom;
 import com.back.catchmate.chat.entity.ChatRoomMember;
+import com.back.catchmate.chat.entity.MessageType;
 import com.back.catchmate.chat.repository.ChatRoomMemberRepository;
 import com.back.catchmate.chat.repository.ChatRoomRepository;
-import com.back.catchmate.chat.event.ChatMessageBroadcastEvent;
-import com.back.catchmate.chat.entity.MessageType;
+import com.back.catchmate.user.entity.Authority;
 import com.back.catchmate.user.entity.User;
 import com.back.catchmate.user.repository.UserRepository;
-import com.back.catchmate.user.entity.Authority;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,16 +35,6 @@ import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
-import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 // 실제 임베디드 서버 + 실제 WebSocket/STOMP 핸드셰이크(JWT 인증, 구독 권한 검사 포함) + 실제 Redis 를 모두 거쳐
 // "메시지가 정상적으로 오고 가는지" 를 검증한다.
 // ChatRedisPubSubIntegrationTest 가 Redis <-> Subscriber 구간만 봤다면, 이 테스트는
@@ -45,8 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(
         classes = CatchmateApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "spring.profiles.active=local"
-)
+        properties = "spring.profiles.active=local")
 class ChatMessageE2eStompTest {
 
     @LocalServerPort
@@ -137,7 +133,10 @@ class ChatMessageE2eStompTest {
         connectHeaders.add("Authorization", token);
 
         StompSession session = stompClient
-                .connectAsync("ws://localhost:" + port + "/ws/chat", new WebSocketHttpHeaders(), connectHeaders,
+                .connectAsync(
+                        "ws://localhost:" + port + "/ws/chat",
+                        new WebSocketHttpHeaders(),
+                        connectHeaders,
                         new StompSessionHandlerAdapter() {})
                 .get(5, TimeUnit.SECONDS);
 

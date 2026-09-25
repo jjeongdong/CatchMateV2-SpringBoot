@@ -17,13 +17,11 @@ public class ChatSequenceRedisStore {
      * Key: chat:room:{roomId}:seq
      */
     public Long generateSequence(Long roomId) {
-        return redisTemplate.opsForValue()
-                .increment(SEQ_KEY_PREFIX + roomId + SEQ_KEY_SUFFIX);
+        return redisTemplate.opsForValue().increment(SEQ_KEY_PREFIX + roomId + SEQ_KEY_SUFFIX);
     }
 
     public Long getCurrentSequence(Long roomId) {
-        String value = redisTemplate.opsForValue()
-                .get(SEQ_KEY_PREFIX + roomId + SEQ_KEY_SUFFIX);
+        String value = redisTemplate.opsForValue().get(SEQ_KEY_PREFIX + roomId + SEQ_KEY_SUFFIX);
         return value != null ? Long.parseLong(value) : 0L;
     }
 }

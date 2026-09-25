@@ -16,8 +16,7 @@ public class S3Config {
     @Bean
     public AwsCredentialsProvider awsCredentialsProvider(
             @Value("${aws.credentials.accessKeyId:}") String accessKeyId,
-            @Value("${aws.credentials.secretAccessKey:}") String secretAccessKey
-    ) {
+            @Value("${aws.credentials.secretAccessKey:}") String secretAccessKey) {
         if (accessKeyId != null && !accessKeyId.isBlank() && secretAccessKey != null && !secretAccessKey.isBlank()) {
             return StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey));
         }
@@ -25,10 +24,7 @@ public class S3Config {
     }
 
     @Bean
-    public S3Client s3Client(
-            @Value("${aws.region}") String region,
-            AwsCredentialsProvider awsCredentialsProvider
-    ) {
+    public S3Client s3Client(@Value("${aws.region}") String region, AwsCredentialsProvider awsCredentialsProvider) {
         return S3Client.builder()
                 .region(Region.of(region))
                 .credentialsProvider(awsCredentialsProvider)

@@ -21,8 +21,7 @@ public class SwaggerConfig {
                 .bearerFormat("JWT");
 
         SecurityRequirement securityRequirement = new SecurityRequirement().addList(JWT_SCHEME_NAME);
-        Components components = new Components()
-                .addSecuritySchemes(JWT_SCHEME_NAME, securityScheme);
+        Components components = new Components().addSecuritySchemes(JWT_SCHEME_NAME, securityScheme);
 
         return new OpenAPI()
                 .info(apiInfo())

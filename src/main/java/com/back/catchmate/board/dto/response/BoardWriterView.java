@@ -14,6 +14,4 @@ public record BoardWriterView(
         LocalDate birthDate,
         String watchStyle,
         BoardClubView club,
-        String authority
-) {
-}
+        String authority) {}

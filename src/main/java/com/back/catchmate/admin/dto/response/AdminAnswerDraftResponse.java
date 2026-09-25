@@ -1,7 +1,6 @@
 package com.back.catchmate.admin.dto.response;
 
 import com.back.catchmate.inquiry.dto.response.AnswerDraftResponse;
-
 import java.util.List;
 
 /**
@@ -11,11 +10,7 @@ import java.util.List;
  * @param draft    생성된 초안 (또는 fallback 안내)
  * @param sources  초안 근거 출처 라벨 목록
  */
-public record AdminAnswerDraftResponse(
-        boolean grounded,
-        String draft,
-        List<String> sources
-) {
+public record AdminAnswerDraftResponse(boolean grounded, String draft, List<String> sources) {
     public static AdminAnswerDraftResponse from(AnswerDraftResponse info) {
         return new AdminAnswerDraftResponse(info.grounded(), info.draft(), info.sources());
     }

@@ -9,6 +9,4 @@ public record EnrollBoardSummary(
         boolean bookMarked,
         EnrollClubView cheerClub,
         EnrollGameView gameResponse,
-        EnrollWriterView userResponse
-) {
-}
+        EnrollWriterView userResponse) {}

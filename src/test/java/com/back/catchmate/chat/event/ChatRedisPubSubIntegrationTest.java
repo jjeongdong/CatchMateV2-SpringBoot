@@ -1,10 +1,17 @@
 package com.back.catchmate.chat.event;
 
-import com.back.catchmate.chat.event.ChatMessageBroadcastEvent;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.then;
+
 import com.back.catchmate.chat.entity.MessageType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.time.LocalDateTime;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,15 +28,6 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-
-import java.time.LocalDateTime;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.then;
 
 // 실제 로컬 Redis(127.0.0.1:6379)로 발행 -> 구독까지 전 구간을 검증한다.
 // ChatRedisSubscriberTest 는 onMessage 를 직접 호출하는 단위 테스트라 MessageListenerAdapter.setSerializer(null)
@@ -80,7 +78,8 @@ class ChatRedisPubSubIntegrationTest {
         RedisTemplate<String, ChatMessageBroadcastEvent> publishTemplate = new RedisTemplate<>();
         publishTemplate.setConnectionFactory(connectionFactory);
         publishTemplate.setKeySerializer(new StringRedisSerializer());
-        publishTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(objectMapper, ChatMessageBroadcastEvent.class));
+        publishTemplate.setValueSerializer(
+                new Jackson2JsonRedisSerializer<>(objectMapper, ChatMessageBroadcastEvent.class));
         publishTemplate.afterPropertiesSet();
 
         ChatMessageBroadcastEvent event = ChatMessageBroadcastEvent.builder()
@@ -96,9 +95,11 @@ class ChatRedisPubSubIntegrationTest {
 
         CountDownLatch received = new CountDownLatch(1);
         Mockito.doAnswer(invocation -> {
-            received.countDown();
-            return null;
-        }).when(messagingTemplate).send(any(), any());
+                    received.countDown();
+                    return null;
+                })
+                .when(messagingTemplate)
+                .send(any(), any());
 
         // when
         publishTemplate.convertAndSend(TEST_TOPIC.getTopic(), event);

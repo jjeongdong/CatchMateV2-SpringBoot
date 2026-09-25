@@ -9,6 +9,4 @@ public record InquirySummary(
         String content,
         String answer,
         String status,
-        LocalDateTime createdAt
-) {
-}
+        LocalDateTime createdAt) {}

@@ -21,12 +21,11 @@ import com.back.catchmate.user.dto.command.CreateUserCommand;
 import com.back.catchmate.user.dto.response.CreatedUserResponse;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
-import java.util.UUID;
 
 // 클래스 레벨에 @Transactional 을 붙이지 말 것.
 // handleCallback 은 OAuth 공급자(카카오·구글)로 토큰 교환 + 사용자 조회 HTTP 를 순차로 호출한다.
@@ -54,7 +53,8 @@ public class OAuthService {
         validateStateMatches(command.state(), command.stateFromCookie());
 
         OAuthUserInfo oauthUserInfo = fetchOAuthUserInfo(command);
-        Optional<UserSummary> registeredUser = userService.findUserSummaryByProviderId(oauthUserInfo.getProviderIdWithProvider());
+        Optional<UserSummary> registeredUser =
+                userService.findUserSummaryByProviderId(oauthUserInfo.getProviderIdWithProvider());
 
         if (registeredUser.isEmpty()) {
             return issueSignupToken(oauthUserInfo);
@@ -72,7 +72,8 @@ public class OAuthService {
         CreatedUserResponse createdUser = userService.createUser(toCreateUserCommand(claims, command));
         IssuedAuthToken issuedToken = authService.createToken(createdUser.userId(), createdUser.authority());
 
-        SignUpResponse response = SignUpResponse.of(createdUser.userId(), issuedToken.accessToken(), createdUser.createdAt());
+        SignUpResponse response =
+                SignUpResponse.of(createdUser.userId(), issuedToken.accessToken(), createdUser.createdAt());
         return new SignUpResult(response, issuedToken.refreshToken());
     }
 
@@ -92,8 +93,7 @@ public class OAuthService {
                 claims.getProvider() != null ? claims.getProvider().getProvider() : null,
                 claims.getProviderId(),
                 claims.getEmail(),
-                claims.getProfileImageUrl()
-        );
+                claims.getProfileImageUrl());
         String signupToken = authService.issueSignupToken(payload);
         return new OAuthCallbackResult.NewUser(signupToken);
     }
@@ -118,8 +118,7 @@ public class OAuthService {
                 command.birthDate(),
                 command.favoriteClubId(),
                 claims.getProfileImageUrl(),
-                command.watchStyle()
-        );
+                command.watchStyle());
     }
 
     private void validateStateMatches(String state, String stateFromCookie) {

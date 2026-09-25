@@ -1,9 +1,9 @@
 package com.back.catchmate.enroll.service;
 
-import com.back.catchmate.common.error.ErrorCode;
-import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.board.service.BoardService;
+import com.back.catchmate.common.error.ErrorCode;
+import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.enroll.dto.response.EnrollAcceptResponse;
 import com.back.catchmate.enroll.entity.Enroll;
 import com.back.catchmate.enroll.event.EnrollAcceptedEvent;
@@ -38,7 +38,7 @@ public class EnrollAcceptExecutor {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     private final UserService userService;
-    
+
     private final BoardService boardService;
 
     @Retryable(
@@ -47,8 +47,8 @@ public class EnrollAcceptExecutor {
             backoff = @Backoff(delay = 50, multiplier = 2))
     @Transactional
     public EnrollAcceptResponse accept(Long userId, Long enrollId) {
-        Enroll enroll = enrollRepository.findById(enrollId)
-                .orElseThrow(() -> new BaseException(ErrorCode.ENROLL_NOT_FOUND));
+        Enroll enroll =
+                enrollRepository.findById(enrollId).orElseThrow(() -> new BaseException(ErrorCode.ENROLL_NOT_FOUND));
         if (!enroll.getBoardOwnerId().equals(userId)) {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }
@@ -59,12 +59,8 @@ public class EnrollAcceptExecutor {
         enroll.accept();
         enrollRepository.save(enroll);
 
-        applicationEventPublisher.publishEvent(EnrollAcceptedEvent.of(
-                enrollId,
-                board.boardId(),
-                applicant.userId(),
-                board.userId()
-        ));
+        applicationEventPublisher.publishEvent(
+                EnrollAcceptedEvent.of(enrollId, board.boardId(), applicant.userId(), board.userId()));
 
         return EnrollAcceptResponse.of(enrollId);
     }

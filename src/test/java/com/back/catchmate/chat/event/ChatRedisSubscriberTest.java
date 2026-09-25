@@ -1,10 +1,14 @@
 package com.back.catchmate.chat.event;
 
-import com.back.catchmate.chat.event.ChatMessageBroadcastEvent;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.then;
+
 import com.back.catchmate.chat.entity.MessageType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,12 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-
-import java.time.LocalDateTime;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.then;
 
 // ChatMessageRedisPublisher 가 발행할 때 쓰는 것과 동일한 방식(JavaTimeModule + ISO 문자열)으로
 // ObjectMapper 를 구성해, "Redis 로 오는 JSON == STOMP 로 나가는 JSON" 이라는 전제가

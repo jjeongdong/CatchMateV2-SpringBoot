@@ -1,16 +1,16 @@
 package com.back.catchmate.chat.repository;
 
 import com.back.catchmate.chat.dto.ReadSequenceUpdate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
-import java.util.List;
-
 @RequiredArgsConstructor
 public class ChatRoomMemberRepositoryImpl implements ChatRoomMemberRepositoryCustom {
-    private static final String BATCH_UPDATE_LAST_READ_SEQUENCE = """
+    private static final String BATCH_UPDATE_LAST_READ_SEQUENCE =
+            """
             UPDATE chat_room_members
             SET last_read_sequence = :sequence
             WHERE chat_room_id = :chatRoomId AND user_id = :userId

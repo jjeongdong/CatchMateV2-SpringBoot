@@ -13,14 +13,6 @@ import com.back.catchmate.game.dto.response.GameSummary;
 import com.back.catchmate.game.service.GameService;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +20,13 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
@@ -55,15 +54,15 @@ public class BookmarkService {
     }
 
     public PagedResponse<BookmarkedBoardSummary> getBookmarkedBoards(Long userId, int page, int size) {
-        Page<Bookmark> bookmarkPage = bookmarkRepository.findAllByUserId(userId, sortByCreatedAtDesc(PageRequest.of(page, size)));
+        Page<Bookmark> bookmarkPage =
+                bookmarkRepository.findAllByUserId(userId, sortByCreatedAtDesc(PageRequest.of(page, size)));
 
         if (bookmarkPage.isEmpty()) {
             return new PagedResponse<>(bookmarkPage, List.of());
         }
 
-        List<Long> boardIds = bookmarkPage.getContent().stream()
-                .map(Bookmark::getBoardId)
-                .toList();
+        List<Long> boardIds =
+                bookmarkPage.getContent().stream().map(Bookmark::getBoardId).toList();
 
         List<BoardSummary> boards = boardService.getBoardSummaries(boardIds);
         List<BookmarkedBoardSummary> responses = assembleSummaries(boards);
@@ -87,10 +86,7 @@ public class BookmarkService {
     // (기존 BookmarkRepositoryImpl.findAllByUserId 동작을 그대로 옮긴 것)
     private PageRequest sortByCreatedAtDesc(Pageable pageable) {
         return PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
+                pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     private List<BookmarkedBoardSummary> assembleSummaries(List<BoardSummary> boards) {
@@ -107,26 +103,28 @@ public class BookmarkService {
                 .distinct()
                 .toList();
 
-        Map<Long, UserSummary> userMap = userIds.isEmpty() ? Map.of() :
-                userService.getUserSummaries(userIds).stream()
+        Map<Long, UserSummary> userMap = userIds.isEmpty()
+                ? Map.of()
+                : userService.getUserSummaries(userIds).stream()
                         .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
-        Map<Long, GameSummary> gameMap = gameIds.isEmpty() ? Map.of() :
-                gameService.getGameSummaries(gameIds).stream()
+        Map<Long, GameSummary> gameMap = gameIds.isEmpty()
+                ? Map.of()
+                : gameService.getGameSummaries(gameIds).stream()
                         .collect(Collectors.toMap(GameSummary::gameId, Function.identity()));
 
         List<Long> clubIds = Stream.of(
                         boards.stream().map(BoardSummary::cheerClubId),
                         gameMap.values().stream().map(GameSummary::homeClubId),
                         gameMap.values().stream().map(GameSummary::awayClubId),
-                        userMap.values().stream().map(UserSummary::clubId)
-                )
+                        userMap.values().stream().map(UserSummary::clubId))
                 .flatMap(Function.identity())
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
 
-        Map<Long, ClubSummary> clubMap = clubIds.isEmpty() ? Map.of() :
-                clubService.getClubSummaries(clubIds).stream()
+        Map<Long, ClubSummary> clubMap = clubIds.isEmpty()
+                ? Map.of()
+                : clubService.getClubSummaries(clubIds).stream()
                         .collect(Collectors.toMap(ClubSummary::clubId, Function.identity()));
 
         return boards.stream()
@@ -134,7 +132,11 @@ public class BookmarkService {
                 .toList();
     }
 
-    private BookmarkedBoardSummary toSummary(BoardSummary board, Map<Long, UserSummary> userMap, Map<Long, ClubSummary> clubMap, Map<Long, GameSummary> gameMap) {
+    private BookmarkedBoardSummary toSummary(
+            BoardSummary board,
+            Map<Long, UserSummary> userMap,
+            Map<Long, ClubSummary> clubMap,
+            Map<Long, GameSummary> gameMap) {
         UserSummary user = board.userId() != null ? userMap.get(board.userId()) : null;
         ClubSummary userClub = user != null && user.clubId() != null ? clubMap.get(user.clubId()) : null;
         ClubSummary cheerClub = board.cheerClubId() != null ? clubMap.get(board.cheerClubId()) : null;

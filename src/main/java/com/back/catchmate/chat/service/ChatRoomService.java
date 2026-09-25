@@ -1,11 +1,12 @@
 package com.back.catchmate.chat.service;
+
 import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.board.service.BoardService;
+import com.back.catchmate.chat.dto.MembershipSnapshot;
 import com.back.catchmate.chat.entity.ChatMessage;
 import com.back.catchmate.chat.entity.ChatRoom;
 import com.back.catchmate.chat.entity.ChatRoomMember;
 import com.back.catchmate.chat.entity.MessageType;
-import com.back.catchmate.chat.dto.MembershipSnapshot;
 import com.back.catchmate.chat.infra.ChatHistoryRedisCache;
 import com.back.catchmate.chat.infra.ChatMembershipRedisCache;
 import com.back.catchmate.chat.infra.ChatSequenceRedisStore;
@@ -16,14 +17,13 @@ import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
@@ -41,7 +41,8 @@ public class ChatRoomService {
     private final UserService userService;
 
     public ChatRoom getChatRoomOrThrow(Long chatRoomId) {
-        return chatRoomRepository.findById(chatRoomId)
+        return chatRoomRepository
+                .findById(chatRoomId)
                 .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_NOT_FOUND));
     }
 
@@ -60,7 +61,8 @@ public class ChatRoomService {
 
     @Transactional
     public ChatRoom getOrCreateChatRoom(Long boardId) {
-        return chatRoomRepository.findByBoardId(boardId)
+        return chatRoomRepository
+                .findByBoardId(boardId)
                 .orElseGet(() -> chatRoomRepository.save(ChatRoom.createChatRoom(boardId)));
     }
 
@@ -77,13 +79,8 @@ public class ChatRoomService {
         Long sequence = chatSequenceRedisStore.getCurrentSequence(chatRoomId);
 
         String enterMessage = user.nickName() + "님이 입장하셨습니다.";
-        ChatMessage chatMessage = ChatMessage.createMessage(
-                chatRoomId,
-                user.userId(),
-                enterMessage,
-                MessageType.SYSTEM,
-                sequence
-        );
+        ChatMessage chatMessage =
+                ChatMessage.createMessage(chatRoomId, user.userId(), enterMessage, MessageType.SYSTEM, sequence);
 
         chatMessage = chatMessageRepository.save(chatMessage);
         chatHistoryRedisCache.evictLatestPage(chatRoomId);
@@ -105,13 +102,8 @@ public class ChatRoomService {
         chatMembershipRedisCache.evict(chatRoomId, chatRoomMember.getUserId());
 
         String leaveMessage = user.nickName() + "님이 퇴장하셨습니다.";
-        ChatMessage chatMessage = ChatMessage.createMessage(
-                chatRoomId,
-                user.userId(),
-                leaveMessage,
-                MessageType.SYSTEM,
-                sequence
-        );
+        ChatMessage chatMessage =
+                ChatMessage.createMessage(chatRoomId, user.userId(), leaveMessage, MessageType.SYSTEM, sequence);
 
         chatMessage = chatMessageRepository.save(chatMessage);
         chatHistoryRedisCache.evictLatestPage(chatRoomId);
@@ -128,16 +120,18 @@ public class ChatRoomService {
 
     // 멤버십 인증 캐시(read-through). miss 시에만 DB 조회 후 캐시 적재.
     private boolean isActiveMember(Long roomId, Long userId) {
-        return chatMembershipRedisCache.find(roomId, userId)
+        return chatMembershipRedisCache
+                .find(roomId, userId)
                 .map(MembershipSnapshot::active)
                 .orElseGet(() -> {
-                    Optional<ChatRoomMember> member = chatRoomMemberRepository.findByChatRoomIdAndUserId(roomId, userId);
+                    Optional<ChatRoomMember> member =
+                            chatRoomMemberRepository.findByChatRoomIdAndUserId(roomId, userId);
                     if (member.isEmpty()) {
                         return false;
                     }
                     ChatRoomMember found = member.get();
-                    chatMembershipRedisCache.put(roomId, userId,
-                            new MembershipSnapshot(found.isActive(), found.isReadOnly()));
+                    chatMembershipRedisCache.put(
+                            roomId, userId, new MembershipSnapshot(found.isActive(), found.isReadOnly()));
                     return found.isActive();
                 });
     }
@@ -178,13 +172,8 @@ public class ChatRoomService {
 
         UserSummary targetUser = userService.getUserSummary(targetMember.getUserId());
         String kickMessage = targetUser.nickName() + "님이 내보내졌습니다.";
-        ChatMessage chatMessage = ChatMessage.createMessage(
-                chatRoomId,
-                targetUser.userId(),
-                kickMessage,
-                MessageType.SYSTEM,
-                sequence
-        );
+        ChatMessage chatMessage =
+                ChatMessage.createMessage(chatRoomId, targetUser.userId(), kickMessage, MessageType.SYSTEM, sequence);
 
         chatMessage = chatMessageRepository.save(chatMessage);
         chatHistoryRedisCache.evictLatestPage(chatRoomId);

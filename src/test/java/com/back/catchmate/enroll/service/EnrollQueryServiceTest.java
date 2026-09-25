@@ -1,5 +1,19 @@
 package com.back.catchmate.enroll.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.never;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.times;
+
+import com.back.catchmate.board.dto.response.BoardSummary;
+import com.back.catchmate.board.service.BoardService;
+import com.back.catchmate.bookmark.service.BookmarkService;
+import com.back.catchmate.club.dto.response.ClubSummary;
+import com.back.catchmate.club.service.ClubService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.response.PagedResponse;
@@ -8,18 +22,13 @@ import com.back.catchmate.enroll.dto.response.EnrollDetailResponse;
 import com.back.catchmate.enroll.dto.response.EnrollReceiveResponse;
 import com.back.catchmate.enroll.dto.response.EnrollRequestResponse;
 import com.back.catchmate.enroll.dto.response.EnrollResponse;
-import com.back.catchmate.board.dto.response.BoardSummary;
-import com.back.catchmate.board.service.BoardService;
-import com.back.catchmate.bookmark.service.BookmarkService;
-import com.back.catchmate.club.dto.response.ClubSummary;
-import com.back.catchmate.club.service.ClubService;
-import com.back.catchmate.game.dto.response.GameSummary;
+import com.back.catchmate.enroll.entity.AcceptStatus;
+import com.back.catchmate.enroll.entity.Enroll;
+import com.back.catchmate.enroll.repository.EnrollRepository;
 import com.back.catchmate.game.service.GameService;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
-import com.back.catchmate.enroll.entity.AcceptStatus;
-import com.back.catchmate.enroll.repository.EnrollRepository;
-import com.back.catchmate.enroll.entity.Enroll;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,31 +41,24 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-import java.util.Set;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.never;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.times;
-
 @ExtendWith(MockitoExtension.class)
 class EnrollQueryServiceTest {
 
     @Mock
     private EnrollRepository enrollRepository;
+
     @Mock
-    private BoardService boardService;                // cross-context: 자기 FetchPort 를 모킹
+    private BoardService boardService; // cross-context: 자기 FetchPort 를 모킹
+
     @Mock
     private BookmarkService bookmarkService;
+
     @Mock
     private ClubService clubService;
+
     @Mock
     private GameService gameService;
+
     @Mock
     private UserService userService;
 
@@ -77,8 +79,7 @@ class EnrollQueryServiceTest {
         // when & then
         assertThatThrownBy(() -> sut.getEnroll(otherUserId, enrollId))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.FORBIDDEN_ACCESS));
+                .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN_ACCESS));
         then(userService).shouldHaveNoInteractions();
         then(clubService).shouldHaveNoInteractions();
     }
@@ -155,10 +156,12 @@ class EnrollQueryServiceTest {
         // given
         Long userId = 1L, boardId = 10L, writerId = 2L;
         given(enrollRepository.findAllByUserId(eq(userId), any(Pageable.class)))
-                .willReturn(new PageImpl<>(List.of(
-                        enroll(100L, userId, boardId, writerId, AcceptStatus.PENDING, true),
-                        enroll(101L, userId, boardId, writerId, AcceptStatus.REJECTED, false)
-                ), PageRequest.of(0, 10), 2));
+                .willReturn(new PageImpl<>(
+                        List.of(
+                                enroll(100L, userId, boardId, writerId, AcceptStatus.PENDING, true),
+                                enroll(101L, userId, boardId, writerId, AcceptStatus.REJECTED, false)),
+                        PageRequest.of(0, 10),
+                        2));
         given(bookmarkService.findBookmarkedBoardIds(userId, List.of(boardId))).willReturn(List.of(boardId));
         given(boardService.getBoardSummaries(List.of(boardId))).willReturn(List.of(board(boardId, writerId)));
         given(userService.getUserSummaries(List.of(writerId))).willReturn(List.of(user(writerId, null)));
@@ -168,11 +171,10 @@ class EnrollQueryServiceTest {
 
         // then
         assertThat(response.getContent()).hasSize(2);
-        assertThat(response.getContent())
-                .allSatisfy(item -> {
-                    assertThat(item.boardResponse().boardId()).isEqualTo(boardId);
-                    assertThat(item.boardResponse().bookMarked()).isTrue();
-                });
+        assertThat(response.getContent()).allSatisfy(item -> {
+            assertThat(item.boardResponse().boardId()).isEqualTo(boardId);
+            assertThat(item.boardResponse().bookMarked()).isTrue();
+        });
         assertThat(response.getContent().get(0).acceptStatus()).isEqualTo(AcceptStatus.PENDING);
         assertThat(response.getContent().get(1).acceptStatus()).isEqualTo(AcceptStatus.REJECTED);
         then(boardService).should(times(1)).getBoardSummaries(List.of(boardId));
@@ -190,8 +192,7 @@ class EnrollQueryServiceTest {
         // when & then
         assertThatThrownBy(() -> sut.getEnrollReceiveListByBoardId(otherUserId, boardId, 0, 10))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.FORBIDDEN_ACCESS));
+                .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN_ACCESS));
         then(enrollRepository).shouldHaveNoInteractions();
         then(userService).shouldHaveNoInteractions();
     }
@@ -202,10 +203,12 @@ class EnrollQueryServiceTest {
         // given
         Long boardId = 10L, writerId = 2L, applicantId = 1L, clubId = 5L;
         given(boardService.getBoardSummary(boardId)).willReturn(board(boardId, writerId));
-        given(enrollRepository.findAllByBoardIdAndAcceptStatus(eq(boardId), eq(AcceptStatus.PENDING), any(Pageable.class)))
-                .willReturn(new PageImpl<>(List.of(
-                        enroll(100L, applicantId, boardId, writerId, AcceptStatus.PENDING, true)
-                ), PageRequest.of(0, 10), 1));
+        given(enrollRepository.findAllByBoardIdAndAcceptStatus(
+                        eq(boardId), eq(AcceptStatus.PENDING), any(Pageable.class)))
+                .willReturn(new PageImpl<>(
+                        List.of(enroll(100L, applicantId, boardId, writerId, AcceptStatus.PENDING, true)),
+                        PageRequest.of(0, 10),
+                        1));
         given(userService.getUserSummaries(List.of(applicantId))).willReturn(List.of(user(applicantId, clubId)));
         given(clubService.getClubSummaries(List.of(clubId))).willReturn(List.of(club(clubId)));
 
@@ -218,7 +221,8 @@ class EnrollQueryServiceTest {
         assertThat(applicant.enrollId()).isEqualTo(100L);
         assertThat(applicant.applicantResponse().userId()).isEqualTo(applicantId);
         assertThat(applicant.applicantResponse().favoriteClub()).isEqualTo("LG 트윈스");
-        then(enrollRepository).should()
+        then(enrollRepository)
+                .should()
                 .findAllByBoardIdAndAcceptStatus(eq(boardId), eq(AcceptStatus.PENDING), any(Pageable.class));
     }
 
@@ -229,7 +233,8 @@ class EnrollQueryServiceTest {
     void 받은_신청이_없으면_신청_상세조회를_하지_않는다() {
         // given
         Long writerId = 2L;
-        given(enrollRepository.findDistinctBoardIdsByOwnerIdAndStatus(eq(writerId), eq(AcceptStatus.PENDING), any(Pageable.class)))
+        given(enrollRepository.findDistinctBoardIdsByOwnerIdAndStatus(
+                        eq(writerId), eq(AcceptStatus.PENDING), any(Pageable.class)))
                 .willReturn(Page.empty(PageRequest.of(0, 10)));
 
         // when
@@ -247,13 +252,13 @@ class EnrollQueryServiceTest {
     void 게시글별로_자기_신청만_묶고_신청없는_게시글은_제외한다() {
         // given
         Long writerId = 2L, boardId = 10L, emptyBoardId = 11L;
-        given(enrollRepository.findDistinctBoardIdsByOwnerIdAndStatus(eq(writerId), eq(AcceptStatus.PENDING), any(Pageable.class)))
+        given(enrollRepository.findDistinctBoardIdsByOwnerIdAndStatus(
+                        eq(writerId), eq(AcceptStatus.PENDING), any(Pageable.class)))
                 .willReturn(new PageImpl<>(List.of(boardId, emptyBoardId), PageRequest.of(0, 10), 2));
         given(enrollRepository.findAllByBoardIdInAndStatus(List.of(boardId, emptyBoardId), AcceptStatus.PENDING))
                 .willReturn(List.of(
                         enroll(100L, 1L, boardId, writerId, AcceptStatus.PENDING, true),
-                        enroll(101L, 3L, boardId, writerId, AcceptStatus.PENDING, true)
-                ));
+                        enroll(101L, 3L, boardId, writerId, AcceptStatus.PENDING, true)));
         given(boardService.getBoardSummaries(List.of(boardId, emptyBoardId)))
                 .willReturn(List.of(board(boardId, writerId), board(emptyBoardId, writerId)));
         given(userService.getUserSummaries(List.of(1L, 3L))).willReturn(List.of(user(1L, null), user(3L, null)));
@@ -267,7 +272,8 @@ class EnrollQueryServiceTest {
         EnrollReceiveResponse receive = response.getContent().get(0);
         assertThat(receive.boardResponse().boardId()).isEqualTo(boardId);
         assertThat(receive.enrollResponses()).hasSize(2);
-        assertThat(receive.enrollResponses()).extracting(EnrollResponse::enrollId)
+        assertThat(receive.enrollResponses())
+                .extracting(EnrollResponse::enrollId)
                 .containsExactly(100L, 101L);
         assertThat(response.getTotalElements()).isEqualTo(2);
         // 게시글 수와 무관하게 보드 조회는 1회 (N+1 회귀 방지)
@@ -277,8 +283,8 @@ class EnrollQueryServiceTest {
 
     // ── 테스트 데이터 헬퍼 ──────────────────────────────────────────
 
-    private Enroll enroll(Long id, Long userId, Long boardId, Long boardOwnerId,
-                          AcceptStatus status, boolean newEnroll) {
+    private Enroll enroll(
+            Long id, Long userId, Long boardId, Long boardOwnerId, AcceptStatus status, boolean newEnroll) {
         return Enroll.builder()
                 .id(id)
                 .userId(userId)
@@ -295,9 +301,26 @@ class EnrollQueryServiceTest {
     }
 
     private UserSummary user(Long userId, Long clubId) {
-        return new UserSummary(userId, "test@catchmate.com", null, null, 'M', "홍길동",
-                null, null, null, "USER", null, clubId,
-                false, false, false, false, false, null, null);
+        return new UserSummary(
+                userId,
+                "test@catchmate.com",
+                null,
+                null,
+                'M',
+                "홍길동",
+                null,
+                null,
+                null,
+                "USER",
+                null,
+                clubId,
+                false,
+                false,
+                false,
+                false,
+                false,
+                null,
+                null);
     }
 
     private ClubSummary club(Long clubId) {

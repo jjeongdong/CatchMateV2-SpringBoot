@@ -3,27 +3,27 @@ package com.back.catchmate.admin.controller;
 import com.back.catchmate.admin.dto.request.InquiryAnswerRequest;
 import com.back.catchmate.admin.dto.request.NoticeCreateRequest;
 import com.back.catchmate.admin.dto.request.NoticeUpdateRequest;
-import com.back.catchmate.global.authorization.annotation.AuthUser;
-import com.back.catchmate.admin.service.AdminService;
 import com.back.catchmate.admin.dto.response.AdminAnswerDraftResponse;
-import com.back.catchmate.admin.dto.response.AdminCorpusReindexResponse;
 import com.back.catchmate.admin.dto.response.AdminBoardDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminBoardResponse;
+import com.back.catchmate.admin.dto.response.AdminCorpusReindexResponse;
 import com.back.catchmate.admin.dto.response.AdminDashboardResponse;
+import com.back.catchmate.admin.dto.response.AdminInquiryAnswerResponse;
 import com.back.catchmate.admin.dto.response.AdminInquiryDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminInquiryResponse;
+import com.back.catchmate.admin.dto.response.AdminNoticeActionResponse;
+import com.back.catchmate.admin.dto.response.AdminNoticeCreateResponse;
 import com.back.catchmate.admin.dto.response.AdminNoticeDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminNoticeResponse;
+import com.back.catchmate.admin.dto.response.AdminNoticeUpdateResponse;
+import com.back.catchmate.admin.dto.response.AdminReportActionResponse;
 import com.back.catchmate.admin.dto.response.AdminReportDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminReportResponse;
 import com.back.catchmate.admin.dto.response.AdminUserDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminUserResponse;
-import com.back.catchmate.admin.dto.response.AdminInquiryAnswerResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeActionResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeCreateResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeUpdateResponse;
-import com.back.catchmate.admin.dto.response.AdminReportActionResponse;
+import com.back.catchmate.admin.service.AdminService;
 import com.back.catchmate.common.response.PagedResponse;
+import com.back.catchmate.global.authorization.annotation.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -43,15 +43,15 @@ public class AdminController {
 
     @PostMapping("/notices")
     @Operation(summary = "공지사항 등록", description = "공지사항을 등록할 수 있습니다. (관리자 전용)")
-    public ResponseEntity<AdminNoticeCreateResponse> createNotice(@AuthUser Long userId,
-                                                                  @RequestBody @Valid NoticeCreateRequest request) {
+    public ResponseEntity<AdminNoticeCreateResponse> createNotice(
+            @AuthUser Long userId, @RequestBody @Valid NoticeCreateRequest request) {
         return ResponseEntity.ok(adminService.createNotice(userId, request));
     }
 
     @PostMapping("/inquiries/{inquiryId}/answer")
     @Operation(summary = "문의 답변 등록", description = "유저의 문의에 답변을 등록하고 상태를 '완료'로 변경합니다.")
-    public ResponseEntity<AdminInquiryAnswerResponse> createInquiryAnswer(@PathVariable Long inquiryId,
-                                                                          @RequestBody @Valid InquiryAnswerRequest request) {
+    public ResponseEntity<AdminInquiryAnswerResponse> createInquiryAnswer(
+            @PathVariable Long inquiryId, @RequestBody @Valid InquiryAnswerRequest request) {
         return ResponseEntity.ok(adminService.createInquiryAnswer(request.toCommand(inquiryId)));
     }
 
@@ -82,8 +82,7 @@ public class AdminController {
     @GetMapping("/users")
     @Operation(summary = "관리자 유저 리스트 조회", description = "구단명을 파라미터로 받아 유저 목록을 조회합니다.")
     public ResponseEntity<PagedResponse<AdminUserResponse>> getUserList(
-            @Parameter(description = "구단명 (옵션, 비워두면 전체 조회)")
-            @RequestParam(required = false) String clubName,
+            @Parameter(description = "구단명 (옵션, 비워두면 전체 조회)") @RequestParam(required = false) String clubName,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(adminService.getUserList(clubName, page, size));
@@ -97,16 +96,17 @@ public class AdminController {
 
     @GetMapping("/users/{userId}/boards")
     @Operation(summary = "유저 작성 게시글 조회", description = "특정 유저가 작성한 게시글 목록을 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<AdminBoardResponse>> getBoardListByUserId(@PathVariable Long userId,
-                                                                                  @RequestParam(defaultValue = "0") int page,
-                                                                                  @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<PagedResponse<AdminBoardResponse>> getBoardListByUserId(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(adminService.getBoardListByUserId(userId, page, size));
     }
 
     @GetMapping("/boards")
     @Operation(summary = "관리자 게시글 전체 조회", description = "전체 게시글을 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<AdminBoardResponse>> getBoardList(@RequestParam(defaultValue = "0") int page,
-                                                                          @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<PagedResponse<AdminBoardResponse>> getBoardList(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(adminService.getBoardList(page, size));
     }
 
@@ -118,8 +118,8 @@ public class AdminController {
 
     @GetMapping("/reports")
     @Operation(summary = "관리자 신고 목록 조회", description = "전체 신고 내역을 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<AdminReportResponse>> getReportList(@RequestParam(defaultValue = "0") int page,
-                                                                            @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<PagedResponse<AdminReportResponse>> getReportList(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(adminService.getReportList(page, size));
     }
 
@@ -131,8 +131,8 @@ public class AdminController {
 
     @GetMapping("/inquiries")
     @Operation(summary = "관리자 문의 목록 조회", description = "전체 1:1 문의 내역을 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<AdminInquiryResponse>> getInquiryList(@RequestParam(defaultValue = "0") int page,
-                                                                              @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<PagedResponse<AdminInquiryResponse>> getInquiryList(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(adminService.getInquiryList(page, size));
     }
 
@@ -144,8 +144,8 @@ public class AdminController {
 
     @GetMapping("/notices")
     @Operation(summary = "공지사항 목록 조회", description = "공지사항 목록을 페이징하여 조회합니다. (page는 0부터 시작)")
-    public ResponseEntity<PagedResponse<AdminNoticeResponse>> getNoticeList(@RequestParam(defaultValue = "0") int page,
-                                                                            @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<PagedResponse<AdminNoticeResponse>> getNoticeList(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(adminService.getNoticeList(page, size));
     }
 
@@ -157,16 +157,14 @@ public class AdminController {
 
     @PutMapping("/notices/{noticeId}")
     @Operation(summary = "공지사항 수정", description = "특정 공지사항을 수정합니다. (관리자 전용)")
-    public ResponseEntity<AdminNoticeUpdateResponse> updateNotice(@AuthUser Long userId,
-                                                                  @PathVariable Long noticeId,
-                                                                  @RequestBody @Valid NoticeUpdateRequest request) {
+    public ResponseEntity<AdminNoticeUpdateResponse> updateNotice(
+            @AuthUser Long userId, @PathVariable Long noticeId, @RequestBody @Valid NoticeUpdateRequest request) {
         return ResponseEntity.ok(adminService.updateNotice(noticeId, request));
     }
 
     @DeleteMapping("/notices/{noticeId}")
     @Operation(summary = "공지사항 삭제", description = "특정 공지사항을 삭제합니다. (관리자 전용)")
-    public ResponseEntity<AdminNoticeActionResponse> deleteNotice(@AuthUser Long userId,
-                                                                  @PathVariable Long noticeId) {
+    public ResponseEntity<AdminNoticeActionResponse> deleteNotice(@AuthUser Long userId, @PathVariable Long noticeId) {
         return ResponseEntity.ok(adminService.deleteNotice(noticeId));
     }
 }

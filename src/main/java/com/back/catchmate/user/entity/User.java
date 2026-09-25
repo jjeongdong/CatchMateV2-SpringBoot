@@ -9,17 +9,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.SQLRestriction;
-
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
-import java.util.Objects;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Getter
@@ -87,9 +85,17 @@ public class User extends BaseTimeEntity {
     @Column
     private LocalDateTime deletedAt;
 
-    public static User createUser(String provider, String providerId, String email, String nickName, Character gender,
-                                  LocalDate birthDate, Long favoriteClubId, String profileImageUrl, String fcmToken,
-                                  String watchStyle) {
+    public static User createUser(
+            String provider,
+            String providerId,
+            String email,
+            String nickName,
+            Character gender,
+            LocalDate birthDate,
+            Long favoriteClubId,
+            String profileImageUrl,
+            String fcmToken,
+            String watchStyle) {
         return User.builder()
                 .email(email)
                 .provider(provider)

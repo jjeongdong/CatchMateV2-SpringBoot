@@ -1,13 +1,12 @@
 package com.back.catchmate.user.infra;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Redis 기반 사용자 온라인/오프라인 상태 추적 서비스
@@ -92,7 +91,8 @@ public class RedisUserOnlineStatus {
         if (userIds.isEmpty()) return Map.of();
 
         try {
-            List<String> keys = userIds.stream().map(id -> USER_ROOM_FOCUS_KEY_PREFIX + id).toList();
+            List<String> keys =
+                    userIds.stream().map(id -> USER_ROOM_FOCUS_KEY_PREFIX + id).toList();
             List<String> values = redisTemplate.opsForValue().multiGet(keys);
             if (values == null) return Map.of();
 

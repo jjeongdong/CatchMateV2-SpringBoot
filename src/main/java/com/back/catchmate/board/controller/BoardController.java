@@ -17,6 +17,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -31,10 +34,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-
 @Tag(name = "[사용자] 게시글 관련 API")
 @RestController
 @RequestMapping("/api/boards")
@@ -45,15 +44,14 @@ public class BoardController {
 
     @PostMapping
     @Operation(summary = "게시글 생성/임시저장 API", description = "게시글을 생성하거나 임시저장합니다.")
-    public ResponseEntity<BoardCreateResponse> createBoard(@AuthUser Long userId,
-                                                           @Valid @RequestBody BoardCreateRequest request) {
+    public ResponseEntity<BoardCreateResponse> createBoard(
+            @AuthUser Long userId, @Valid @RequestBody BoardCreateRequest request) {
         return ResponseEntity.ok(boardService.createBoard(userId, request.toCommand()));
     }
 
     @GetMapping("/{boardId}")
     @Operation(summary = "게시글 단일 조회 API", description = "게시글 ID로 상세 정보를 조회합니다.")
-    public ResponseEntity<BoardDetailResponse> getBoard(@AuthUser Long userId,
-                                                        @PathVariable Long boardId) {
+    public ResponseEntity<BoardDetailResponse> getBoard(@AuthUser Long userId, @PathVariable Long boardId) {
         return ResponseEntity.ok(boardResponseAssembler.getBoard(userId, boardId));
     }
 
@@ -68,58 +66,51 @@ public class BoardController {
     }
 
     @GetMapping
-    @Operation(summary = "게시글 목록 조회 (무한스크롤)",
+    @Operation(
+            summary = "게시글 목록 조회 (무한스크롤)",
             description = "첫 페이지는 커서 없이 요청. 이후 응답의 nextCursorDateTime, nextCursorId를 파라미터로 전달.")
     public ResponseEntity<CursorPagedResponse<BoardResponse>> getBoardList(
             @Parameter(hidden = true) @AuthUser Long userId,
             @RequestParam(required = false) LocalDate gameDate,
             @RequestParam(required = false) Integer maxPerson,
             @RequestParam(required = false) List<Long> preferredTeamIdList,
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastLiftUpDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                    LocalDateTime lastLiftUpDate,
             @RequestParam(required = false) Long lastBoardId,
             @RequestParam(defaultValue = "10") int size) {
         CursorPagedResponse<BoardResponse> response = boardResponseAssembler.getBoardList(
-                userId,
-                gameDate,
-                maxPerson,
-                preferredTeamIdList,
-                lastLiftUpDate,
-                lastBoardId,
-                size
-        );
+                userId, gameDate, maxPerson, preferredTeamIdList, lastLiftUpDate, lastBoardId, size);
         return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "유저별 게시글 조회")
     @GetMapping("/users/{userId}")
-    public ResponseEntity<PagedResponse<BoardResponse>> getBoardListByUserId(@PathVariable Long userId,
-                                                                             @Parameter(hidden = true) @AuthUser Long loginUserId,
-                                                                             @RequestParam(defaultValue = "0") int page,
-                                                                             @RequestParam(defaultValue = "10") int size) {
-        PagedResponse<BoardResponse> response = boardResponseAssembler.getBoardListByUserId(userId, loginUserId, page, size);
+    public ResponseEntity<PagedResponse<BoardResponse>> getBoardListByUserId(
+            @PathVariable Long userId,
+            @Parameter(hidden = true) @AuthUser Long loginUserId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PagedResponse<BoardResponse> response =
+                boardResponseAssembler.getBoardListByUserId(userId, loginUserId, page, size);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{boardId}")
     @Operation(summary = "게시글 수정 API")
-    public ResponseEntity<BoardUpdateResponse> updateBoard(@AuthUser Long userId,
-                                                           @PathVariable Long boardId,
-                                                           @Valid @RequestBody BoardUpdateRequest request) {
+    public ResponseEntity<BoardUpdateResponse> updateBoard(
+            @AuthUser Long userId, @PathVariable Long boardId, @Valid @RequestBody BoardUpdateRequest request) {
         return ResponseEntity.ok(boardService.updateBoard(userId, boardId, request.toCommand()));
     }
 
     @PatchMapping("/{boardId}/lift-up")
     @Operation(summary = "게시글 끌어올리기 API")
-    public ResponseEntity<BoardLiftUpResponse> updateLiftUpDate(@AuthUser Long userId,
-                                                                @PathVariable Long boardId) {
+    public ResponseEntity<BoardLiftUpResponse> updateLiftUpDate(@AuthUser Long userId, @PathVariable Long boardId) {
         return ResponseEntity.ok(boardService.updateLiftUpDate(userId, boardId));
     }
 
     @DeleteMapping("/{boardId}")
     @Operation(summary = "게시글 삭제 API")
-    public ResponseEntity<Void> deleteBoard(@AuthUser Long userId,
-                                            @PathVariable Long boardId) {
+    public ResponseEntity<Void> deleteBoard(@AuthUser Long userId, @PathVariable Long boardId) {
         boardService.deleteBoard(userId, boardId);
         return ResponseEntity.ok().build();
     }

@@ -1,7 +1,6 @@
 package com.back.catchmate.chat.repository;
 
 import com.back.catchmate.chat.dto.ReadSequenceUpdate;
-
 import java.util.List;
 
 public interface ChatRoomMemberRepositoryCustom {

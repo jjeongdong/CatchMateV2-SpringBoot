@@ -1,18 +1,17 @@
 package com.back.catchmate.user.repository;
 
+import static com.back.catchmate.user.entity.QUser.user;
+
 import com.back.catchmate.user.entity.User;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import static com.back.catchmate.user.entity.QUser.user;
 
 @RequiredArgsConstructor
 public class UserRepositoryImpl implements UserRepositoryCustom {
@@ -20,10 +19,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
 
     @Override
     public List<User> findAllEventAlarmEnabled() {
-        return jpaQueryFactory
-                .selectFrom(user)
-                .where(user.eventAlarm.eq('Y'))
-                .fetch();
+        return jpaQueryFactory.selectFrom(user).where(user.eventAlarm.eq('Y')).fetch();
     }
 
     @Override
@@ -53,14 +49,10 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
                 .groupBy(user.clubId)
                 .fetch();
 
-        return results.stream()
-                .collect(Collectors.toMap(
-                        tuple -> tuple.get(user.clubId),
-                        tuple -> {
-                            Long count = tuple.get(user.count());
-                            return count != null ? count : 0L;
-                        }
-                ));
+        return results.stream().collect(Collectors.toMap(tuple -> tuple.get(user.clubId), tuple -> {
+            Long count = tuple.get(user.count());
+            return count != null ? count : 0L;
+        }));
     }
 
     @Override
@@ -72,13 +64,9 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
                 .groupBy(user.watchStyle)
                 .fetch();
 
-        return results.stream()
-                .collect(Collectors.toMap(
-                        tuple -> tuple.get(user.watchStyle),
-                        tuple -> {
-                            Long count = tuple.get(user.count());
-                            return count != null ? count : 0L;
-                        }
-                ));
+        return results.stream().collect(Collectors.toMap(tuple -> tuple.get(user.watchStyle), tuple -> {
+            Long count = tuple.get(user.count());
+            return count != null ? count : 0L;
+        }));
     }
 }

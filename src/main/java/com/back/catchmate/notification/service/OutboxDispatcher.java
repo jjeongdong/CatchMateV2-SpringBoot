@@ -8,17 +8,16 @@ import com.back.catchmate.notification.infra.PermanentNotificationFailureExcepti
 import com.back.catchmate.user.service.UserOnlineStatusService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -59,7 +58,8 @@ public class OutboxDispatcher {
     }
 
     public void processPendingNotifications() {
-        List<NotificationOutbox> claimList = outboxStateTransitioner.claimPendingNotifications(maxRetryCount, batchSize);
+        List<NotificationOutbox> claimList =
+                outboxStateTransitioner.claimPendingNotifications(maxRetryCount, batchSize);
         if (claimList.isEmpty()) return;
 
         log.info("처리 대상 알림 {}건을 선점했습니다. 발송을 시작합니다.", claimList.size());
@@ -76,10 +76,9 @@ public class OutboxDispatcher {
 
     private void rollbackClaimToRetryable(List<NotificationOutbox> claimList, Exception cause) {
         String reason = "배치 처리 실패 - " + cause.getMessage();
-        Map<Long, String> errorMessages = claimList.stream()
-                .collect(Collectors.toMap(NotificationOutbox::getId, outbox -> reason));
-        outboxStateTransitioner.applyDispatchResults(
-                List.of(), List.of(), claimList, errorMessages, maxRetryCount);
+        Map<Long, String> errorMessages =
+                claimList.stream().collect(Collectors.toMap(NotificationOutbox::getId, outbox -> reason));
+        outboxStateTransitioner.applyDispatchResults(List.of(), List.of(), claimList, errorMessages, maxRetryCount);
     }
 
     public void recoverStuckProcessing() {
@@ -122,8 +121,7 @@ public class OutboxDispatcher {
                     outbox.getRecipientAddress(),
                     outbox.getTitle(),
                     outbox.getBody(),
-                    payload
-            ));
+                    payload));
         }
 
         List<NotificationSendResult> results = fcmNotificationSender.sendNotifications(messages);
@@ -153,7 +151,8 @@ public class OutboxDispatcher {
     }
 
     // 포커스 방 확인이 필요한 건 CHAT 알림뿐이다. 수신자별 왕복 대신 MGET 한 번으로 모아온다.
-    private Map<Long, Long> fetchChatFocusRooms(List<NotificationOutbox> claimList, Map<Long, Map<String, String>> payloads) {
+    private Map<Long, Long> fetchChatFocusRooms(
+            List<NotificationOutbox> claimList, Map<Long, Map<String, String>> payloads) {
         List<Long> chatRecipientIds = claimList.stream()
                 .filter(outbox -> isChat(payloads.get(outbox.getId())))
                 .map(NotificationOutbox::getRecipientId)
@@ -165,15 +164,15 @@ public class OutboxDispatcher {
         return userOnlineStatusService.getUserFocusRooms(chatRecipientIds);
     }
 
-    private boolean isRecipientViewingChatRoom(NotificationOutbox outbox, Map<String, String> payload, Map<Long, Long> focusRooms) {
+    private boolean isRecipientViewingChatRoom(
+            NotificationOutbox outbox, Map<String, String> payload, Map<Long, Long> focusRooms) {
         if (!isChat(payload)) return false;
 
         Long chatRoomId = parseRoomId(payload.get("roomId"));
         if (chatRoomId == null || !chatRoomId.equals(focusRooms.get(outbox.getRecipientId()))) {
             return false;
         }
-        log.debug("[아웃박스] 수신자 {}가 현재 채팅방 {}을 보고 있으므로 FCM 발송을 생략하고 성공 처리합니다.",
-                outbox.getRecipientId(), chatRoomId);
+        log.debug("[아웃박스] 수신자 {}가 현재 채팅방 {}을 보고 있으므로 FCM 발송을 생략하고 성공 처리합니다.", outbox.getRecipientId(), chatRoomId);
         return true;
     }
 
@@ -202,8 +201,10 @@ public class OutboxDispatcher {
                 if (chatRoomId != null) {
                     Long focusRoomId = userOnlineStatusService.getUserFocusRoom(outbox.getRecipientId());
                     if (chatRoomId.equals(focusRoomId)) {
-                        log.debug("[아웃박스] 수신자 {}가 현재 채팅방 {}을 보고 있으므로 FCM 발송을 생략하고 성공 처리합니다.",
-                                outbox.getRecipientId(), chatRoomId);
+                        log.debug(
+                                "[아웃박스] 수신자 {}가 현재 채팅방 {}을 보고 있으므로 FCM 발송을 생략하고 성공 처리합니다.",
+                                outbox.getRecipientId(),
+                                chatRoomId);
                         outboxStateTransitioner.updateStatusSuccess(outbox);
                         return;
                     }
@@ -215,8 +216,7 @@ public class OutboxDispatcher {
                     outbox.getRecipientAddress(),
                     outbox.getTitle(),
                     outbox.getBody(),
-                    payload
-            );
+                    payload);
             outboxStateTransitioner.updateStatusSuccess(outbox);
         } catch (PermanentNotificationFailureException e) {
             log.warn("알림 영구 실패 (ID: {}) - 재시도 중단. 사유: {}", outbox.getId(), e.getMessage());

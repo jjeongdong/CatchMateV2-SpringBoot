@@ -2,20 +2,19 @@ package com.back.catchmate.chat.entity;
 
 import com.back.catchmate.global.persistence.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
 @Getter
 @Builder
-@Table(name = "chat_room_members", indexes = {
-        // 내 채팅방 목록(JOIN chat_room_members ON ... WHERE user_id = ? AND left_at IS NULL) 용.
-        // chat_room_id 는 FK 인덱스가 자동 생성되지만 user_id 는 없어 풀스캔이었다.
-        @Index(name = "idx_chat_room_members_user_active",
-                columnList = "user_id, left_at"
-        )
-})
+@Table(
+        name = "chat_room_members",
+        indexes = {
+            // 내 채팅방 목록(JOIN chat_room_members ON ... WHERE user_id = ? AND left_at IS NULL) 용.
+            // chat_room_id 는 FK 인덱스가 자동 생성되지만 user_id 는 없어 풀스캔이었다.
+            @Index(name = "idx_chat_room_members_user_active", columnList = "user_id, left_at")
+        })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class ChatRoomMember extends BaseTimeEntity {

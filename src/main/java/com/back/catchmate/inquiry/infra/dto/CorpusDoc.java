@@ -8,9 +8,4 @@ package com.back.catchmate.inquiry.infra.dto;
  * @param sourceId   원본 식별자 (검색 결과에서 출처 추적용)
  * @param text       임베딩 대상 본문
  */
-public record CorpusDoc(
-        String sourceType,
-        Long sourceId,
-        String text
-) {
-}
+public record CorpusDoc(String sourceType, Long sourceId, String text) {}

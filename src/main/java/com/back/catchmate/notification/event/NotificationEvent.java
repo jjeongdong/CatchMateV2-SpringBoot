@@ -14,10 +14,7 @@ import java.util.Map;
  * @param userIds 알림 받을 유저 ID 목록
  * @param data    수신자 전원이 공유하는 알림 데이터
  */
-public record NotificationEvent(
-        List<Long> userIds,
-        Map<String, String> data
-) {
+public record NotificationEvent(List<Long> userIds, Map<String, String> data) {
     public static NotificationEvent of(Long userId, Map<String, String> data) {
         return new NotificationEvent(List.of(userId), data);
     }
