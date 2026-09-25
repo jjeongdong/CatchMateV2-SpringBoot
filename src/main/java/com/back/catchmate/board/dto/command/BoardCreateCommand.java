@@ -11,6 +11,4 @@ public record BoardCreateCommand(
         String preferredGender,
         List<String> preferredAgeRange,
         Long gameId,
-        boolean completed
-) {
-}
+        boolean completed) {}

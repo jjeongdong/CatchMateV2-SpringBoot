@@ -14,8 +14,7 @@ public record BookmarkedBoardSummary(
         boolean bookMarked,
         BookmarkClubResponse cheerClub,
         BookmarkGameResponse gameInfo,
-        BookmarkUserResponse userInfo
-) {
+        BookmarkUserResponse userInfo) {
     public static BookmarkedBoardSummary from(
             BoardSummary board,
             boolean bookMarked,
@@ -24,8 +23,7 @@ public record BookmarkedBoardSummary(
             ClubSummary cheerClub,
             GameSummary game,
             ClubSummary homeClub,
-            ClubSummary awayClub
-    ) {
+            ClubSummary awayClub) {
         return new BookmarkedBoardSummary(
                 board.boardId(),
                 board.title(),
@@ -35,8 +33,7 @@ public record BookmarkedBoardSummary(
                 bookMarked,
                 cheerClub != null ? BookmarkClubResponse.from(cheerClub) : null,
                 game != null ? BookmarkGameResponse.from(game, homeClub, awayClub) : null,
-                user != null ? BookmarkUserResponse.from(user, userClub) : null
-        );
+                user != null ? BookmarkUserResponse.from(user, userClub) : null);
     }
 
     public record BookmarkClubResponse(Long clubId, String name) {
@@ -51,19 +48,14 @@ public record BookmarkedBoardSummary(
                     game.gameId(),
                     home != null ? home.name() : null,
                     away != null ? away.name() : null,
-                    game.location()
-            );
+                    game.location());
         }
     }
 
     public record BookmarkUserResponse(Long userId, String nickName, String profileImageUrl, String clubName) {
         public static BookmarkUserResponse from(UserSummary user, ClubSummary userClub) {
             return new BookmarkUserResponse(
-                    user.userId(),
-                    user.nickName(),
-                    user.profileImageUrl(),
-                    userClub != null ? userClub.name() : null
-            );
+                    user.userId(), user.nickName(), user.profileImageUrl(), userClub != null ? userClub.name() : null);
         }
     }
 }

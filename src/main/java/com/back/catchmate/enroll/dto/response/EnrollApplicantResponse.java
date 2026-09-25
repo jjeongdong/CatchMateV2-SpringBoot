@@ -7,6 +7,4 @@ public record EnrollApplicantResponse(
         String description,
         LocalDateTime requestDate,
         boolean newEnroll,
-        ApplicantResponse applicantResponse
-) {
-}
+        ApplicantResponse applicantResponse) {}

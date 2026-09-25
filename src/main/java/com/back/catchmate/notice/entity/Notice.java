@@ -34,11 +34,7 @@ public class Notice extends BaseTimeEntity {
     private String content;
 
     public static Notice createNotice(Long writerId, String title, String content) {
-        return Notice.builder()
-                .writerId(writerId)
-                .title(title)
-                .content(content)
-                .build();
+        return Notice.builder().writerId(writerId).title(title).content(content).build();
     }
 
     public void updateNotice(String title, String content) {

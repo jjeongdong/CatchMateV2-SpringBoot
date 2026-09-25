@@ -2,15 +2,14 @@ package com.back.catchmate.notification.service;
 
 import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.board.service.BoardService;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
 import com.back.catchmate.notification.infra.RedisNotificationPublisher;
+import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.service.UserService;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 /**
  * Enroll 알림의 비동기 발송(STOMP 실시간 + FCM 즉시 시도) 전용 서비스.
@@ -35,8 +34,12 @@ public class EnrollNotificationDispatchService {
     private final RedisNotificationPublisher redisNotificationPublisher;
 
     public void dispatchOnEnrollRequested(Long enrollId, Long boardId, Long applicantId, Long boardOwnerId) {
-        log.info("[Enroll알림] dispatchOnEnrollRequested 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
-                enrollId, boardId, applicantId, boardOwnerId);
+        log.info(
+                "[Enroll알림] dispatchOnEnrollRequested 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
+                enrollId,
+                boardId,
+                applicantId,
+                boardOwnerId);
         UserSummary recipient = userService.getUserSummary(boardOwnerId);
         if (!recipient.enrollAlarmEnabled()) {
             log.warn("[Enroll알림] 수신자(boardOwnerId: {})의 enrollAlarm 설정이 비활성화(false)되어 발송을 중단합니다.", boardOwnerId);
@@ -52,8 +55,12 @@ public class EnrollNotificationDispatchService {
     }
 
     public void dispatchOnEnrollAccepted(Long enrollId, Long boardId, Long applicantId, Long boardOwnerId) {
-        log.info("[Enroll알림] dispatchOnEnrollAccepted 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
-                enrollId, boardId, applicantId, boardOwnerId);
+        log.info(
+                "[Enroll알림] dispatchOnEnrollAccepted 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
+                enrollId,
+                boardId,
+                applicantId,
+                boardOwnerId);
         UserSummary recipient = userService.getUserSummary(applicantId);
         if (!recipient.enrollAlarmEnabled()) {
             log.warn("[Enroll알림] 수신자(applicantId: {})의 enrollAlarm 설정이 비활성화(false)되어 발송을 중단합니다.", applicantId);
@@ -68,8 +75,12 @@ public class EnrollNotificationDispatchService {
     }
 
     public void dispatchOnEnrollRejected(Long enrollId, Long boardId, Long applicantId, Long boardOwnerId) {
-        log.info("[Enroll알림] dispatchOnEnrollRejected 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
-                enrollId, boardId, applicantId, boardOwnerId);
+        log.info(
+                "[Enroll알림] dispatchOnEnrollRejected 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
+                enrollId,
+                boardId,
+                applicantId,
+                boardOwnerId);
         UserSummary recipient = userService.getUserSummary(applicantId);
         if (!recipient.enrollAlarmEnabled()) {
             log.warn("[Enroll알림] 수신자(applicantId: {})의 enrollAlarm 설정이 비활성화(false)되어 발송을 중단합니다.", applicantId);
@@ -84,8 +95,12 @@ public class EnrollNotificationDispatchService {
     }
 
     public void dispatchOnEnrollCancelled(Long enrollId, Long boardId, Long applicantId, Long boardOwnerId) {
-        log.info("[Enroll알림] dispatchOnEnrollCancelled 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
-                enrollId, boardId, applicantId, boardOwnerId);
+        log.info(
+                "[Enroll알림] dispatchOnEnrollCancelled 호출 - enrollId: {}, boardId: {}, applicantId: {}, boardOwnerId: {}",
+                enrollId,
+                boardId,
+                applicantId,
+                boardOwnerId);
         UserSummary recipient = userService.getUserSummary(boardOwnerId);
         if (!recipient.enrollAlarmEnabled()) {
             log.warn("[Enroll알림] 수신자(boardOwnerId: {})의 enrollAlarm 설정이 비활성화(false)되어 발송을 중단합니다.", boardOwnerId);
@@ -101,13 +116,7 @@ public class EnrollNotificationDispatchService {
     }
 
     private void dispatch(
-            UserSummary recipient,
-            Long boardId,
-            String title,
-            String body,
-            String type,
-            boolean pushEnabled
-    ) {
+            UserSummary recipient, Long boardId, String title, String body, String type, boolean pushEnabled) {
         Map<String, String> payload = createNotificationData(type, boardId, title, body);
         log.info("[Enroll알림] STOMP 알림 전송 시도 - recipientId: {}, payload: {}", recipient.userId(), payload);
         redisNotificationPublisher.dispatch(recipient.userId(), payload);
@@ -125,7 +134,6 @@ public class EnrollNotificationDispatchService {
                 "type", type,
                 "boardId", String.valueOf(boardId),
                 "title", title,
-                "body", body
-        );
+                "body", body);
     }
 }

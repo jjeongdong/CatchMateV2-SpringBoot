@@ -1,11 +1,10 @@
 package com.back.catchmate.board.dto.response;
 
+import com.back.catchmate.board.entity.Board;
+import com.back.catchmate.board.entity.BoardButtonStatus;
 import com.back.catchmate.club.dto.response.ClubSummary;
 import com.back.catchmate.game.dto.response.GameSummary;
 import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.board.entity.Board;
-import com.back.catchmate.board.entity.BoardButtonStatus;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,11 +23,19 @@ public record BoardDetailResponse(
         Long chatRoomId,
         BoardClubView cheerClub,
         BoardGameView game,
-        BoardWriterView user
-) {
-    public static BoardDetailResponse of(Board board, boolean bookMarked, BoardButtonStatus buttonStatus, Long myEnrollId, Long chatRoomId,
-                                         UserSummary user, ClubSummary userClub, ClubSummary cheerClub,
-                                         GameSummary game, ClubSummary homeClub, ClubSummary awayClub) {
+        BoardWriterView user) {
+    public static BoardDetailResponse of(
+            Board board,
+            boolean bookMarked,
+            BoardButtonStatus buttonStatus,
+            Long myEnrollId,
+            Long chatRoomId,
+            UserSummary user,
+            ClubSummary userClub,
+            ClubSummary cheerClub,
+            GameSummary game,
+            ClubSummary homeClub,
+            ClubSummary awayClub) {
         return new BoardDetailResponse(
                 board.getId(),
                 board.getTitle(),
@@ -44,8 +51,7 @@ public record BoardDetailResponse(
                 chatRoomId,
                 toClubView(cheerClub),
                 toGameView(game, homeClub, awayClub),
-                toWriterView(user, userClub)
-        );
+                toWriterView(user, userClub));
     }
 
     private static BoardClubView toClubView(ClubSummary club) {
@@ -56,12 +62,7 @@ public record BoardDetailResponse(
     private static BoardGameView toGameView(GameSummary game, ClubSummary homeClub, ClubSummary awayClub) {
         if (game == null) return null;
         return new BoardGameView(
-                game.gameId(),
-                game.gameStartDate(),
-                game.location(),
-                toClubView(homeClub),
-                toClubView(awayClub)
-        );
+                game.gameId(), game.gameStartDate(), game.location(), toClubView(homeClub), toClubView(awayClub));
     }
 
     private static BoardWriterView toWriterView(UserSummary user, ClubSummary userClub) {
@@ -75,7 +76,6 @@ public record BoardDetailResponse(
                 user.birthDate(),
                 user.watchStyle(),
                 toClubView(userClub),
-                user.authority()
-        );
+                user.authority());
     }
 }

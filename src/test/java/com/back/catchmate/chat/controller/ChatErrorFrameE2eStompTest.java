@@ -1,10 +1,18 @@
 package com.back.catchmate.chat.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.back.catchmate.CatchmateApplication;
 import com.back.catchmate.auth.infra.JwtTokenProvider;
+import com.back.catchmate.user.entity.Authority;
 import com.back.catchmate.user.entity.User;
 import com.back.catchmate.user.repository.UserRepository;
-import com.back.catchmate.user.entity.Authority;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,23 +28,13 @@ import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
-import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 // 커밋 전 전송 실패가 발신자에게 실제로 되돌아오는지를 전 구간(실제 STOMP 핸드셰이크 + JWT 인증 +
 // /user/queue/errors 구독 인가 + @MessageExceptionHandler + @SendToUser)으로 검증한다.
 // 이 경로가 깨지면 예외는 서버 로그에만 남고 발신자는 메시지가 사라진 걸 알 수 없다.
 @SpringBootTest(
         classes = CatchmateApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "spring.profiles.active=local"
-)
+        properties = "spring.profiles.active=local")
 class ChatErrorFrameE2eStompTest {
     private static final long NOT_JOINED_ROOM_ID = 999_999_999L;
 
@@ -67,7 +65,8 @@ class ChatErrorFrameE2eStompTest {
         // when
         send("""
                 {"chatRoomId":%d,"content":"안녕하세요","messageType":"TEXT"}
-                """.formatted(NOT_JOINED_ROOM_ID));
+                """
+                .formatted(NOT_JOINED_ROOM_ID));
 
         // then
         String body = pollErrorFrame(errorFrames);
@@ -86,7 +85,8 @@ class ChatErrorFrameE2eStompTest {
         // when
         send("""
                 {"chatRoomId":%d,"content":"","messageType":"TEXT"}
-                """.formatted(NOT_JOINED_ROOM_ID));
+                """
+                .formatted(NOT_JOINED_ROOM_ID));
 
         // then: @Valid 가 컨트롤러 진입 시점에 걸러 멤버십 조회(DB)까지 가지 않는다
         String body = pollErrorFrame(errorFrames);
@@ -115,11 +115,14 @@ class ChatErrorFrameE2eStompTest {
                 .build());
 
         StompHeaders connectHeaders = new StompHeaders();
-        connectHeaders.add("Authorization",
-                tokenProvider.createAccessToken(savedUser.getId(), Authority.ROLE_USER.name()));
+        connectHeaders.add(
+                "Authorization", tokenProvider.createAccessToken(savedUser.getId(), Authority.ROLE_USER.name()));
 
         session = new WebSocketStompClient(new StandardWebSocketClient())
-                .connectAsync("ws://localhost:" + port + "/ws/chat", new WebSocketHttpHeaders(), connectHeaders,
+                .connectAsync(
+                        "ws://localhost:" + port + "/ws/chat",
+                        new WebSocketHttpHeaders(),
+                        connectHeaders,
                         new StompSessionHandlerAdapter() {})
                 .get(5, TimeUnit.SECONDS);
 

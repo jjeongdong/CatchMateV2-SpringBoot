@@ -1,16 +1,15 @@
 package com.back.catchmate.game.repository;
 
+import static com.back.catchmate.game.entity.QGame.game;
+
 import com.back.catchmate.game.dto.request.GameSearchCondition;
 import com.back.catchmate.game.entity.Game;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static com.back.catchmate.game.entity.QGame.game;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class GameRepositoryImpl implements GameRepositoryCustom {
@@ -20,10 +19,7 @@ public class GameRepositoryImpl implements GameRepositoryCustom {
     public List<Game> findAllByCondition(GameSearchCondition condition) {
         return jpaQueryFactory
                 .selectFrom(game)
-                .where(
-                        onDate(condition.gameDate()),
-                        involvesClub(condition.clubId())
-                )
+                .where(onDate(condition.gameDate()), involvesClub(condition.clubId()))
                 .orderBy(game.gameStartDate.asc(), game.id.asc())
                 .fetch();
     }

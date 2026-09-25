@@ -1,7 +1,6 @@
 package com.back.catchmate.user.dto.response;
 
 import com.back.catchmate.user.entity.User;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -24,8 +23,7 @@ public record UserSummary(
         boolean eventAlarmEnabled,
         boolean reported,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
-) {
+        LocalDateTime updatedAt) {
     public static UserSummary from(User user) {
         return new UserSummary(
                 user.getId(),
@@ -46,7 +44,6 @@ public record UserSummary(
                 user.isEventAlarmEnabled(),
                 user.isReported(),
                 user.getCreatedAt(),
-                user.getModifiedAt()
-        );
+                user.getModifiedAt());
     }
 }

@@ -1,23 +1,23 @@
 package com.back.catchmate.notification.repository;
 
 import com.back.catchmate.notification.entity.NotificationOutbox;
-import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
 public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepositoryCustom {
     // created_at/modified_at 은 JPA 감사(@CreatedDate/@LastModifiedDate) 기반이라 순수 JDBC INSERT 에선
     // 자동 세팅되지 않으므로 SQL 에서 직접 채운다. id 는 IDENTITY 라 컬럼에서 제외한다.
-    private static final String BATCH_INSERT_SQL = """
+    private static final String BATCH_INSERT_SQL =
+            """
             INSERT INTO notification_outbox
                 (recipient_id, fcm_token, title, body, payload,
                  retry_count, status, error_message, created_at, modified_at)
@@ -25,7 +25,8 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
             """;
 
     // 상태 전이로 바뀌는 컬럼만 갱신한다. 나머지(수신자·본문·payload)는 적재 후 불변이다.
-    private static final String BATCH_UPDATE_SQL = """
+    private static final String BATCH_UPDATE_SQL =
+            """
             UPDATE notification_outbox
                SET status = ?, retry_count = ?, error_message = ?, modified_at = ?
              WHERE id = ?

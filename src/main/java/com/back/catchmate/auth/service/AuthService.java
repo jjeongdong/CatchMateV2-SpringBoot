@@ -28,7 +28,8 @@ public class AuthService {
     @Transactional
     public AuthReissueResponse updateToken(String refreshToken) {
         Long userId = tokenProvider.getUserId(refreshToken);
-        refreshTokenRepository.findById(refreshToken)
+        refreshTokenRepository
+                .findById(refreshToken)
                 .orElseThrow(() -> new BaseException(ErrorCode.INVALID_REFRESH_TOKEN));
 
         // refresh token 의 role 클레임을 믿지 않고 최신 권한을 다시 조회한다.
@@ -50,11 +51,7 @@ public class AuthService {
         String accessToken = tokenProvider.createAccessToken(userId, authority);
         String refreshToken = tokenProvider.createRefreshToken(userId, authority);
 
-        refreshTokenRepository.save(
-                refreshToken,
-                userId,
-                tokenProvider.getRefreshTokenExpirationTime()
-        );
+        refreshTokenRepository.save(refreshToken, userId, tokenProvider.getRefreshTokenExpirationTime());
         return new IssuedAuthToken(accessToken, refreshToken);
     }
 

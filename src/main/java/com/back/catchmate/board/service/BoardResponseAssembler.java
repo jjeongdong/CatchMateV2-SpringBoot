@@ -1,11 +1,9 @@
 package com.back.catchmate.board.service;
 
+import com.back.catchmate.board.dto.request.BoardSearchCondition;
 import com.back.catchmate.board.dto.response.BoardDetailResponse;
 import com.back.catchmate.board.dto.response.BoardResponse;
 import com.back.catchmate.board.dto.response.BoardTempDetailResponse;
-import com.back.catchmate.board.entity.Board;
-import com.back.catchmate.board.entity.BoardButtonStatus;
-import com.back.catchmate.board.dto.request.BoardSearchCondition;
 import com.back.catchmate.board.entity.Board;
 import com.back.catchmate.board.entity.BoardButtonStatus;
 import com.back.catchmate.bookmark.service.BookmarkService;
@@ -24,25 +22,22 @@ import com.back.catchmate.game.service.GameService;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.BlockService;
 import com.back.catchmate.user.service.UserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import org.springframework.stereotype.Component;
-
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -73,7 +68,8 @@ public class BoardResponseAssembler {
                 .toList();
     }
 
-    public BoardDetailResponse buildBoardDetailResponse(Board board, boolean bookMarked, BoardButtonStatus buttonStatus, Long myEnrollId, Long chatRoomId) {
+    public BoardDetailResponse buildBoardDetailResponse(
+            Board board, boolean bookMarked, BoardButtonStatus buttonStatus, Long myEnrollId, Long chatRoomId) {
         BoardReferences references = loadReferences(List.of(board));
         UserSummary user = references.user(board);
         GameSummary game = references.game(board);
@@ -89,8 +85,7 @@ public class BoardResponseAssembler {
                 references.cheerClub(board),
                 game,
                 references.homeClub(game),
-                references.awayClub(game)
-        );
+                references.awayClub(game));
     }
 
     public BoardTempDetailResponse buildTempDetailResponse(Board board) {
@@ -104,8 +99,7 @@ public class BoardResponseAssembler {
                 references.cheerClub(board),
                 game,
                 references.homeClub(game),
-                references.awayClub(game)
-        );
+                references.awayClub(game));
     }
 
     private BoardReferences loadReferences(Collection<Board> boards) {
@@ -121,27 +115,29 @@ public class BoardResponseAssembler {
                 .distinct()
                 .toList();
 
-        Map<Long, UserSummary> userMap = userIds.isEmpty() ? Map.of() :
-                userService.getUserSummaries(userIds).stream()
+        Map<Long, UserSummary> userMap = userIds.isEmpty()
+                ? Map.of()
+                : userService.getUserSummaries(userIds).stream()
                         .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
 
-        Map<Long, GameSummary> gameMap = gameIds.isEmpty() ? Map.of() :
-                gameService.getGameSummaries(gameIds).stream()
+        Map<Long, GameSummary> gameMap = gameIds.isEmpty()
+                ? Map.of()
+                : gameService.getGameSummaries(gameIds).stream()
                         .collect(Collectors.toMap(GameSummary::gameId, Function.identity()));
 
         List<Long> clubIds = Stream.of(
                         boards.stream().map(Board::getCheerClubId),
                         gameMap.values().stream().map(GameSummary::homeClubId),
                         gameMap.values().stream().map(GameSummary::awayClubId),
-                        userMap.values().stream().map(UserSummary::clubId)
-                )
+                        userMap.values().stream().map(UserSummary::clubId))
                 .flatMap(Function.identity())
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
 
-        Map<Long, ClubSummary> clubMap = clubIds.isEmpty() ? Map.of() :
-                clubService.getClubSummaries(clubIds).stream()
+        Map<Long, ClubSummary> clubMap = clubIds.isEmpty()
+                ? Map.of()
+                : clubService.getClubSummaries(clubIds).stream()
                         .collect(Collectors.toMap(ClubSummary::clubId, Function.identity()));
 
         return new BoardReferences(userMap, clubMap, gameMap);
@@ -158,15 +154,11 @@ public class BoardResponseAssembler {
                 references.cheerClub(board),
                 game,
                 references.homeClub(game),
-                references.awayClub(game)
-        );
+                references.awayClub(game));
     }
 
     private record BoardReferences(
-            Map<Long, UserSummary> userMap,
-            Map<Long, ClubSummary> clubMap,
-            Map<Long, GameSummary> gameMap
-    ) {
+            Map<Long, UserSummary> userMap, Map<Long, ClubSummary> clubMap, Map<Long, GameSummary> gameMap) {
         private UserSummary user(Board board) {
             return board.getUserId() != null ? userMap.get(board.getUserId()) : null;
         }
@@ -202,15 +194,22 @@ public class BoardResponseAssembler {
         boolean isBookMarked = bookmarkService.isBookmarked(userId, boardId);
         Optional<EnrollSummary> myEnroll = enrollQueryService.findEnrollByUserIdAndBoardId(userId, boardId);
 
-        BoardButtonStatus buttonStatus = BoardButtonStatus.resolve(userId, board, myEnroll.map(EnrollSummary::acceptStatus).orElse(null));
+        BoardButtonStatus buttonStatus = BoardButtonStatus.resolve(
+                userId, board, myEnroll.map(EnrollSummary::acceptStatus).orElse(null));
         Long myEnrollId = myEnroll.map(EnrollSummary::enrollId).orElse(null);
         Long chatRoomId = findChatRoomId(board);
 
         return buildBoardDetailResponse(board, isBookMarked, buttonStatus, myEnrollId, chatRoomId);
     }
 
-    public CursorPagedResponse<BoardResponse> getBoardList(Long userId, LocalDate gameDate, Integer maxPerson, List<Long> preferredTeamIdList,
-                                                           LocalDateTime lastLiftUpDate, Long lastBoardId, int size) {
+    public CursorPagedResponse<BoardResponse> getBoardList(
+            Long userId,
+            LocalDate gameDate,
+            Integer maxPerson,
+            List<Long> preferredTeamIdList,
+            LocalDateTime lastLiftUpDate,
+            Long lastBoardId,
+            int size) {
         List<Long> blockedUserIds = blockService.getBlockedUserIds(userId);
         List<Long> matchingGameIds = gameDate != null ? gameService.findIdsByGameStartDateOn(gameDate) : null;
 
@@ -220,8 +219,7 @@ public class BoardResponseAssembler {
         }
 
         BoardSearchCondition condition = BoardSearchCondition.of(
-                userId, matchingGameIds, maxPerson, preferredTeamIdList, blockedUserIds, lastLiftUpDate, lastBoardId
-        );
+                userId, matchingGameIds, maxPerson, preferredTeamIdList, blockedUserIds, lastLiftUpDate, lastBoardId);
 
         CursorPage<Board> boardPage = boardService.getBoardListByCondition(condition, size);
         List<Board> boards = boardPage.getContent();
@@ -253,7 +251,10 @@ public class BoardResponseAssembler {
     }
 
     public BoardTempDetailResponse getTempBoard(Long userId) {
-        return boardService.findTempBoard(userId).map(this::buildTempDetailResponse).orElse(null);
+        return boardService
+                .findTempBoard(userId)
+                .map(this::buildTempDetailResponse)
+                .orElse(null);
     }
 
     private Set<Long> findBookmarkedBoardIds(Long userId, List<Board> boards) {

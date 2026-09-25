@@ -2,7 +2,6 @@ package com.back.catchmate.user.dto.response;
 
 import com.back.catchmate.club.dto.response.ClubSummary;
 import com.back.catchmate.user.entity.User;
-
 import java.time.LocalDate;
 
 public record UserUpdateResponse(
@@ -17,8 +16,7 @@ public record UserUpdateResponse(
         String nickName,
         ClubSummary club,
         LocalDate birthDate,
-        String watchStyle
-) {
+        String watchStyle) {
     public static UserUpdateResponse from(User user, ClubSummary club) {
         return new UserUpdateResponse(
                 user.getId(),
@@ -32,7 +30,6 @@ public record UserUpdateResponse(
                 user.getNickName(),
                 club,
                 user.getBirthDate(),
-                user.getWatchStyle()
-        );
+                user.getWatchStyle());
     }
 }

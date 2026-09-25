@@ -17,6 +17,9 @@ import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.response.CursorPage;
 import com.back.catchmate.game.dto.response.GameSummary;
 import com.back.catchmate.game.service.GameService;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -25,10 +28,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * board 데이터만 다룬다. bookmark·chat·enroll 은 주입하지 않는다 — 그쪽 서비스들이 이 서비스를
@@ -61,8 +60,7 @@ public class BoardService {
                 game != null && isGameComplete(game),
                 command.preferredGender(),
                 PreferredAgeRange.of(command.preferredAgeRange()),
-                command.completed()
-        );
+                command.completed());
 
         Board savedBoard = boardRepository.save(board);
 
@@ -89,8 +87,7 @@ public class BoardService {
                 game != null && isGameComplete(game),
                 command.preferredGender(),
                 PreferredAgeRange.of(command.preferredAgeRange()),
-                command.completed()
-        );
+                command.completed());
 
         boardRepository.save(board);
 
@@ -120,7 +117,7 @@ public class BoardService {
     public void deleteBoard(Long userId, Long boardId) {
         Board board = getBoard(boardId);
         verifyBoardOwner(board, userId);
-        board.delete();                 // 완성 게시글: soft delete (deletedAt 세팅)
+        board.delete(); // 완성 게시글: soft delete (deletedAt 세팅)
         boardRepository.save(board);
     }
 
@@ -134,8 +131,7 @@ public class BoardService {
 
     // ── 자기 컨텍스트 조회 (조립기가 쓴다) ─────────────────────────────
     public Board getBoard(Long boardId) {
-        return boardRepository.findById(boardId)
-                .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
+        return boardRepository.findById(boardId).orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
     }
 
     public List<Board> getBoards(List<Long> boardIds) {
@@ -144,7 +140,8 @@ public class BoardService {
     }
 
     public Board getCompletedBoard(Long boardId) {
-        return boardRepository.findByIdAndCompletedTrue(boardId)
+        return boardRepository
+                .findByIdAndCompletedTrue(boardId)
                 .orElseThrow(() -> new BaseException(ErrorCode.BOARD_NOT_FOUND));
     }
 
@@ -154,7 +151,8 @@ public class BoardService {
 
     public Page<Board> getBoardListByUserId(Long userId, int page, int size) {
         // 사용자별 목록은 끌어올린 순서가 기준이다 (전체 목록의 createdAt 기준과 다르다)
-        return boardRepository.findAllByUserId(userId, PageRequest.of(page, size, Sort.by("liftUpDate").descending()));
+        return boardRepository.findAllByUserId(
+                userId, PageRequest.of(page, size, Sort.by("liftUpDate").descending()));
     }
 
     public CursorPage<Board> getBoardListByCondition(BoardSearchCondition condition, int size) {
@@ -176,13 +174,15 @@ public class BoardService {
 
     public Page<BoardAdminView> getBoardAdminViews(Pageable pageable) {
         // 관리자 전체 목록은 최신 등록순으로 고정한다
-        PageRequest sorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "createdAt"));
+        PageRequest sorted = PageRequest.of(
+                pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
         return boardRepository.findAllByCompletedTrue(sorted).map(this::toAdminView);
     }
 
     public Page<BoardAdminView> getBoardAdminViewsByUserId(Long userId, Pageable pageable) {
-        PageRequest sorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+        PageRequest sorted = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
                 Sort.by("liftUpDate").descending());
         return boardRepository.findAllByUserId(userId, sorted).map(this::toAdminView);
     }
@@ -205,8 +205,10 @@ public class BoardService {
 
     // 게시글 발행에 충분한 경기 정보인지 판정한다 (board 의 규칙 — 전환 전 BoardGameInfo.isComplete()).
     private boolean isGameComplete(GameSummary game) {
-        return game.homeClubId() != null && game.awayClubId() != null
-                && game.gameStartDate() != null && game.location() != null;
+        return game.homeClubId() != null
+                && game.awayClubId() != null
+                && game.gameStartDate() != null
+                && game.location() != null;
     }
 
     private GameSummary resolveGame(Long gameId) {
@@ -227,11 +229,12 @@ public class BoardService {
                 board.getCheerClubId(),
                 board.getGameId(),
                 board.getPreferredGender(),
-                board.getPreferredAgeRange() != null ? board.getPreferredAgeRange().asList() : List.of(),
+                board.getPreferredAgeRange() != null
+                        ? board.getPreferredAgeRange().asList()
+                        : List.of(),
                 board.isCompleted(),
                 board.getCreatedAt(),
-                board.getLiftUpDate()
-        );
+                board.getLiftUpDate());
     }
 
     private BoardAdminView toAdminView(Board board) {
@@ -244,7 +247,6 @@ public class BoardService {
                 board.getUserId(),
                 board.getGameId(),
                 board.isCompleted(),
-                board.getCreatedAt()
-        );
+                board.getCreatedAt());
     }
 }

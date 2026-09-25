@@ -1,8 +1,7 @@
 package com.back.catchmate.notification.dto.response;
 
-import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.notification.entity.Notification;
-
+import com.back.catchmate.user.dto.response.UserSummary;
 import java.time.LocalDateTime;
 
 public record NotificationResponse(
@@ -16,9 +15,9 @@ public record NotificationResponse(
         Long targetId,
         Long boardId,
         String gameInfo,
-        String acceptStatus
-) {
-    public static NotificationResponse from(Notification notification, UserSummary sender, String acceptStatus, String gameInfo) {
+        String acceptStatus) {
+    public static NotificationResponse from(
+            Notification notification, UserSummary sender, String acceptStatus, String gameInfo) {
         return new NotificationResponse(
                 notification.getId(),
                 notification.getTitle(),
@@ -30,7 +29,6 @@ public record NotificationResponse(
                 notification.getTargetId(),
                 notification.getBoardId(),
                 gameInfo,
-                acceptStatus
-        );
+                acceptStatus);
     }
 }

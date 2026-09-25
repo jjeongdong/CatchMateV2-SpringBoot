@@ -21,6 +21,11 @@ import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -28,12 +33,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -84,18 +83,19 @@ public class ChatMessageService {
      * @EventListener(커밋 전 Outbox 저장)가 원자적으로 커밋된다. 브로드캐스트/알림 dispatch 는 AFTER_COMMIT.
      */
     @Transactional
-    public ChatMessage persistAndPublish(Long chatRoomId, Long senderId, String content,
-                                         MessageType messageType, Long sequence, UserSummary sender) {
+    public ChatMessage persistAndPublish(
+            Long chatRoomId,
+            Long senderId,
+            String content,
+            MessageType messageType,
+            Long sequence,
+            UserSummary sender) {
         ChatMessage chatMessage = ChatMessage.createMessage(chatRoomId, senderId, content, messageType, sequence);
         chatMessage = chatMessageRepository.save(chatMessage);
 
         applicationEventPublisher.publishEvent(ChatMessageBroadcastEvent.from(chatMessage, sender));
         applicationEventPublisher.publishEvent(ChatMessageNotificationEvent.of(
-                chatMessage.getChatRoom().getId(),
-                chatMessage.getId(),
-                senderId,
-                chatMessage.getContent()
-        ));
+                chatMessage.getChatRoom().getId(), chatMessage.getId(), senderId, chatMessage.getContent()));
         return chatMessage;
     }
 
@@ -115,23 +115,21 @@ public class ChatMessageService {
             }
             chatHistoryRedisCache.evictLatestPage(chatRoomId);
         } catch (Exception e) {
-            log.error("메시지 전송 후처리 실패 (roomId: {}, senderId: {}, sequence: {})",
-                    chatRoomId, senderId, sequence, e);
+            log.error("메시지 전송 후처리 실패 (roomId: {}, senderId: {}, sequence: {})", chatRoomId, senderId, sequence, e);
         }
     }
 
     // 멤버십 인증 캐시(read-through). miss 시에만 DB 조회 후 캐시 적재. 멤버 행이 없으면 예외.
     private MembershipSnapshot resolveMembership(Long chatRoomId, Long userId) {
-        return chatMembershipRedisCache.find(chatRoomId, userId)
-                .orElseGet(() -> {
-                    // 캐시 miss → DB 조회 후 캐시에 적재
-                    ChatRoomMember member = chatRoomMemberRepository
-                            .findByChatRoomIdAndUserId(chatRoomId, userId)
-                            .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
-                    MembershipSnapshot snapshot = new MembershipSnapshot(member.isActive(), member.isReadOnly());
-                    chatMembershipRedisCache.put(chatRoomId, userId, snapshot);
-                    return snapshot;
-                });
+        return chatMembershipRedisCache.find(chatRoomId, userId).orElseGet(() -> {
+            // 캐시 miss → DB 조회 후 캐시에 적재
+            ChatRoomMember member = chatRoomMemberRepository
+                    .findByChatRoomIdAndUserId(chatRoomId, userId)
+                    .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
+            MembershipSnapshot snapshot = new MembershipSnapshot(member.isActive(), member.isReadOnly());
+            chatMembershipRedisCache.put(chatRoomId, userId, snapshot);
+            return snapshot;
+        });
     }
 
     public void markAsRead(Long chatRoomId, Long userId) {
@@ -183,15 +181,12 @@ public class ChatMessageService {
     @Cacheable(
             value = "chatHistory",
             key = "#roomId + '_' + (#lastMessageId != null ? #lastMessageId : 'START') + '_' + #size",
-            cacheManager = "redisCacheManager"
-    )
+            cacheManager = "redisCacheManager")
     public ChatMessageListDto getChatHistory(Long roomId, Long lastMessageId, int size) {
         List<ChatMessage> dbMessages = chatMessageRepository.findChatHistory(roomId, lastMessageId, size);
 
-        List<Long> senderIds = dbMessages.stream()
-                .map(ChatMessage::getSenderId)
-                .distinct()
-                .toList();
+        List<Long> senderIds =
+                dbMessages.stream().map(ChatMessage::getSenderId).distinct().toList();
         Map<Long, UserSummary> senderById = senderIds.isEmpty()
                 ? Map.of()
                 : userService.getUserSummaries(senderIds).stream()

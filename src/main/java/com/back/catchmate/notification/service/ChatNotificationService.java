@@ -1,21 +1,20 @@
 package com.back.catchmate.notification.service;
 
-import com.back.catchmate.notification.dto.OutboxRecipient;
 import com.back.catchmate.chat.dto.response.ChatRecipientSummary;
 import com.back.catchmate.chat.service.ChatQueryService;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
-import com.back.catchmate.user.service.UserOnlineStatusService;
+import com.back.catchmate.notification.dto.OutboxRecipient;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.service.UserOnlineStatusService;
+import com.back.catchmate.user.service.UserService;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -30,18 +29,21 @@ public class ChatNotificationService {
     private final OutboxSaver outboxSaver;
 
     public void saveOnChatMessageSent(Long chatRoomId, Long messageId, Long senderId, String content) {
-        List<ChatRecipientSummary> recipientsInfo = chatQueryService.getChatRoomRecipientSummaries(chatRoomId, senderId);
+        List<ChatRecipientSummary> recipientsInfo =
+                chatQueryService.getChatRoomRecipientSummaries(chatRoomId, senderId);
         if (recipientsInfo.isEmpty()) return;
 
         UserSummary sender = userService.getUserSummary(senderId);
         String title = NotificationTemplate.CHAT_NEW_MESSAGE.formatTitle(sender.nickName());
         String body = NotificationTemplate.CHAT_NEW_MESSAGE.formatBody(content);
-        Map<String, String> payload = createNotificationData(chatRoomId, senderId, sender.nickName(), content, title, body);
+        Map<String, String> payload =
+                createNotificationData(chatRoomId, senderId, sender.nickName(), content, title, body);
 
-        Map<Long, ChatRecipientSummary> infoMap = recipientsInfo.stream()
-                .collect(Collectors.toMap(ChatRecipientSummary::userId, Function.identity()));
+        Map<Long, ChatRecipientSummary> infoMap =
+                recipientsInfo.stream().collect(Collectors.toMap(ChatRecipientSummary::userId, Function.identity()));
 
-        List<UserSummary> recipients = userService.getUserSummaries(recipientsInfo.stream().map(ChatRecipientSummary::userId).toList());
+        List<UserSummary> recipients = userService.getUserSummaries(
+                recipientsInfo.stream().map(ChatRecipientSummary::userId).toList());
 
         // 알림 설정으로 먼저 걸러 Redis 조회 대상 자체를 줄인다.
         List<UserSummary> candidates = recipients.stream()
@@ -66,8 +68,7 @@ public class ChatNotificationService {
     }
 
     private static Map<String, String> createNotificationData(
-            Long chatRoomId, Long senderId, String senderNickname, String content, String title, String body
-    ) {
+            Long chatRoomId, Long senderId, String senderNickname, String content, String title, String body) {
         return Map.of(
                 "type", NOTIFICATION_TYPE,
                 "roomId", chatRoomId.toString(),
@@ -75,7 +76,6 @@ public class ChatNotificationService {
                 "senderNickname", senderNickname,
                 "content", content,
                 "title", title,
-                "body", body
-        );
+                "body", body);
     }
 }

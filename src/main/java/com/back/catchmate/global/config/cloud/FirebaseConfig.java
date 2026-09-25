@@ -4,12 +4,11 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import jakarta.annotation.PostConstruct;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.context.annotation.Configuration;
-
 import java.io.IOException;
 import java.io.InputStream;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 
 @Slf4j
 @Configuration
@@ -33,11 +32,7 @@ public class FirebaseConfig {
             log.info("Firebase initialized successfully");
 
             FirebaseApp firebaseApp = FirebaseApp.getInstance();
-            log.info(
-                    "Firebase Project ID = {}",
-                    firebaseApp.getOptions().getProjectId()
-
-            );
+            log.info("Firebase Project ID = {}", firebaseApp.getOptions().getProjectId());
 
             log.info("Firebase App Name={}", firebaseApp.getName());
 

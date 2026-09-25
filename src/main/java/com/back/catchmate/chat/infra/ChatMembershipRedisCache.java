@@ -1,12 +1,11 @@
 package com.back.catchmate.chat.infra;
 
 import com.back.catchmate.chat.dto.MembershipSnapshot;
+import java.time.Duration;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
-
-import java.time.Duration;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor

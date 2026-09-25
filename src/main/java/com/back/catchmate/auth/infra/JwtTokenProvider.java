@@ -7,14 +7,13 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.util.Date;
 
 @Slf4j
 @Component
@@ -22,14 +21,19 @@ import java.util.Date;
 public class JwtTokenProvider {
     @Value("${jwt.secretKey}")
     private String secretKey;
+
     @Value("${jwt.access.expiration}")
     private Long accessTokenExpirationPeriod;
+
     @Value("${jwt.refresh.expiration}")
     private Long refreshTokenExpirationPeriod;
+
     @Value("${jwt.signup.expiration:600000}")
     private Long signupTokenExpirationPeriod;
+
     @Value("${jwt.access.header}")
     private String ACCESS_TOKEN_SUBJECT;
+
     @Value("${jwt.refresh.header}")
     private String REFRESH_TOKEN_SUBJECT;
 
@@ -102,8 +106,7 @@ public class JwtTokenProvider {
                     claims.get(PROVIDER_CLAIM, String.class),
                     claims.get(PROVIDER_ID_CLAIM, String.class),
                     claims.get(EMAIL_CLAIM, String.class),
-                    claims.get(PROFILE_IMAGE_URL_CLAIM, String.class)
-            );
+                    claims.get(PROFILE_IMAGE_URL_CLAIM, String.class));
         } catch (BaseException e) {
             throw e;
         } catch (Exception e) {

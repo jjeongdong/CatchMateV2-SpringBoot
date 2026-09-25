@@ -1,5 +1,7 @@
 package com.back.catchmate.global.config.security;
 
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -16,9 +18,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
@@ -32,36 +31,29 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .cors(Customizer.withDefaults())
-            .csrf(AbstractHttpConfigurer::disable)
-            .formLogin(AbstractHttpConfigurer::disable)
-            .httpBasic(AbstractHttpConfigurer::disable)
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-            .exceptionHandling(exception ->
-                exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
-
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                        "/ws/chat/**",
-                        "/actuator/**",
-                        "/api/oauth/authorize/**",
-                        "/api/oauth/callback/**",
-                        "/api/oauth/signup",
-                        "/api/auth/reissue",
-                        "/api/auth/logout",
-                        "/api/users/check-nickname",
-                        "/api/users/additional-info",
-                        "/api/clubs/list",
-                        "/swagger-ui/**",
-                        "/v3/api-docs/**"
-                ).permitAll()
-                .anyRequest().authenticated()
-            )
-
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.cors(Customizer.withDefaults())
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+                .authorizeHttpRequests(auth -> auth.requestMatchers(
+                                "/ws/chat/**",
+                                "/actuator/**",
+                                "/api/oauth/authorize/**",
+                                "/api/oauth/callback/**",
+                                "/api/oauth/signup",
+                                "/api/auth/reissue",
+                                "/api/auth/logout",
+                                "/api/users/check-nickname",
+                                "/api/users/additional-info",
+                                "/api/clubs/list",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

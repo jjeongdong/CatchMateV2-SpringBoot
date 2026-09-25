@@ -1,11 +1,10 @@
 package com.back.catchmate.user.service;
 
 import com.back.catchmate.user.infra.RedisUserOnlineStatus;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 /**
  * Redis 전용 서비스라 DB 를 건드리지 않는다.

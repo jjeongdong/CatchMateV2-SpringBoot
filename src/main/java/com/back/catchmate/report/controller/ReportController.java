@@ -23,8 +23,8 @@ public class ReportController {
 
     @PostMapping
     @Operation(summary = "신고 접수 API", description = "유저 신고를 접수하는 API 입니다.")
-    public ResponseEntity<ReportCreateResponse> createReport(@AuthUser Long reporterId,
-                                                             @Valid @RequestBody ReportCreateRequest request) {
+    public ResponseEntity<ReportCreateResponse> createReport(
+            @AuthUser Long reporterId, @Valid @RequestBody ReportCreateRequest request) {
         return ResponseEntity.ok(reportService.createReport(reporterId, request));
     }
 }

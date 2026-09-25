@@ -1,13 +1,12 @@
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.back.catchmate.CatchmateApplication;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = CatchmateApplication.class, properties = "spring.profiles.active=local")
 class OutboxRetryReliabilityTest {
@@ -16,8 +15,8 @@ class OutboxRetryReliabilityTest {
     private JdbcTemplate jdbcTemplate;
 
     private static final int TOTAL_NOTIFICATIONS = 100;
-    private static final int MAX_RETRY_COUNT = 5;       // application.yml과 ��일
-    private static final double FCM_FAILURE_RATE = 0.3;  // FCM 1회 호출 시 30% 실패율 가정
+    private static final int MAX_RETRY_COUNT = 5; // application.yml과 ��일
+    private static final double FCM_FAILURE_RATE = 0.3; // FCM 1회 호출 시 30% 실패율 가정
 
     /**
      * Outbox 재시도 메커니즘의 최종 발송 성공률 측정
@@ -136,10 +135,11 @@ class OutboxRetryReliabilityTest {
         System.out.println("  ┌──────────────────┬──────────────┬──────────────┐");
         System.out.println("  │      항목         │ Outbox 미적�� │ Outbox 적용  │");
         System.out.println("  ├─��────────────────┼──────────────┼──────────────┤");
-        System.out.printf("  │ 발송 성공         │  %4d / %d  │  %4d / %d  │%n",
+        System.out.printf(
+                "  │ 발송 성공         │  %4d / %d  │  %4d / %d  │%n",
                 withoutOutboxSuccess, bulkCount, withOutboxSuccess, bulkCount);
-        System.out.printf("  │ 발송 실패         │  %4d건       │  %4d���       │%n",
-                bulkCount - withoutOutboxSuccess, failedCount);
+        System.out.printf(
+                "  │ 발송 실패         │  %4d건       │  %4d���       │%n", bulkCount - withoutOutboxSuccess, failedCount);
         System.out.printf("  │ 성공률            │    %5.1f%%    │    %5.1f%%    │%n", withoutRate, withRate);
         System.out.printf("  │ 재시도 횟수       │      -       │  %4d회       │%n", totalRetries);
         System.out.printf("  │ 단건 최대 재시도  │      -       │     %d회      │%n", maxRetriesForSingleNotification);

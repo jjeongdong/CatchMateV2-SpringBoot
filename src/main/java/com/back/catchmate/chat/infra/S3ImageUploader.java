@@ -1,5 +1,9 @@
 package com.back.catchmate.chat.infra;
 
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -7,20 +11,16 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.io.InputStream;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.UUID;
-
 @Component("chatS3ImageUploader")
 public class S3ImageUploader {
     private final S3Client s3Client;
     private final String bucket;
     private final String publicBaseUrl;
 
-    public S3ImageUploader(S3Client s3Client,
-                           @Value("${aws.s3.bucket}") String bucket,
-                           @Value("${aws.s3.publicBaseUrl}") String publicBaseUrl) {
+    public S3ImageUploader(
+            S3Client s3Client,
+            @Value("${aws.s3.bucket}") String bucket,
+            @Value("${aws.s3.publicBaseUrl}") String publicBaseUrl) {
         this.s3Client = s3Client;
         this.bucket = bucket;
         this.publicBaseUrl = publicBaseUrl;
@@ -45,7 +45,8 @@ public class S3ImageUploader {
 
         s3Client.putObject(request, RequestBody.fromInputStream(inputStream, size));
 
-        String base = publicBaseUrl.endsWith("/") ? publicBaseUrl.substring(0, publicBaseUrl.length() - 1) : publicBaseUrl;
+        String base =
+                publicBaseUrl.endsWith("/") ? publicBaseUrl.substring(0, publicBaseUrl.length() - 1) : publicBaseUrl;
         return base + "/" + key;
     }
 
@@ -55,4 +56,3 @@ public class S3ImageUploader {
         return "profile/" + timestamp + "_" + UUID.randomUUID() + "_" + safeName;
     }
 }
-

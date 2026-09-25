@@ -1,16 +1,14 @@
 package com.back.catchmate.enroll.event;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 /**
  * 외부 알림 API(FCM) 지연이 메인 트랜잭션 응답 시간에 미치는 영향을 측정하는 테스트.
@@ -102,7 +100,8 @@ class AsyncEventPerformanceTest {
         }
 
         double syncAvg = syncTimes.stream().mapToLong(Long::longValue).average().orElse(0);
-        double asyncAvg = asyncTimes.stream().mapToLong(Long::longValue).average().orElse(0);
+        double asyncAvg =
+                asyncTimes.stream().mapToLong(Long::longValue).average().orElse(0);
         long syncMax = syncTimes.stream().mapToLong(Long::longValue).max().orElse(0);
         long asyncMax = asyncTimes.stream().mapToLong(Long::longValue).max().orElse(0);
         double improvement = ((syncAvg - asyncAvg) / syncAvg) * 100;

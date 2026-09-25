@@ -1,15 +1,14 @@
 package com.back.catchmate.global.config.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-
-import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 @Configuration
@@ -86,7 +85,9 @@ public class AsyncConfig {
             // 즉시발송 포기 — 스케줄러가 PENDING Outbox 를 회수한다. 웹 스레드 데드락 방지를 위해 절대 CallerRuns 하지 않는다.
             meterRegistry.counter("notification.dispatch.shed").increment();
             if (log.isDebugEnabled()) {
-                log.debug("[알림] 즉시발송 executor 포화 — 즉시발송 건너뜀(스케줄러가 회수). queueSize={}", exec.getQueue().size());
+                log.debug(
+                        "[알림] 즉시발송 executor 포화 — 즉시발송 건너뜀(스케줄러가 회수). queueSize={}",
+                        exec.getQueue().size());
             }
         });
 

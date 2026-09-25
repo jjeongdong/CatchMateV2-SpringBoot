@@ -5,10 +5,12 @@ import com.back.catchmate.chat.dto.request.ChatReadRequest;
 import com.back.catchmate.chat.dto.request.ChatRoomEnterRequest;
 import com.back.catchmate.chat.dto.request.ChatRoomLeaveRequest;
 import com.back.catchmate.chat.dto.response.ChatErrorResponse;
+import com.back.catchmate.chat.service.ChatCommandService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.chat.service.ChatCommandService;
 import jakarta.validation.Valid;
+import java.security.Principal;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
@@ -18,9 +20,6 @@ import org.springframework.messaging.handler.annotation.support.MethodArgumentNo
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.FieldError;
-
-import java.security.Principal;
-import java.util.Objects;
 
 @Slf4j
 @Controller
@@ -36,8 +35,11 @@ public class ChatController {
     public void sendMessage(@Valid @Payload ChatMessageRequest request, Principal principal) {
         Long senderId = extractUserId(principal);
 
-        log.debug("채팅 메시지 수신 - chatRoomId: {}, senderId: {}, content: {}",
-                request.chatRoomId(), senderId, request.content());
+        log.debug(
+                "채팅 메시지 수신 - chatRoomId: {}, senderId: {}, content: {}",
+                request.chatRoomId(),
+                senderId,
+                request.content());
 
         chatCommandService.sendMessage(senderId, request.toCommand(senderId));
         log.debug("채팅 메시지 처리 위임 완료 (Redis Pub/Sub 동작 중)");
@@ -87,12 +89,13 @@ public class ChatController {
 
     @MessageExceptionHandler(MethodArgumentNotValidException.class)
     @SendToUser(destinations = ERROR_DESTINATION, broadcast = false)
-    public ChatErrorResponse handleValidationException(MethodArgumentNotValidException e, @Payload ChatMessageRequest request) {
+    public ChatErrorResponse handleValidationException(
+            MethodArgumentNotValidException e, @Payload ChatMessageRequest request) {
         String message = firstFieldMessage(e);
 
         log.warn("채팅 요청 검증 실패 - chatRoomId: {}, message: {}", request.chatRoomId(), message);
-        return ChatErrorResponse.of(request.chatRoomId(), ErrorCode.BAD_REQUEST, message,
-                isRetryable(ErrorCode.BAD_REQUEST));
+        return ChatErrorResponse.of(
+                request.chatRoomId(), ErrorCode.BAD_REQUEST, message, isRetryable(ErrorCode.BAD_REQUEST));
     }
 
     // 역직렬화 실패(MessageConversionException)도 여기로 온다. 그 경우 @Payload 복원이 다시
@@ -101,8 +104,8 @@ public class ChatController {
     @SendToUser(destinations = ERROR_DESTINATION, broadcast = false)
     public ChatErrorResponse handleUnexpectedException(Exception e) {
         log.error("채팅 요청 처리 중 예기치 못한 오류", e);
-        return ChatErrorResponse.of(null, ErrorCode.INTERNAL_SERVER_ERROR,
-                isRetryable(ErrorCode.INTERNAL_SERVER_ERROR));
+        return ChatErrorResponse.of(
+                null, ErrorCode.INTERNAL_SERVER_ERROR, isRetryable(ErrorCode.INTERNAL_SERVER_ERROR));
     }
 
     // 재전송 가치는 예외 타입이 아니라 실패 성격으로 갈린다. 4xx(읽기 전용 방·비참여자·검증 실패)는 다시

@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,19 +16,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Getter
 @Builder
-@Table(name = "chat_rooms",
+@Table(
+        name = "chat_rooms",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_chat_rooms_board_id",
-                        columnNames = {"board_id"}
-                )
-        }
-)
+            @UniqueConstraint(
+                    name = "uk_chat_rooms_board_id",
+                    columnNames = {"board_id"})
+        })
 @SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -50,10 +48,7 @@ public class ChatRoom extends BaseTimeEntity {
 
     // 채팅방 생성 메서드
     public static ChatRoom createChatRoom(Long boardId) {
-        return ChatRoom.builder()
-                .boardId(boardId)
-                .lastMessageSequence(0L)
-                .build();
+        return ChatRoom.builder().boardId(boardId).lastMessageSequence(0L).build();
     }
 
     // 채팅 메시지 시퀀스 증가 메서드

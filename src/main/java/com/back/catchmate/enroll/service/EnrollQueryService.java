@@ -1,7 +1,5 @@
 package com.back.catchmate.enroll.service;
 
-import com.back.catchmate.common.error.ErrorCode;
-import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.board.service.BoardService;
 import com.back.catchmate.bookmark.service.BookmarkService;
@@ -10,15 +8,6 @@ import com.back.catchmate.club.service.ClubService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.response.PagedResponse;
-import com.back.catchmate.enroll.entity.AcceptStatus;
-import com.back.catchmate.enroll.entity.Enroll;
-import com.back.catchmate.enroll.repository.EnrollRepository;
-import com.back.catchmate.game.dto.response.GameSummary;
-import com.back.catchmate.game.service.GameService;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
-import org.springframework.data.domain.Sort;
-import java.util.HashSet;
 import com.back.catchmate.enroll.dto.response.ApplicantResponse;
 import com.back.catchmate.enroll.dto.response.EnrollApplicantDetailView;
 import com.back.catchmate.enroll.dto.response.EnrollApplicantResponse;
@@ -32,15 +21,16 @@ import com.back.catchmate.enroll.dto.response.EnrollRequestResponse;
 import com.back.catchmate.enroll.dto.response.EnrollResponse;
 import com.back.catchmate.enroll.dto.response.EnrollSummary;
 import com.back.catchmate.enroll.dto.response.EnrollWriterView;
-import com.google.common.math.LongMath;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.back.catchmate.enroll.entity.AcceptStatus;
+import com.back.catchmate.enroll.entity.Enroll;
+import com.back.catchmate.enroll.repository.EnrollRepository;
+import com.back.catchmate.game.dto.response.GameSummary;
+import com.back.catchmate.game.service.GameService;
+import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.service.UserService;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -50,6 +40,12 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
@@ -87,29 +83,29 @@ public class EnrollQueryService {
                 .distinct()
                 .toList();
 
-        Set<Long> bookmarkedBoardIds = boardIds.isEmpty() ? Set.of() : new HashSet<>(bookmarkService.findBookmarkedBoardIds(userId, boardIds));
+        Set<Long> bookmarkedBoardIds =
+                boardIds.isEmpty() ? Set.of() : new HashSet<>(bookmarkService.findBookmarkedBoardIds(userId, boardIds));
         List<BoardSummary> boards = boardIds.isEmpty() ? List.of() : boardService.getBoardSummaries(boardIds);
-        Map<Long, EnrollBoardSummary> boardSummaryById = buildBoardSummaries(boards, bookmarkedBoardIds::contains)
-                .stream()
-                .collect(Collectors.toMap(EnrollBoardSummary::boardId, Function.identity()));
+        Map<Long, EnrollBoardSummary> boardSummaryById =
+                buildBoardSummaries(boards, bookmarkedBoardIds::contains).stream()
+                        .collect(Collectors.toMap(EnrollBoardSummary::boardId, Function.identity()));
 
         List<EnrollRequestResponse> responses = enrollPage.getContent().stream()
-                .map(enroll -> EnrollRequestResponse.from(
-                        enroll,
-                        boardSummaryById.get(enroll.getBoardId())
-                ))
+                .map(enroll -> EnrollRequestResponse.from(enroll, boardSummaryById.get(enroll.getBoardId())))
                 .toList();
 
         return new PagedResponse<>(enrollPage, responses);
     }
 
-    public PagedResponse<EnrollApplicantResponse> getEnrollReceiveListByBoardId(Long userId, Long boardId, int page, int size) {
+    public PagedResponse<EnrollApplicantResponse> getEnrollReceiveListByBoardId(
+            Long userId, Long boardId, int page, int size) {
         BoardSummary board = boardService.getBoardSummary(boardId);
         if (!board.userId().equals(userId)) {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }
 
-        Page<Enroll> enrollPage = enrollRepository.findAllByBoardIdAndAcceptStatus(boardId, AcceptStatus.PENDING, latestFirst(page, size));
+        Page<Enroll> enrollPage = enrollRepository.findAllByBoardIdAndAcceptStatus(
+                boardId, AcceptStatus.PENDING, latestFirst(page, size));
 
         Map<Long, UserSummary> userById = resolveEnrollApplicants(enrollPage.getContent());
         Map<Long, ClubSummary> clubById = resolveClubs(userById.values());
@@ -126,7 +122,8 @@ public class EnrollQueryService {
 
     public PagedResponse<EnrollReceiveResponse> getEnrollReceiveList(Long userId, int page, int size) {
         // 사용자가 작성한 게시글 중에서 신청이 보류 중인 게시글의 ID를 가져온다.
-        Page<Long> boardIdPage = enrollRepository.findDistinctBoardIdsByOwnerIdAndStatus(userId, AcceptStatus.PENDING, PageRequest.of(page, size));
+        Page<Long> boardIdPage = enrollRepository.findDistinctBoardIdsByOwnerIdAndStatus(
+                userId, AcceptStatus.PENDING, PageRequest.of(page, size));
         List<Long> boardIds = boardIdPage.getContent();
 
         if (boardIds.isEmpty()) {
@@ -134,8 +131,8 @@ public class EnrollQueryService {
         }
 
         List<Enroll> allEnrolls = findPendingEnrollsByBoardIds(boardIds);
-        Map<Long, List<Enroll>> enrollsByBoardId = allEnrolls.stream()
-                .collect(Collectors.groupingBy(Enroll::getBoardId));
+        Map<Long, List<Enroll>> enrollsByBoardId =
+                allEnrolls.stream().collect(Collectors.groupingBy(Enroll::getBoardId));
 
         // 페이지 전체를 한 번에 조립 — 보드 1회 + (작성자·경기·구단) 각 1회
         Map<Long, EnrollBoardSummary> summaryByBoardId =
@@ -155,7 +152,8 @@ public class EnrollQueryService {
                     List<EnrollResponse> enrollList = enrolls.stream()
                             .map(e -> {
                                 UserSummary u = applicantById.get(e.getUserId());
-                                ClubSummary c = u != null && u.clubId() != null ? applicantClubById.get(u.clubId()) : null;
+                                ClubSummary c =
+                                        u != null && u.clubId() != null ? applicantClubById.get(u.clubId()) : null;
                                 return toEnrollResponse(e, u, c);
                             })
                             .toList();
@@ -175,15 +173,15 @@ public class EnrollQueryService {
 
     // --- Internal Helpers ---
 
-    private EnrollDetailResponse toEnrollDetailResponse(Enroll enroll, UserSummary applicant, ClubSummary applicantClub, EnrollBoardSummary boardResponse) {
+    private EnrollDetailResponse toEnrollDetailResponse(
+            Enroll enroll, UserSummary applicant, ClubSummary applicantClub, EnrollBoardSummary boardResponse) {
         return new EnrollDetailResponse(
                 enroll.getId(),
                 enroll.getAcceptStatus(),
                 enroll.getDescription(),
                 enroll.getRequestedAt(),
                 toApplicantDetailView(applicant, applicantClub),
-                boardResponse
-        );
+                boardResponse);
     }
 
     private EnrollApplicantResponse toEnrollApplicantResponse(Enroll enroll, UserSummary user, ClubSummary club) {
@@ -192,8 +190,7 @@ public class EnrollQueryService {
                 enroll.getDescription(),
                 enroll.getRequestedAt(),
                 true,
-                ApplicantResponse.from(user, club)
-        );
+                ApplicantResponse.from(user, club));
     }
 
     private EnrollResponse toEnrollResponse(Enroll enroll, UserSummary user, ClubSummary club) {
@@ -202,15 +199,11 @@ public class EnrollQueryService {
                 enroll.getDescription(),
                 enroll.isNewEnroll(),
                 enroll.getRequestedAt(),
-                ApplicantResponse.from(user, club)
-        );
+                ApplicantResponse.from(user, club));
     }
 
     private Map<Long, UserSummary> resolveEnrollApplicants(List<Enroll> enrolls) {
-        List<Long> userIds = enrolls.stream()
-                .map(Enroll::getUserId)
-                .distinct()
-                .toList();
+        List<Long> userIds = enrolls.stream().map(Enroll::getUserId).distinct().toList();
         if (userIds.isEmpty()) return Map.of();
         return userService.getUserSummaries(userIds).stream()
                 .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
@@ -231,7 +224,8 @@ public class EnrollQueryService {
         return buildBoardSummaries(List.of(board), id -> bookmarked).get(0);
     }
 
-    private List<EnrollBoardSummary> buildBoardSummaries(List<BoardSummary> boards, Predicate<Long> bookmarkedPredicate) {
+    private List<EnrollBoardSummary> buildBoardSummaries(
+            List<BoardSummary> boards, Predicate<Long> bookmarkedPredicate) {
         if (boards.isEmpty()) return List.of();
 
         List<Long> userIds = boards.stream()
@@ -245,25 +239,27 @@ public class EnrollQueryService {
                 .distinct()
                 .toList();
 
-        Map<Long, UserSummary> userMap = userIds.isEmpty() ? Map.of() :
-                userService.getUserSummaries(userIds).stream()
+        Map<Long, UserSummary> userMap = userIds.isEmpty()
+                ? Map.of()
+                : userService.getUserSummaries(userIds).stream()
                         .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
-        Map<Long, GameSummary> gameMap = gameIds.isEmpty() ? Map.of() :
-                gameService.getGameSummaries(gameIds).stream()
+        Map<Long, GameSummary> gameMap = gameIds.isEmpty()
+                ? Map.of()
+                : gameService.getGameSummaries(gameIds).stream()
                         .collect(Collectors.toMap(GameSummary::gameId, Function.identity()));
 
         List<Long> clubIds = Stream.of(
                         boards.stream().map(BoardSummary::cheerClubId),
                         gameMap.values().stream().map(GameSummary::homeClubId),
                         gameMap.values().stream().map(GameSummary::awayClubId),
-                        userMap.values().stream().map(UserSummary::clubId)
-                )
+                        userMap.values().stream().map(UserSummary::clubId))
                 .flatMap(Function.identity())
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
-        Map<Long, ClubSummary> clubMap = clubIds.isEmpty() ? Map.of() :
-                clubService.getClubSummaries(clubIds).stream()
+        Map<Long, ClubSummary> clubMap = clubIds.isEmpty()
+                ? Map.of()
+                : clubService.getClubSummaries(clubIds).stream()
                         .collect(Collectors.toMap(ClubSummary::clubId, Function.identity()));
 
         return boards.stream()
@@ -271,10 +267,12 @@ public class EnrollQueryService {
                 .toList();
     }
 
-    private EnrollBoardSummary toSummary(BoardSummary board, boolean bookmarked,
-                                         Map<Long, UserSummary> userMap,
-                                         Map<Long, ClubSummary> clubMap,
-                                         Map<Long, GameSummary> gameMap) {
+    private EnrollBoardSummary toSummary(
+            BoardSummary board,
+            boolean bookmarked,
+            Map<Long, UserSummary> userMap,
+            Map<Long, ClubSummary> clubMap,
+            Map<Long, GameSummary> gameMap) {
         UserSummary user = board.userId() != null ? userMap.get(board.userId()) : null;
         ClubSummary userClub = user != null && user.clubId() != null ? clubMap.get(user.clubId()) : null;
         ClubSummary cheerClub = board.cheerClubId() != null ? clubMap.get(board.cheerClubId()) : null;
@@ -284,8 +282,15 @@ public class EnrollQueryService {
         return toEnrollBoardSummary(board, bookmarked, user, userClub, cheerClub, game, homeClub, awayClub);
     }
 
-    private EnrollBoardSummary toEnrollBoardSummary(BoardSummary board, boolean bookMarked, UserSummary user, ClubSummary userClub,
-                                                    ClubSummary cheerClub, GameSummary game, ClubSummary homeClub, ClubSummary awayClub) {
+    private EnrollBoardSummary toEnrollBoardSummary(
+            BoardSummary board,
+            boolean bookMarked,
+            UserSummary user,
+            ClubSummary userClub,
+            ClubSummary cheerClub,
+            GameSummary game,
+            ClubSummary homeClub,
+            ClubSummary awayClub) {
         return new EnrollBoardSummary(
                 board.boardId(),
                 board.title(),
@@ -296,8 +301,7 @@ public class EnrollQueryService {
                 bookMarked,
                 toClubView(cheerClub),
                 toGameView(game, homeClub, awayClub),
-                toWriterView(user, userClub)
-        );
+                toWriterView(user, userClub));
     }
 
     private EnrollClubView toClubView(ClubSummary club) {
@@ -308,12 +312,7 @@ public class EnrollQueryService {
     private EnrollGameView toGameView(GameSummary game, ClubSummary homeClub, ClubSummary awayClub) {
         if (game == null) return null;
         return new EnrollGameView(
-                game.gameId(),
-                game.gameStartDate(),
-                game.location(),
-                toClubView(homeClub),
-                toClubView(awayClub)
-        );
+                game.gameId(), game.gameStartDate(), game.location(), toClubView(homeClub), toClubView(awayClub));
     }
 
     private EnrollWriterView toWriterView(UserSummary user, ClubSummary userClub) {
@@ -327,8 +326,7 @@ public class EnrollQueryService {
                 user.birthDate(),
                 user.watchStyle(),
                 toClubView(userClub),
-                user.authority()
-        );
+                user.authority());
     }
 
     private EnrollApplicantDetailView toApplicantDetailView(UserSummary user, ClubSummary userClub) {
@@ -342,8 +340,7 @@ public class EnrollQueryService {
                 user.birthDate(),
                 user.watchStyle(),
                 toClubView(userClub),
-                user.authority()
-        );
+                user.authority());
     }
 
     // ── 다른 컨텍스트용 ────────────────────────────────────────────────
@@ -380,13 +377,11 @@ public class EnrollQueryService {
                 enroll.getDescription(),
                 enroll.getAcceptStatus() != null ? enroll.getAcceptStatus().name() : null,
                 enroll.isNewEnroll(),
-                enroll.getRequestedAt()
-        );
+                enroll.getRequestedAt());
     }
 
     private Enroll getEnrollOrThrow(Long enrollId) {
-        return enrollRepository.findById(enrollId)
-                .orElseThrow(() -> new BaseException(ErrorCode.ENROLL_NOT_FOUND));
+        return enrollRepository.findById(enrollId).orElseThrow(() -> new BaseException(ErrorCode.ENROLL_NOT_FOUND));
     }
 
     private List<Enroll> findPendingEnrollsByBoardIds(List<Long> boardIds) {

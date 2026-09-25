@@ -1,21 +1,18 @@
 package com.back.catchmate.board.repository;
 
+import static com.back.catchmate.board.entity.QBoard.board;
+
 import com.back.catchmate.board.dto.request.BoardSearchCondition;
 import com.back.catchmate.board.entity.Board;
+import com.back.catchmate.common.response.CursorPage;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
-
-import java.time.LocalDateTime;
-import java.util.Collections;
-import com.back.catchmate.common.response.CursorPage;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
-import static com.back.catchmate.board.entity.QBoard.board;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
@@ -36,8 +33,7 @@ public class BoardRepositoryImpl implements BoardRepositoryCustom {
                         inPreferredTeams(condition.getPreferredTeamIdList()),
                         inMatchingGames(condition.getMatchingGameIds()),
                         notInBlockedUsers(condition.getBlockedUserIds()),
-                        cursorCondition(condition.getLastLiftUpDate(), condition.getLastBoardId())
-                )
+                        cursorCondition(condition.getLastLiftUpDate(), condition.getLastBoardId()))
                 .orderBy(board.liftUpDate.desc(), board.id.desc())
                 .limit(fetchSize)
                 .fetch();
@@ -66,16 +62,14 @@ public class BoardRepositoryImpl implements BoardRepositoryCustom {
     }
 
     private BooleanExpression notInBlockedUsers(List<Long> blockedUserIds) {
-        return blockedUserIds != null && !blockedUserIds.isEmpty()
-                ? board.userId.notIn(blockedUserIds)
-                : null;
+        return blockedUserIds != null && !blockedUserIds.isEmpty() ? board.userId.notIn(blockedUserIds) : null;
     }
 
     private BooleanExpression cursorCondition(LocalDateTime lastLiftUpDate, Long lastBoardId) {
         if (lastLiftUpDate == null || lastBoardId == null) return null;
-        return board.liftUpDate.lt(lastLiftUpDate)
-                .or(board.liftUpDate.eq(lastLiftUpDate)
-                        .and(board.id.lt(lastBoardId)));
+        return board.liftUpDate
+                .lt(lastLiftUpDate)
+                .or(board.liftUpDate.eq(lastLiftUpDate).and(board.id.lt(lastBoardId)));
     }
 
     @Override

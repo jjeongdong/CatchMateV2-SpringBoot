@@ -15,6 +15,4 @@ public record BoardAdminView(
         Long userId,
         Long gameId,
         boolean completed,
-        LocalDateTime createdAt
-) {
-}
+        LocalDateTime createdAt) {}

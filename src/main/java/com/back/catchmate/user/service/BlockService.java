@@ -9,6 +9,9 @@ import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.entity.Block;
 import com.back.catchmate.user.event.UserBlockedEvent;
 import com.back.catchmate.user.repository.BlockRepository;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -16,10 +19,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +56,8 @@ public class BlockService {
             return new PagedResponse<>(blockPage, List.of());
         }
 
-        List<Long> blockedIds = blockPage.getContent().stream().map(Block::getBlockedId).toList();
+        List<Long> blockedIds =
+                blockPage.getContent().stream().map(Block::getBlockedId).toList();
 
         Map<Long, UserSummary> blockedById = userService.getUserSummaries(blockedIds).stream()
                 .collect(Collectors.toMap(UserSummary::userId, u -> u));
@@ -89,11 +89,12 @@ public class BlockService {
                 user.nickName(),
                 user.profileImageUrl(),
                 null // blockedAt 필드는 원본 엔티티에 없거나 필요시 추가
-        );
+                );
     }
 
     private Block getBlockOrThrow(Long blockerId, Long blockedId) {
-        return blockRepository.findByBlockerIdAndBlockedId(blockerId, blockedId)
+        return blockRepository
+                .findByBlockerIdAndBlockedId(blockerId, blockedId)
                 .orElseThrow(() -> new BaseException(ErrorCode.BLOCK_NOT_FOUND));
     }
 

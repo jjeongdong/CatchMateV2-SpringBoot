@@ -6,17 +6,16 @@ import com.back.catchmate.notification.repository.NotificationOutboxRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -29,8 +28,8 @@ public class OutboxStateTransitioner {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<NotificationOutbox> claimPendingNotifications(int maxRetryCount, int batchSize) {
-        List<NotificationOutbox> pendingList = outboxRepository.findAllForProcessing(
-                OutboxStatus.PENDING, maxRetryCount, Pageable.ofSize(batchSize));
+        List<NotificationOutbox> pendingList =
+                outboxRepository.findAllForProcessing(OutboxStatus.PENDING, maxRetryCount, Pageable.ofSize(batchSize));
         if (pendingList.isEmpty()) {
             return pendingList;
         }
@@ -44,7 +43,8 @@ public class OutboxStateTransitioner {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<NotificationOutbox> claimPendingByRecipientId(Long recipientId) {
-        List<NotificationOutbox> pendingList = outboxRepository.findAllByRecipientIdAndStatusForProcessing(recipientId, OutboxStatus.PENDING);
+        List<NotificationOutbox> pendingList =
+                outboxRepository.findAllByRecipientIdAndStatusForProcessing(recipientId, OutboxStatus.PENDING);
         for (NotificationOutbox outbox : pendingList) {
             outbox.startProcessing();
             outboxRepository.save(outbox);
@@ -67,7 +67,8 @@ public class OutboxStateTransitioner {
 
         LocalDateTime createdAt = outbox.getCreatedAt();
         if (createdAt != null) {
-            meterRegistry.timer("notification.outbox.latency", "retried", retried)
+            meterRegistry
+                    .timer("notification.outbox.latency", "retried", retried)
                     .record(Duration.between(createdAt, LocalDateTime.now()));
         }
     }
@@ -76,7 +77,9 @@ public class OutboxStateTransitioner {
     public void updateStatusPermanentFailure(NotificationOutbox outbox, String reason) {
         outbox.permanentFail(reason);
         outboxRepository.save(outbox);
-        meterRegistry.counter("notification.outbox.failure", "type", "permanent").increment();
+        meterRegistry
+                .counter("notification.outbox.failure", "type", "permanent")
+                .increment();
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -94,13 +97,14 @@ public class OutboxStateTransitioner {
      * @param errorMessages 아웃박스 id → 실패 사유(성공 건은 없음)
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void applyDispatchResults(List<NotificationOutbox> successes,
-                                     List<NotificationOutbox> permanentFailures,
-                                     List<NotificationOutbox> retryableFailures,
-                                     Map<Long, String> errorMessages,
-                                     int maxRetryCount) {
-        List<NotificationOutbox> updated = new ArrayList<>(
-                successes.size() + permanentFailures.size() + retryableFailures.size());
+    public void applyDispatchResults(
+            List<NotificationOutbox> successes,
+            List<NotificationOutbox> permanentFailures,
+            List<NotificationOutbox> retryableFailures,
+            Map<Long, String> errorMessages,
+            int maxRetryCount) {
+        List<NotificationOutbox> updated =
+                new ArrayList<>(successes.size() + permanentFailures.size() + retryableFailures.size());
 
         for (NotificationOutbox outbox : successes) {
             outbox.success();
@@ -109,7 +113,9 @@ public class OutboxStateTransitioner {
         }
         for (NotificationOutbox outbox : permanentFailures) {
             outbox.permanentFail(errorMessages.get(outbox.getId()));
-            meterRegistry.counter("notification.outbox.failure", "type", "permanent").increment();
+            meterRegistry
+                    .counter("notification.outbox.failure", "type", "permanent")
+                    .increment();
             updated.add(outbox);
         }
         for (NotificationOutbox outbox : retryableFailures) {
@@ -129,7 +135,8 @@ public class OutboxStateTransitioner {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public int recoverStuckProcessing(LocalDateTime threshold, int maxRetryCount, int batchSize) {
-        List<NotificationOutbox> stuckList = outboxRepository.findAllStuckForRecovery(OutboxStatus.PROCESSING, threshold, Pageable.ofSize(batchSize));
+        List<NotificationOutbox> stuckList = outboxRepository.findAllStuckForRecovery(
+                OutboxStatus.PROCESSING, threshold, Pageable.ofSize(batchSize));
         for (NotificationOutbox outbox : stuckList) {
             applyFailure(outbox, maxRetryCount, "PROCESSING 상태 정체로 회수됨");
             outboxRepository.save(outbox);
@@ -143,7 +150,9 @@ public class OutboxStateTransitioner {
         outbox.recordError(errorMessage);
         if (outbox.getRetryCount() >= maxRetryCount) {
             outbox.fail();
-            meterRegistry.counter("notification.outbox.failure", "type", "max_retry_exceeded").increment();
+            meterRegistry
+                    .counter("notification.outbox.failure", "type", "max_retry_exceeded")
+                    .increment();
         } else {
             outbox.pending();
         }

@@ -1,5 +1,9 @@
 package com.back.catchmate.user.infra;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -7,11 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
-
-import java.util.List;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 // MGET 은 "요청한 키 순서대로 값을 돌려주고, 없는 키 자리에는 null 을 채운다" 는 프로토콜 가정 위에서만
 // userIds 와 짝을 맞출 수 있다. 이 가정이 깨지면 'A 의 포커스 방을 B 의 것으로 착각' 하는 조용한 버그가 되므로
@@ -56,10 +55,7 @@ class RedisUserOnlineStatusMultiGetIntegrationTest {
         Map<Long, Long> focusRooms = sut.getUserFocusRooms(List.of(userA, userB, userC));
 
         // then
-        assertThat(focusRooms).containsOnly(
-                Map.entry(userA, 11L),
-                Map.entry(userC, 33L)
-        );
+        assertThat(focusRooms).containsOnly(Map.entry(userA, 11L), Map.entry(userC, 33L));
         assertThat(focusRooms).doesNotContainKey(userB);
     }
 

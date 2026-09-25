@@ -1,15 +1,14 @@
 package com.back.catchmate.notification.service;
 
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
 import com.back.catchmate.notification.infra.RedisNotificationPublisher;
+import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.service.UserService;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * 공지사항 알림의 비동기 발송 전용 서비스(비트랜잭션).
@@ -37,8 +36,7 @@ public class AdminNoticeNotificationDispatchService {
                 "type", NOTIFICATION_TYPE,
                 "noticeId", noticeId.toString(),
                 "title", title,
-                "body", body
-        );
+                "body", body);
 
         // 전원이 같은 내용을 받으므로 수신자별 publish 대신 한 건으로 묶어 보낸다.
         List<Long> recipientIds = userService.getEventAlarmEnabledUserSummaries().stream()

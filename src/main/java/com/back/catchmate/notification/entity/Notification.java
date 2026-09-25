@@ -22,12 +22,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "notifications", indexes = {
-        // 알림 목록 조회(user_id 필터 + created_at DESC 정렬)와 안 읽음 여부 확인 용.
-        @Index(name = "idx_notifications_user_created",
-                columnList = "user_id, created_at DESC"
-        )
-})
+@Table(
+        name = "notifications",
+        indexes = {
+            // 알림 목록 조회(user_id 필터 + created_at DESC 정렬)와 안 읽음 여부 확인 용.
+            @Index(name = "idx_notifications_user_created", columnList = "user_id, created_at DESC")
+        })
 public class Notification extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,7 +55,8 @@ public class Notification extends BaseTimeEntity {
     @Column
     private Long targetId;
 
-    public static Notification createNotification(Long userId, Long senderId, Long boardId, String title, AlarmType type, Long targetId) {
+    public static Notification createNotification(
+            Long userId, Long senderId, Long boardId, String title, AlarmType type, Long targetId) {
         return Notification.builder()
                 .userId(userId)
                 .senderId(senderId)

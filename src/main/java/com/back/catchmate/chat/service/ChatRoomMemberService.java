@@ -6,14 +6,13 @@ import com.back.catchmate.chat.infra.ChatMembershipRedisCache;
 import com.back.catchmate.chat.repository.ChatRoomMemberRepository;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
@@ -29,8 +28,8 @@ public class ChatRoomMemberService {
     @Transactional
     public ChatRoomMember addMember(ChatRoom chatRoom, Long userId) {
         // 이미 멤버인지 확인
-        Optional<ChatRoomMember> existing = chatRoomMemberRepository
-                .findByChatRoomIdAndUserId(chatRoom.getId(), userId);
+        Optional<ChatRoomMember> existing =
+                chatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoom.getId(), userId);
 
         if (existing.isPresent()) {
             ChatRoomMember member = existing.get();
@@ -91,7 +90,8 @@ public class ChatRoomMemberService {
      * 특정 채팅방의 활성 멤버 단건 조회 (없으면 예외)
      */
     private ChatRoomMember getActiveMemberOrThrow(Long chatRoomId, Long userId) {
-        return chatRoomMemberRepository.findByChatRoomIdAndUserId(chatRoomId, userId)
+        return chatRoomMemberRepository
+                .findByChatRoomIdAndUserId(chatRoomId, userId)
                 .filter(ChatRoomMember::isActive)
                 .orElseThrow(() -> new BaseException(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
     }
@@ -109,10 +109,7 @@ public class ChatRoomMemberService {
     public Map<Long, ChatRoomMember> getChatRoomMembersByChatRoomIds(List<Long> chatRoomIds, Long userId) {
         return chatRoomMemberRepository.findByChatRoomIdsAndUserId(chatRoomIds, userId).stream()
                 .collect(Collectors.toMap(
-                        member -> member.getChatRoom().getId(),
-                        member -> member,
-                        (existing, replacement) -> existing
-                ));
+                        member -> member.getChatRoom().getId(), member -> member, (existing, replacement) -> existing));
     }
 
     /**

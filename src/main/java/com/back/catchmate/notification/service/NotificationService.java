@@ -17,14 +17,6 @@ import com.back.catchmate.notification.entity.enums.AlarmType;
 import com.back.catchmate.notification.repository.NotificationRepository;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +24,13 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
@@ -52,11 +51,13 @@ public class NotificationService {
 
         String acceptStatus = null;
         if (notification.getType() == AlarmType.ENROLL && notification.getTargetId() != null) {
-            acceptStatus = enrollQueryService.findAcceptStatusById(notification.getTargetId())
+            acceptStatus = enrollQueryService
+                    .findAcceptStatusById(notification.getTargetId())
                     .orElse(null);
         }
 
-        UserSummary sender = notification.getSenderId() != null ? userService.getUserSummary(notification.getSenderId()) : null;
+        UserSummary sender =
+                notification.getSenderId() != null ? userService.getUserSummary(notification.getSenderId()) : null;
         String gameInfo = resolveGameInfo(notification.getBoardId());
         return NotificationResponse.from(notification, sender, acceptStatus, gameInfo);
     }
@@ -90,10 +91,10 @@ public class NotificationService {
                     String status = (notification.getType() == AlarmType.ENROLL)
                             ? enrollStatusMap.get(notification.getTargetId())
                             : null;
-                    String gameInfo = notification.getBoardId() != null
-                            ? gameInfoByBoardId.get(notification.getBoardId())
-                            : null;
-                    UserSummary sender = notification.getSenderId() != null ? senderById.get(notification.getSenderId()) : null;
+                    String gameInfo =
+                            notification.getBoardId() != null ? gameInfoByBoardId.get(notification.getBoardId()) : null;
+                    UserSummary sender =
+                            notification.getSenderId() != null ? senderById.get(notification.getSenderId()) : null;
                     return NotificationResponse.from(notification, sender, status, gameInfo);
                 })
                 .toList();
@@ -128,13 +129,15 @@ public class NotificationService {
     }
 
     @Transactional
-    public void createNotification(Long userId, Long senderId, Long boardId, String title, AlarmType type, Long targetId) {
+    public void createNotification(
+            Long userId, Long senderId, Long boardId, String title, AlarmType type, Long targetId) {
         Notification notification = Notification.createNotification(userId, senderId, boardId, title, type, targetId);
         notificationRepository.save(notification);
     }
 
     @Transactional
-    public void createNotifications(List<Long> userIds, Long senderId, Long boardId, String title, AlarmType type, Long targetId) {
+    public void createNotifications(
+            List<Long> userIds, Long senderId, Long boardId, String title, AlarmType type, Long targetId) {
         if (userIds.isEmpty()) {
             return;
         }
@@ -145,7 +148,8 @@ public class NotificationService {
     }
 
     private Notification getNotificationOrThrow(Long notificationId) {
-        return notificationRepository.findById(notificationId)
+        return notificationRepository
+                .findById(notificationId)
                 .orElseThrow(() -> new BaseException(ErrorCode.NOTIFICATION_NOT_FOUND));
     }
 
@@ -205,30 +209,26 @@ public class NotificationService {
                 : clubService.getClubSummaries(clubIds).stream()
                         .collect(Collectors.toMap(ClubSummary::clubId, Function.identity()));
 
-        return boardIds.stream()
-                .collect(Collectors.toMap(
-                        Function.identity(),
-                        bid -> {
-                            BoardSummary b = boardById.get(bid);
-                            if (b == null || b.gameId() == null) return "";
-                            GameSummary game = gameById.get(b.gameId());
-                            if (game == null) return "";
-                            ClubSummary home = game.homeClubId() != null ? clubById.get(game.homeClubId()) : null;
-                            ClubSummary away = game.awayClubId() != null ? clubById.get(game.awayClubId()) : null;
-                            return formatGameInfo(game, home, away);
-                        }
-                ));
+        return boardIds.stream().collect(Collectors.toMap(Function.identity(), bid -> {
+            BoardSummary b = boardById.get(bid);
+            if (b == null || b.gameId() == null) return "";
+            GameSummary game = gameById.get(b.gameId());
+            if (game == null) return "";
+            ClubSummary home = game.homeClubId() != null ? clubById.get(game.homeClubId()) : null;
+            ClubSummary away = game.awayClubId() != null ? clubById.get(game.awayClubId()) : null;
+            return formatGameInfo(game, home, away);
+        }));
     }
 
     private static String formatGameInfo(GameSummary game, ClubSummary homeClub, ClubSummary awayClub) {
         if (game == null || game.gameStartDate() == null) return null;
         String home = homeClub != null ? homeClub.name() : "?";
         String away = awayClub != null ? awayClub.name() : "?";
-        return String.format("%s · %s · %s vs %s",
+        return String.format(
+                "%s · %s · %s vs %s",
                 game.gameStartDate().format(GAME_INFO_FORMATTER),
                 game.location() != null ? game.location() : "?",
                 home,
-                away
-        );
+                away);
     }
 }

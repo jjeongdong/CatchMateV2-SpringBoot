@@ -1,7 +1,7 @@
 package com.back.catchmate.user.controller;
 
-import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.common.response.PagedResponse;
+import com.back.catchmate.global.authorization.annotation.AuthUser;
 import com.back.catchmate.user.dto.response.BlockActionResponse;
 import com.back.catchmate.user.dto.response.BlockedUserResponse;
 import com.back.catchmate.user.service.BlockService;
@@ -32,9 +32,10 @@ public class BlockController {
 
     @GetMapping
     @Operation(summary = "차단 목록 조회 API", description = "차단한 유저 목록을 페이징 조회하는 API 입니다.")
-    public ResponseEntity<PagedResponse<BlockedUserResponse>> getBlockList(@AuthUser Long userId,
-                                                                           @RequestParam(defaultValue = "0") int page,
-                                                                           @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<PagedResponse<BlockedUserResponse>> getBlockList(
+            @AuthUser Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(blockService.getBlockList(userId, page, size));
     }
 

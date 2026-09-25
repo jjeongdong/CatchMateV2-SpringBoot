@@ -1,11 +1,6 @@
-import com.back.catchmate.CatchmateApplication;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import javax.sql.DataSource;
+import com.back.catchmate.CatchmateApplication;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,8 +13,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import javax.sql.DataSource;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @SpringBootTest(classes = CatchmateApplication.class, properties = "spring.profiles.active=local")
 class OutboxSkipLockedConcurrencyTest {
@@ -30,8 +29,8 @@ class OutboxSkipLockedConcurrencyTest {
     @Autowired
     private DataSource dataSource;
 
-    private static final int OUTBOX_COUNT = 20;        // PENDING 알림 건수
-    private static final int SCHEDULER_INSTANCES = 5;   // 동시 스케줄러 인스턴스 수
+    private static final int OUTBOX_COUNT = 20; // PENDING 알림 건수
+    private static final int SCHEDULER_INSTANCES = 5; // 동시 스케줄러 인스턴스 수
 
     /**
      * SKIP LOCKED 적용: 여러 스케줄러 인스턴스가 동시에 PENDING 알림을 선점해도
@@ -149,7 +148,8 @@ class OutboxSkipLockedConcurrencyTest {
         System.out.println("  ┌────────────────────┬───────────────┬───────────────┐");
         System.out.println("  │       항목          │ SKIP LOCKED O │ SKIP LOCKED X │");
         System.out.println("  ├────────────────────┼───────────────┼───────────────┤");
-        System.out.printf("  │ 총 FCM 발송 횟수   │     %3d회     │     %3d회     │%n", slSendCount.get(), noSlSendCount.get());
+        System.out.printf(
+                "  │ 총 FCM 발송 횟수   │     %3d회     │     %3d회     │%n", slSendCount.get(), noSlSendCount.get());
         System.out.printf("  │ 중복 발송 건수      │     %3d건     │     %3d건     │%n", slDuplicates, noSlDuplicates);
         System.out.printf("  │ 처리 시간           │   %5dms     │   %5dms     │%n", slElapsed, noSlElapsed);
         System.out.println("  ├────────────────────┼───────────────┼───────────────┤");
@@ -159,11 +159,12 @@ class OutboxSkipLockedConcurrencyTest {
         System.out.println();
         System.out.println("  [분석]");
         System.out.println("    - SKIP LOCKED: 이미 잠긴 행을 건너뛰어 각 인스턴스가 서로 다른 알림을 처리");
-        System.out.printf("    - SKIP LOCKED 미적용: %d건 알림에 대해 %d회 발송 → %d건 중복 (사용자에게 동일 알림 반복 도달)%n",
+        System.out.printf(
+                "    - SKIP LOCKED 미적용: %d건 알림에 대해 %d회 발송 → %d건 중복 (사용자에게 동일 알림 반복 도달)%n",
                 OUTBOX_COUNT, noSlSendCount.get(), noSlDuplicates);
         if (noSlSendCount.get() > OUTBOX_COUNT) {
-            System.out.printf("    - 불필요한 FCM 호출 %d회 발생 → 외부 API 비용 낭비 + 사용자 경험 저하%n",
-                    noSlSendCount.get() - OUTBOX_COUNT);
+            System.out.printf(
+                    "    - 불필요한 FCM 호출 %d회 발생 → 외부 API 비용 낭비 + 사용자 경험 저하%n", noSlSendCount.get() - OUTBOX_COUNT);
         }
         System.out.println("==========================================================");
 
@@ -176,9 +177,8 @@ class OutboxSkipLockedConcurrencyTest {
     //  동시 스케줄러 실행
     // =========================================================================
 
-    private void runConcurrentSchedulers(boolean useSkipLocked,
-                                         AtomicInteger totalSendCount,
-                                         Map<Long, List<String>> processedByThread)
+    private void runConcurrentSchedulers(
+            boolean useSkipLocked, AtomicInteger totalSendCount, Map<Long, List<String>> processedByThread)
             throws InterruptedException {
 
         ExecutorService executor = Executors.newFixedThreadPool(SCHEDULER_INSTANCES);
@@ -199,7 +199,8 @@ class OutboxSkipLockedConcurrencyTest {
 
                     // 어떤 스레드가 어떤 outbox를 처리했는지 기록
                     for (Long id : claimedIds) {
-                        processedByThread.computeIfAbsent(id, k -> Collections.synchronizedList(new ArrayList<>()))
+                        processedByThread
+                                .computeIfAbsent(id, k -> Collections.synchronizedList(new ArrayList<>()))
                                 .add(threadName);
                     }
 
@@ -235,7 +236,7 @@ class OutboxSkipLockedConcurrencyTest {
                         : "SELECT id FROM notification_outbox WHERE status = 'PENDING' AND retry_count < 5";
 
                 try (PreparedStatement ps = conn.prepareStatement(selectSql);
-                     ResultSet rs = ps.executeQuery()) {
+                        ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         claimedIds.add(rs.getLong("id"));
                     }
@@ -301,13 +302,12 @@ class OutboxSkipLockedConcurrencyTest {
         List<Long> ids = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             jdbcTemplate.update(
-                    "INSERT INTO notification_outbox (recipient_id, fcm_token, channel, title, body, payload, retry_count, status, created_at, modified_at) " +
-                            "VALUES (?, ?, 'FCM', ?, ?, '{}', 0, 'PENDING', NOW(), NOW())",
+                    "INSERT INTO notification_outbox (recipient_id, fcm_token, channel, title, body, payload, retry_count, status, created_at, modified_at) "
+                            + "VALUES (?, ?, 'FCM', ?, ?, '{}', 0, 'PENDING', NOW(), NOW())",
                     (long) (i + 1),
                     "fcm_token_test_" + i,
                     "테스트 알림 " + i,
-                    "동시성 테스트용 알림 본문 " + i
-            );
+                    "동시성 테스트용 알림 본문 " + i);
             ids.add(jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class));
         }
         return ids;

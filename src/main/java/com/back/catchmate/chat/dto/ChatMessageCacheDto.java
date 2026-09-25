@@ -3,11 +3,10 @@ package com.back.catchmate.chat.dto;
 import com.back.catchmate.chat.entity.ChatMessage;
 import com.back.catchmate.chat.entity.MessageType;
 import com.back.catchmate.user.dto.response.UserSummary;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
@@ -31,7 +30,6 @@ public class ChatMessageCacheDto {
                 sender != null ? sender.profileImageUrl() : null,
                 message.getContent(),
                 message.getMessageType(),
-                message.getCreatedAt()
-        );
+                message.getCreatedAt());
     }
 }

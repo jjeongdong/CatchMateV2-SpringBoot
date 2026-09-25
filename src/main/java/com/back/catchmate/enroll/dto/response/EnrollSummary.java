@@ -9,6 +9,4 @@ public record EnrollSummary(
         String description,
         String acceptStatus,
         boolean newEnroll,
-        LocalDateTime requestedAt
-) {
-}
+        LocalDateTime requestedAt) {}

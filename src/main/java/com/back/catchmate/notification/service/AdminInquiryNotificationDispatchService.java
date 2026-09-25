@@ -1,14 +1,13 @@
 package com.back.catchmate.notification.service;
 
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
 import com.back.catchmate.notification.infra.RedisNotificationPublisher;
+import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.service.UserService;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 /**
  * 관리자 문의 답변 알림의 비동기 발송 전용 서비스(비트랜잭션).
@@ -39,9 +38,7 @@ public class AdminInquiryNotificationDispatchService {
                         "type", NOTIFICATION_TYPE,
                         "inquiryId", inquiryId.toString(),
                         "title", title,
-                        "body", body
-                )
-        );
+                        "body", body));
 
         outboxDispatcher.sendPendingOutboxImmediately(recipient.userId());
     }

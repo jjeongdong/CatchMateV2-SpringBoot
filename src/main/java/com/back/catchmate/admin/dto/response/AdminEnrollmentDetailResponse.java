@@ -2,7 +2,6 @@ package com.back.catchmate.admin.dto.response;
 
 import com.back.catchmate.enroll.dto.response.EnrollSummary;
 import com.back.catchmate.user.dto.response.UserSummary;
-
 import java.time.LocalDateTime;
 
 public record AdminEnrollmentDetailResponse(
@@ -15,8 +14,7 @@ public record AdminEnrollmentDetailResponse(
         String email,
         String provider,
         String status,
-        LocalDateTime requestedAt
-) {
+        LocalDateTime requestedAt) {
     public static AdminEnrollmentDetailResponse from(EnrollSummary enroll, UserSummary user, String clubName) {
         return new AdminEnrollmentDetailResponse(
                 enroll.enrollId(),
@@ -28,7 +26,6 @@ public record AdminEnrollmentDetailResponse(
                 user.email(),
                 user.provider(),
                 enroll.acceptStatus(),
-                enroll.requestedAt()
-        );
+                enroll.requestedAt());
     }
 }

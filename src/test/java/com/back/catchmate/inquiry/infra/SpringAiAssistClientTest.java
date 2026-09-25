@@ -1,15 +1,5 @@
 package com.back.catchmate.inquiry.infra;
 
-import com.back.catchmate.inquiry.infra.SpringAiAssistClient.LlmDraft;
-import com.back.catchmate.inquiry.infra.dto.AnswerDraft;
-import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -17,12 +7,20 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.back.catchmate.inquiry.infra.SpringAiAssistClient.LlmDraft;
+import com.back.catchmate.inquiry.infra.dto.AnswerDraft;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
+
 class SpringAiAssistClientTest {
 
     private final ChatClient chatClient = mock(ChatClient.class);
     private final VectorStore vectorStore = mock(VectorStore.class);
-    private final SpringAiAssistClient adapter =
-            new SpringAiAssistClient(chatClient, vectorStore, 4, 0.6);
+    private final SpringAiAssistClient adapter = new SpringAiAssistClient(chatClient, vectorStore, 4, 0.6);
 
     @Test
     void 근거_문서가_없으면_LLM_호출없이_fallback() {

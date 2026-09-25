@@ -1,7 +1,6 @@
 package com.back.catchmate.admin.dto.response;
 
 import com.back.catchmate.board.dto.response.BoardAdminView;
-
 import java.time.LocalDateTime;
 
 public record AdminBoardResponse(
@@ -11,8 +10,7 @@ public record AdminBoardResponse(
         boolean completed,
         int currentPerson,
         int maxPerson,
-        LocalDateTime createdAt
-) {
+        LocalDateTime createdAt) {
     public static AdminBoardResponse from(BoardAdminView board) {
         return new AdminBoardResponse(
                 board.boardId(),
@@ -21,7 +19,6 @@ public record AdminBoardResponse(
                 board.completed(),
                 board.currentPerson(),
                 board.maxPerson(),
-                board.createdAt()
-        );
+                board.createdAt());
     }
 }

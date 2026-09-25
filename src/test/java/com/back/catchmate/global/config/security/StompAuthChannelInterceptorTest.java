@@ -1,9 +1,15 @@
 package com.back.catchmate.global.config.security;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+
 import com.back.catchmate.auth.service.AuthService;
 import com.back.catchmate.chat.service.ChatQueryService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,13 +27,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.util.AntPathMatcher;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class StompAuthChannelInterceptorTest {
@@ -63,20 +62,22 @@ class StompAuthChannelInterceptorTest {
         // when & then
         assertThat(pathMatcher.isPattern("/sub/**")).isTrue();
         assertThat(pathMatcher.match("/sub/**", CHAT_ROOM_DESTINATION)).isTrue();
-        assertThat(pathMatcher.match("/queue/**", "/queue/notifications-user7f3a")).isTrue();
+        assertThat(pathMatcher.match("/queue/**", "/queue/notifications-user7f3a"))
+                .isTrue();
     }
 
     @ParameterizedTest(name = "{0}")
-    @ValueSource(strings = {
-            "/sub/**",
-            "/sub/chat/**",
-            "/sub/chat/*/5",
-            "/sub/chat/room/*",
-            "/**",
-            "/queue/**",
-            "/queue/notifications-user7f3a",
-            "/sub/chat/15"
-    })
+    @ValueSource(
+            strings = {
+                "/sub/**",
+                "/sub/chat/**",
+                "/sub/chat/*/5",
+                "/sub/chat/room/*",
+                "/**",
+                "/queue/**",
+                "/queue/notifications-user7f3a",
+                "/sub/chat/15"
+            })
     @DisplayName("허용 목적지가 아닌 구독은 BAD_REQUEST 로 차단하고 참가 여부를 조회하지 않는다")
     void 허용되지_않은_목적지_구독은_차단된다(String destination) {
         // given
@@ -85,8 +86,7 @@ class StompAuthChannelInterceptorTest {
         // when & then
         assertThatThrownBy(() -> sut.preSend(message, channel))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.BAD_REQUEST));
+                .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.BAD_REQUEST));
 
         then(chatQueryService).shouldHaveNoInteractions();
     }
@@ -100,8 +100,7 @@ class StompAuthChannelInterceptorTest {
         // when & then
         assertThatThrownBy(() -> sut.preSend(message, channel))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.BAD_REQUEST));
+                .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.BAD_REQUEST));
     }
 
     @Test
@@ -128,8 +127,8 @@ class StompAuthChannelInterceptorTest {
         // when & then
         assertThatThrownBy(() -> sut.preSend(message, channel))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.USER_CHATROOM_NOT_FOUND));
+                .satisfies(e ->
+                        assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.USER_CHATROOM_NOT_FOUND));
     }
 
     @Test
@@ -155,8 +154,8 @@ class StompAuthChannelInterceptorTest {
         // when & then
         assertThatThrownBy(() -> sut.preSend(message, channel))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.SOCKET_CONNECT_FAILED));
+                .satisfies(
+                        e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.SOCKET_CONNECT_FAILED));
     }
 
     private Message<byte[]> subscribeMessage(String destination, Authentication user) {
@@ -171,7 +170,6 @@ class StompAuthChannelInterceptorTest {
     }
 
     private Authentication authenticated() {
-        return new UsernamePasswordAuthenticationToken(
-                USER_ID, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        return new UsernamePasswordAuthenticationToken(USER_ID, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
     }
 }

@@ -1,28 +1,5 @@
 package com.back.catchmate.enroll.service;
 
-import com.back.catchmate.common.error.ErrorCode;
-import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.enroll.dto.command.EnrollCreateCommand;
-import com.back.catchmate.enroll.dto.response.EnrollAcceptResponse;
-import com.back.catchmate.enroll.event.EnrollRejectedEvent;
-import com.back.catchmate.enroll.event.EnrollRequestedEvent;
-import com.back.catchmate.board.dto.response.BoardSummary;
-import com.back.catchmate.board.service.BoardService;
-import com.back.catchmate.enroll.infra.RedisIdempotencyStore;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
-import com.back.catchmate.enroll.repository.EnrollRepository;
-import com.back.catchmate.enroll.entity.AcceptStatus;
-import com.back.catchmate.enroll.entity.Enroll;
-import java.util.Optional;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,19 +10,47 @@ import static org.mockito.BDDMockito.never;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
 
+import com.back.catchmate.board.dto.response.BoardSummary;
+import com.back.catchmate.board.service.BoardService;
+import com.back.catchmate.common.error.ErrorCode;
+import com.back.catchmate.common.error.exception.BaseException;
+import com.back.catchmate.enroll.dto.command.EnrollCreateCommand;
+import com.back.catchmate.enroll.dto.response.EnrollAcceptResponse;
+import com.back.catchmate.enroll.entity.AcceptStatus;
+import com.back.catchmate.enroll.entity.Enroll;
+import com.back.catchmate.enroll.event.EnrollRejectedEvent;
+import com.back.catchmate.enroll.event.EnrollRequestedEvent;
+import com.back.catchmate.enroll.infra.RedisIdempotencyStore;
+import com.back.catchmate.enroll.repository.EnrollRepository;
+import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.service.UserService;
+import java.util.Optional;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+
 @ExtendWith(MockitoExtension.class)
 class EnrollCommandServiceTest {
 
     @Mock
     private EnrollRepository enrollRepository;
+
     @Mock
-    private UserService userService;                 // cross-context: 자기 FetchPort 를 모킹
+    private UserService userService; // cross-context: 자기 FetchPort 를 모킹
+
     @Mock
     private BoardService boardService;
+
     @Mock
     private RedisIdempotencyStore redisIdempotencyStore;
+
     @Mock
     private EnrollAcceptExecutor enrollAcceptExecutor;
+
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
 
@@ -90,8 +95,8 @@ class EnrollCommandServiceTest {
         // when & then
         assertThatThrownBy(() -> sut.createEnroll(command))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.ALREADY_ENROLL_PENDING));
+                .satisfies(e ->
+                        assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.ALREADY_ENROLL_PENDING));
         then(enrollRepository).should(never()).save(any());
         then(applicationEventPublisher).shouldHaveNoInteractions();
     }
@@ -129,8 +134,7 @@ class EnrollCommandServiceTest {
         // when & then
         assertThatThrownBy(() -> sut.updateEnrollReject(otherUserId, enrollId))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.FORBIDDEN_ACCESS));
+                .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN_ACCESS));
         then(enrollRepository).should(never()).save(any());
         then(applicationEventPublisher).shouldHaveNoInteractions();
         then(boardService).shouldHaveNoInteractions();
@@ -149,8 +153,7 @@ class EnrollCommandServiceTest {
         // when & then
         assertThatThrownBy(() -> sut.deleteEnroll(otherUserId, enrollId))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.FORBIDDEN_ACCESS));
+                .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN_ACCESS));
         then(enrollRepository).should(never()).delete(any());
         then(applicationEventPublisher).shouldHaveNoInteractions();
     }
@@ -178,8 +181,7 @@ class EnrollCommandServiceTest {
         // given
         Long userId = 2L, enrollId = 100L;
         given(redisIdempotencyStore.acquireIfAbsent(anyString(), anyLong())).willReturn(true);
-        given(enrollAcceptExecutor.accept(userId, enrollId))
-                .willReturn(EnrollAcceptResponse.of(enrollId));
+        given(enrollAcceptExecutor.accept(userId, enrollId)).willReturn(EnrollAcceptResponse.of(enrollId));
 
         // when
         var response = sut.updateEnrollAccept(userId, enrollId);
@@ -196,8 +198,7 @@ class EnrollCommandServiceTest {
         Long userId = 2L, enrollId = 100L;
         String idempotencyKey = "idempotent:enroll:accept:" + enrollId;
         given(redisIdempotencyStore.acquireIfAbsent(anyString(), anyLong())).willReturn(true);
-        given(enrollAcceptExecutor.accept(userId, enrollId))
-                .willReturn(EnrollAcceptResponse.of(enrollId));
+        given(enrollAcceptExecutor.accept(userId, enrollId)).willReturn(EnrollAcceptResponse.of(enrollId));
 
         // when
         sut.updateEnrollAccept(userId, enrollId);
@@ -214,20 +215,21 @@ class EnrollCommandServiceTest {
         String idempotencyKey = "idempotent:enroll:accept:" + enrollId;
         given(redisIdempotencyStore.acquireIfAbsent(anyString(), anyLong())).willReturn(true);
         willThrow(new BaseException(ErrorCode.ENROLL_ACCEPT_CONFLICT))
-                .given(enrollAcceptExecutor).accept(userId, enrollId);
+                .given(enrollAcceptExecutor)
+                .accept(userId, enrollId);
 
         // when & then
         assertThatThrownBy(() -> sut.updateEnrollAccept(userId, enrollId))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.ENROLL_ACCEPT_CONFLICT));
+                .satisfies(e ->
+                        assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.ENROLL_ACCEPT_CONFLICT));
         then(redisIdempotencyStore).should().release(idempotencyKey);
     }
 
     // ── 테스트 데이터 헬퍼 ──────────────────────────────────────────
 
-    private Enroll enroll(Long id, Long userId, Long boardId, Long boardOwnerId,
-                          AcceptStatus status, boolean newEnroll) {
+    private Enroll enroll(
+            Long id, Long userId, Long boardId, Long boardOwnerId, AcceptStatus status, boolean newEnroll) {
         return Enroll.builder()
                 .id(id)
                 .userId(userId)
@@ -240,9 +242,26 @@ class EnrollCommandServiceTest {
     }
 
     private UserSummary userInfo(Long userId) {
-        return new UserSummary(userId, "test@catchmate.com", null, null, 'M', "홍길동",
-                null, null, null, "USER", null, 1L,
-                false, false, false, false, false, null, null);
+        return new UserSummary(
+                userId,
+                "test@catchmate.com",
+                null,
+                null,
+                'M',
+                "홍길동",
+                null,
+                null,
+                null,
+                "USER",
+                null,
+                1L,
+                false,
+                false,
+                false,
+                false,
+                false,
+                null,
+                null);
     }
 
     private BoardSummary boardInfo(Long boardId, Long ownerId) {

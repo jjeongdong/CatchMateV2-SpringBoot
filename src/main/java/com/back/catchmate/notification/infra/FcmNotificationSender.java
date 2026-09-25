@@ -9,21 +9,20 @@ import com.google.firebase.messaging.AndroidNotification;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.Message;
+import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.SendResponse;
 import com.google.firebase.messaging.WebpushConfig;
 import com.google.firebase.messaging.WebpushNotification;
 import io.micrometer.core.instrument.MeterRegistry;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /**
  * FCM 발송 어댑터.
@@ -53,7 +52,8 @@ public class FcmNotificationSender {
     public void sendNotification(Long userId, String token, String title, String body, Map<String, String> data) {
         Map<String, String> safeData = data != null ? data : Collections.emptyMap();
 
-        log.debug("FCM 발송 시도 - User: {}, Token: {}, Title: {}, Body: {}, Data: {}", userId, token, title, body, safeData);
+        log.debug(
+                "FCM 발송 시도 - User: {}, Token: {}, Title: {}, Body: {}, Data: {}", userId, token, title, body, safeData);
 
         try {
             String response = FirebaseMessaging.getInstance().send(toFcmMessage(token, title, body, safeData));
@@ -61,16 +61,25 @@ public class FcmNotificationSender {
         } catch (FirebaseMessagingException e) {
             if (isPermanentFailure(e)) {
                 log.error("FCM 영구 실패 발생 - errorCode: {}, token: {}", e.getMessagingErrorCode(), token);
-                meterRegistry.counter("notification.fcm.send.failure", "type", "permanent").increment();
+                meterRegistry
+                        .counter("notification.fcm.send.failure", "type", "permanent")
+                        .increment();
                 throw new PermanentNotificationFailureException(permanentFailureReason(e, token), e);
             }
-            log.warn("FCM 전송 실패 (아웃박스가 재시도) - errorCode: {}, 에러 메시지: {}, 토큰: {}",
-                    e.getMessagingErrorCode(), e.getMessage(), token);
-            meterRegistry.counter("notification.fcm.send.failure", "type", "transient").increment();
+            log.warn(
+                    "FCM 전송 실패 (아웃박스가 재시도) - errorCode: {}, 에러 메시지: {}, 토큰: {}",
+                    e.getMessagingErrorCode(),
+                    e.getMessage(),
+                    token);
+            meterRegistry
+                    .counter("notification.fcm.send.failure", "type", "transient")
+                    .increment();
             throw new BaseException(ErrorCode.FCM_SEND_FAILED);
         } catch (Exception e) {
             log.error("FCM 전송 중 예상치 못한 에러 발생 - Token: {}, Message: {}", token, e.getMessage(), e);
-            meterRegistry.counter("notification.fcm.send.failure", "type", "unexpected").increment();
+            meterRegistry
+                    .counter("notification.fcm.send.failure", "type", "unexpected")
+                    .increment();
             throw e;
         }
     }
@@ -110,13 +119,20 @@ public class FcmNotificationSender {
         } catch (FirebaseMessagingException e) {
             // 배치 호출 자체가 실패(인증·네트워크)해 건별 결과가 없다 → 전건을 재시도 대상으로 돌린다.
             log.error("FCM 배치 전송 실패 - count: {}, errorCode: {}", chunk.size(), e.getMessagingErrorCode(), e);
-            meterRegistry.counter("notification.fcm.send.failure", "type", "batch_call").increment(chunk.size());
+            meterRegistry
+                    .counter("notification.fcm.send.failure", "type", "batch_call")
+                    .increment(chunk.size());
             String reason = "FCM 배치 호출 실패 - " + e.getMessage();
-            return chunk.stream().map(message -> NotificationSendResult.ofRetryableFailure(reason)).toList();
+            return chunk.stream()
+                    .map(message -> NotificationSendResult.ofRetryableFailure(reason))
+                    .toList();
         }
 
-        log.debug("FCM 배치 전송 완료 - 요청 {}건, 성공 {}건, 실패 {}건",
-                chunk.size(), batchResponse.getSuccessCount(), batchResponse.getFailureCount());
+        log.debug(
+                "FCM 배치 전송 완료 - 요청 {}건, 성공 {}건, 실패 {}건",
+                chunk.size(),
+                batchResponse.getSuccessCount(),
+                batchResponse.getFailureCount());
 
         List<SendResponse> responses = batchResponse.getResponses();
         List<NotificationSendResult> results = new ArrayList<>(responses.size());
@@ -133,15 +149,21 @@ public class FcmNotificationSender {
 
         FirebaseMessagingException e = response.getException();
         if (e == null) {
-            meterRegistry.counter("notification.fcm.send.failure", "type", "unexpected").increment();
+            meterRegistry
+                    .counter("notification.fcm.send.failure", "type", "unexpected")
+                    .increment();
             return NotificationSendResult.ofRetryableFailure("FCM 전송 실패 - 원인 불명");
         }
         if (isPermanentFailure(e)) {
             log.warn("FCM 영구 실패 - errorCode: {}, token: {}", e.getMessagingErrorCode(), token);
-            meterRegistry.counter("notification.fcm.send.failure", "type", "permanent").increment();
+            meterRegistry
+                    .counter("notification.fcm.send.failure", "type", "permanent")
+                    .increment();
             return NotificationSendResult.ofPermanentFailure(permanentFailureReason(e, token));
         }
-        meterRegistry.counter("notification.fcm.send.failure", "type", "transient").increment();
+        meterRegistry
+                .counter("notification.fcm.send.failure", "type", "transient")
+                .increment();
         return NotificationSendResult.ofRetryableFailure(
                 "FCM 전송 실패 - errorCode: " + e.getMessagingErrorCode() + ", message: " + e.getMessage());
     }
@@ -151,10 +173,8 @@ public class FcmNotificationSender {
         // OS 가 배너를 새로 쌓지 않고 기존 것을 교체한다. 수신 측이 아무 처리를 하지 않아도 중복이 보이지 않는다.
         String dedupKey = safeData.get(DEDUP_KEY);
 
-        WebpushNotification.Builder webpushNotification = WebpushNotification.builder()
-                .setTitle(title)
-                .setBody(body)
-                .setIcon("/catchmate-logo.svg");
+        WebpushNotification.Builder webpushNotification =
+                WebpushNotification.builder().setTitle(title).setBody(body).setIcon("/catchmate-logo.svg");
         AndroidNotification.Builder androidNotification = AndroidNotification.builder();
         if (dedupKey != null) {
             webpushNotification.setTag(dedupKey);
@@ -162,10 +182,8 @@ public class FcmNotificationSender {
         }
 
         return Message.builder()
-                .setNotification(Notification.builder()
-                        .setTitle(title)
-                        .setBody(body)
-                        .build())
+                .setNotification(
+                        Notification.builder().setTitle(title).setBody(body).build())
                 .setWebpushConfig(WebpushConfig.builder()
                         .setNotification(webpushNotification.build())
                         .build())

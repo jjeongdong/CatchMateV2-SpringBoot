@@ -1,4 +1,3 @@
 package com.back.catchmate.notification.dto.response;
 
-public record ReadAllNotificationsResponse(int updatedCount) {
-}
+public record ReadAllNotificationsResponse(int updatedCount) {}

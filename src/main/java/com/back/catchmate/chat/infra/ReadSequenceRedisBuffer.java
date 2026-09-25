@@ -1,15 +1,14 @@
 package com.back.catchmate.chat.infra;
 
 import com.back.catchmate.chat.dto.ReadSequenceUpdate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @Slf4j
 @Component
@@ -19,23 +18,20 @@ public class ReadSequenceRedisBuffer {
     private final StringRedisTemplate redisTemplate;
 
     private static final DefaultRedisScript<Long> BUFFER_SCRIPT = new DefaultRedisScript<>(
-            "local current = redis.call('HGET', KEYS[1], ARGV[1]) " +
-                    "if current == false or tonumber(current) < tonumber(ARGV[2]) then " +
-                    "  redis.call('HSET', KEYS[1], ARGV[1], ARGV[2]) " +
-                    "  return 1 " +
-                    "end " +
-                    "return 0",
-            Long.class
-    );
+            "local current = redis.call('HGET', KEYS[1], ARGV[1]) "
+                    + "if current == false or tonumber(current) < tonumber(ARGV[2]) then "
+                    + "  redis.call('HSET', KEYS[1], ARGV[1], ARGV[2]) "
+                    + "  return 1 "
+                    + "end "
+                    + "return 0",
+            Long.class);
 
     private static final DefaultRedisScript<List> DRAIN_SCRIPT = new DefaultRedisScript<>(
-            "local entries = redis.call('HGETALL', KEYS[1]) " +
-                    "if #entries > 0 then " +
-                    "  redis.call('DEL', KEYS[1]) " +
-                    "end " +
-                    "return entries",
-            List.class
-    );
+            "local entries = redis.call('HGETALL', KEYS[1]) " + "if #entries > 0 then "
+                    + "  redis.call('DEL', KEYS[1]) "
+                    + "end "
+                    + "return entries",
+            List.class);
 
     public void buffer(Long chatRoomId, Long userId, Long sequence) {
         String field = chatRoomId + ":" + userId;

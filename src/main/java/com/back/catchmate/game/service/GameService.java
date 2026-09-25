@@ -9,10 +9,6 @@ import com.back.catchmate.game.dto.response.GameResponse;
 import com.back.catchmate.game.dto.response.GameSummary;
 import com.back.catchmate.game.entity.Game;
 import com.back.catchmate.game.repository.GameRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +17,9 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 경기 조회 서비스. 현재는 조회 전용이라 클래스 레벨 {@code readOnly = true} 하나로 끝난다.
@@ -45,7 +44,8 @@ public class GameService {
 
         Map<Long, ClubSummary> clubMap = loadClubs(games);
         return games.stream()
-                .map(game -> GameResponse.of(game, clubMap.get(game.getHomeClubId()), clubMap.get(game.getAwayClubId())))
+                .map(game ->
+                        GameResponse.of(game, clubMap.get(game.getHomeClubId()), clubMap.get(game.getAwayClubId())))
                 .toList();
     }
 
@@ -60,9 +60,7 @@ public class GameService {
             return List.of();
         }
 
-        return gameRepository.findAllById(gameIds).stream()
-                .map(this::toSummary)
-                .collect(Collectors.toList());
+        return gameRepository.findAllById(gameIds).stream().map(this::toSummary).collect(Collectors.toList());
     }
 
     /**
@@ -77,8 +75,7 @@ public class GameService {
     }
 
     private Game getGameOrThrow(Long gameId) {
-        return gameRepository.findById(gameId)
-                .orElseThrow(() -> new BaseException(ErrorCode.GAME_NOT_FOUND));
+        return gameRepository.findById(gameId).orElseThrow(() -> new BaseException(ErrorCode.GAME_NOT_FOUND));
     }
 
     private Map<Long, ClubSummary> loadClubs(List<Game> games) {
@@ -99,11 +96,6 @@ public class GameService {
 
     private GameSummary toSummary(Game game) {
         return new GameSummary(
-                game.getId(),
-                game.getGameStartDate(),
-                game.getLocation(),
-                game.getHomeClubId(),
-                game.getAwayClubId()
-        );
+                game.getId(), game.getGameStartDate(), game.getLocation(), game.getHomeClubId(), game.getAwayClubId());
     }
 }

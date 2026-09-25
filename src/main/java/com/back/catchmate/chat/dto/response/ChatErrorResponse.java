@@ -10,12 +10,7 @@ import com.back.catchmate.common.error.ErrorCode;
  * false = 도메인 규칙 위반(읽기 전용 방·비참여자 등, 재전송해도 동일 실패),
  * true = 일시 장애(Redis·DB 등, 재전송 유효).
  */
-public record ChatErrorResponse(
-        Long chatRoomId,
-        String code,
-        String message,
-        boolean retryable
-) {
+public record ChatErrorResponse(Long chatRoomId, String code, String message, boolean retryable) {
     public static ChatErrorResponse of(Long chatRoomId, ErrorCode errorCode, boolean retryable) {
         return of(chatRoomId, errorCode, errorCode.getMessage(), retryable);
     }

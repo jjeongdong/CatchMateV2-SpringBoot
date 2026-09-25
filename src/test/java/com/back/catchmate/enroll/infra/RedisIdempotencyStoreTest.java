@@ -1,5 +1,13 @@
 package com.back.catchmate.enroll.infra;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
+
+import java.time.Duration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,15 +18,6 @@ import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
-import java.time.Duration;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willThrow;
-
 @ExtendWith(MockitoExtension.class)
 class RedisIdempotencyStoreTest {
 
@@ -26,6 +25,7 @@ class RedisIdempotencyStoreTest {
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
+
     @Mock
     private ValueOperations<String, Object> valueOperations;
 
@@ -83,7 +83,8 @@ class RedisIdempotencyStoreTest {
         // given
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         willThrow(new RedisConnectionFailureException("down"))
-                .given(valueOperations).setIfAbsent(any(), any(), any(Duration.class));
+                .given(valueOperations)
+                .setIfAbsent(any(), any(), any(Duration.class));
 
         // when
         boolean acquired = sut.acquireIfAbsent(KEY, 10L);
@@ -111,7 +112,9 @@ class RedisIdempotencyStoreTest {
     @DisplayName("락 해제 중 Redis 오류가 나도 예외를 던지지 않는다")
     void 해제_실패해도_예외를_밖으로_던지지_않는다() {
         // given
-        willThrow(new RedisConnectionFailureException("down")).given(redisTemplate).delete(KEY);
+        willThrow(new RedisConnectionFailureException("down"))
+                .given(redisTemplate)
+                .delete(KEY);
 
         // when & then
         assertThatCode(() -> sut.release(KEY)).doesNotThrowAnyException();

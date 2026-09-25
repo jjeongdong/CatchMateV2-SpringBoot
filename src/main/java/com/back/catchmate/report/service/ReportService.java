@@ -23,19 +23,12 @@ public class ReportService {
 
     @Transactional
     public ReportCreateResponse createReport(Long reporterId, ReportCreateRequest request) {
-        Report report = Report.createReport(
-                reporterId,
-                request.reportedUserId(),
-                request.reason(),
-                request.description()
-        );
+        Report report =
+                Report.createReport(reporterId, request.reportedUserId(), request.reason(), request.description());
 
         Report saved = reportRepository.save(report);
 
-        return new ReportCreateResponse(
-                saved.getId(),
-                saved.getCreatedAt()
-        );
+        return new ReportCreateResponse(saved.getId(), saved.getCreatedAt());
     }
 
     @Transactional
@@ -51,10 +44,7 @@ public class ReportService {
 
     public Page<ReportSummary> getReportSummaries(Pageable pageable) {
         PageRequest sortedPageRequest = PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
+                pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
 
         return reportRepository.findAll(sortedPageRequest).map(this::toSummary);
     }
@@ -68,8 +58,7 @@ public class ReportService {
     }
 
     private Report getReportOrThrow(Long reportId) {
-        return reportRepository.findById(reportId)
-                .orElseThrow(() -> new BaseException(ErrorCode.REPORT_NOT_FOUND));
+        return reportRepository.findById(reportId).orElseThrow(() -> new BaseException(ErrorCode.REPORT_NOT_FOUND));
     }
 
     private ReportSummary toSummary(Report report) {
@@ -80,7 +69,6 @@ public class ReportService {
                 report.getReason().name(),
                 report.getDescription(),
                 report.getCreatedAt(),
-                report.isCompleted()
-        );
+                report.isCompleted());
     }
 }

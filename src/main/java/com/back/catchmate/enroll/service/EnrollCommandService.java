@@ -44,14 +44,11 @@ public class EnrollCommandService {
         UserSummary applicant = userService.getUserSummary(command.userId());
         BoardSummary board = boardService.getCompletedBoardSummary(command.boardId());
 
-        Enroll savedEnroll = createEnrollInternal(applicant.userId(), board.boardId(), board.userId(), command.description());
+        Enroll savedEnroll =
+                createEnrollInternal(applicant.userId(), board.boardId(), board.userId(), command.description());
 
-        applicationEventPublisher.publishEvent(EnrollRequestedEvent.of(
-                savedEnroll.getId(),
-                board.boardId(),
-                applicant.userId(),
-                board.userId()
-        ));
+        applicationEventPublisher.publishEvent(
+                EnrollRequestedEvent.of(savedEnroll.getId(), board.boardId(), applicant.userId(), board.userId()));
 
         return EnrollCreateResponse.of(savedEnroll.getId());
     }
@@ -82,12 +79,8 @@ public class EnrollCommandService {
         enroll.reject();
         enrollRepository.save(enroll);
 
-        applicationEventPublisher.publishEvent(EnrollRejectedEvent.of(
-                enrollId,
-                board.boardId(),
-                applicant.userId(),
-                board.userId()
-        ));
+        applicationEventPublisher.publishEvent(
+                EnrollRejectedEvent.of(enrollId, board.boardId(), applicant.userId(), board.userId()));
 
         return EnrollRejectResponse.of(enrollId);
     }
@@ -104,12 +97,8 @@ public class EnrollCommandService {
 
         enrollRepository.delete(enroll);
 
-        applicationEventPublisher.publishEvent(EnrollCancelledEvent.of(
-                enrollId,
-                board.boardId(),
-                applicant.userId(),
-                board.userId()
-        ));
+        applicationEventPublisher.publishEvent(
+                EnrollCancelledEvent.of(enrollId, board.boardId(), applicant.userId(), board.userId()));
 
         return EnrollCancelResponse.of(enrollId);
     }
@@ -125,13 +114,13 @@ public class EnrollCommandService {
 
     // 다른 컨텍스트용 — 차단 시 수락된 신청 정리
     public void deleteAcceptedEnrollsBetween(Long blockerId, Long blockedId) {
-        enrollRepository.findAllByApplicantIdAndBoardOwnerIdAndStatus(blockerId, blockedId, AcceptStatus.ACCEPTED)
+        enrollRepository
+                .findAllByApplicantIdAndBoardOwnerIdAndStatus(blockerId, blockedId, AcceptStatus.ACCEPTED)
                 .forEach(enrollRepository::delete);
     }
 
     private Enroll getEnrollOrThrow(Long enrollId) {
-        return enrollRepository.findById(enrollId)
-                .orElseThrow(() -> new BaseException(ErrorCode.ENROLL_NOT_FOUND));
+        return enrollRepository.findById(enrollId).orElseThrow(() -> new BaseException(ErrorCode.ENROLL_NOT_FOUND));
     }
 
     private void verifyBoardHost(Enroll enroll, Long userId) {
@@ -141,8 +130,7 @@ public class EnrollCommandService {
     }
 
     private Enroll createEnrollInternal(Long userId, Long boardId, Long boardWriterId, String description) {
-        enrollRepository.findByUserIdAndBoardId(userId, boardId)
-                .ifPresent(Enroll::preventNewEnroll);
+        enrollRepository.findByUserIdAndBoardId(userId, boardId).ifPresent(Enroll::preventNewEnroll);
         Enroll enroll = Enroll.createEnroll(userId, boardId, boardWriterId, description);
         return enrollRepository.save(enroll);
     }

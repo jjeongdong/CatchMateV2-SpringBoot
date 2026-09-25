@@ -16,6 +16,4 @@ public record BoardSummary(
         List<String> preferredAgeRange,
         boolean completed,
         LocalDateTime createdAt,
-        LocalDateTime liftUpDate
-) {
-}
+        LocalDateTime liftUpDate) {}

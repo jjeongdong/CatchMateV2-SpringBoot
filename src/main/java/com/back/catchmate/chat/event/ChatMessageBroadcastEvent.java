@@ -4,9 +4,8 @@ import com.back.catchmate.chat.entity.ChatMessage;
 import com.back.catchmate.chat.entity.MessageType;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Builder;
-
 import java.time.LocalDateTime;
+import lombok.Builder;
 
 /**
  * 채팅 메시지 이벤트 DTO
@@ -22,8 +21,7 @@ public record ChatMessageBroadcastEvent(
         String content,
         MessageType messageType,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
-        LocalDateTime createdAt
-) {
+                LocalDateTime createdAt) {
     public static ChatMessageBroadcastEvent from(ChatMessage domain, UserSummary sender) {
         return ChatMessageBroadcastEvent.builder()
                 .messageId(domain.getId())

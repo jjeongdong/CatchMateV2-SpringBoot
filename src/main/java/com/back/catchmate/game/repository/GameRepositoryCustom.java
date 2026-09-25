@@ -2,7 +2,6 @@ package com.back.catchmate.game.repository;
 
 import com.back.catchmate.game.dto.request.GameSearchCondition;
 import com.back.catchmate.game.entity.Game;
-
 import java.util.List;
 
 public interface GameRepositoryCustom {

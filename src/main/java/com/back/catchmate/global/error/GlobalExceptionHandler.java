@@ -3,6 +3,7 @@ package com.back.catchmate.global.error;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.ErrorResponse;
 import com.back.catchmate.common.error.exception.BaseException;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -11,8 +12,6 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -41,10 +40,7 @@ public class GlobalExceptionHandler {
 
         log.warn("Invalid request body: {}", e.getMessage());
 
-        return ErrorResponse.toResponseEntity(
-                ErrorCode.BAD_REQUEST,
-                "요청 포맷이 올바르지 않습니다. (JSON 형식을 확인해주세요)"
-        );
+        return ErrorResponse.toResponseEntity(ErrorCode.BAD_REQUEST, "요청 포맷이 올바르지 않습니다. (JSON 형식을 확인해주세요)");
     }
 
     // 4. 접근 권한 에러

@@ -10,9 +10,4 @@ import java.util.List;
  * @param draftText  생성된 답변 초안 (fallback 시 안내 문구)
  * @param sources    초안 근거로 사용된 출처 라벨 목록
  */
-public record AnswerDraft(
-        boolean grounded,
-        String draftText,
-        List<String> sources
-) {
-}
+public record AnswerDraft(boolean grounded, String draftText, List<String> sources) {}

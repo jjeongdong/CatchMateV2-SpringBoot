@@ -17,6 +17,8 @@ import com.back.catchmate.inquiry.repository.InquiryRepository;
 import com.back.catchmate.notice.service.NoticeService;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,9 +26,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -58,7 +57,8 @@ public class InquiryService {
     }
 
     public PagedResponse<InquiryDetailResponse> getInquiryListByUser(Long userId, int page, int size) {
-        Page<Inquiry> inquiryPage = inquiryRepository.findAllByUserId(userId, sortByCreatedAtDesc(PageRequest.of(page, size)));
+        Page<Inquiry> inquiryPage =
+                inquiryRepository.findAllByUserId(userId, sortByCreatedAtDesc(PageRequest.of(page, size)));
 
         if (inquiryPage.isEmpty()) {
             return new PagedResponse<>(inquiryPage, List.of());
@@ -85,7 +85,9 @@ public class InquiryService {
 
     // 다른 컨텍스트용 — 사용자별 페이징 요약
     public Page<InquirySummary> getInquirySummariesByUser(Long userId, Pageable pageable) {
-        return inquiryRepository.findAllByUserId(userId, sortByCreatedAtDesc(pageable)).map(this::toSummary);
+        return inquiryRepository
+                .findAllByUserId(userId, sortByCreatedAtDesc(pageable))
+                .map(this::toSummary);
     }
 
     public long getTotalInquiryCount() {
@@ -122,14 +124,15 @@ public class InquiryService {
     public int reindex() {
         List<CorpusDoc> docs = new ArrayList<>();
 
-        noticeService.getAllNoticeSummaries().forEach(notice ->
-                docs.add(new CorpusDoc("NOTICE", notice.noticeId(),
-                        notice.title() + "\n" + notice.content())));
+        noticeService
+                .getAllNoticeSummaries()
+                .forEach(notice ->
+                        docs.add(new CorpusDoc("NOTICE", notice.noticeId(), notice.title() + "\n" + notice.content())));
 
         inquiryRepository.findAll(sortByCreatedAtDesc(PageRequest.of(0, MAX_CORPUS_FETCH))).getContent().stream()
                 .filter(inquiry -> inquiry.getStatus() == InquiryStatus.ANSWERED && inquiry.getAnswer() != null)
-                .forEach(inquiry -> docs.add(new CorpusDoc("ANSWERED_INQUIRY", inquiry.getId(),
-                        inquiry.getContent() + "\n답변: " + inquiry.getAnswer())));
+                .forEach(inquiry -> docs.add(new CorpusDoc(
+                        "ANSWERED_INQUIRY", inquiry.getId(), inquiry.getContent() + "\n답변: " + inquiry.getAnswer())));
 
         assistClient.clear();
         assistClient.upsert(docs);
@@ -137,18 +140,14 @@ public class InquiryService {
     }
 
     private Inquiry getInquiryOrThrow(Long inquiryId) {
-        return inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new BaseException(ErrorCode.INQUIRY_NOT_FOUND));
+        return inquiryRepository.findById(inquiryId).orElseThrow(() -> new BaseException(ErrorCode.INQUIRY_NOT_FOUND));
     }
 
     // 목록 조회는 호출자가 넘긴 정렬을 무시하고 항상 최신순으로 고정한다.
     // (기존 InquiryRepositoryImpl.sortByCreatedAtDesc 동작을 그대로 옮긴 것)
     private PageRequest sortByCreatedAtDesc(Pageable pageable) {
         return PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
+                pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     private InquiryDetailResponse toDetailResponse(Inquiry inquiry, String nickname) {
@@ -159,8 +158,7 @@ public class InquiryService {
                 inquiry.getContent(),
                 inquiry.getAnswer(),
                 inquiry.getStatus().getDescription(),
-                inquiry.getCreatedAt()
-        );
+                inquiry.getCreatedAt());
     }
 
     private InquirySummary toSummary(Inquiry inquiry) {
@@ -171,7 +169,6 @@ public class InquiryService {
                 inquiry.getContent(),
                 inquiry.getAnswer(),
                 inquiry.getStatus().name(),
-                inquiry.getCreatedAt()
-        );
+                inquiry.getCreatedAt());
     }
 }

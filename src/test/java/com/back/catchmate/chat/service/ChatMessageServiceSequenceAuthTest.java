@@ -1,5 +1,12 @@
 package com.back.catchmate.chat.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.never;
+import static org.mockito.BDDMockito.then;
+
 import com.back.catchmate.chat.dto.MembershipSnapshot;
 import com.back.catchmate.chat.entity.MessageType;
 import com.back.catchmate.chat.infra.ChatMembershipRedisCache;
@@ -7,6 +14,7 @@ import com.back.catchmate.chat.infra.ChatSequenceRedisStore;
 import com.back.catchmate.chat.repository.ChatRoomMemberRepository;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,15 +23,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.never;
-import static org.mockito.BDDMockito.then;
 
 /**
  * prepareSequence 의 인가 게이트 검증.
@@ -60,8 +59,8 @@ class ChatMessageServiceSequenceAuthTest {
         // when & then
         assertThatThrownBy(() -> sut.prepareSequence(ROOM_ID, SENDER_ID, messageType))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
+                .satisfies(e ->
+                        assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
 
         then(chatSequenceRedisStore).shouldHaveNoInteractions();
     }
@@ -77,8 +76,8 @@ class ChatMessageServiceSequenceAuthTest {
         // when & then
         assertThatThrownBy(() -> sut.prepareSequence(ROOM_ID, SENDER_ID, messageType))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
+                .satisfies(e ->
+                        assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.CHATROOM_MEMBER_NOT_FOUND));
 
         then(chatSequenceRedisStore).shouldHaveNoInteractions();
     }
@@ -94,8 +93,7 @@ class ChatMessageServiceSequenceAuthTest {
         // when & then
         assertThatThrownBy(() -> sut.prepareSequence(ROOM_ID, SENDER_ID, messageType))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.CHATROOM_READ_ONLY));
+                .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.CHATROOM_READ_ONLY));
 
         then(chatSequenceRedisStore).shouldHaveNoInteractions();
     }

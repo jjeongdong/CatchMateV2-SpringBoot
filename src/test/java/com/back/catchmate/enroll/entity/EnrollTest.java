@@ -1,12 +1,12 @@
 package com.back.catchmate.enroll.entity;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EnrollTest {
 
@@ -42,8 +42,7 @@ class EnrollTest {
         // when & then
         assertThatThrownBy(() -> Enroll.createEnroll(ownerId, boardId, ownerId, "설명"))
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.ENROLL_BAD_REQUEST));
+                .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.ENROLL_BAD_REQUEST));
     }
 
     // ── accept ──────────────────────────────────────────────────────
@@ -68,10 +67,9 @@ class EnrollTest {
         Enroll enroll = enroll(AcceptStatus.ACCEPTED, false);
 
         // when & then
-        assertThatThrownBy(enroll::accept)
-                .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.ALREADY_ENROLL_ACCEPTED));
+        assertThatThrownBy(enroll::accept).isInstanceOf(BaseException.class).satisfies(e -> assertThat(
+                        ((BaseException) e).getErrorCode())
+                .isEqualTo(ErrorCode.ALREADY_ENROLL_ACCEPTED));
         assertThat(enroll.getAcceptStatus()).isEqualTo(AcceptStatus.ACCEPTED);
     }
 
@@ -110,10 +108,9 @@ class EnrollTest {
         Enroll enroll = enroll(AcceptStatus.REJECTED, false);
 
         // when & then
-        assertThatThrownBy(enroll::reject)
-                .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.ALREADY_ENROLL_REJECTED));
+        assertThatThrownBy(enroll::reject).isInstanceOf(BaseException.class).satisfies(e -> assertThat(
+                        ((BaseException) e).getErrorCode())
+                .isEqualTo(ErrorCode.ALREADY_ENROLL_REJECTED));
         assertThat(enroll.getAcceptStatus()).isEqualTo(AcceptStatus.REJECTED);
     }
 
@@ -143,8 +140,8 @@ class EnrollTest {
         // when & then
         assertThatThrownBy(enroll::preventNewEnroll)
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.ALREADY_ENROLL_PENDING));
+                .satisfies(e ->
+                        assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.ALREADY_ENROLL_PENDING));
     }
 
     @Test
@@ -156,8 +153,8 @@ class EnrollTest {
         // when & then
         assertThatThrownBy(enroll::preventNewEnroll)
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.ALREADY_ENROLL_REJECTED));
+                .satisfies(e ->
+                        assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.ALREADY_ENROLL_REJECTED));
     }
 
     @Test
@@ -169,8 +166,8 @@ class EnrollTest {
         // when & then
         assertThatThrownBy(enroll::preventNewEnroll)
                 .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.ALREADY_ENROLL_ACCEPTED));
+                .satisfies(e ->
+                        assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.ALREADY_ENROLL_ACCEPTED));
     }
 
     // ── 테스트 데이터 헬퍼 ──────────────────────────────────────────

@@ -1,7 +1,6 @@
 package com.back.catchmate.notification.repository;
 
 import com.back.catchmate.notification.entity.Notification;
-
 import java.util.List;
 
 public interface NotificationRepositoryCustom {

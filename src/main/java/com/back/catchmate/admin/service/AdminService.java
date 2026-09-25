@@ -43,14 +43,6 @@ import com.back.catchmate.report.dto.response.ReportSummary;
 import com.back.catchmate.report.service.ReportService;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -59,6 +51,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
@@ -78,17 +77,14 @@ public class AdminService {
         return AdminDashboardResponse.of(
                 userService.getTotalUserCount(),
                 AdminDashboardResponse.GenderRatio.of(
-                        userService.getUserCountByGender('M'),
-                        userService.getUserCountByGender('F')
-                ),
+                        userService.getUserCountByGender('M'), userService.getUserCountByGender('F')),
                 boardService.getTotalBoardCount(),
                 resolveUserCountByClubName(),
                 userService.getUserCountByWatchStyle(),
                 reportService.getTotalReportCount(),
                 reportService.getPendingReportCount(),
                 inquiryService.getTotalInquiryCount(),
-                inquiryService.getWaitingInquiryCount()
-        );
+                inquiryService.getWaitingInquiryCount());
     }
 
     private Map<String, Long> resolveUserCountByClubName() {
@@ -124,7 +120,11 @@ public class AdminService {
         Map<Long, ClubSummary> clubById = resolveUserClubs(userPage.getContent());
 
         List<AdminUserResponse> responses = userPage.getContent().stream()
-                .map(u -> AdminUserResponse.from(u, u.clubId() != null && clubById.get(u.clubId()) != null ? clubById.get(u.clubId()).name() : null))
+                .map(u -> AdminUserResponse.from(
+                        u,
+                        u.clubId() != null && clubById.get(u.clubId()) != null
+                                ? clubById.get(u.clubId()).name()
+                                : null))
                 .toList();
 
         return new PagedResponse<>(userPage, responses);
@@ -134,14 +134,12 @@ public class AdminService {
         BoardSummary board = boardService.getCompletedBoardSummary(boardId);
         List<EnrollSummary> enrolls = enrollQueryService.getEnrollListByBoardIds(Collections.singletonList(boardId));
 
-        List<Long> enrollUserIds = enrolls.stream()
-                .map(EnrollSummary::userId)
-                .distinct()
-                .toList();
+        List<Long> enrollUserIds =
+                enrolls.stream().map(EnrollSummary::userId).distinct().toList();
         Map<Long, UserSummary> enrollUserById = enrollUserIds.isEmpty()
                 ? Map.of()
                 : userService.getUserSummaries(enrollUserIds).stream()
-                .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+                        .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
         Map<Long, ClubSummary> enrollUserClubById = resolveUserClubs(enrollUserById.values());
 
         List<AdminEnrollmentDetailResponse> enrollmentInfos = enrolls.stream()
@@ -162,9 +160,8 @@ public class AdminService {
         Pageable pageable = PageRequest.of(page, size);
         Page<BoardAdminView> boardPage = boardService.getBoardAdminViewsByUserId(userId, pageable);
 
-        List<AdminBoardResponse> responses = boardPage.getContent().stream()
-                .map(AdminBoardResponse::from)
-                .toList();
+        List<AdminBoardResponse> responses =
+                boardPage.getContent().stream().map(AdminBoardResponse::from).toList();
 
         return new PagedResponse<>(boardPage, responses);
     }
@@ -173,9 +170,8 @@ public class AdminService {
         Pageable pageable = PageRequest.of(page, size);
         Page<BoardAdminView> boardPage = boardService.getBoardAdminViews(pageable);
 
-        List<AdminBoardResponse> responses = boardPage.getContent().stream()
-                .map(AdminBoardResponse::from)
-                .toList();
+        List<AdminBoardResponse> responses =
+                boardPage.getContent().stream().map(AdminBoardResponse::from).toList();
 
         return new PagedResponse<>(boardPage, responses);
     }
@@ -191,9 +187,13 @@ public class AdminService {
         Pageable pageable = PageRequest.of(page, size);
         Page<ReportSummary> reportPage = reportService.getReportSummaries(pageable);
 
-        Map<Long, UserSummary> reporterById = userService.getUserSummaries(
-                reportPage.getContent().stream().map(ReportSummary::reporterId).distinct().toList()
-        ).stream().collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+        Map<Long, UserSummary> reporterById = userService
+                .getUserSummaries(reportPage.getContent().stream()
+                        .map(ReportSummary::reporterId)
+                        .distinct()
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
 
         List<AdminReportResponse> responses = reportPage.getContent().stream()
                 .map(r -> AdminReportResponse.from(r, reporterById.get(r.reporterId())))
@@ -212,9 +212,13 @@ public class AdminService {
         Pageable pageable = PageRequest.of(page, size);
         Page<InquirySummary> inquiryPage = inquiryService.getInquirySummaries(pageable);
 
-        Map<Long, UserSummary> userById = userService.getUserSummaries(
-                inquiryPage.getContent().stream().map(InquirySummary::userId).distinct().toList()
-        ).stream().collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+        Map<Long, UserSummary> userById = userService
+                .getUserSummaries(inquiryPage.getContent().stream()
+                        .map(InquirySummary::userId)
+                        .distinct()
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
 
         List<AdminInquiryResponse> responses = inquiryPage.getContent().stream()
                 .map(i -> AdminInquiryResponse.from(i, userById.get(i.userId())))
@@ -237,9 +241,13 @@ public class AdminService {
         Pageable pageable = PageRequest.of(page, size);
         Page<NoticeSummary> noticePage = noticeService.getNoticeSummaries(pageable);
 
-        Map<Long, String> writerNicknameById = userService.getUserSummaries(
-                noticePage.getContent().stream().map(NoticeSummary::writerId).distinct().toList()
-        ).stream().collect(Collectors.toMap(UserSummary::userId, UserSummary::nickName));
+        Map<Long, String> writerNicknameById = userService
+                .getUserSummaries(noticePage.getContent().stream()
+                        .map(NoticeSummary::writerId)
+                        .distinct()
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(UserSummary::userId, UserSummary::nickName));
 
         List<AdminNoticeResponse> responses = noticePage.getContent().stream()
                 .map(n -> AdminNoticeResponse.from(n, writerNicknameById.getOrDefault(n.writerId(), "")))
@@ -264,9 +272,7 @@ public class AdminService {
         NoticeCreateResponse created = noticeService.createNotice(userId, request.title(), request.content());
         AdminNoticeCreateResponse response = AdminNoticeCreateResponse.from(created);
 
-        applicationEventPublisher.publishEvent(
-                NoticeCreatedEvent.of(response.noticeId(), request.title())
-        );
+        applicationEventPublisher.publishEvent(NoticeCreatedEvent.of(response.noticeId(), request.title()));
 
         return response;
     }
@@ -277,8 +283,7 @@ public class AdminService {
 
         InquirySummary updatedInquiry = inquiryService.getInquirySummary(command.inquiryId());
         applicationEventPublisher.publishEvent(
-                InquiryAnswerRegisteredEvent.of(updatedInquiry.inquiryId(), updatedInquiry.userId())
-        );
+                InquiryAnswerRegisteredEvent.of(updatedInquiry.inquiryId(), updatedInquiry.userId()));
 
         return AdminInquiryAnswerResponse.of(updatedInquiry.inquiryId(), updatedInquiry.userId());
     }

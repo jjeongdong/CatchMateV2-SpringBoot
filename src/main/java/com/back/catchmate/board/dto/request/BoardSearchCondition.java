@@ -1,10 +1,9 @@
 package com.back.catchmate.board.dto.request;
 
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.Builder;
+import lombok.Getter;
 
 @Getter
 @Builder
@@ -15,19 +14,21 @@ public class BoardSearchCondition {
      * <p>null: 게임 날짜 필터 미적용. 빈 리스트: 매칭 경기 없음(→ 결과도 비어야 함).
      */
     private final List<Long> matchingGameIds;
+
     private final Integer maxPerson;
     private final List<Long> preferredTeamIdList;
     private final List<Long> blockedUserIds;
     private final LocalDateTime lastLiftUpDate;
     private final Long lastBoardId;
 
-    public static BoardSearchCondition of(Long userId,
-                                          List<Long> matchingGameIds,
-                                          Integer maxPerson,
-                                          List<Long> preferredTeamIdList,
-                                          List<Long> blockedUserIds,
-                                          LocalDateTime lastLiftUpDate,
-                                          Long lastBoardId) {
+    public static BoardSearchCondition of(
+            Long userId,
+            List<Long> matchingGameIds,
+            Integer maxPerson,
+            List<Long> preferredTeamIdList,
+            List<Long> blockedUserIds,
+            LocalDateTime lastLiftUpDate,
+            Long lastBoardId) {
         return BoardSearchCondition.builder()
                 .userId(userId)
                 .matchingGameIds(matchingGameIds == null ? null : List.copyOf(matchingGameIds))

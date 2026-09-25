@@ -4,18 +4,21 @@ import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.global.config.security.CookieFactory;
 import com.back.catchmate.global.config.security.OAuthFrontendProperties;
-import com.back.catchmate.oauth.dto.request.SignUpRequest;
 import com.back.catchmate.oauth.dto.command.OAuthCallbackCommand;
+import com.back.catchmate.oauth.dto.request.SignUpRequest;
 import com.back.catchmate.oauth.dto.response.AuthorizeRedirect;
 import com.back.catchmate.oauth.dto.response.OAuthCallbackResult;
 import com.back.catchmate.oauth.dto.response.SignUpResponse;
 import com.back.catchmate.oauth.dto.response.SignUpResult;
-import com.back.catchmate.oauth.service.OAuthService;
 import com.back.catchmate.oauth.entity.Provider;
+import com.back.catchmate.oauth.service.OAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -29,10 +32,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Tag(name = "[인증] OAuth 로그인 API")
@@ -49,7 +48,9 @@ public class OAuthController {
     public ResponseEntity<SignUpResponse> signUp(@Valid @RequestBody SignUpRequest request) {
         SignUpResult result = oauthService.signUp(request.toCommand());
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookieFactory.refresh(result.refreshToken()).toString())
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        cookieFactory.refresh(result.refreshToken()).toString())
                 .body(result.response());
     }
 
@@ -58,7 +59,9 @@ public class OAuthController {
     public ResponseEntity<Void> authorize(@PathVariable String provider, HttpServletResponse response) {
         Provider p = Provider.of(provider);
         AuthorizeRedirect redirect = oauthService.buildAuthorizeRedirect(p);
-        response.addHeader(HttpHeaders.SET_COOKIE, cookieFactory.oauthState(redirect.state()).toString());
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookieFactory.oauthState(redirect.state()).toString());
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(redirect.url()))
                 .build();
@@ -66,33 +69,32 @@ public class OAuthController {
 
     @GetMapping("/callback/{provider}")
     @Operation(summary = "OAuth 콜백 처리", description = "공급자로부터 받은 code를 검증하고 토큰을 발급합니다.")
-    public ResponseEntity<Void> callback(@PathVariable String provider,
-                                         @RequestParam(required = false) String code,
-                                         @RequestParam(required = false) String state,
-                                         @RequestParam(required = false) String error,
-                                         @RequestParam(name = "error_description", required = false) String errorDescription,
-                                         @CookieValue(name = "oauth_state", required = false) String stateCookie,
-                                         HttpServletResponse response) {
-        response.addHeader(HttpHeaders.SET_COOKIE, cookieFactory.clearOAuthState().toString());
+    public ResponseEntity<Void> callback(
+            @PathVariable String provider,
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String error,
+            @RequestParam(name = "error_description", required = false) String errorDescription,
+            @CookieValue(name = "oauth_state", required = false) String stateCookie,
+            HttpServletResponse response) {
+        response.addHeader(
+                HttpHeaders.SET_COOKIE, cookieFactory.clearOAuthState().toString());
 
         if (error != null) {
-            log.warn("OAuth provider returned error: provider={}, error={}, description={}",
-                    provider, error, errorDescription);
+            log.warn(
+                    "OAuth provider returned error: provider={}, error={}, description={}",
+                    provider,
+                    error,
+                    errorDescription);
             throw new BaseException(ErrorCode.OAUTH_PROVIDER_ERROR);
         }
         if (code == null || code.isBlank() || state == null || state.isBlank()) {
-            log.warn("OAuth callback missing code/state: provider={}, code={}, state={}",
-                    provider, code, state);
+            log.warn("OAuth callback missing code/state: provider={}, code={}, state={}", provider, code, state);
             throw new BaseException(ErrorCode.OAUTH_PROVIDER_ERROR);
         }
 
         Provider p = Provider.of(provider);
-        OAuthCallbackResult result = oauthService.handleCallback(new OAuthCallbackCommand(
-                p,
-                code,
-                state,
-                stateCookie
-        ));
+        OAuthCallbackResult result = oauthService.handleCallback(new OAuthCallbackCommand(p, code, state, stateCookie));
 
         String redirectUrl = buildRedirectUrl(result, response);
         return ResponseEntity.status(HttpStatus.FOUND)
@@ -102,16 +104,19 @@ public class OAuthController {
 
     private String buildRedirectUrl(OAuthCallbackResult result, HttpServletResponse response) {
         if (result instanceof OAuthCallbackResult.Existing existing) {
-            response.addHeader(HttpHeaders.SET_COOKIE,
+            response.addHeader(
+                    HttpHeaders.SET_COOKIE,
                     cookieFactory.refresh(existing.refreshToken()).toString());
             String base = requireBase(frontendProperties.getSuccessRedirect(), "oauth.frontend.success-redirect");
-            String redirect = base + "?access_token=" + URLEncoder.encode(existing.accessToken(), StandardCharsets.UTF_8);
+            String redirect =
+                    base + "?access_token=" + URLEncoder.encode(existing.accessToken(), StandardCharsets.UTF_8);
             log.info("OAuth callback (existing user) → redirecting to {}", base);
             return redirect;
         }
         if (result instanceof OAuthCallbackResult.NewUser newUser) {
             String base = requireBase(frontendProperties.getSignupRedirect(), "oauth.frontend.signup-redirect");
-            String redirect = base + "?signup_token=" + URLEncoder.encode(newUser.signupToken(), StandardCharsets.UTF_8);
+            String redirect =
+                    base + "?signup_token=" + URLEncoder.encode(newUser.signupToken(), StandardCharsets.UTF_8);
             log.info("OAuth callback (new user) → redirecting to {}", base);
             return redirect;
         }
