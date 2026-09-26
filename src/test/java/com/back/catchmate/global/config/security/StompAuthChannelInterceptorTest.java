@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
-import com.back.catchmate.auth.service.AuthService;
 import com.back.catchmate.chat.service.ChatQueryService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
@@ -37,7 +36,7 @@ class StompAuthChannelInterceptorTest {
     private static final String NOTIFICATION_DESTINATION = "/user/queue/notifications";
 
     @Mock
-    private AuthService authService;
+    private AccessTokenVerifier accessTokenVerifier;
 
     @Mock
     private ChatQueryService chatQueryService;

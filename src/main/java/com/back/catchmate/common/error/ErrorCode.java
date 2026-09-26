@@ -25,7 +25,6 @@ public enum ErrorCode implements com.back.catchmate.global.error.ErrorCode {
     TEMP_BOARD_NOT_FOUND(ErrorType.NOT_FOUND, "임시 저장된 글이 존재하지 않습니다."),
     TEMP_BOARD_BAD_REQUEST(ErrorType.NOT_FOUND, "임시 저장된 글을 불러올 권한이 없습니다."),
     INVALID_ACCESS_TOKEN(ErrorType.UNAUTHORIZED, "유효하지 않은 액세스 토큰입니다."),
-    INVALID_REFRESH_TOKEN(ErrorType.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
     ALREADY_BOOKMARK(ErrorType.INVALID, "이미 찜한 게시글입니다."),
     BOOKMARK_NOT_FOUND(ErrorType.NOT_FOUND, "존재하지 않는 찜입니다."),
     BOOKMARK_BAD_REQUEST(ErrorType.INVALID, "본인 게시글은 찜할 수 없습니다."),
@@ -61,16 +60,8 @@ public enum ErrorCode implements com.back.catchmate.global.error.ErrorCode {
     SOCKET_CONNECT_FAILED(ErrorType.UNAUTHORIZED, "소켓 연결에 실패했습니다."),
 
     // 토큰
-    INVALID_TOKEN(ErrorType.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     BAD_REQUEST(ErrorType.INVALID, "클라이언트 오류입니다."),
-    INTERNAL_SERVER_ERROR(ErrorType.INTERNAL, "서버 오류입니다."),
-
-    // OAuth
-    OAUTH_PROVIDER_ERROR(ErrorType.EXTERNAL, "OAuth 공급자 통신 중 오류가 발생했습니다."),
-    OAUTH_STATE_MISMATCH(ErrorType.INVALID, "OAuth state 검증에 실패했습니다."),
-    UNSUPPORTED_OAUTH_PROVIDER(ErrorType.INVALID, "지원하지 않는 OAuth 공급자입니다."),
-    INVALID_SIGNUP_TOKEN(ErrorType.UNAUTHORIZED, "유효하지 않은 회원가입 토큰입니다."),
-    MISSING_REFRESH_COOKIE(ErrorType.UNAUTHORIZED, "Refresh Token 쿠키가 존재하지 않습니다.");
+    INTERNAL_SERVER_ERROR(ErrorType.INTERNAL, "서버 오류입니다.");
 
     private final ErrorType type;
     private final String message;

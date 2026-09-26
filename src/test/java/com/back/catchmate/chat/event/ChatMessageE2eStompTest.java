@@ -3,7 +3,7 @@ package com.back.catchmate.chat.event;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.back.catchmate.CatchmateApplication;
-import com.back.catchmate.auth.infra.JwtTokenProvider;
+import com.back.catchmate.auth.infrastructure.JwtTokenProvider;
 import com.back.catchmate.board.entity.Board;
 import com.back.catchmate.board.repository.BoardRepository;
 import com.back.catchmate.chat.entity.ChatRoom;

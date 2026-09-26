@@ -3,7 +3,7 @@ package com.back.catchmate.chat.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.back.catchmate.CatchmateApplication;
-import com.back.catchmate.auth.infra.JwtTokenProvider;
+import com.back.catchmate.auth.infrastructure.JwtTokenProvider;
 import com.back.catchmate.user.domain.Authority;
 import com.back.catchmate.user.domain.User;
 import com.back.catchmate.user.infrastructure.UserJpaRepository;

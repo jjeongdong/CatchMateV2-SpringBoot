@@ -4,6 +4,8 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,8 +22,9 @@ class ArchitectureTest {
                 .importPackages(ROOT);
 
         // when & then
-        for (ArchRule rule :
-                ArchitectureRules.all(ROOT, MigratedContexts.NAMES, MigratedContexts.CROSS_CONTEXT_ALLOWLIST)) {
+        Set<String> boundaryExceptions = new HashSet<>(MigratedContexts.CROSS_CONTEXT_ALLOWLIST);
+        boundaryExceptions.addAll(MigratedContexts.SYNC_COMMAND_ALLOWLIST);
+        for (ArchRule rule : ArchitectureRules.all(ROOT, MigratedContexts.NAMES, boundaryExceptions)) {
             rule.check(classes);
         }
     }

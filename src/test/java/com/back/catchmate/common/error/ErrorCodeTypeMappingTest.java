@@ -19,8 +19,7 @@ class ErrorCodeTypeMappingTest {
         "CHATROOM_READ_ONLY, FORBIDDEN",
         "BOARD_NOT_FOUND, NOT_FOUND",
         "ENROLL_ACCEPT_CONFLICT, CONFLICT",
-        "NOTIFICATION_OUTBOX_SAVE_FAILED, INTERNAL",
-        "OAUTH_PROVIDER_ERROR, EXTERNAL"
+        "NOTIFICATION_OUTBOX_SAVE_FAILED, INTERNAL"
     })
     @DisplayName("기존 HTTP 상태가 같은 의미의 ErrorType 으로 옮겨졌다")
     void mapsLegacyStatusToErrorType(ErrorCode errorCode, ErrorType expected) {

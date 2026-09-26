@@ -1,6 +1,5 @@
 package com.back.catchmate.global.config.security;
 
-import com.back.catchmate.auth.service.AuthService;
 import com.back.catchmate.chat.service.ChatQueryService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
@@ -36,7 +35,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private static final Set<String> ALLOWED_USER_DESTINATIONS =
             Set.of("/user/queue/notifications", "/user/queue/errors");
 
-    private final AuthService authService;
+    private final AccessTokenVerifier accessTokenVerifier;
     private final ChatQueryService chatQueryService;
 
     @Override
@@ -67,12 +66,11 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         }
 
         try {
-            Long userId = authService.getUserId(token);
-            String role = authService.getUserRole(token);
+            AuthenticatedUser user = accessTokenVerifier.verify(token);
 
-            accessor.setUser(
-                    new UsernamePasswordAuthenticationToken(userId, null, List.of(new SimpleGrantedAuthority(role))));
-            log.debug("WebSocket user authenticated: {}", userId);
+            accessor.setUser(new UsernamePasswordAuthenticationToken(
+                    user.userId(), null, List.of(new SimpleGrantedAuthority(user.role()))));
+            log.debug("WebSocket user authenticated: {}", user.userId());
         } catch (Exception e) {
             log.warn("WebSocket token validation failed: {}", e.getMessage());
             throw new BaseException(ErrorCode.SOCKET_CONNECT_FAILED);

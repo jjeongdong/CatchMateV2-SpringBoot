@@ -87,7 +87,7 @@ final class ArchitectureRules {
 
     private static ArchRule boundaryRule(String root, String context, Set<String> allowlist) {
         DescribedPredicate<JavaClass> notAllowlisted =
-                DescribedPredicate.describe("JOIN 허용 목록에 없음", (JavaClass origin) -> allowlist.stream()
+                DescribedPredicate.describe("경계 예외 목록에 없음", (JavaClass origin) -> allowlist.stream()
                         .noneMatch(name -> origin.getName().equals(name)
                                 || origin.getName().startsWith(name + "$")));
         DescribedPredicate<JavaClass> otherContextInternal = DescribedPredicate.describe(
