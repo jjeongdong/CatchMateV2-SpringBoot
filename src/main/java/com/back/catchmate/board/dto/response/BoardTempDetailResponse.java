@@ -2,7 +2,7 @@ package com.back.catchmate.board.dto.response;
 
 import com.back.catchmate.board.entity.Board;
 import com.back.catchmate.club.application.dto.api.ClubInfo;
-import com.back.catchmate.game.dto.response.GameSummary;
+import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.user.dto.response.UserSummary;
 import java.util.List;
 
@@ -21,7 +21,7 @@ public record BoardTempDetailResponse(
             UserSummary user,
             ClubInfo userClub,
             ClubInfo cheerClub,
-            GameSummary game,
+            GameInfo game,
             ClubInfo homeClub,
             ClubInfo awayClub) {
         if (board == null) {
@@ -45,7 +45,7 @@ public record BoardTempDetailResponse(
         return new BoardClubView(club.clubId(), club.name(), club.homeStadium(), club.region());
     }
 
-    private static BoardGameView toGameView(GameSummary game, ClubInfo homeClub, ClubInfo awayClub) {
+    private static BoardGameView toGameView(GameInfo game, ClubInfo homeClub, ClubInfo awayClub) {
         if (game == null) return null;
         return new BoardGameView(
                 game.gameId(), game.gameStartDate(), game.location(), toClubView(homeClub), toClubView(awayClub));

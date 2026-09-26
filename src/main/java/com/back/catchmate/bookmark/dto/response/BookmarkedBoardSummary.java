@@ -2,7 +2,7 @@ package com.back.catchmate.bookmark.dto.response;
 
 import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.club.application.dto.api.ClubInfo;
-import com.back.catchmate.game.dto.response.GameSummary;
+import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.user.dto.response.UserSummary;
 
 public record BookmarkedBoardSummary(
@@ -21,7 +21,7 @@ public record BookmarkedBoardSummary(
             UserSummary user,
             ClubInfo userClub,
             ClubInfo cheerClub,
-            GameSummary game,
+            GameInfo game,
             ClubInfo homeClub,
             ClubInfo awayClub) {
         return new BookmarkedBoardSummary(
@@ -43,7 +43,7 @@ public record BookmarkedBoardSummary(
     }
 
     public record BookmarkGameResponse(Long gameId, String homeClubName, String awayClubName, String location) {
-        public static BookmarkGameResponse from(GameSummary game, ClubInfo home, ClubInfo away) {
+        public static BookmarkGameResponse from(GameInfo game, ClubInfo home, ClubInfo away) {
             return new BookmarkGameResponse(
                     game.gameId(),
                     home != null ? home.name() : null,

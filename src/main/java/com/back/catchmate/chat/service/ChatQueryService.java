@@ -15,8 +15,8 @@ import com.back.catchmate.chat.entity.MessageType;
 import com.back.catchmate.club.application.ClubQueryApi;
 import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.common.response.PagedResponse;
-import com.back.catchmate.game.dto.response.GameSummary;
-import com.back.catchmate.game.service.GameService;
+import com.back.catchmate.game.application.GameQueryApi;
+import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
 import java.util.List;
@@ -43,7 +43,7 @@ public class ChatQueryService {
     private final ChatRoomMemberService chatRoomMemberService;
     private final BoardService boardService;
     private final ClubQueryApi clubQueryApi;
-    private final GameService gameService;
+    private final GameQueryApi gameQueryApi;
     private final UserService userService;
 
     public PagedResponse<ChatRoomResponse> getMyChatRooms(Long userId, int page, int size) {
@@ -190,15 +190,12 @@ public class ChatQueryService {
                 ? Map.of()
                 : userService.getUserSummaries(userIds).stream()
                         .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
-        Map<Long, GameSummary> gameMap = gameIds.isEmpty()
-                ? Map.of()
-                : gameService.getGameSummaries(gameIds).stream()
-                        .collect(Collectors.toMap(GameSummary::gameId, Function.identity()));
+        Map<Long, GameInfo> gameMap = gameIds.isEmpty() ? Map.of() : gameQueryApi.getInfos(gameIds);
 
         List<Long> clubIds = Stream.of(
                         boards.stream().map(BoardSummary::cheerClubId),
-                        gameMap.values().stream().map(GameSummary::homeClubId),
-                        gameMap.values().stream().map(GameSummary::awayClubId),
+                        gameMap.values().stream().map(GameInfo::homeClubId),
+                        gameMap.values().stream().map(GameInfo::awayClubId),
                         userMap.values().stream().map(UserSummary::clubId))
                 .flatMap(Function.identity())
                 .filter(Objects::nonNull)
@@ -215,11 +212,11 @@ public class ChatQueryService {
             BoardSummary board,
             Map<Long, UserSummary> userMap,
             Map<Long, ClubInfo> clubMap,
-            Map<Long, GameSummary> gameMap) {
+            Map<Long, GameInfo> gameMap) {
         UserSummary user = board.userId() != null ? userMap.get(board.userId()) : null;
         ClubInfo userClub = user != null && user.clubId() != null ? clubMap.get(user.clubId()) : null;
         ClubInfo cheerClub = board.cheerClubId() != null ? clubMap.get(board.cheerClubId()) : null;
-        GameSummary game = board.gameId() != null ? gameMap.get(board.gameId()) : null;
+        GameInfo game = board.gameId() != null ? gameMap.get(board.gameId()) : null;
         ClubInfo homeClub = game != null && game.homeClubId() != null ? clubMap.get(game.homeClubId()) : null;
         ClubInfo awayClub = game != null && game.awayClubId() != null ? clubMap.get(game.awayClubId()) : null;
         return ChatRoomBoardSummary.from(board, false, user, userClub, cheerClub, game, homeClub, awayClub);

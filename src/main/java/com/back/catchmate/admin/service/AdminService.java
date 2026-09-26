@@ -32,8 +32,8 @@ import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.enroll.dto.response.EnrollSummary;
 import com.back.catchmate.enroll.service.EnrollQueryService;
-import com.back.catchmate.game.dto.response.GameSummary;
-import com.back.catchmate.game.service.GameService;
+import com.back.catchmate.game.application.GameQueryApi;
+import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.inquiry.dto.response.InquirySummary;
 import com.back.catchmate.inquiry.service.InquiryService;
 import com.back.catchmate.notice.dto.response.NoticeCreateResponse;
@@ -64,7 +64,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AdminService {
     private final ClubQueryApi clubQueryApi;
-    private final GameService gameService;
+    private final GameQueryApi gameQueryApi;
     private final UserService userService;
     private final BoardService boardService;
     private final NoticeService noticeService;
@@ -150,7 +150,7 @@ public class AdminService {
                 .toList();
 
         UserSummary writer = board.userId() != null ? userService.getUserSummary(board.userId()) : null;
-        GameSummary game = board.gameId() != null ? gameService.getGameSummary(board.gameId()) : null;
+        GameInfo game = board.gameId() != null ? gameQueryApi.getInfo(board.gameId()) : null;
 
         return AdminBoardDetailResponse.from(board, writer, game, enrollmentInfos);
     }

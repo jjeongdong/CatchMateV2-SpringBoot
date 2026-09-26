@@ -25,7 +25,7 @@ import com.back.catchmate.enroll.dto.response.EnrollResponse;
 import com.back.catchmate.enroll.entity.AcceptStatus;
 import com.back.catchmate.enroll.entity.Enroll;
 import com.back.catchmate.enroll.repository.EnrollRepository;
-import com.back.catchmate.game.service.GameService;
+import com.back.catchmate.game.application.GameQueryApi;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
 import java.util.List;
@@ -58,7 +58,7 @@ class EnrollQueryServiceTest {
     private ClubQueryApi clubQueryApi;
 
     @Mock
-    private GameService gameService;
+    private GameQueryApi gameQueryApi;
 
     @Mock
     private UserService userService;

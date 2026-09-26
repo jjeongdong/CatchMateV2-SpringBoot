@@ -1,7 +1,7 @@
 package com.back.catchmate.admin.dto.response;
 
 import com.back.catchmate.board.dto.response.BoardSummary;
-import com.back.catchmate.game.dto.response.GameSummary;
+import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.user.dto.response.UserSummary;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,7 +19,7 @@ public record AdminBoardDetailResponse(
         LocalDateTime createdAt,
         List<AdminEnrollmentDetailResponse> enrollments) {
     public static AdminBoardDetailResponse from(
-            BoardSummary board, UserSummary writer, GameSummary game, List<AdminEnrollmentDetailResponse> enrollments) {
+            BoardSummary board, UserSummary writer, GameInfo game, List<AdminEnrollmentDetailResponse> enrollments) {
         return new AdminBoardDetailResponse(
                 board.boardId(),
                 board.title(),

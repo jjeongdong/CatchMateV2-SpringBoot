@@ -17,8 +17,8 @@ import com.back.catchmate.common.response.CursorPagedResponse;
 import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.enroll.dto.response.EnrollSummary;
 import com.back.catchmate.enroll.service.EnrollQueryService;
-import com.back.catchmate.game.dto.response.GameSummary;
-import com.back.catchmate.game.service.GameService;
+import com.back.catchmate.game.application.GameQueryApi;
+import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.BlockService;
 import com.back.catchmate.user.service.UserService;
@@ -53,7 +53,7 @@ public class BoardResponseAssembler {
     private final UserService userService;
     private final BlockService blockService;
     private final ClubQueryApi clubQueryApi;
-    private final GameService gameService;
+    private final GameQueryApi gameQueryApi;
 
     public BoardResponse buildBoardResponse(Board board, boolean bookmarked) {
         BoardReferences references = loadReferences(List.of(board));
@@ -72,7 +72,7 @@ public class BoardResponseAssembler {
             Board board, boolean bookMarked, BoardButtonStatus buttonStatus, Long myEnrollId, Long chatRoomId) {
         BoardReferences references = loadReferences(List.of(board));
         UserSummary user = references.user(board);
-        GameSummary game = references.game(board);
+        GameInfo game = references.game(board);
 
         return BoardDetailResponse.of(
                 board,
@@ -91,7 +91,7 @@ public class BoardResponseAssembler {
     public BoardTempDetailResponse buildTempDetailResponse(Board board) {
         BoardReferences references = loadReferences(List.of(board));
         UserSummary user = references.user(board);
-        GameSummary game = references.game(board);
+        GameInfo game = references.game(board);
         return BoardTempDetailResponse.from(
                 board,
                 user,
@@ -120,15 +120,12 @@ public class BoardResponseAssembler {
                 : userService.getUserSummaries(userIds).stream()
                         .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
 
-        Map<Long, GameSummary> gameMap = gameIds.isEmpty()
-                ? Map.of()
-                : gameService.getGameSummaries(gameIds).stream()
-                        .collect(Collectors.toMap(GameSummary::gameId, Function.identity()));
+        Map<Long, GameInfo> gameMap = gameIds.isEmpty() ? Map.of() : gameQueryApi.getInfos(gameIds);
 
         List<Long> clubIds = Stream.of(
                         boards.stream().map(Board::getCheerClubId),
-                        gameMap.values().stream().map(GameSummary::homeClubId),
-                        gameMap.values().stream().map(GameSummary::awayClubId),
+                        gameMap.values().stream().map(GameInfo::homeClubId),
+                        gameMap.values().stream().map(GameInfo::awayClubId),
                         userMap.values().stream().map(UserSummary::clubId))
                 .flatMap(Function.identity())
                 .filter(Objects::nonNull)
@@ -142,7 +139,7 @@ public class BoardResponseAssembler {
 
     private BoardResponse toBoardResponse(Board board, boolean bookMarked, BoardReferences references) {
         UserSummary user = references.user(board);
-        GameSummary game = references.game(board);
+        GameInfo game = references.game(board);
         return BoardResponse.from(
                 board,
                 bookMarked,
@@ -155,7 +152,7 @@ public class BoardResponseAssembler {
     }
 
     private record BoardReferences(
-            Map<Long, UserSummary> userMap, Map<Long, ClubInfo> clubMap, Map<Long, GameSummary> gameMap) {
+            Map<Long, UserSummary> userMap, Map<Long, ClubInfo> clubMap, Map<Long, GameInfo> gameMap) {
         private UserSummary user(Board board) {
             return board.getUserId() != null ? userMap.get(board.getUserId()) : null;
         }
@@ -168,15 +165,15 @@ public class BoardResponseAssembler {
             return board.getCheerClubId() != null ? clubMap.get(board.getCheerClubId()) : null;
         }
 
-        private GameSummary game(Board board) {
+        private GameInfo game(Board board) {
             return board.getGameId() != null ? gameMap.get(board.getGameId()) : null;
         }
 
-        private ClubInfo homeClub(GameSummary game) {
+        private ClubInfo homeClub(GameInfo game) {
             return game != null && game.homeClubId() != null ? clubMap.get(game.homeClubId()) : null;
         }
 
-        private ClubInfo awayClub(GameSummary game) {
+        private ClubInfo awayClub(GameInfo game) {
             return game != null && game.awayClubId() != null ? clubMap.get(game.awayClubId()) : null;
         }
     }
@@ -208,7 +205,7 @@ public class BoardResponseAssembler {
             Long lastBoardId,
             int size) {
         List<Long> blockedUserIds = blockService.getBlockedUserIds(userId);
-        List<Long> matchingGameIds = gameDate != null ? gameService.findIdsByGameStartDateOn(gameDate) : null;
+        List<Long> matchingGameIds = gameDate != null ? gameQueryApi.getIdsStartingOn(gameDate) : null;
 
         // 날짜 필터를 줬는데 매칭 경기가 0건이면 게시글도 없음 — 짧은 회로
         if (matchingGameIds != null && matchingGameIds.isEmpty()) {
