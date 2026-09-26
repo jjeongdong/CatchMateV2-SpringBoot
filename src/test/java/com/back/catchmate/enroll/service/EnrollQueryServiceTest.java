@@ -26,11 +26,14 @@ import com.back.catchmate.enroll.entity.AcceptStatus;
 import com.back.catchmate.enroll.entity.Enroll;
 import com.back.catchmate.enroll.repository.EnrollRepository;
 import com.back.catchmate.game.application.GameQueryApi;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,7 +64,7 @@ class EnrollQueryServiceTest {
     private GameQueryApi gameQueryApi;
 
     @Mock
-    private UserService userService;
+    private UserQueryApi userQueryApi;
 
     @InjectMocks
     private EnrollQueryService sut;
@@ -81,7 +84,7 @@ class EnrollQueryServiceTest {
         assertThatThrownBy(() -> sut.getEnroll(otherUserId, enrollId))
                 .isInstanceOf(BaseException.class)
                 .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN_ACCESS));
-        then(userService).shouldHaveNoInteractions();
+        then(userQueryApi).shouldHaveNoInteractions();
         then(clubQueryApi).shouldHaveNoInteractions();
     }
 
@@ -93,8 +96,8 @@ class EnrollQueryServiceTest {
         given(enrollRepository.findById(enrollId))
                 .willReturn(Optional.of(enroll(enrollId, applicantId, boardId, writerId, AcceptStatus.PENDING, true)));
         given(boardService.getBoardSummary(boardId)).willReturn(board(boardId, writerId));
-        given(userService.getUserSummary(applicantId)).willReturn(user(applicantId, null));
-        given(userService.getUserSummaries(List.of(writerId))).willReturn(List.of(user(writerId, null)));
+        given(userQueryApi.getInfo(applicantId)).willReturn(user(applicantId, null));
+        given(userQueryApi.getInfos(List.of(writerId))).willReturn(usersById(user(writerId, null)));
 
         // when
         EnrollDetailResponse response = sut.getEnroll(applicantId, enrollId);
@@ -117,8 +120,8 @@ class EnrollQueryServiceTest {
         given(enrollRepository.findById(enrollId))
                 .willReturn(Optional.of(enroll(enrollId, applicantId, boardId, writerId, AcceptStatus.PENDING, true)));
         given(boardService.getBoardSummary(boardId)).willReturn(board(boardId, writerId));
-        given(userService.getUserSummary(applicantId)).willReturn(user(applicantId, clubId));
-        given(userService.getUserSummaries(List.of(writerId))).willReturn(List.of(user(writerId, null)));
+        given(userQueryApi.getInfo(applicantId)).willReturn(user(applicantId, clubId));
+        given(userQueryApi.getInfos(List.of(writerId))).willReturn(usersById(user(writerId, null)));
         given(clubQueryApi.getInfo(clubId)).willReturn(club(clubId));
 
         // when
@@ -148,7 +151,7 @@ class EnrollQueryServiceTest {
         assertThat(response.getTotalElements()).isZero();
         then(bookmarkService).shouldHaveNoInteractions();
         then(boardService).shouldHaveNoInteractions();
-        then(userService).shouldHaveNoInteractions();
+        then(userQueryApi).shouldHaveNoInteractions();
     }
 
     @Test
@@ -165,7 +168,7 @@ class EnrollQueryServiceTest {
                         2));
         given(bookmarkService.findBookmarkedBoardIds(userId, List.of(boardId))).willReturn(List.of(boardId));
         given(boardService.getBoardSummaries(List.of(boardId))).willReturn(List.of(board(boardId, writerId)));
-        given(userService.getUserSummaries(List.of(writerId))).willReturn(List.of(user(writerId, null)));
+        given(userQueryApi.getInfos(List.of(writerId))).willReturn(usersById(user(writerId, null)));
 
         // when
         PagedResponse<EnrollRequestResponse> response = sut.getEnrollRequestList(userId, 0, 10);
@@ -195,7 +198,7 @@ class EnrollQueryServiceTest {
                 .isInstanceOf(BaseException.class)
                 .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN_ACCESS));
         then(enrollRepository).shouldHaveNoInteractions();
-        then(userService).shouldHaveNoInteractions();
+        then(userQueryApi).shouldHaveNoInteractions();
     }
 
     @Test
@@ -210,7 +213,7 @@ class EnrollQueryServiceTest {
                         List.of(enroll(100L, applicantId, boardId, writerId, AcceptStatus.PENDING, true)),
                         PageRequest.of(0, 10),
                         1));
-        given(userService.getUserSummaries(List.of(applicantId))).willReturn(List.of(user(applicantId, clubId)));
+        given(userQueryApi.getInfos(List.of(applicantId))).willReturn(usersById(user(applicantId, clubId)));
         given(clubQueryApi.getInfos(List.of(clubId))).willReturn(Map.of(clubId, club(clubId)));
 
         // when
@@ -245,7 +248,7 @@ class EnrollQueryServiceTest {
         assertThat(response.getContent()).isEmpty();
         then(enrollRepository).should(never()).findAllByBoardIdInAndStatus(any(), eq(AcceptStatus.PENDING));
         then(boardService).shouldHaveNoInteractions();
-        then(userService).shouldHaveNoInteractions();
+        then(userQueryApi).shouldHaveNoInteractions();
     }
 
     @Test
@@ -262,8 +265,8 @@ class EnrollQueryServiceTest {
                         enroll(101L, 3L, boardId, writerId, AcceptStatus.PENDING, true)));
         given(boardService.getBoardSummaries(List.of(boardId, emptyBoardId)))
                 .willReturn(List.of(board(boardId, writerId), board(emptyBoardId, writerId)));
-        given(userService.getUserSummaries(List.of(1L, 3L))).willReturn(List.of(user(1L, null), user(3L, null)));
-        given(userService.getUserSummaries(List.of(writerId))).willReturn(List.of(user(writerId, null)));
+        given(userQueryApi.getInfos(List.of(1L, 3L))).willReturn(usersById(user(1L, null), user(3L, null)));
+        given(userQueryApi.getInfos(List.of(writerId))).willReturn(usersById(user(writerId, null)));
 
         // when
         PagedResponse<EnrollReceiveResponse> response = sut.getEnrollReceiveList(writerId, 0, 10);
@@ -301,8 +304,12 @@ class EnrollQueryServiceTest {
         return new BoardSummary(boardId, "제목", "내용", 4, 1, writerId, null, null, null, null, false, null, null);
     }
 
-    private UserSummary user(Long userId, Long clubId) {
-        return new UserSummary(
+    private Map<Long, UserInfo> usersById(UserInfo... users) {
+        return Arrays.stream(users).collect(Collectors.toMap(UserInfo::userId, Function.identity()));
+    }
+
+    private UserInfo user(Long userId, Long clubId) {
+        return new UserInfo(
                 userId,
                 "test@catchmate.com",
                 null,
@@ -315,7 +322,6 @@ class EnrollQueryServiceTest {
                 "USER",
                 null,
                 clubId,
-                false,
                 false,
                 false,
                 false,

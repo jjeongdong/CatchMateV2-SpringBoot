@@ -4,8 +4,8 @@ import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.board.service.BoardService;
 import com.back.catchmate.notification.entity.enums.AlarmType;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class EnrollNotificationService {
     private static final String TYPE_ENROLL_CANCEL = "ENROLL_CANCEL";
 
     private final BoardService boardService;
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
     private final OutboxSaver outboxSaver;
     private final NotificationService notificationService;
 
@@ -38,7 +38,7 @@ public class EnrollNotificationService {
                 boardId,
                 applicantId,
                 boardOwnerId);
-        UserSummary applicant = userService.getUserSummary(applicantId);
+        UserInfo applicant = userQueryApi.getInfo(applicantId);
         BoardSummary board = boardService.getBoardSummary(boardId);
         String title = NotificationTemplate.ENROLL_REQUEST.formatTitle(applicant.nickName());
         String body = NotificationTemplate.ENROLL_REQUEST.formatBody(board.title());
@@ -83,7 +83,7 @@ public class EnrollNotificationService {
                 boardId,
                 applicantId,
                 boardOwnerId);
-        UserSummary applicant = userService.getUserSummary(applicantId);
+        UserInfo applicant = userQueryApi.getInfo(applicantId);
         String title = NotificationTemplate.ENROLL_CANCEL.formatTitle(applicant.nickName());
 
         notificationService.createNotification(boardOwnerId, applicantId, boardId, title, AlarmType.ENROLL, enrollId);
@@ -109,7 +109,7 @@ public class EnrollNotificationService {
             return;
         }
 
-        UserSummary recipient = userService.getUserSummary(recipientId);
+        UserInfo recipient = userQueryApi.getInfo(recipientId);
         log.info(
                 "[Enroll알림] 수신자 설정 상태 - enrollAlarmEnabled: {}, fcmToken: {}",
                 recipient.enrollAlarmEnabled(),

@@ -2,8 +2,8 @@ package com.back.catchmate.notification.service;
 
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
 import com.back.catchmate.notification.infra.RedisNotificationPublisher;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +19,12 @@ import org.springframework.stereotype.Service;
 public class AdminInquiryNotificationDispatchService {
     private static final String NOTIFICATION_TYPE = "INQUIRY";
 
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
     private final OutboxDispatcher outboxDispatcher;
     private final RedisNotificationPublisher redisNotificationPublisher;
 
     public void dispatchOnInquiryAnswered(Long inquiryId, Long inquiryAuthorId) {
-        UserSummary recipient = userService.getUserSummary(inquiryAuthorId);
+        UserInfo recipient = userQueryApi.getInfo(inquiryAuthorId);
         if (!recipient.eventAlarmEnabled()) {
             return;
         }

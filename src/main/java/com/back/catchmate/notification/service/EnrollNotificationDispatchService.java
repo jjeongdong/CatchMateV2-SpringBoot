@@ -4,8 +4,8 @@ import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.board.service.BoardService;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
 import com.back.catchmate.notification.infra.RedisNotificationPublisher;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ public class EnrollNotificationDispatchService {
     private static final String TYPE_ENROLL_CANCEL = "ENROLL_CANCEL";
 
     private final BoardService boardService;
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
     private final OutboxDispatcher outboxDispatcher;
     private final RedisNotificationPublisher redisNotificationPublisher;
 
@@ -40,13 +40,13 @@ public class EnrollNotificationDispatchService {
                 boardId,
                 applicantId,
                 boardOwnerId);
-        UserSummary recipient = userService.getUserSummary(boardOwnerId);
+        UserInfo recipient = userQueryApi.getInfo(boardOwnerId);
         if (!recipient.enrollAlarmEnabled()) {
             log.warn("[Enroll알림] 수신자(boardOwnerId: {})의 enrollAlarm 설정이 비활성화(false)되어 발송을 중단합니다.", boardOwnerId);
             return;
         }
 
-        UserSummary applicant = userService.getUserSummary(applicantId);
+        UserInfo applicant = userQueryApi.getInfo(applicantId);
         BoardSummary board = boardService.getBoardSummary(boardId);
         String title = NotificationTemplate.ENROLL_REQUEST.formatTitle(applicant.nickName());
         String body = NotificationTemplate.ENROLL_REQUEST.formatBody(board.title());
@@ -61,7 +61,7 @@ public class EnrollNotificationDispatchService {
                 boardId,
                 applicantId,
                 boardOwnerId);
-        UserSummary recipient = userService.getUserSummary(applicantId);
+        UserInfo recipient = userQueryApi.getInfo(applicantId);
         if (!recipient.enrollAlarmEnabled()) {
             log.warn("[Enroll알림] 수신자(applicantId: {})의 enrollAlarm 설정이 비활성화(false)되어 발송을 중단합니다.", applicantId);
             return;
@@ -81,7 +81,7 @@ public class EnrollNotificationDispatchService {
                 boardId,
                 applicantId,
                 boardOwnerId);
-        UserSummary recipient = userService.getUserSummary(applicantId);
+        UserInfo recipient = userQueryApi.getInfo(applicantId);
         if (!recipient.enrollAlarmEnabled()) {
             log.warn("[Enroll알림] 수신자(applicantId: {})의 enrollAlarm 설정이 비활성화(false)되어 발송을 중단합니다.", applicantId);
             return;
@@ -101,13 +101,13 @@ public class EnrollNotificationDispatchService {
                 boardId,
                 applicantId,
                 boardOwnerId);
-        UserSummary recipient = userService.getUserSummary(boardOwnerId);
+        UserInfo recipient = userQueryApi.getInfo(boardOwnerId);
         if (!recipient.enrollAlarmEnabled()) {
             log.warn("[Enroll알림] 수신자(boardOwnerId: {})의 enrollAlarm 설정이 비활성화(false)되어 발송을 중단합니다.", boardOwnerId);
             return;
         }
 
-        UserSummary applicant = userService.getUserSummary(applicantId);
+        UserInfo applicant = userQueryApi.getInfo(applicantId);
         BoardSummary board = boardService.getBoardSummary(boardId);
         String title = NotificationTemplate.ENROLL_CANCEL.formatTitle(applicant.nickName());
         String body = NotificationTemplate.ENROLL_CANCEL.formatBody(board.title());
@@ -116,7 +116,7 @@ public class EnrollNotificationDispatchService {
     }
 
     private void dispatch(
-            UserSummary recipient, Long boardId, String title, String body, String type, boolean pushEnabled) {
+            UserInfo recipient, Long boardId, String title, String body, String type, boolean pushEnabled) {
         Map<String, String> payload = createNotificationData(type, boardId, title, body);
         log.info("[Enroll알림] STOMP 알림 전송 시도 - recipientId: {}, payload: {}", recipient.userId(), payload);
         redisNotificationPublisher.dispatch(recipient.userId(), payload);

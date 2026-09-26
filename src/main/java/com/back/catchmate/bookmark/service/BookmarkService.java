@@ -11,14 +11,13 @@ import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.game.application.GameQueryApi;
 import com.back.catchmate.game.application.dto.api.GameInfo;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -36,7 +35,7 @@ public class BookmarkService {
 
     private final ClubQueryApi clubQueryApi;
     private final GameQueryApi gameQueryApi;
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
     // board 는 아직 헥사고날이라 정문 UseCase 로 진입한다 (board 전환 시 BoardService 로 교체)
     private final BoardService boardService;
 
@@ -103,17 +102,14 @@ public class BookmarkService {
                 .distinct()
                 .toList();
 
-        Map<Long, UserSummary> userMap = userIds.isEmpty()
-                ? Map.of()
-                : userService.getUserSummaries(userIds).stream()
-                        .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+        Map<Long, UserInfo> userMap = userIds.isEmpty() ? Map.of() : userQueryApi.getInfos(userIds);
         Map<Long, GameInfo> gameMap = gameIds.isEmpty() ? Map.of() : gameQueryApi.getInfos(gameIds);
 
         List<Long> clubIds = Stream.of(
                         boards.stream().map(BoardSummary::cheerClubId),
                         gameMap.values().stream().map(GameInfo::homeClubId),
                         gameMap.values().stream().map(GameInfo::awayClubId),
-                        userMap.values().stream().map(UserSummary::clubId))
+                        userMap.values().stream().map(UserInfo::clubId))
                 .flatMap(Function.identity())
                 .filter(Objects::nonNull)
                 .distinct()
@@ -127,11 +123,8 @@ public class BookmarkService {
     }
 
     private BookmarkedBoardSummary toSummary(
-            BoardSummary board,
-            Map<Long, UserSummary> userMap,
-            Map<Long, ClubInfo> clubMap,
-            Map<Long, GameInfo> gameMap) {
-        UserSummary user = board.userId() != null ? userMap.get(board.userId()) : null;
+            BoardSummary board, Map<Long, UserInfo> userMap, Map<Long, ClubInfo> clubMap, Map<Long, GameInfo> gameMap) {
+        UserInfo user = board.userId() != null ? userMap.get(board.userId()) : null;
         ClubInfo userClub = user != null && user.clubId() != null ? clubMap.get(user.clubId()) : null;
         ClubInfo cheerClub = board.cheerClubId() != null ? clubMap.get(board.cheerClubId()) : null;
         GameInfo game = board.gameId() != null ? gameMap.get(board.gameId()) : null;

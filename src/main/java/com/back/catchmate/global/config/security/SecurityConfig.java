@@ -48,7 +48,7 @@ public class SecurityConfig {
                                 "/api/oauth/signup",
                                 "/api/auth/reissue",
                                 "/api/auth/logout",
-                                "/api/users/check-nickname",
+                                "/api/users/nickname-availability",
                                 "/api/users/additional-info",
                                 "/api/clubs",
                                 "/swagger-ui/**",

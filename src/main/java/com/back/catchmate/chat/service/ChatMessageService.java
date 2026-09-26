@@ -19,13 +19,11 @@ import com.back.catchmate.chat.repository.ChatRoomMemberRepository;
 import com.back.catchmate.chat.repository.ChatRoomRepository;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -50,7 +48,7 @@ public class ChatMessageService {
     private final ChatSequenceRedisStore chatSequenceRedisStore;
     private final ReadSequenceRedisBuffer readSequenceRedisBuffer;
 
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
     private final ChatBufferFlushExecutor chatBufferFlushExecutor;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -84,12 +82,7 @@ public class ChatMessageService {
      */
     @Transactional
     public ChatMessage persistAndPublish(
-            Long chatRoomId,
-            Long senderId,
-            String content,
-            MessageType messageType,
-            Long sequence,
-            UserSummary sender) {
+            Long chatRoomId, Long senderId, String content, MessageType messageType, Long sequence, UserInfo sender) {
         ChatMessage chatMessage = ChatMessage.createMessage(chatRoomId, senderId, content, messageType, sequence);
         chatMessage = chatMessageRepository.save(chatMessage);
 
@@ -187,10 +180,7 @@ public class ChatMessageService {
 
         List<Long> senderIds =
                 dbMessages.stream().map(ChatMessage::getSenderId).distinct().toList();
-        Map<Long, UserSummary> senderById = senderIds.isEmpty()
-                ? Map.of()
-                : userService.getUserSummaries(senderIds).stream()
-                        .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+        Map<Long, UserInfo> senderById = senderIds.isEmpty() ? Map.of() : userQueryApi.getInfos(senderIds);
 
         List<ChatMessageCacheDto> chatMessageCacheDtoList = dbMessages.stream()
                 .map(msg -> ChatMessageCacheDto.from(msg, senderById.get(msg.getSenderId())))

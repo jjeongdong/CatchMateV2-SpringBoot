@@ -17,10 +17,11 @@ import com.back.catchmate.oauth.dto.response.SignUpResult;
 import com.back.catchmate.oauth.entity.Provider;
 import com.back.catchmate.oauth.infra.OAuthClient;
 import com.back.catchmate.oauth.infra.OAuthClientRegistry;
-import com.back.catchmate.user.dto.command.CreateUserCommand;
-import com.back.catchmate.user.dto.response.CreatedUserResponse;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserCommandService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
+import com.back.catchmate.user.application.dto.command.UserCreateCommand;
+import com.back.catchmate.user.application.dto.result.UserCreateResult;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class OAuthService {
     private final OAuthClientRegistry oauthClientRegistry;
 
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
+    private final UserCommandService userCommandService;
     private final ClubQueryApi clubQueryApi;
     private final AuthService authService;
 
@@ -53,8 +55,8 @@ public class OAuthService {
         validateStateMatches(command.state(), command.stateFromCookie());
 
         OAuthUserInfo oauthUserInfo = fetchOAuthUserInfo(command);
-        Optional<UserSummary> registeredUser =
-                userService.findUserSummaryByProviderId(oauthUserInfo.getProviderIdWithProvider());
+        Optional<UserInfo> registeredUser =
+                userQueryApi.findInfoByProviderId(oauthUserInfo.getProviderIdWithProvider());
 
         if (registeredUser.isEmpty()) {
             return issueSignupToken(oauthUserInfo);
@@ -69,7 +71,7 @@ public class OAuthService {
         // 존재하지 않으면 ClubQueryApi 가 ClubNotFoundException 을 던진다
         clubQueryApi.getInfo(command.favoriteClubId());
 
-        CreatedUserResponse createdUser = userService.createUser(toCreateUserCommand(claims, command));
+        UserCreateResult createdUser = userCommandService.createUser(toCreateUserCommand(claims, command));
         IssuedAuthToken issuedToken = authService.createToken(createdUser.userId(), createdUser.authority());
 
         SignUpResponse response =
@@ -82,7 +84,7 @@ public class OAuthService {
         return client.exchange(command.code());
     }
 
-    private OAuthCallbackResult issueLoginTokens(UserSummary user) {
+    private OAuthCallbackResult issueLoginTokens(UserInfo user) {
         IssuedAuthToken issuedToken = authService.createToken(user.userId(), user.authority());
         return new OAuthCallbackResult.Existing(issuedToken.accessToken(), issuedToken.refreshToken());
     }
@@ -108,8 +110,8 @@ public class OAuthService {
                 .build();
     }
 
-    private CreateUserCommand toCreateUserCommand(SignupTokenClaims claims, SignUpCommand command) {
-        return new CreateUserCommand(
+    private UserCreateCommand toCreateUserCommand(SignupTokenClaims claims, SignUpCommand command) {
+        return new UserCreateCommand(
                 claims.getProvider().getProvider(),
                 claims.getProviderIdWithProvider(),
                 claims.getEmail(),

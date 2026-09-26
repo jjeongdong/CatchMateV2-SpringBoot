@@ -9,8 +9,8 @@ import com.back.catchmate.chat.infra.S3ImageUploader;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.global.infrastructure.upload.UploadFile;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,7 @@ public class ChatCommandService {
     private final ChatRoomService chatRoomService;
     private final ChatMessageService chatMessageService;
     private final ChatRoomMemberService chatRoomMemberService;
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
     private final S3ImageUploader s3ImageUploader;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -39,7 +39,7 @@ public class ChatCommandService {
             throw new BaseException(ErrorCode.BAD_REQUEST);
         }
 
-        UserSummary sender = userService.getUserSummary(senderId);
+        UserInfo sender = userQueryApi.getInfo(senderId);
 
         Long sequence = chatMessageService.prepareSequence(command.chatRoomId(), senderId, command.messageType());
 
@@ -54,7 +54,7 @@ public class ChatCommandService {
     }
 
     public void leaveChatRoom(Long userId, Long chatRoomId) {
-        UserSummary user = userService.getUserSummary(userId);
+        UserInfo user = userQueryApi.getInfo(userId);
         ChatMessage savedMessage = chatRoomService.leaveChatRoom(chatRoomId, user);
         applicationEventPublisher.publishEvent(ChatMessageBroadcastEvent.from(savedMessage, user));
     }
@@ -84,7 +84,7 @@ public class ChatCommandService {
     public void kickChatRoomMember(Long hostId, Long chatRoomId, Long targetUserId) {
         ChatMessage savedMessage = chatRoomService.kickChatRoomMember(chatRoomId, hostId, targetUserId);
 
-        UserSummary targetUser = userService.getUserSummary(savedMessage.getSenderId());
+        UserInfo targetUser = userQueryApi.getInfo(savedMessage.getSenderId());
         applicationEventPublisher.publishEvent(ChatMessageBroadcastEvent.from(savedMessage, targetUser));
     }
 
@@ -105,7 +105,7 @@ public class ChatCommandService {
      * {@link com.back.catchmate.chat.event.ChatRoomMemberJoinedEvent} 리스너에서 호출.
      */
     public void welcomeNewMember(Long chatRoomId, Long userId) {
-        UserSummary user = userService.getUserSummary(userId);
+        UserInfo user = userQueryApi.getInfo(userId);
         ChatMessage joinMessage = chatRoomService.enterChatRoom(chatRoomId, user);
         applicationEventPublisher.publishEvent(ChatMessageBroadcastEvent.from(joinMessage, user));
     }

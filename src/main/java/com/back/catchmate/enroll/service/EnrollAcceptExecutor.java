@@ -8,8 +8,8 @@ import com.back.catchmate.enroll.dto.response.EnrollAcceptResponse;
 import com.back.catchmate.enroll.entity.Enroll;
 import com.back.catchmate.enroll.event.EnrollAcceptedEvent;
 import com.back.catchmate.enroll.repository.EnrollRepository;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -37,7 +37,7 @@ public class EnrollAcceptExecutor {
     private final EnrollRepository enrollRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
 
     private final BoardService boardService;
 
@@ -54,7 +54,7 @@ public class EnrollAcceptExecutor {
         }
 
         BoardSummary board = boardService.getBoardSummary(enroll.getBoardId());
-        UserSummary applicant = userService.getUserSummary(enroll.getUserId());
+        UserInfo applicant = userQueryApi.getInfo(enroll.getUserId());
 
         enroll.accept();
         enrollRepository.save(enroll);

@@ -16,8 +16,8 @@ import com.back.catchmate.enroll.event.EnrollRejectedEvent;
 import com.back.catchmate.enroll.event.EnrollRequestedEvent;
 import com.back.catchmate.enroll.infra.RedisIdempotencyStore;
 import com.back.catchmate.enroll.repository.EnrollRepository;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,14 +34,14 @@ public class EnrollCommandService {
     private final EnrollAcceptExecutor enrollAcceptExecutor;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
     private final BoardService boardService;
 
     @Value("${enroll.idempotency.ttl-seconds:10}")
     private long idempotencyTtlSeconds;
 
     public EnrollCreateResponse createEnroll(EnrollCreateCommand command) {
-        UserSummary applicant = userService.getUserSummary(command.userId());
+        UserInfo applicant = userQueryApi.getInfo(command.userId());
         BoardSummary board = boardService.getCompletedBoardSummary(command.boardId());
 
         Enroll savedEnroll =
@@ -74,7 +74,7 @@ public class EnrollCommandService {
         Enroll enroll = getEnrollOrThrow(enrollId);
         verifyBoardHost(enroll, userId);
         BoardSummary board = boardService.getBoardSummary(enroll.getBoardId());
-        UserSummary applicant = userService.getUserSummary(enroll.getUserId());
+        UserInfo applicant = userQueryApi.getInfo(enroll.getUserId());
 
         enroll.reject();
         enrollRepository.save(enroll);
@@ -92,7 +92,7 @@ public class EnrollCommandService {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }
 
-        UserSummary applicant = userService.getUserSummary(enroll.getUserId());
+        UserInfo applicant = userQueryApi.getInfo(enroll.getUserId());
         BoardSummary board = boardService.getBoardSummary(enroll.getBoardId());
 
         enrollRepository.delete(enroll);

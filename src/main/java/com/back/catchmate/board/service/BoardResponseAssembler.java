@@ -19,9 +19,8 @@ import com.back.catchmate.enroll.dto.response.EnrollSummary;
 import com.back.catchmate.enroll.service.EnrollQueryService;
 import com.back.catchmate.game.application.GameQueryApi;
 import com.back.catchmate.game.application.dto.api.GameInfo;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.BlockService;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -33,7 +32,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -50,8 +48,7 @@ public class BoardResponseAssembler {
     private final EnrollQueryService enrollQueryService;
     private final ChatQueryService chatQueryService;
 
-    private final UserService userService;
-    private final BlockService blockService;
+    private final UserQueryApi userQueryApi;
     private final ClubQueryApi clubQueryApi;
     private final GameQueryApi gameQueryApi;
 
@@ -71,7 +68,7 @@ public class BoardResponseAssembler {
     public BoardDetailResponse buildBoardDetailResponse(
             Board board, boolean bookMarked, BoardButtonStatus buttonStatus, Long myEnrollId, Long chatRoomId) {
         BoardReferences references = loadReferences(List.of(board));
-        UserSummary user = references.user(board);
+        UserInfo user = references.user(board);
         GameInfo game = references.game(board);
 
         return BoardDetailResponse.of(
@@ -90,7 +87,7 @@ public class BoardResponseAssembler {
 
     public BoardTempDetailResponse buildTempDetailResponse(Board board) {
         BoardReferences references = loadReferences(List.of(board));
-        UserSummary user = references.user(board);
+        UserInfo user = references.user(board);
         GameInfo game = references.game(board);
         return BoardTempDetailResponse.from(
                 board,
@@ -115,10 +112,7 @@ public class BoardResponseAssembler {
                 .distinct()
                 .toList();
 
-        Map<Long, UserSummary> userMap = userIds.isEmpty()
-                ? Map.of()
-                : userService.getUserSummaries(userIds).stream()
-                        .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+        Map<Long, UserInfo> userMap = userIds.isEmpty() ? Map.of() : userQueryApi.getInfos(userIds);
 
         Map<Long, GameInfo> gameMap = gameIds.isEmpty() ? Map.of() : gameQueryApi.getInfos(gameIds);
 
@@ -126,7 +120,7 @@ public class BoardResponseAssembler {
                         boards.stream().map(Board::getCheerClubId),
                         gameMap.values().stream().map(GameInfo::homeClubId),
                         gameMap.values().stream().map(GameInfo::awayClubId),
-                        userMap.values().stream().map(UserSummary::clubId))
+                        userMap.values().stream().map(UserInfo::clubId))
                 .flatMap(Function.identity())
                 .filter(Objects::nonNull)
                 .distinct()
@@ -138,7 +132,7 @@ public class BoardResponseAssembler {
     }
 
     private BoardResponse toBoardResponse(Board board, boolean bookMarked, BoardReferences references) {
-        UserSummary user = references.user(board);
+        UserInfo user = references.user(board);
         GameInfo game = references.game(board);
         return BoardResponse.from(
                 board,
@@ -152,12 +146,12 @@ public class BoardResponseAssembler {
     }
 
     private record BoardReferences(
-            Map<Long, UserSummary> userMap, Map<Long, ClubInfo> clubMap, Map<Long, GameInfo> gameMap) {
-        private UserSummary user(Board board) {
+            Map<Long, UserInfo> userMap, Map<Long, ClubInfo> clubMap, Map<Long, GameInfo> gameMap) {
+        private UserInfo user(Board board) {
             return board.getUserId() != null ? userMap.get(board.getUserId()) : null;
         }
 
-        private ClubInfo userClub(UserSummary user) {
+        private ClubInfo userClub(UserInfo user) {
             return user != null && user.clubId() != null ? clubMap.get(user.clubId()) : null;
         }
 
@@ -204,7 +198,7 @@ public class BoardResponseAssembler {
             LocalDateTime lastLiftUpDate,
             Long lastBoardId,
             int size) {
-        List<Long> blockedUserIds = blockService.getBlockedUserIds(userId);
+        List<Long> blockedUserIds = userQueryApi.getBlockedUserIds(userId);
         List<Long> matchingGameIds = gameDate != null ? gameQueryApi.getIdsStartingOn(gameDate) : null;
 
         // 날짜 필터를 줬는데 매칭 경기가 0건이면 게시글도 없음 — 짧은 회로
@@ -229,10 +223,10 @@ public class BoardResponseAssembler {
     }
 
     public PagedResponse<BoardResponse> getBoardListByUserId(Long targetUserId, Long loginUserId, int page, int size) {
-        UserSummary targetUser = userService.getUserSummary(targetUserId);
-        UserSummary loginUser = userService.getUserSummary(loginUserId);
+        UserInfo targetUser = userQueryApi.getInfo(targetUserId);
+        UserInfo loginUser = userQueryApi.getInfo(loginUserId);
 
-        if (blockService.isUserBlocked(targetUser.userId(), loginUser.userId())) {
+        if (userQueryApi.isBlocked(loginUser.userId(), targetUser.userId())) {
             throw new BaseException(ErrorCode.BLOCKED_USER_BOARD);
         }
 

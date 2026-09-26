@@ -7,8 +7,9 @@ import com.back.catchmate.auth.infra.JwtTokenProvider;
 import com.back.catchmate.auth.infra.RefreshTokenRedisRepository;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserCommandService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +24,8 @@ public class AuthService {
     private final RefreshTokenRedisRepository refreshTokenRepository;
     private final JwtTokenProvider tokenProvider;
 
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
+    private final UserCommandService userCommandService;
 
     @Transactional
     public AuthReissueResponse updateToken(String refreshToken) {
@@ -34,7 +36,7 @@ public class AuthService {
 
         // refresh token 의 role 클레임을 믿지 않고 최신 권한을 다시 조회한다.
         // (권한이 강등된 사용자가 옛 refresh token 으로 옛 권한을 재발급받는 것을 막는다.)
-        UserSummary user = userService.getUserSummary(userId);
+        UserInfo user = userQueryApi.getInfo(userId);
         String newAccessToken = tokenProvider.createAccessToken(user.userId(), user.authority());
         return AuthReissueResponse.of(newAccessToken);
     }
@@ -42,7 +44,7 @@ public class AuthService {
     @Transactional
     public void deleteToken(String refreshToken) {
         Long userId = tokenProvider.getUserId(refreshToken);
-        userService.clearFcmToken(userId);
+        userCommandService.clearFcmToken(userId);
         refreshTokenRepository.deleteById(refreshToken);
     }
 

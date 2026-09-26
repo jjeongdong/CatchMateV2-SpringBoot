@@ -15,8 +15,8 @@ import com.back.catchmate.inquiry.infra.dto.AnswerDraft;
 import com.back.catchmate.inquiry.infra.dto.CorpusDoc;
 import com.back.catchmate.inquiry.repository.InquiryRepository;
 import com.back.catchmate.notice.service.NoticeService;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class InquiryService {
     private final InquiryRepository inquiryRepository;
     private final SpringAiAssistClient assistClient;
 
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
     private final NoticeService noticeService;
 
     @Transactional
@@ -52,7 +52,7 @@ public class InquiryService {
         if (!inquiry.getUserId().equals(userId)) {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }
-        UserSummary inquirer = userService.getUserSummary(inquiry.getUserId());
+        UserInfo inquirer = userQueryApi.getInfo(inquiry.getUserId());
         return toDetailResponse(inquiry, inquirer.nickName());
     }
 
@@ -64,7 +64,7 @@ public class InquiryService {
             return new PagedResponse<>(inquiryPage, List.of());
         }
 
-        String nickname = userService.getUserSummary(userId).nickName();
+        String nickname = userQueryApi.getInfo(userId).nickName();
 
         List<InquiryDetailResponse> responses = inquiryPage.getContent().stream()
                 .map(i -> toDetailResponse(i, nickname))

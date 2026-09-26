@@ -1,7 +1,7 @@
 package com.back.catchmate.chat.controller;
 
 import com.back.catchmate.chat.service.ChatCommandService;
-import com.back.catchmate.user.service.UserOnlineStatusService;
+import com.back.catchmate.user.application.UserCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -18,7 +18,7 @@ import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 @RequiredArgsConstructor
 public class ChatWebSocketSessionEventListener {
     private final ChatCommandService chatCommandService;
-    private final UserOnlineStatusService userOnlineStatusService;
+    private final UserCommandService userCommandService;
 
     /**
      * WebSocket 연결 (브라우저 접속)
@@ -31,8 +31,8 @@ public class ChatWebSocketSessionEventListener {
         Long userId = extractUserId(headerAccessor);
 
         if (userId != null) {
-            userOnlineStatusService.setUserOnline(userId);
-            userOnlineStatusService.removeUserFocusRoom(userId);
+            userCommandService.markOnline(userId);
+            userCommandService.unfocusRoom(userId);
             log.info("WebSocket connected - User {} set to ONLINE (focus reset)", userId);
         }
     }
@@ -48,8 +48,8 @@ public class ChatWebSocketSessionEventListener {
         Long userId = extractUserId(headerAccessor);
 
         if (userId != null) {
-            userOnlineStatusService.setUserOffline(userId);
-            userOnlineStatusService.removeUserFocusRoom(userId);
+            userCommandService.markOffline(userId);
+            userCommandService.unfocusRoom(userId);
             log.info("WebSocket disconnected - User {} set to OFFLINE", userId);
         }
     }
@@ -67,7 +67,7 @@ public class ChatWebSocketSessionEventListener {
             Long roomId = extractRoomIdFromDestination(destination);
             if (roomId != null) {
                 chatCommandService.readChatRoom(userId, roomId);
-                userOnlineStatusService.setUserFocusRoom(userId, roomId);
+                userCommandService.focusRoom(userId, roomId);
                 log.info("User {} is focusing room {}", userId, roomId);
             }
         }
@@ -82,7 +82,7 @@ public class ChatWebSocketSessionEventListener {
         Long userId = extractUserId(headerAccessor);
 
         if (userId != null) {
-            userOnlineStatusService.removeUserFocusRoom(userId);
+            userCommandService.unfocusRoom(userId);
             log.info("User {} left the room (Focus removed)", userId);
         }
     }

@@ -4,9 +4,8 @@ import com.back.catchmate.chat.dto.response.ChatRecipientSummary;
 import com.back.catchmate.chat.service.ChatQueryService;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
 import com.back.catchmate.notification.infra.RedisNotificationPublisher;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserOnlineStatusService;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -25,9 +24,8 @@ import org.springframework.stereotype.Service;
 public class ChatNotificationDispatchService {
     private static final String NOTIFICATION_TYPE = "CHAT";
 
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
     private final ChatQueryService chatQueryService;
-    private final UserOnlineStatusService userOnlineStatusService;
     private final OutboxDispatcher outboxDispatcher;
     private final RedisNotificationPublisher redisNotificationPublisher;
 
@@ -45,7 +43,7 @@ public class ChatNotificationDispatchService {
                 chatQueryService.getChatRoomRecipientSummaries(chatRoomId, senderId);
         if (recipientsInfo.isEmpty()) return;
 
-        UserSummary sender = userService.getUserSummary(senderId);
+        UserInfo sender = userQueryApi.getInfo(senderId);
         String title = NotificationTemplate.CHAT_NEW_MESSAGE.formatTitle(sender.nickName());
         String body = NotificationTemplate.CHAT_NEW_MESSAGE.formatBody(content);
         Map<String, String> payload =
@@ -54,25 +52,28 @@ public class ChatNotificationDispatchService {
         Map<Long, ChatRecipientSummary> infoMap =
                 recipientsInfo.stream().collect(Collectors.toMap(ChatRecipientSummary::userId, Function.identity()));
 
-        List<UserSummary> recipients = userService.getUserSummaries(
-                recipientsInfo.stream().map(ChatRecipientSummary::userId).toList());
+        List<UserInfo> recipients = List.copyOf(userQueryApi
+                .getInfos(recipientsInfo.stream()
+                        .map(ChatRecipientSummary::userId)
+                        .toList())
+                .values());
 
         // 알림 설정과 무관하게 전원의 포커스 여부를 봐야 하므로 수신자 전체를 MGET 한 번으로 모아온다.
-        Map<Long, Long> focusRooms = userOnlineStatusService.getUserFocusRooms(
-                recipients.stream().map(UserSummary::userId).toList());
+        Map<Long, Long> focusRooms = userQueryApi.getFocusRooms(
+                recipients.stream().map(UserInfo::userId).toList());
 
         // 현재 보고 있는 방이면 실시간 알림 스킵
-        List<UserSummary> targets = recipients.stream()
+        List<UserInfo> targets = recipients.stream()
                 .filter(recipient -> !chatRoomId.equals(focusRooms.get(recipient.userId())))
                 .toList();
 
         // 알림 설정 여부와 상관없이 STOMP 메시지는 항상 전송 (목록 업데이트 등 UI 동기화용).
         // 방 인원 전원이 같은 payload 를 받으므로 수신자별 publish 대신 한 건으로 묶는다.
         redisNotificationPublisher.dispatchAll(
-                targets.stream().map(UserSummary::userId).toList(), payload);
+                targets.stream().map(UserInfo::userId).toList(), payload);
 
         // 알림이 켜져있으면 즉시 발송 시도 (Outbox Dispatch)
-        for (UserSummary recipient : targets) {
+        for (UserInfo recipient : targets) {
             if (infoMap.get(recipient.userId()).isNotificationOn() && recipient.chatAlarmEnabled()) {
                 outboxDispatcher.sendPendingOutboxImmediately(recipient.userId());
             }

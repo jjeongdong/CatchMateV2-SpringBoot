@@ -16,8 +16,8 @@ import com.back.catchmate.enroll.entity.AcceptStatus;
 import com.back.catchmate.enroll.entity.Enroll;
 import com.back.catchmate.enroll.event.EnrollAcceptedEvent;
 import com.back.catchmate.enroll.repository.EnrollRepository;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ class EnrollAcceptExecutorTest {
     private BoardService boardService; // cross-context: 자기 FetchPort 를 모킹
 
     @Mock
-    private UserService userService;
+    private UserQueryApi userQueryApi;
 
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
@@ -57,7 +57,7 @@ class EnrollAcceptExecutorTest {
         Enroll enroll = enroll(enrollId, applicantId, boardId, ownerId, AcceptStatus.PENDING, true);
         given(enrollRepository.findById(enrollId)).willReturn(Optional.of(enroll));
         given(boardService.getBoardSummary(boardId)).willReturn(boardInfo(boardId, ownerId));
-        given(userService.getUserSummary(applicantId)).willReturn(userInfo(applicantId));
+        given(userQueryApi.getInfo(applicantId)).willReturn(userInfo(applicantId));
 
         // when
         EnrollAcceptResponse response = sut.accept(ownerId, enrollId);
@@ -89,7 +89,7 @@ class EnrollAcceptExecutorTest {
                 .isInstanceOf(BaseException.class)
                 .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN_ACCESS));
         then(boardService).shouldHaveNoInteractions();
-        then(userService).shouldHaveNoInteractions();
+        then(userQueryApi).shouldHaveNoInteractions();
         then(enrollRepository).should(never()).save(any());
         then(applicationEventPublisher).shouldHaveNoInteractions();
     }
@@ -102,7 +102,7 @@ class EnrollAcceptExecutorTest {
         Enroll enroll = enroll(enrollId, applicantId, boardId, ownerId, AcceptStatus.ACCEPTED, false);
         given(enrollRepository.findById(enrollId)).willReturn(Optional.of(enroll));
         given(boardService.getBoardSummary(boardId)).willReturn(boardInfo(boardId, ownerId));
-        given(userService.getUserSummary(applicantId)).willReturn(userInfo(applicantId));
+        given(userQueryApi.getInfo(applicantId)).willReturn(userInfo(applicantId));
 
         // when & then
         assertThatThrownBy(() -> sut.accept(ownerId, enrollId))
@@ -146,8 +146,8 @@ class EnrollAcceptExecutorTest {
                 .build();
     }
 
-    private UserSummary userInfo(Long userId) {
-        return new UserSummary(
+    private UserInfo userInfo(Long userId) {
+        return new UserInfo(
                 userId,
                 "test@catchmate.com",
                 null,
@@ -160,7 +160,6 @@ class EnrollAcceptExecutorTest {
                 "USER",
                 null,
                 1L,
-                false,
                 false,
                 false,
                 false,

@@ -11,9 +11,9 @@ import com.back.catchmate.chat.entity.ChatRoomMember;
 import com.back.catchmate.chat.entity.MessageType;
 import com.back.catchmate.chat.repository.ChatRoomMemberRepository;
 import com.back.catchmate.chat.repository.ChatRoomRepository;
-import com.back.catchmate.user.entity.Authority;
-import com.back.catchmate.user.entity.User;
-import com.back.catchmate.user.repository.UserRepository;
+import com.back.catchmate.user.domain.Authority;
+import com.back.catchmate.user.domain.User;
+import com.back.catchmate.user.infrastructure.UserJpaRepository;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -55,7 +55,7 @@ class ChatMessageE2eStompTest {
     private ChatMessageRedisPublisher chatMessageRedisPublisher;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserJpaRepository userRepository;
 
     @Autowired
     private ChatRoomRepository chatRoomRepository;
@@ -84,22 +84,16 @@ class ChatMessageE2eStompTest {
     void 실제_stomp_연결로_메시지가_정상적으로_오고_간다() throws Exception {
         // given: 테스트용 유저 + 채팅방 + 참여자 (실제 DB)
         long unique = System.nanoTime();
-        savedUser = userRepository.save(User.builder()
-                .clubId(1L)
-                .email("e2e-" + unique + "@test.com")
-                .provider("KAKAO")
-                .providerId("e2e-" + unique)
-                .gender('M')
-                .nickName("e2e-" + unique)
-                .birthDate(LocalDate.of(2000, 1, 1))
-                .profileImageUrl("https://example.com/profile.png")
-                .allAlarm('Y')
-                .chatAlarm('Y')
-                .enrollAlarm('Y')
-                .eventAlarm('Y')
-                .authority(Authority.ROLE_USER)
-                .reported(false)
-                .build());
+        savedUser = userRepository.save(User.create(
+                "KAKAO",
+                "e2e-" + unique,
+                "e2e-" + unique + "@test.com",
+                "e2e-" + unique,
+                'M',
+                LocalDate.of(2000, 1, 1),
+                1L,
+                "https://example.com/profile.png",
+                null));
 
         // chat_rooms.board_id 에 실제 FK(boards.board_id)가 걸려 있어 더미 게시글이 필요하다
         savedBoard = boardRepository.save(Board.builder()

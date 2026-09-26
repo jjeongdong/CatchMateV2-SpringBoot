@@ -2,8 +2,8 @@ package com.back.catchmate.notification.service;
 
 import com.back.catchmate.notification.entity.enums.AlarmType;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminInquiryNotificationService {
     private static final String NOTIFICATION_TYPE = "INQUIRY";
 
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
     private final OutboxSaver outboxSaver;
     private final NotificationService notificationService;
 
     public void saveOnInquiryAnswered(Long inquiryId, Long inquiryAuthorId) {
-        UserSummary recipient = userService.getUserSummary(inquiryAuthorId);
+        UserInfo recipient = userQueryApi.getInfo(inquiryAuthorId);
         String title = NotificationTemplate.INQUIRY_ANSWER.getTitle();
         String body = NotificationTemplate.INQUIRY_ANSWER.getBodyTemplate();
 

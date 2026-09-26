@@ -1,7 +1,7 @@
 package com.back.catchmate.enroll.dto.response;
 
 import com.back.catchmate.club.application.dto.api.ClubInfo;
-import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 
 public record ApplicantResponse(
         Long userId,
@@ -11,7 +11,7 @@ public record ApplicantResponse(
         String ageRange,
         String favoriteClub,
         String watchStyle) {
-    public static ApplicantResponse from(UserSummary user, ClubInfo club) {
+    public static ApplicantResponse from(UserInfo user, ClubInfo club) {
         return new ApplicantResponse(
                 user.userId(),
                 user.nickName(),
