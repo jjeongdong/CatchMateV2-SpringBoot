@@ -1,8 +1,6 @@
 package com.back.catchmate.admin.service;
 
 import com.back.catchmate.admin.dto.command.InquiryRegisterAnswerCommand;
-import com.back.catchmate.admin.dto.request.NoticeCreateRequest;
-import com.back.catchmate.admin.dto.request.NoticeUpdateRequest;
 import com.back.catchmate.admin.dto.response.AdminAnswerDraftResponse;
 import com.back.catchmate.admin.dto.response.AdminBoardDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminBoardResponse;
@@ -12,18 +10,9 @@ import com.back.catchmate.admin.dto.response.AdminEnrollmentDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminInquiryAnswerResponse;
 import com.back.catchmate.admin.dto.response.AdminInquiryDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminInquiryResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeActionResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeCreateResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeDetailResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeUpdateResponse;
-import com.back.catchmate.admin.dto.response.AdminReportActionResponse;
-import com.back.catchmate.admin.dto.response.AdminReportDetailResponse;
-import com.back.catchmate.admin.dto.response.AdminReportResponse;
 import com.back.catchmate.admin.dto.response.AdminUserDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminUserResponse;
 import com.back.catchmate.admin.event.InquiryAnswerRegisteredEvent;
-import com.back.catchmate.admin.event.NoticeCreatedEvent;
 import com.back.catchmate.board.dto.response.BoardAdminView;
 import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.board.service.BoardService;
@@ -36,12 +25,7 @@ import com.back.catchmate.game.application.GameQueryApi;
 import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.inquiry.dto.response.InquirySummary;
 import com.back.catchmate.inquiry.service.InquiryService;
-import com.back.catchmate.notice.dto.response.NoticeCreateResponse;
-import com.back.catchmate.notice.dto.response.NoticeSummary;
-import com.back.catchmate.notice.service.NoticeService;
-import com.back.catchmate.report.dto.response.ReportSummary;
-import com.back.catchmate.report.service.ReportService;
-import com.back.catchmate.user.application.UserCommandService;
+import com.back.catchmate.report.application.ReportQueryApi;
 import com.back.catchmate.user.application.UserQueryApi;
 import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.Collection;
@@ -67,11 +51,9 @@ public class AdminService {
     private final ClubQueryApi clubQueryApi;
     private final GameQueryApi gameQueryApi;
     private final UserQueryApi userQueryApi;
-    private final UserCommandService userCommandService;
     private final BoardService boardService;
-    private final NoticeService noticeService;
     private final EnrollQueryService enrollQueryService;
-    private final ReportService reportService;
+    private final ReportQueryApi reportQueryApi;
     private final InquiryService inquiryService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -82,8 +64,8 @@ public class AdminService {
                 boardService.getTotalBoardCount(),
                 resolveUserCountByClubName(),
                 userQueryApi.countByWatchStyles(),
-                reportService.getTotalReportCount(),
-                reportService.getPendingReportCount(),
+                reportQueryApi.count(),
+                reportQueryApi.countPending(),
                 inquiryService.getTotalInquiryCount(),
                 inquiryService.getWaitingInquiryCount());
     }
@@ -174,29 +156,6 @@ public class AdminService {
         return new PagedResponse<>(boardPage, responses);
     }
 
-    public AdminReportDetailResponse getReport(Long reportId) {
-        ReportSummary report = reportService.getReportSummary(reportId);
-        UserInfo reporter = userQueryApi.getInfo(report.reporterId());
-        UserInfo reportedUser = userQueryApi.getInfo(report.reportedUserId());
-        return AdminReportDetailResponse.from(report, reporter, reportedUser);
-    }
-
-    public PagedResponse<AdminReportResponse> getReportList(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<ReportSummary> reportPage = reportService.getReportSummaries(pageable);
-
-        Map<Long, UserInfo> reporterById = userQueryApi.getInfos(reportPage.getContent().stream()
-                .map(ReportSummary::reporterId)
-                .distinct()
-                .toList());
-
-        List<AdminReportResponse> responses = reportPage.getContent().stream()
-                .map(r -> AdminReportResponse.from(r, reporterById.get(r.reporterId())))
-                .toList();
-
-        return new PagedResponse<>(reportPage, responses);
-    }
-
     public AdminInquiryDetailResponse getInquiry(Long inquiryId) {
         InquirySummary inquiry = inquiryService.getInquirySummary(inquiryId);
         UserInfo user = userQueryApi.getInfo(inquiry.userId());
@@ -223,32 +182,6 @@ public class AdminService {
         return AdminAnswerDraftResponse.from(inquiryService.draftAnswer(inquiryId));
     }
 
-    public AdminNoticeDetailResponse getNotice(Long noticeId) {
-        NoticeSummary notice = noticeService.getNoticeSummary(noticeId);
-        UserInfo writer = userQueryApi.getInfo(notice.writerId());
-        return AdminNoticeDetailResponse.from(notice, writer.nickName());
-    }
-
-    public PagedResponse<AdminNoticeResponse> getNoticeList(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<NoticeSummary> noticePage = noticeService.getNoticeSummaries(pageable);
-
-        Map<Long, String> writerNicknameById = userQueryApi
-                .getInfos(noticePage.getContent().stream()
-                        .map(NoticeSummary::writerId)
-                        .distinct()
-                        .toList())
-                .values()
-                .stream()
-                .collect(Collectors.toMap(UserInfo::userId, UserInfo::nickName));
-
-        List<AdminNoticeResponse> responses = noticePage.getContent().stream()
-                .map(n -> AdminNoticeResponse.from(n, writerNicknameById.getOrDefault(n.writerId(), "")))
-                .toList();
-
-        return new PagedResponse<>(noticePage, responses);
-    }
-
     private Map<Long, ClubInfo> resolveUserClubs(Collection<UserInfo> users) {
         List<Long> clubIds = users.stream()
                 .map(UserInfo::clubId)
@@ -257,16 +190,6 @@ public class AdminService {
                 .toList();
         if (clubIds.isEmpty()) return Map.of();
         return clubQueryApi.getInfos(clubIds);
-    }
-
-    @Transactional
-    public AdminNoticeCreateResponse createNotice(Long userId, NoticeCreateRequest request) {
-        NoticeCreateResponse created = noticeService.createNotice(userId, request.title(), request.content());
-        AdminNoticeCreateResponse response = AdminNoticeCreateResponse.from(created);
-
-        applicationEventPublisher.publishEvent(NoticeCreatedEvent.of(response.noticeId(), request.title()));
-
-        return response;
     }
 
     @Transactional
@@ -283,31 +206,5 @@ public class AdminService {
     @Transactional
     public AdminCorpusReindexResponse reindexInquiryCorpus() {
         return AdminCorpusReindexResponse.of(inquiryService.reindex());
-    }
-
-    @Transactional
-    public AdminReportActionResponse updateReportProcess(Long reportId) {
-        ReportSummary report = reportService.getReportSummary(reportId);
-        Long reportedUserId = report.reportedUserId();
-
-        userCommandService.markUserAsReported(reportedUserId);
-        reportService.processReport(reportId);
-
-        return AdminReportActionResponse.of(reportId, reportedUserId);
-    }
-
-    @Transactional
-    public AdminNoticeUpdateResponse updateNotice(Long noticeId, NoticeUpdateRequest request) {
-        noticeService.updateNotice(noticeId, request.title(), request.content());
-
-        NoticeSummary updatedNotice = noticeService.getNoticeSummary(noticeId);
-        UserInfo writer = userQueryApi.getInfo(updatedNotice.writerId());
-        return AdminNoticeUpdateResponse.from(updatedNotice, writer.nickName());
-    }
-
-    @Transactional
-    public AdminNoticeActionResponse deleteNotice(Long noticeId) {
-        noticeService.deleteNotice(noticeId);
-        return AdminNoticeActionResponse.of(noticeId, "공지사항이 삭제되었습니다.");
     }
 }

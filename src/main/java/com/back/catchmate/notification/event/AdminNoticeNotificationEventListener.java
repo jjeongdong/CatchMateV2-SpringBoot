@@ -1,6 +1,6 @@
 package com.back.catchmate.notification.event;
 
-import com.back.catchmate.admin.event.NoticeCreatedEvent;
+import com.back.catchmate.notice.domain.event.NoticeCreatedEvent;
 import com.back.catchmate.notification.service.AdminNoticeNotificationDispatchService;
 import com.back.catchmate.notification.service.AdminNoticeNotificationService;
 import lombok.RequiredArgsConstructor;

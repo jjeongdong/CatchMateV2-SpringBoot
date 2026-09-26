@@ -57,10 +57,6 @@ public enum ErrorCode implements com.back.catchmate.global.error.ErrorCode {
     INQUIRY_NOT_FOUND(ErrorType.NOT_FOUND, "존재하지 않는 문의입니다."),
     INQUIRY_ALREADY_ANSWERED(ErrorType.CONFLICT, "이미 답변이 등록된 문의는 수정할 수 없습니다."),
 
-    // 신고
-    REPORT_NOT_FOUND(ErrorType.NOT_FOUND, "존재하지 않는 신고입니다."),
-    CANNOT_REPORT_SELF(ErrorType.INVALID, "자기 자신을 신고할 수 없습니다."),
-
     // 소켓
     SOCKET_CONNECT_FAILED(ErrorType.UNAUTHORIZED, "소켓 연결에 실패했습니다."),
 
@@ -74,10 +70,7 @@ public enum ErrorCode implements com.back.catchmate.global.error.ErrorCode {
     OAUTH_STATE_MISMATCH(ErrorType.INVALID, "OAuth state 검증에 실패했습니다."),
     UNSUPPORTED_OAUTH_PROVIDER(ErrorType.INVALID, "지원하지 않는 OAuth 공급자입니다."),
     INVALID_SIGNUP_TOKEN(ErrorType.UNAUTHORIZED, "유효하지 않은 회원가입 토큰입니다."),
-    MISSING_REFRESH_COOKIE(ErrorType.UNAUTHORIZED, "Refresh Token 쿠키가 존재하지 않습니다."),
-
-    // 공지글
-    NOTICE_NOT_FOUND(ErrorType.NOT_FOUND, "존재하지 않는 공지입니다.");
+    MISSING_REFRESH_COOKIE(ErrorType.UNAUTHORIZED, "Refresh Token 쿠키가 존재하지 않습니다.");
 
     private final ErrorType type;
     private final String message;
