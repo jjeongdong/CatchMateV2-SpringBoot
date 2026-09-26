@@ -60,7 +60,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("기존 BaseException 은 기존 코드 이름과 매핑된 상태로 응답한다")
     void legacyBaseExceptionKeepsItsCodeAndMappedStatus() throws Exception {
-        assertError(get("/test/legacy"), 404, "BOARD_NOT_FOUND", "존재하지 않는 게시글입니다.");
+        assertError(get("/test/legacy"), 404, "CHATROOM_NOT_FOUND", "존재하지 않는 채팅방입니다.");
     }
 
     @Test
@@ -205,7 +205,7 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/test/legacy")
         void legacy() {
-            throw new BaseException(com.back.catchmate.common.error.ErrorCode.BOARD_NOT_FOUND);
+            throw new BaseException(com.back.catchmate.common.error.ErrorCode.CHATROOM_NOT_FOUND);
         }
 
         @PostMapping("/test/body")

@@ -7,7 +7,8 @@ import java.util.Set;
 final class MigratedContexts {
 
     // 새 컨벤션으로 전환을 마친 BC 의 최상위 패키지명 (예: "board").
-    static final Set<String> NAMES = Set.of("auth", "club", "game", "inquiry", "notice", "report", "user");
+    static final Set<String> NAMES =
+            Set.of("auth", "board", "bookmark", "club", "enroll", "game", "inquiry", "notice", "report", "user");
 
     // 성능 문제가 측정으로 확인돼 타 BC 테이블 JOIN 을 허용한 클래스의 FQCN.
     // 추가할 때는 해당 클래스에 사유와 측정 근거를 주석으로 남긴다.

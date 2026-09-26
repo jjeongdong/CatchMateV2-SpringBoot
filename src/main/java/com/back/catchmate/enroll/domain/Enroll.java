@@ -1,7 +1,12 @@
-package com.back.catchmate.enroll.entity;
+package com.back.catchmate.enroll.domain;
 
-import com.back.catchmate.common.error.ErrorCode;
-import com.back.catchmate.common.error.exception.BaseException;
+import com.back.catchmate.enroll.domain.exception.EnrollAlreadyAcceptedException;
+import com.back.catchmate.enroll.domain.exception.EnrollAlreadyPendingException;
+import com.back.catchmate.enroll.domain.exception.EnrollAlreadyRejectedException;
+import com.back.catchmate.enroll.domain.exception.EnrollNotApplicantException;
+import com.back.catchmate.enroll.domain.exception.EnrollNotBoardWriterException;
+import com.back.catchmate.enroll.domain.exception.EnrollNotParticipantException;
+import com.back.catchmate.enroll.domain.exception.EnrollSelfNotAllowedException;
 import com.back.catchmate.global.persistence.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,16 +20,12 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @Table(
         name = "enrolls",
         uniqueConstraints = {
@@ -50,7 +51,7 @@ public class Enroll extends BaseTimeEntity {
     @Column(name = "board_id", nullable = false)
     private Long boardId;
 
-    /** 게시글 작성자 ID — 생성 시점 board.userId 스냅샷 (cross-context 조인 회피용). */
+    /** 게시글 작성자 ID — 생성 시점 board.userId 스냅샷. 권한 판단과 이벤트 값에 board 조회 없이 쓴다. */
     @Column(name = "board_owner_id", nullable = false)
     private Long boardOwnerId;
 
@@ -64,57 +65,73 @@ public class Enroll extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean newEnroll;
 
-    // 생성 비즈니스 로직
-    public static Enroll createEnroll(Long userId, Long boardId, Long boardOwnerId, String description) {
-        if (userId.equals(boardOwnerId)) {
-            throw new BaseException(ErrorCode.ENROLL_BAD_REQUEST);
+    private Enroll(Long userId, Long boardId, Long boardOwnerId, String description) {
+        this.userId = userId;
+        this.boardId = boardId;
+        this.boardOwnerId = boardOwnerId;
+        this.description = description;
+        this.acceptStatus = AcceptStatus.PENDING;
+        this.newEnroll = true;
+    }
+
+    public static Enroll create(Long applicantId, Long boardId, Long boardWriterId, String description) {
+        if (applicantId.equals(boardWriterId)) {
+            throw new EnrollSelfNotAllowedException();
         }
-
-        return Enroll.builder()
-                .userId(userId)
-                .boardId(boardId)
-                .boardOwnerId(boardOwnerId)
-                .description(description)
-                .acceptStatus(AcceptStatus.PENDING)
-                .newEnroll(true)
-                .build();
+        return new Enroll(applicantId, boardId, boardWriterId, description);
     }
 
-    // 읽음 처리 비즈니스 로직
-    public void markAsRead() {
-        this.newEnroll = false;
+    // 같은 (신청자, 게시글) 신청이 이미 있으면 상태에 맞는 이유로 재신청을 막는다.
+    public void preventReapply() {
+        switch (acceptStatus) {
+            case PENDING -> throw new EnrollAlreadyPendingException();
+            case REJECTED -> throw new EnrollAlreadyRejectedException();
+            case ACCEPTED -> throw new EnrollAlreadyAcceptedException();
+        }
     }
 
-    // 수락 비즈니스 로직
-    public void accept() {
-        if (this.acceptStatus == AcceptStatus.ACCEPTED) {
-            throw new BaseException(ErrorCode.ALREADY_ENROLL_ACCEPTED);
+    public void accept(Long requesterId) {
+        verifyBoardWriter(requesterId);
+        if (acceptStatus == AcceptStatus.ACCEPTED) {
+            throw new EnrollAlreadyAcceptedException();
         }
         this.acceptStatus = AcceptStatus.ACCEPTED;
     }
 
-    // 거절 비즈니스 로직
-    public void reject() {
-        if (this.acceptStatus == AcceptStatus.REJECTED) {
-            throw new BaseException(ErrorCode.ALREADY_ENROLL_REJECTED);
+    public void reject(Long requesterId) {
+        verifyBoardWriter(requesterId);
+        if (acceptStatus == AcceptStatus.REJECTED) {
+            throw new EnrollAlreadyRejectedException();
         }
         this.acceptStatus = AcceptStatus.REJECTED;
     }
 
-    // 동일 (userId, boardId) 신청이 이미 존재하는 경우 새 신청을 거부하는 비즈니스 로직
-    public void preventNewEnroll() {
-        switch (this.acceptStatus) {
-            case PENDING -> throw new BaseException(ErrorCode.ALREADY_ENROLL_PENDING);
-            case REJECTED -> throw new BaseException(ErrorCode.ALREADY_ENROLL_REJECTED);
-            case ACCEPTED -> throw new BaseException(ErrorCode.ALREADY_ENROLL_ACCEPTED);
-            default -> {
-                /* 통과 */
-            }
+    public void markAsRead(Long requesterId) {
+        verifyBoardWriter(requesterId);
+        this.newEnroll = false;
+    }
+
+    // 취소(삭제) 전 확인. 삭제는 리포지토리가 한다.
+    public void verifyApplicant(Long requesterId) {
+        if (!userId.equals(requesterId)) {
+            throw new EnrollNotApplicantException();
+        }
+    }
+
+    public void verifyParticipant(Long requesterId) {
+        if (!userId.equals(requesterId) && !boardOwnerId.equals(requesterId)) {
+            throw new EnrollNotParticipantException();
         }
     }
 
     /** 신청 시각 — BaseTimeEntity 의 createdAt 을 도메인 용어로 노출한다. */
     public LocalDateTime getRequestedAt() {
         return getCreatedAt();
+    }
+
+    private void verifyBoardWriter(Long requesterId) {
+        if (!boardOwnerId.equals(requesterId)) {
+            throw new EnrollNotBoardWriterException();
+        }
     }
 }

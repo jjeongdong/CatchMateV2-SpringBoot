@@ -1,18 +1,30 @@
-package com.back.catchmate.enroll.infra;
+package com.back.catchmate.enroll.infrastructure;
 
+import com.back.catchmate.enroll.domain.EnrollAcceptIdempotencyStore;
 import java.time.Duration;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-public class RedisIdempotencyStore {
-    private final RedisTemplate<String, Object> redisTemplate;
+public class RedisEnrollAcceptIdempotencyStore implements EnrollAcceptIdempotencyStore {
+    private static final String KEY_PREFIX = "idempotent:enroll:accept:";
 
-    public boolean acquireIfAbsent(String key, long ttlSeconds) {
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final long ttlSeconds;
+
+    public RedisEnrollAcceptIdempotencyStore(
+            RedisTemplate<String, Object> redisTemplate,
+            @Value("${enroll.idempotency.ttl-seconds:10}") long ttlSeconds) {
+        this.redisTemplate = redisTemplate;
+        this.ttlSeconds = ttlSeconds;
+    }
+
+    @Override
+    public boolean acquire(Long enrollId) {
+        String key = KEY_PREFIX + enrollId;
         try {
             Boolean result = redisTemplate.opsForValue().setIfAbsent(key, "1", Duration.ofSeconds(ttlSeconds));
             return Boolean.TRUE.equals(result);
@@ -22,7 +34,9 @@ public class RedisIdempotencyStore {
         }
     }
 
-    public void release(String key) {
+    @Override
+    public void release(Long enrollId) {
+        String key = KEY_PREFIX + enrollId;
         try {
             redisTemplate.delete(key);
         } catch (Exception e) {

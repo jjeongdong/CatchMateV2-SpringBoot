@@ -1,9 +1,9 @@
 package com.back.catchmate.notification.event;
 
-import com.back.catchmate.enroll.event.EnrollAcceptedEvent;
-import com.back.catchmate.enroll.event.EnrollCancelledEvent;
-import com.back.catchmate.enroll.event.EnrollRejectedEvent;
-import com.back.catchmate.enroll.event.EnrollRequestedEvent;
+import com.back.catchmate.enroll.domain.event.EnrollAcceptedEvent;
+import com.back.catchmate.enroll.domain.event.EnrollCancelledEvent;
+import com.back.catchmate.enroll.domain.event.EnrollRejectedEvent;
+import com.back.catchmate.enroll.domain.event.EnrollRequestedEvent;
 import com.back.catchmate.notification.service.EnrollNotificationDispatchService;
 import com.back.catchmate.notification.service.EnrollNotificationService;
 import lombok.RequiredArgsConstructor;

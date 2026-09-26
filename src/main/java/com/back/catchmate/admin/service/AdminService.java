@@ -1,27 +1,17 @@
 package com.back.catchmate.admin.service;
 
-import com.back.catchmate.admin.dto.response.AdminBoardDetailResponse;
-import com.back.catchmate.admin.dto.response.AdminBoardResponse;
 import com.back.catchmate.admin.dto.response.AdminDashboardResponse;
-import com.back.catchmate.admin.dto.response.AdminEnrollmentDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminUserDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminUserResponse;
-import com.back.catchmate.board.dto.response.BoardAdminView;
-import com.back.catchmate.board.dto.response.BoardSummary;
-import com.back.catchmate.board.service.BoardService;
+import com.back.catchmate.board.application.BoardQueryApi;
 import com.back.catchmate.club.application.ClubQueryApi;
 import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.common.response.PagedResponse;
-import com.back.catchmate.enroll.dto.response.EnrollSummary;
-import com.back.catchmate.enroll.service.EnrollQueryService;
-import com.back.catchmate.game.application.GameQueryApi;
-import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.inquiry.application.InquiryQueryApi;
 import com.back.catchmate.report.application.ReportQueryApi;
 import com.back.catchmate.user.application.UserQueryApi;
 import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -40,10 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AdminService {
     private final ClubQueryApi clubQueryApi;
-    private final GameQueryApi gameQueryApi;
     private final UserQueryApi userQueryApi;
-    private final BoardService boardService;
-    private final EnrollQueryService enrollQueryService;
+    private final BoardQueryApi boardQueryApi;
     private final ReportQueryApi reportQueryApi;
     private final InquiryQueryApi inquiryQueryApi;
 
@@ -51,7 +39,7 @@ public class AdminService {
         return AdminDashboardResponse.of(
                 userQueryApi.count(),
                 AdminDashboardResponse.GenderRatio.of(userQueryApi.countByGender('M'), userQueryApi.countByGender('F')),
-                boardService.getTotalBoardCount(),
+                boardQueryApi.count(),
                 resolveUserCountByClubName(),
                 userQueryApi.countByWatchStyles(),
                 reportQueryApi.count(),
@@ -101,49 +89,6 @@ public class AdminService {
                 .toList();
 
         return new PagedResponse<>(userPage, responses);
-    }
-
-    public AdminBoardDetailResponse getBoardWithEnrollList(Long boardId) {
-        BoardSummary board = boardService.getCompletedBoardSummary(boardId);
-        List<EnrollSummary> enrolls = enrollQueryService.getEnrollListByBoardIds(Collections.singletonList(boardId));
-
-        List<Long> enrollUserIds =
-                enrolls.stream().map(EnrollSummary::userId).distinct().toList();
-        Map<Long, UserInfo> enrollUserById = enrollUserIds.isEmpty() ? Map.of() : userQueryApi.getInfos(enrollUserIds);
-        Map<Long, ClubInfo> enrollUserClubById = resolveUserClubs(enrollUserById.values());
-
-        List<AdminEnrollmentDetailResponse> enrollmentInfos = enrolls.stream()
-                .map(enroll -> {
-                    UserInfo u = enrollUserById.get(enroll.userId());
-                    ClubInfo c = u != null && u.clubId() != null ? enrollUserClubById.get(u.clubId()) : null;
-                    return AdminEnrollmentDetailResponse.from(enroll, u, c != null ? c.name() : null);
-                })
-                .toList();
-
-        UserInfo writer = board.userId() != null ? userQueryApi.getInfo(board.userId()) : null;
-        GameInfo game = board.gameId() != null ? gameQueryApi.getInfo(board.gameId()) : null;
-
-        return AdminBoardDetailResponse.from(board, writer, game, enrollmentInfos);
-    }
-
-    public PagedResponse<AdminBoardResponse> getBoardListByUserId(Long userId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<BoardAdminView> boardPage = boardService.getBoardAdminViewsByUserId(userId, pageable);
-
-        List<AdminBoardResponse> responses =
-                boardPage.getContent().stream().map(AdminBoardResponse::from).toList();
-
-        return new PagedResponse<>(boardPage, responses);
-    }
-
-    public PagedResponse<AdminBoardResponse> getBoardList(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<BoardAdminView> boardPage = boardService.getBoardAdminViews(pageable);
-
-        List<AdminBoardResponse> responses =
-                boardPage.getContent().stream().map(AdminBoardResponse::from).toList();
-
-        return new PagedResponse<>(boardPage, responses);
     }
 
     private Map<Long, ClubInfo> resolveUserClubs(Collection<UserInfo> users) {

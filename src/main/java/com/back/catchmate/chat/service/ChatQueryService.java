@@ -1,7 +1,7 @@
 package com.back.catchmate.chat.service;
 
-import com.back.catchmate.board.dto.response.BoardSummary;
-import com.back.catchmate.board.service.BoardService;
+import com.back.catchmate.board.application.BoardQueryApi;
+import com.back.catchmate.board.application.dto.api.BoardInfo;
 import com.back.catchmate.chat.dto.ChatMessageListDto;
 import com.back.catchmate.chat.dto.response.ChatMessageResponse;
 import com.back.catchmate.chat.dto.response.ChatRecipientSummary;
@@ -41,7 +41,7 @@ public class ChatQueryService {
     private final ChatRoomService chatRoomService;
     private final ChatMessageService chatMessageService;
     private final ChatRoomMemberService chatRoomMemberService;
-    private final BoardService boardService;
+    private final BoardQueryApi boardQueryApi;
     private final ClubQueryApi clubQueryApi;
     private final GameQueryApi gameQueryApi;
     private final UserQueryApi userQueryApi;
@@ -63,7 +63,9 @@ public class ChatQueryService {
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
-        List<BoardSummary> boards = boardIds.isEmpty() ? List.of() : boardService.getBoardSummaries(boardIds);
+        List<BoardInfo> boards = boardIds.isEmpty()
+                ? List.of()
+                : List.copyOf(boardQueryApi.getInfos(boardIds).values());
         Map<Long, ChatRoomBoardSummary> boardSummaryById = buildBoardSummaries(boards).stream()
                 .collect(Collectors.toMap(ChatRoomBoardSummary::boardId, Function.identity()));
 
@@ -145,13 +147,6 @@ public class ChatQueryService {
     }
 
     /**
-     * 게시글 ID에 해당하는 채팅방의 ID 반환 (없으면 empty).
-     */
-    public Optional<Long> findChatRoomIdByBoardId(Long boardId) {
-        return chatRoomService.findByBoardId(boardId).map(ChatRoom::getId);
-    }
-
-    /**
      * 채팅방의 모든 활성 멤버 ID와 알림 설정 정보 목록 (발신자 제외).
      */
     public List<ChatRecipientSummary> getChatRoomRecipientSummaries(Long chatRoomId, Long excludeUserId) {
@@ -170,16 +165,16 @@ public class ChatQueryService {
         return userQueryApi.getInfos(senderIds);
     }
 
-    private List<ChatRoomBoardSummary> buildBoardSummaries(List<BoardSummary> boards) {
+    private List<ChatRoomBoardSummary> buildBoardSummaries(List<BoardInfo> boards) {
         if (boards.isEmpty()) return List.of();
 
         List<Long> userIds = boards.stream()
-                .map(BoardSummary::userId)
+                .map(BoardInfo::userId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
         List<Long> gameIds = boards.stream()
-                .map(BoardSummary::gameId)
+                .map(BoardInfo::gameId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
@@ -188,7 +183,7 @@ public class ChatQueryService {
         Map<Long, GameInfo> gameMap = gameIds.isEmpty() ? Map.of() : gameQueryApi.getInfos(gameIds);
 
         List<Long> clubIds = Stream.of(
-                        boards.stream().map(BoardSummary::cheerClubId),
+                        boards.stream().map(BoardInfo::cheerClubId),
                         gameMap.values().stream().map(GameInfo::homeClubId),
                         gameMap.values().stream().map(GameInfo::awayClubId),
                         userMap.values().stream().map(UserInfo::clubId))
@@ -204,7 +199,7 @@ public class ChatQueryService {
     }
 
     private ChatRoomBoardSummary toSummary(
-            BoardSummary board, Map<Long, UserInfo> userMap, Map<Long, ClubInfo> clubMap, Map<Long, GameInfo> gameMap) {
+            BoardInfo board, Map<Long, UserInfo> userMap, Map<Long, ClubInfo> clubMap, Map<Long, GameInfo> gameMap) {
         UserInfo user = board.userId() != null ? userMap.get(board.userId()) : null;
         ClubInfo userClub = user != null && user.clubId() != null ? clubMap.get(user.clubId()) : null;
         ClubInfo cheerClub = board.cheerClubId() != null ? clubMap.get(board.cheerClubId()) : null;

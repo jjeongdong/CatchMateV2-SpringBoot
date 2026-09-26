@@ -1,7 +1,7 @@
 package com.back.catchmate.notification.service;
 
-import com.back.catchmate.board.dto.response.BoardSummary;
-import com.back.catchmate.board.service.BoardService;
+import com.back.catchmate.board.application.BoardQueryApi;
+import com.back.catchmate.board.application.dto.api.BoardInfo;
 import com.back.catchmate.notification.entity.enums.AlarmType;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
 import com.back.catchmate.user.application.UserQueryApi;
@@ -26,7 +26,7 @@ public class EnrollNotificationService {
     private static final String TYPE_ENROLL_REJECTED = "ENROLL_REJECTED";
     private static final String TYPE_ENROLL_CANCEL = "ENROLL_CANCEL";
 
-    private final BoardService boardService;
+    private final BoardQueryApi boardQueryApi;
     private final UserQueryApi userQueryApi;
     private final OutboxSaver outboxSaver;
     private final NotificationService notificationService;
@@ -39,7 +39,7 @@ public class EnrollNotificationService {
                 applicantId,
                 boardOwnerId);
         UserInfo applicant = userQueryApi.getInfo(applicantId);
-        BoardSummary board = boardService.getBoardSummary(boardId);
+        BoardInfo board = boardQueryApi.getInfo(boardId);
         String title = NotificationTemplate.ENROLL_REQUEST.formatTitle(applicant.nickName());
         String body = NotificationTemplate.ENROLL_REQUEST.formatBody(board.title());
 
@@ -53,7 +53,7 @@ public class EnrollNotificationService {
                 boardId,
                 applicantId,
                 boardOwnerId);
-        BoardSummary board = boardService.getBoardSummary(boardId);
+        BoardInfo board = boardQueryApi.getInfo(boardId);
         String title = NotificationTemplate.ENROLL_ACCEPT.getTitle();
         String body = NotificationTemplate.ENROLL_ACCEPT.formatBody(board.title());
 
@@ -68,7 +68,7 @@ public class EnrollNotificationService {
                 boardId,
                 applicantId,
                 boardOwnerId);
-        BoardSummary board = boardService.getBoardSummary(boardId);
+        BoardInfo board = boardQueryApi.getInfo(boardId);
         String title = NotificationTemplate.ENROLL_REJECT.getTitle();
         String body = NotificationTemplate.ENROLL_REJECT.formatBody(board.title());
 

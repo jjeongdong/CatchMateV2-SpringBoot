@@ -1,4 +1,4 @@
-package com.back.catchmate.board.entity;
+package com.back.catchmate.board.domain;
 
 import java.util.Arrays;
 import java.util.List;
