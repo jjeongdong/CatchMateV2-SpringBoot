@@ -1,7 +1,7 @@
 package com.back.catchmate.user.controller;
 
-import com.back.catchmate.common.upload.UploadFile;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
+import com.back.catchmate.global.infrastructure.upload.UploadFile;
 import com.back.catchmate.user.dto.request.UserFcmTokenUpdateRequest;
 import com.back.catchmate.user.dto.request.UserProfileUpdateRequest;
 import com.back.catchmate.user.dto.response.UserAlarmSettingsResponse;

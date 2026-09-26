@@ -62,4 +62,6 @@ public class BoardController implements BoardApiDocs {
 ## 에러 응답
 - 본문은 `{ "code": "BOARD_NOT_FOUND", "message": "존재하지 않는 게시글입니다." }` 뿐.
 - Bean Validation 실패는 `INVALID_INPUT`, `message` 는 첫 필드 에러 메시지.
-- HTTP 상태 변환은 `GlobalExceptionHandler` 에서만 (`ErrorType` → 상태 코드).
+- HTTP 상태 변환은 `global.error.ErrorHttpStatus` 로만 (`ErrorType` → 상태 코드). 쓰는 곳은 `GlobalExceptionHandler` 와 보안 필터 핸들러뿐.
+- HTTP 전용 코드: 없는 URL `NOT_FOUND`(404), 파라미터 누락·타입 불일치 `INVALID_INPUT`(400), 지원하지 않는 메서드 `METHOD_NOT_ALLOWED`(405). 그 밖에 Spring 이 상태를 정한 요청 오류(업로드 용량 초과 413, Content-Type 불일치 415 등)는 그 상태 + `INVALID_INPUT`.
+- 로그: 4xx 는 남기지 않는다. 5xx(`INTERNAL`·`EXTERNAL`)만 `ERROR`.

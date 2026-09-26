@@ -77,4 +77,5 @@ global/            config, error, response, persistence, security, infrastructur
 | 새 BC 생성 | 새 컨벤션으로 만들고 `NAMES` 에 바로 추가 |
 | 전환 중인 BC 가 미전환 BC 를 조회해야 함 | 미전환 BC 에 `{Bc}QueryApi` + `application/dto/api` 만 추가하는 것은 허용 (부분 전환 금지의 유일한 예외) |
 
+- `common/error` 의 기존 `ErrorCode` 는 BC 를 전환할 때 해당 BC 코드를 `{bc}/domain/{Bc}ErrorCode` 로 옮기고, `new BaseException(ErrorCode.XXX)` 를 전용 예외 클래스로 바꾼다. 마지막 BC 전환 후 `common` 을 삭제한다.
 - BC 전환을 마치면 `NAMES` 에 추가하고 `./gradlew test --tests 'com.back.catchmate.architecture.*'` 통과를 확인한다.

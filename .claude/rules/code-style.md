@@ -44,7 +44,7 @@ paths:
 4. 던질 거면 로그 남기지 않는다. 처리하는 곳에서 한 번만.
 5. 개인정보 금지: 토큰, 이메일, 전화번호, FCM 토큰, 채팅 내용.
 6. 레벨: `ERROR` 사람이 확인해야 하는 장애 / `WARN` 시스템이 스스로 처리한 비정상 / `INFO` 중요 비즈니스 이벤트·배치 / `DEBUG` 개발용.
-7. `BusinessException` 은 로그 없음. `INTERNAL` 만 `ERROR`.
+7. `BusinessException` 은 로그 없음. 서버 원인(`INTERNAL`·`EXTERNAL`, `isServerFault()`)만 `ERROR`.
 
 ## 주석
 1. 한국어. "무엇"이 아니라 "왜".

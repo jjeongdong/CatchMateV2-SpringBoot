@@ -90,7 +90,7 @@ class ChatErrorFrameE2eStompTest {
 
         // then: @Valid 가 컨트롤러 진입 시점에 걸러 멤버십 조회(DB)까지 가지 않는다
         String body = pollErrorFrame(errorFrames);
-        assertThat(body).contains("\"code\":\"BAD_REQUEST\"");
+        assertThat(body).contains("\"code\":\"INVALID_INPUT\"");
         assertThat(body).contains("메시지 내용은 필수입니다.");
         assertThat(body).contains("\"retryable\":false");
     }

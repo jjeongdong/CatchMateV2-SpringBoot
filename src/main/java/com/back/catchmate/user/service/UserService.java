@@ -4,7 +4,7 @@ import com.back.catchmate.club.dto.response.ClubSummary;
 import com.back.catchmate.club.service.ClubService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.common.upload.UploadFile;
+import com.back.catchmate.global.infrastructure.upload.UploadFile;
 import com.back.catchmate.user.dto.command.CreateUserCommand;
 import com.back.catchmate.user.dto.command.UserFcmTokenUpdateCommand;
 import com.back.catchmate.user.dto.request.UserProfileUpdateRequest;
