@@ -52,10 +52,6 @@ public enum ErrorCode implements com.back.catchmate.global.error.ErrorCode {
     // 유저 차단
     BLOCKED_USER_BOARD(ErrorType.INVALID, "내가 차단한 유저의 게시글입니다."),
 
-    // 문의
-    INQUIRY_NOT_FOUND(ErrorType.NOT_FOUND, "존재하지 않는 문의입니다."),
-    INQUIRY_ALREADY_ANSWERED(ErrorType.CONFLICT, "이미 답변이 등록된 문의는 수정할 수 없습니다."),
-
     // 소켓
     SOCKET_CONNECT_FAILED(ErrorType.UNAUTHORIZED, "소켓 연결에 실패했습니다."),
 
