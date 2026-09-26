@@ -8,6 +8,9 @@ import com.back.catchmate.chat.dto.response.ChatErrorResponse;
 import com.back.catchmate.chat.service.ChatCommandService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
+import com.back.catchmate.global.error.BusinessException;
+import com.back.catchmate.global.error.ErrorType;
+import com.back.catchmate.global.error.GlobalErrorCode;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.Objects;
@@ -80,11 +83,14 @@ public class ChatController {
     // enter/leave/read 프레임에서 실패해도 chatRoomId 를 그대로 복원할 수 있다.
     // (핸들러 파라미터엔 @Valid 를 붙이지 않아 검증이 재실행되지 않는다.)
 
-    @MessageExceptionHandler(BaseException.class)
+    @MessageExceptionHandler(BusinessException.class)
     @SendToUser(destinations = ERROR_DESTINATION, broadcast = false)
-    public ChatErrorResponse handleBaseException(BaseException e, @Payload ChatMessageRequest request) {
-        log.warn("채팅 요청 실패 - code: {}, chatRoomId: {}", e.getErrorCode(), request.chatRoomId());
-        return ChatErrorResponse.of(request.chatRoomId(), e.getErrorCode(), isRetryable(e.getErrorCode()));
+    public ChatErrorResponse handleBusinessException(BusinessException e, @Payload ChatMessageRequest request) {
+        log.warn("채팅 요청 실패 - code: {}, chatRoomId: {}", e.getErrorCode().name(), request.chatRoomId());
+        return ChatErrorResponse.of(
+                request.chatRoomId(),
+                e.getErrorCode(),
+                isRetryable(e.getErrorCode().type()));
     }
 
     @MessageExceptionHandler(MethodArgumentNotValidException.class)
@@ -95,7 +101,10 @@ public class ChatController {
 
         log.warn("채팅 요청 검증 실패 - chatRoomId: {}, message: {}", request.chatRoomId(), message);
         return ChatErrorResponse.of(
-                request.chatRoomId(), ErrorCode.BAD_REQUEST, message, isRetryable(ErrorCode.BAD_REQUEST));
+                request.chatRoomId(),
+                GlobalErrorCode.INVALID_INPUT,
+                message,
+                isRetryable(GlobalErrorCode.INVALID_INPUT.type()));
     }
 
     // 역직렬화 실패(MessageConversionException)도 여기로 온다. 그 경우 @Payload 복원이 다시
@@ -105,26 +114,26 @@ public class ChatController {
     public ChatErrorResponse handleUnexpectedException(Exception e) {
         log.error("채팅 요청 처리 중 예기치 못한 오류", e);
         return ChatErrorResponse.of(
-                null, ErrorCode.INTERNAL_SERVER_ERROR, isRetryable(ErrorCode.INTERNAL_SERVER_ERROR));
+                null, GlobalErrorCode.INTERNAL_SERVER_ERROR, isRetryable(GlobalErrorCode.INTERNAL_SERVER_ERROR.type()));
     }
 
     // 재전송 가치는 예외 타입이 아니라 실패 성격으로 갈린다. 4xx(읽기 전용 방·비참여자·검증 실패)는 다시
     // 보내도 같은 결과지만, 5xx(Outbox 저장 실패 등 서버 일시 장애)는 트랜잭션이 롤백돼 메시지가 저장되지
-    // 않았으므로 재전송이 유효하다. BaseException 에는 두 종류가 섞여 있어 타입만 보고 판단할 수 없다.
-    private static boolean isRetryable(ErrorCode errorCode) {
-        return errorCode.getHttpStatus().is5xxServerError();
+    // 않았으므로 재전송이 유효하다. BusinessException 에는 두 종류가 섞여 있어 타입만 보고 판단할 수 없다.
+    private static boolean isRetryable(ErrorType errorType) {
+        return errorType.isServerFault();
     }
 
     private static String firstFieldMessage(MethodArgumentNotValidException e) {
         if (e.getBindingResult() == null) {
-            return ErrorCode.BAD_REQUEST.getMessage();
+            return GlobalErrorCode.INVALID_INPUT.message();
         }
 
         return e.getBindingResult().getFieldErrors().stream()
                 .map(FieldError::getDefaultMessage)
                 .filter(Objects::nonNull)
                 .findFirst()
-                .orElse(ErrorCode.BAD_REQUEST.getMessage());
+                .orElse(GlobalErrorCode.INVALID_INPUT.message());
     }
 
     private Long extractUserId(Principal principal) {
