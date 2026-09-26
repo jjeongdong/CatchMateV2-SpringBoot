@@ -37,6 +37,7 @@ public class BoardController implements BoardApiDocs {
 
 ## URL
 1. `/api` 로 시작, 클래스 `@RequestMapping` 에만 기재.
+   - 예외: 한 Controller 가 두 리소스 경로에 걸치면(`/api/boards/{boardId}/enrolls` 와 `/api/enrolls/**`) 클래스 매핑은 `/api` 까지만 둔다.
 2. 복수 명사, 여러 단어는 kebab-case (`/chat-rooms`).
 3. 목록은 컬렉션 경로 (`/list`, `/all` 금지).
 4. 중첩은 최대 2단계 (`/api/boards/{boardId}/enrolls`).
