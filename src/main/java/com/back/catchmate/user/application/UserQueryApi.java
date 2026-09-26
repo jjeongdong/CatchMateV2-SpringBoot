@@ -69,32 +69,6 @@ public class UserQueryApi {
     }
 
     /**
-     * 구단별 유저를 최신 가입순으로 한 페이지 조회한다. 전체 수는 {@link #countByClubId(Long)}.
-     *
-     * @param clubId 구단 ID, null 이면 전체
-     * @param page 0 부터 시작하는 페이지 번호
-     * @param size 페이지 크기
-     * @return 유저 정보 목록
-     */
-    @Transactional(readOnly = true)
-    public List<UserInfo> getInfosByClubId(Long clubId, int page, int size) {
-        return userRepository.findAllByClubId(clubId, (long) page * size, size).stream()
-                .map(UserInfo::from)
-                .toList();
-    }
-
-    /**
-     * 구단별 유저 수를 센다.
-     *
-     * @param clubId 구단 ID, null 이면 전체
-     * @return 유저 수
-     */
-    @Transactional(readOnly = true)
-    public long countByClubId(Long clubId) {
-        return userRepository.countByClubId(clubId);
-    }
-
-    /**
      * 구단마다 유저 수를 센다.
      *
      * @return 구단 ID 를 키로 한 유저 수
