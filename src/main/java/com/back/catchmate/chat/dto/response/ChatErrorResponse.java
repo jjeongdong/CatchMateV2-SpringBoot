@@ -1,6 +1,6 @@
 package com.back.catchmate.chat.dto.response;
 
-import com.back.catchmate.common.error.ErrorCode;
+import com.back.catchmate.global.error.ErrorCode;
 
 /**
  * STOMP 전송 실패를 발신자 세션에만 되돌려주는 에러 페이로드.
@@ -12,7 +12,7 @@ import com.back.catchmate.common.error.ErrorCode;
  */
 public record ChatErrorResponse(Long chatRoomId, String code, String message, boolean retryable) {
     public static ChatErrorResponse of(Long chatRoomId, ErrorCode errorCode, boolean retryable) {
-        return of(chatRoomId, errorCode, errorCode.getMessage(), retryable);
+        return of(chatRoomId, errorCode, errorCode.message(), retryable);
     }
 
     public static ChatErrorResponse of(Long chatRoomId, ErrorCode errorCode, String message, boolean retryable) {
