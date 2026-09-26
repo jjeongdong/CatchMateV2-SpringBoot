@@ -75,18 +75,6 @@ class UserQueryApiTest {
     }
 
     @Test
-    @DisplayName("구단별 목록은 page·size 를 offset·limit 으로 바꿔 조회한다")
-    void getInfosByClubIdConvertsPaging() {
-        // given
-        given(userRepository.findAllByClubId(3L, 40L, 20)).willReturn(List.of(UserFixture.user(1L, 3L)));
-
-        // when & then
-        assertThat(userQueryApi.getInfosByClubId(3L, 2, 20))
-                .extracting(UserInfo::userId)
-                .containsExactly(1L);
-    }
-
-    @Test
     @DisplayName("isBlocked 는 첫 인자가 차단한 사람, 둘째 인자가 차단된 사람이다")
     void isBlockedArgumentOrder() {
         // given

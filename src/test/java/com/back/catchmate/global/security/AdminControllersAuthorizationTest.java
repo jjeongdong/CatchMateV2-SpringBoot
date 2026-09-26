@@ -2,10 +2,12 @@ package com.back.catchmate.global.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.back.catchmate.admin.presentation.AdminDashboardController;
 import com.back.catchmate.board.presentation.AdminBoardController;
 import com.back.catchmate.inquiry.presentation.AdminInquiryController;
 import com.back.catchmate.notice.presentation.AdminNoticeController;
 import com.back.catchmate.report.presentation.AdminReportController;
+import com.back.catchmate.user.presentation.AdminUserController;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -19,9 +21,11 @@ class AdminControllersAuthorizationTest {
     @ValueSource(
             classes = {
                 AdminBoardController.class,
+                AdminDashboardController.class,
                 AdminInquiryController.class,
                 AdminNoticeController.class,
-                AdminReportController.class
+                AdminReportController.class,
+                AdminUserController.class
             })
     @DisplayName("관리자 컨트롤러는 ADMIN 권한만 허용한다")
     void requiresAdminRole(Class<?> controller) {
