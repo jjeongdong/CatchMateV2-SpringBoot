@@ -1,7 +1,7 @@
 package com.back.catchmate.game.service;
 
-import com.back.catchmate.club.dto.response.ClubSummary;
-import com.back.catchmate.club.service.ClubService;
+import com.back.catchmate.club.application.ClubQueryApi;
+import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.game.dto.request.GameSearchCondition;
@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class GameService {
     private final GameRepository gameRepository;
 
-    private final ClubService clubService;
+    private final ClubQueryApi clubQueryApi;
 
     public List<GameResponse> getGameList(LocalDate gameDate, Long clubId) {
         List<Game> games = gameRepository.findAllByCondition(new GameSearchCondition(gameDate, clubId));
@@ -42,7 +41,7 @@ public class GameService {
             return List.of();
         }
 
-        Map<Long, ClubSummary> clubMap = loadClubs(games);
+        Map<Long, ClubInfo> clubMap = loadClubs(games);
         return games.stream()
                 .map(game ->
                         GameResponse.of(game, clubMap.get(game.getHomeClubId()), clubMap.get(game.getAwayClubId())))
@@ -78,7 +77,7 @@ public class GameService {
         return gameRepository.findById(gameId).orElseThrow(() -> new BaseException(ErrorCode.GAME_NOT_FOUND));
     }
 
-    private Map<Long, ClubSummary> loadClubs(List<Game> games) {
+    private Map<Long, ClubInfo> loadClubs(List<Game> games) {
         List<Long> clubIds = games.stream()
                 .flatMap(game -> Stream.of(game.getHomeClubId(), game.getAwayClubId()))
                 .filter(Objects::nonNull)
@@ -89,9 +88,7 @@ public class GameService {
             return Map.of();
         }
 
-        return clubService.getClubSummaries(clubIds).stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(ClubSummary::clubId, Function.identity()));
+        return clubQueryApi.getInfos(clubIds);
     }
 
     private GameSummary toSummary(Game game) {

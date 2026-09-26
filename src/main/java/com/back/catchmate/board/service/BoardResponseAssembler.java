@@ -8,8 +8,8 @@ import com.back.catchmate.board.entity.Board;
 import com.back.catchmate.board.entity.BoardButtonStatus;
 import com.back.catchmate.bookmark.service.BookmarkService;
 import com.back.catchmate.chat.service.ChatQueryService;
-import com.back.catchmate.club.dto.response.ClubSummary;
-import com.back.catchmate.club.service.ClubService;
+import com.back.catchmate.club.application.ClubQueryApi;
+import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.response.CursorPage;
@@ -52,7 +52,7 @@ public class BoardResponseAssembler {
 
     private final UserService userService;
     private final BlockService blockService;
-    private final ClubService clubService;
+    private final ClubQueryApi clubQueryApi;
     private final GameService gameService;
 
     public BoardResponse buildBoardResponse(Board board, boolean bookmarked) {
@@ -135,10 +135,7 @@ public class BoardResponseAssembler {
                 .distinct()
                 .toList();
 
-        Map<Long, ClubSummary> clubMap = clubIds.isEmpty()
-                ? Map.of()
-                : clubService.getClubSummaries(clubIds).stream()
-                        .collect(Collectors.toMap(ClubSummary::clubId, Function.identity()));
+        Map<Long, ClubInfo> clubMap = clubIds.isEmpty() ? Map.of() : clubQueryApi.getInfos(clubIds);
 
         return new BoardReferences(userMap, clubMap, gameMap);
     }
@@ -158,16 +155,16 @@ public class BoardResponseAssembler {
     }
 
     private record BoardReferences(
-            Map<Long, UserSummary> userMap, Map<Long, ClubSummary> clubMap, Map<Long, GameSummary> gameMap) {
+            Map<Long, UserSummary> userMap, Map<Long, ClubInfo> clubMap, Map<Long, GameSummary> gameMap) {
         private UserSummary user(Board board) {
             return board.getUserId() != null ? userMap.get(board.getUserId()) : null;
         }
 
-        private ClubSummary userClub(UserSummary user) {
+        private ClubInfo userClub(UserSummary user) {
             return user != null && user.clubId() != null ? clubMap.get(user.clubId()) : null;
         }
 
-        private ClubSummary cheerClub(Board board) {
+        private ClubInfo cheerClub(Board board) {
             return board.getCheerClubId() != null ? clubMap.get(board.getCheerClubId()) : null;
         }
 
@@ -175,11 +172,11 @@ public class BoardResponseAssembler {
             return board.getGameId() != null ? gameMap.get(board.getGameId()) : null;
         }
 
-        private ClubSummary homeClub(GameSummary game) {
+        private ClubInfo homeClub(GameSummary game) {
             return game != null && game.homeClubId() != null ? clubMap.get(game.homeClubId()) : null;
         }
 
-        private ClubSummary awayClub(GameSummary game) {
+        private ClubInfo awayClub(GameSummary game) {
             return game != null && game.awayClubId() != null ? clubMap.get(game.awayClubId()) : null;
         }
     }

@@ -1,7 +1,7 @@
 package com.back.catchmate.board.dto.response;
 
 import com.back.catchmate.board.entity.Board;
-import com.back.catchmate.club.dto.response.ClubSummary;
+import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.game.dto.response.GameSummary;
 import com.back.catchmate.user.dto.response.UserSummary;
 
@@ -19,11 +19,11 @@ public record BoardResponse(
             Board board,
             boolean bookMarked,
             UserSummary user,
-            ClubSummary userClub,
-            ClubSummary cheerClub,
+            ClubInfo userClub,
+            ClubInfo cheerClub,
             GameSummary game,
-            ClubSummary homeClub,
-            ClubSummary awayClub) {
+            ClubInfo homeClub,
+            ClubInfo awayClub) {
         return new BoardResponse(
                 board.getId(),
                 board.getTitle(),
@@ -36,18 +36,18 @@ public record BoardResponse(
                 toWriterView(user, userClub));
     }
 
-    private static BoardClubView toClubView(ClubSummary club) {
+    private static BoardClubView toClubView(ClubInfo club) {
         if (club == null) return null;
         return new BoardClubView(club.clubId(), club.name(), club.homeStadium(), club.region());
     }
 
-    private static BoardGameView toGameView(GameSummary game, ClubSummary homeClub, ClubSummary awayClub) {
+    private static BoardGameView toGameView(GameSummary game, ClubInfo homeClub, ClubInfo awayClub) {
         if (game == null) return null;
         return new BoardGameView(
                 game.gameId(), game.gameStartDate(), game.location(), toClubView(homeClub), toClubView(awayClub));
     }
 
-    private static BoardWriterView toWriterView(UserSummary user, ClubSummary userClub) {
+    private static BoardWriterView toWriterView(UserSummary user, ClubInfo userClub) {
         if (user == null) return null;
         return new BoardWriterView(
                 user.userId(),

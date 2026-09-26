@@ -3,7 +3,7 @@ package com.back.catchmate.oauth.service;
 import com.back.catchmate.auth.dto.SignupTokenPayload;
 import com.back.catchmate.auth.dto.response.IssuedAuthToken;
 import com.back.catchmate.auth.service.AuthService;
-import com.back.catchmate.club.service.ClubService;
+import com.back.catchmate.club.application.ClubQueryApi;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.oauth.dto.OAuthUserInfo;
@@ -38,7 +38,7 @@ public class OAuthService {
     private final OAuthClientRegistry oauthClientRegistry;
 
     private final UserService userService;
-    private final ClubService clubService;
+    private final ClubQueryApi clubQueryApi;
     private final AuthService authService;
 
     @Transactional(readOnly = true)
@@ -66,8 +66,8 @@ public class OAuthService {
     @Transactional
     public SignUpResult signUp(SignUpCommand command) {
         SignupTokenClaims claims = parseSignupToken(command.signupToken());
-        // 존재하지 않으면 ClubService 가 BaseException 을 던진다
-        clubService.getClubSummary(command.favoriteClubId());
+        // 존재하지 않으면 ClubQueryApi 가 ClubNotFoundException 을 던진다
+        clubQueryApi.getInfo(command.favoriteClubId());
 
         CreatedUserResponse createdUser = userService.createUser(toCreateUserCommand(claims, command));
         IssuedAuthToken issuedToken = authService.createToken(createdUser.userId(), createdUser.authority());

@@ -37,7 +37,7 @@ public void acceptEnroll(Long userId, Long enrollId) {
 | 단건 / 목록 | `getBoard` / `getBoards`, `getMyBoards` |
 | 도메인 동작 | `acceptEnroll`, `liftUpBoard` |
 
-- 동의어 금지: `register`, `save`, `modify`, `remove`, `fetch`, `retrieve`. `find` 는 Repository 의 Optional 반환 전용.
+- 동의어 금지: `register`, `save`, `modify`, `remove`, `fetch`, `retrieve`. `find` 는 Repository·QueryApi 의 Optional 반환 전용.
 
 ## DTO
 | 종류 | 위치 | 이름 |

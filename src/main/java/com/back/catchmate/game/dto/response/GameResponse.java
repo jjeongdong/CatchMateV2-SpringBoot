@@ -1,6 +1,6 @@
 package com.back.catchmate.game.dto.response;
 
-import com.back.catchmate.club.dto.response.ClubSummary;
+import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.game.entity.Game;
 import java.time.LocalDateTime;
 
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  */
 public record GameResponse(
         Long gameId, LocalDateTime gameStartDate, String location, GameClubView homeClub, GameClubView awayClub) {
-    public static GameResponse of(Game game, ClubSummary homeClub, ClubSummary awayClub) {
+    public static GameResponse of(Game game, ClubInfo homeClub, ClubInfo awayClub) {
         return new GameResponse(
                 game.getId(),
                 game.getGameStartDate(),

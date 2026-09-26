@@ -27,8 +27,8 @@ import com.back.catchmate.admin.event.NoticeCreatedEvent;
 import com.back.catchmate.board.dto.response.BoardAdminView;
 import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.board.service.BoardService;
-import com.back.catchmate.club.dto.response.ClubSummary;
-import com.back.catchmate.club.service.ClubService;
+import com.back.catchmate.club.application.ClubQueryApi;
+import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.enroll.dto.response.EnrollSummary;
 import com.back.catchmate.enroll.service.EnrollQueryService;
@@ -63,7 +63,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AdminService {
-    private final ClubService clubService;
+    private final ClubQueryApi clubQueryApi;
     private final GameService gameService;
     private final UserService userService;
     private final BoardService boardService;
@@ -90,8 +90,7 @@ public class AdminService {
     private Map<String, Long> resolveUserCountByClubName() {
         Map<Long, Long> countByClubId = userService.getUserCountByClubId();
         if (countByClubId.isEmpty()) return Map.of();
-        Map<Long, ClubSummary> clubById = clubService.getClubSummaries(List.copyOf(countByClubId.keySet())).stream()
-                .collect(Collectors.toMap(ClubSummary::clubId, Function.identity()));
+        Map<Long, ClubInfo> clubById = clubQueryApi.getInfos(List.copyOf(countByClubId.keySet()));
         return countByClubId.entrySet().stream()
                 .filter(e -> clubById.get(e.getKey()) != null)
                 .collect(Collectors.toMap(e -> clubById.get(e.getKey()).name(), Map.Entry::getValue));
@@ -99,7 +98,7 @@ public class AdminService {
 
     public AdminUserDetailResponse getUser(Long userId) {
         UserSummary user = userService.getUserSummary(userId);
-        ClubSummary club = user.clubId() != null ? clubService.getClubSummary(user.clubId()) : null;
+        ClubInfo club = user.clubId() != null ? clubQueryApi.getInfo(user.clubId()) : null;
         return AdminUserDetailResponse.from(user, club != null ? club.name() : null);
     }
 
@@ -108,7 +107,7 @@ public class AdminService {
 
         Long clubId = null;
         if (clubName != null && !clubName.isBlank()) {
-            Optional<ClubSummary> club = clubService.findClubSummaryByName(clubName);
+            Optional<ClubInfo> club = clubQueryApi.findInfoByName(clubName);
             if (club.isEmpty()) {
                 return new PagedResponse<>(Page.empty(pageable), List.of());
             }
@@ -117,7 +116,7 @@ public class AdminService {
 
         Page<UserSummary> userPage = userService.getUserSummariesByClubId(clubId, pageable);
 
-        Map<Long, ClubSummary> clubById = resolveUserClubs(userPage.getContent());
+        Map<Long, ClubInfo> clubById = resolveUserClubs(userPage.getContent());
 
         List<AdminUserResponse> responses = userPage.getContent().stream()
                 .map(u -> AdminUserResponse.from(
@@ -140,12 +139,12 @@ public class AdminService {
                 ? Map.of()
                 : userService.getUserSummaries(enrollUserIds).stream()
                         .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
-        Map<Long, ClubSummary> enrollUserClubById = resolveUserClubs(enrollUserById.values());
+        Map<Long, ClubInfo> enrollUserClubById = resolveUserClubs(enrollUserById.values());
 
         List<AdminEnrollmentDetailResponse> enrollmentInfos = enrolls.stream()
                 .map(enroll -> {
                     UserSummary u = enrollUserById.get(enroll.userId());
-                    ClubSummary c = u != null && u.clubId() != null ? enrollUserClubById.get(u.clubId()) : null;
+                    ClubInfo c = u != null && u.clubId() != null ? enrollUserClubById.get(u.clubId()) : null;
                     return AdminEnrollmentDetailResponse.from(enroll, u, c != null ? c.name() : null);
                 })
                 .toList();
@@ -256,15 +255,14 @@ public class AdminService {
         return new PagedResponse<>(noticePage, responses);
     }
 
-    private Map<Long, ClubSummary> resolveUserClubs(Collection<UserSummary> users) {
+    private Map<Long, ClubInfo> resolveUserClubs(Collection<UserSummary> users) {
         List<Long> clubIds = users.stream()
                 .map(UserSummary::clubId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
         if (clubIds.isEmpty()) return Map.of();
-        return clubService.getClubSummaries(clubIds).stream()
-                .collect(Collectors.toMap(ClubSummary::clubId, Function.identity()));
+        return clubQueryApi.getInfos(clubIds);
     }
 
     @Transactional

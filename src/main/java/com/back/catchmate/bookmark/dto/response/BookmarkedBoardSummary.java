@@ -1,7 +1,7 @@
 package com.back.catchmate.bookmark.dto.response;
 
 import com.back.catchmate.board.dto.response.BoardSummary;
-import com.back.catchmate.club.dto.response.ClubSummary;
+import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.game.dto.response.GameSummary;
 import com.back.catchmate.user.dto.response.UserSummary;
 
@@ -19,11 +19,11 @@ public record BookmarkedBoardSummary(
             BoardSummary board,
             boolean bookMarked,
             UserSummary user,
-            ClubSummary userClub,
-            ClubSummary cheerClub,
+            ClubInfo userClub,
+            ClubInfo cheerClub,
             GameSummary game,
-            ClubSummary homeClub,
-            ClubSummary awayClub) {
+            ClubInfo homeClub,
+            ClubInfo awayClub) {
         return new BookmarkedBoardSummary(
                 board.boardId(),
                 board.title(),
@@ -37,13 +37,13 @@ public record BookmarkedBoardSummary(
     }
 
     public record BookmarkClubResponse(Long clubId, String name) {
-        public static BookmarkClubResponse from(ClubSummary info) {
+        public static BookmarkClubResponse from(ClubInfo info) {
             return new BookmarkClubResponse(info.clubId(), info.name());
         }
     }
 
     public record BookmarkGameResponse(Long gameId, String homeClubName, String awayClubName, String location) {
-        public static BookmarkGameResponse from(GameSummary game, ClubSummary home, ClubSummary away) {
+        public static BookmarkGameResponse from(GameSummary game, ClubInfo home, ClubInfo away) {
             return new BookmarkGameResponse(
                     game.gameId(),
                     home != null ? home.name() : null,
@@ -53,7 +53,7 @@ public record BookmarkedBoardSummary(
     }
 
     public record BookmarkUserResponse(Long userId, String nickName, String profileImageUrl, String clubName) {
-        public static BookmarkUserResponse from(UserSummary user, ClubSummary userClub) {
+        public static BookmarkUserResponse from(UserSummary user, ClubInfo userClub) {
             return new BookmarkUserResponse(
                     user.userId(), user.nickName(), user.profileImageUrl(), userClub != null ? userClub.name() : null);
         }
