@@ -2,6 +2,7 @@ package com.back.catchmate.global.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.back.catchmate.inquiry.presentation.AdminInquiryController;
 import com.back.catchmate.notice.presentation.AdminNoticeController;
 import com.back.catchmate.report.presentation.AdminReportController;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 class AdminControllersAuthorizationTest {
 
     @ParameterizedTest
-    @ValueSource(classes = {AdminNoticeController.class, AdminReportController.class})
+    @ValueSource(classes = {AdminInquiryController.class, AdminNoticeController.class, AdminReportController.class})
     @DisplayName("관리자 컨트롤러는 ADMIN 권한만 허용한다")
     void requiresAdminRole(Class<?> controller) {
         PreAuthorize preAuthorize = controller.getAnnotation(PreAuthorize.class);

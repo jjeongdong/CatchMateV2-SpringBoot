@@ -1,18 +1,11 @@
 package com.back.catchmate.admin.service;
 
-import com.back.catchmate.admin.dto.command.InquiryRegisterAnswerCommand;
-import com.back.catchmate.admin.dto.response.AdminAnswerDraftResponse;
 import com.back.catchmate.admin.dto.response.AdminBoardDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminBoardResponse;
-import com.back.catchmate.admin.dto.response.AdminCorpusReindexResponse;
 import com.back.catchmate.admin.dto.response.AdminDashboardResponse;
 import com.back.catchmate.admin.dto.response.AdminEnrollmentDetailResponse;
-import com.back.catchmate.admin.dto.response.AdminInquiryAnswerResponse;
-import com.back.catchmate.admin.dto.response.AdminInquiryDetailResponse;
-import com.back.catchmate.admin.dto.response.AdminInquiryResponse;
 import com.back.catchmate.admin.dto.response.AdminUserDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminUserResponse;
-import com.back.catchmate.admin.event.InquiryAnswerRegisteredEvent;
 import com.back.catchmate.board.dto.response.BoardAdminView;
 import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.board.service.BoardService;
@@ -23,8 +16,7 @@ import com.back.catchmate.enroll.dto.response.EnrollSummary;
 import com.back.catchmate.enroll.service.EnrollQueryService;
 import com.back.catchmate.game.application.GameQueryApi;
 import com.back.catchmate.game.application.dto.api.GameInfo;
-import com.back.catchmate.inquiry.dto.response.InquirySummary;
-import com.back.catchmate.inquiry.service.InquiryService;
+import com.back.catchmate.inquiry.application.InquiryQueryApi;
 import com.back.catchmate.report.application.ReportQueryApi;
 import com.back.catchmate.user.application.UserQueryApi;
 import com.back.catchmate.user.application.dto.api.UserInfo;
@@ -36,7 +28,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -54,8 +45,7 @@ public class AdminService {
     private final BoardService boardService;
     private final EnrollQueryService enrollQueryService;
     private final ReportQueryApi reportQueryApi;
-    private final InquiryService inquiryService;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final InquiryQueryApi inquiryQueryApi;
 
     public AdminDashboardResponse getDashboardStats() {
         return AdminDashboardResponse.of(
@@ -66,8 +56,8 @@ public class AdminService {
                 userQueryApi.countByWatchStyles(),
                 reportQueryApi.count(),
                 reportQueryApi.countPending(),
-                inquiryService.getTotalInquiryCount(),
-                inquiryService.getWaitingInquiryCount());
+                inquiryQueryApi.count(),
+                inquiryQueryApi.countWaiting());
     }
 
     private Map<String, Long> resolveUserCountByClubName() {
@@ -156,32 +146,6 @@ public class AdminService {
         return new PagedResponse<>(boardPage, responses);
     }
 
-    public AdminInquiryDetailResponse getInquiry(Long inquiryId) {
-        InquirySummary inquiry = inquiryService.getInquirySummary(inquiryId);
-        UserInfo user = userQueryApi.getInfo(inquiry.userId());
-        return AdminInquiryDetailResponse.from(inquiry, user);
-    }
-
-    public PagedResponse<AdminInquiryResponse> getInquiryList(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<InquirySummary> inquiryPage = inquiryService.getInquirySummaries(pageable);
-
-        Map<Long, UserInfo> userById = userQueryApi.getInfos(inquiryPage.getContent().stream()
-                .map(InquirySummary::userId)
-                .distinct()
-                .toList());
-
-        List<AdminInquiryResponse> responses = inquiryPage.getContent().stream()
-                .map(i -> AdminInquiryResponse.from(i, userById.get(i.userId())))
-                .toList();
-
-        return new PagedResponse<>(inquiryPage, responses);
-    }
-
-    public AdminAnswerDraftResponse getInquiryAnswerDraft(Long inquiryId) {
-        return AdminAnswerDraftResponse.from(inquiryService.draftAnswer(inquiryId));
-    }
-
     private Map<Long, ClubInfo> resolveUserClubs(Collection<UserInfo> users) {
         List<Long> clubIds = users.stream()
                 .map(UserInfo::clubId)
@@ -190,21 +154,5 @@ public class AdminService {
                 .toList();
         if (clubIds.isEmpty()) return Map.of();
         return clubQueryApi.getInfos(clubIds);
-    }
-
-    @Transactional
-    public AdminInquiryAnswerResponse createInquiryAnswer(InquiryRegisterAnswerCommand command) {
-        inquiryService.registerAnswer(command.inquiryId(), command.content());
-
-        InquirySummary updatedInquiry = inquiryService.getInquirySummary(command.inquiryId());
-        applicationEventPublisher.publishEvent(
-                InquiryAnswerRegisteredEvent.of(updatedInquiry.inquiryId(), updatedInquiry.userId()));
-
-        return AdminInquiryAnswerResponse.of(updatedInquiry.inquiryId(), updatedInquiry.userId());
-    }
-
-    @Transactional
-    public AdminCorpusReindexResponse reindexInquiryCorpus() {
-        return AdminCorpusReindexResponse.of(inquiryService.reindex());
     }
 }
