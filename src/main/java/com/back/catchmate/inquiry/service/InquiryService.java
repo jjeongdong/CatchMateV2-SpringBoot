@@ -14,7 +14,7 @@ import com.back.catchmate.inquiry.infra.SpringAiAssistClient;
 import com.back.catchmate.inquiry.infra.dto.AnswerDraft;
 import com.back.catchmate.inquiry.infra.dto.CorpusDoc;
 import com.back.catchmate.inquiry.repository.InquiryRepository;
-import com.back.catchmate.notice.service.NoticeService;
+import com.back.catchmate.notice.application.NoticeQueryApi;
 import com.back.catchmate.user.application.UserQueryApi;
 import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class InquiryService {
     private final SpringAiAssistClient assistClient;
 
     private final UserQueryApi userQueryApi;
-    private final NoticeService noticeService;
+    private final NoticeQueryApi noticeQueryApi;
 
     @Transactional
     public InquiryCreateResponse createInquiry(Long userId, InquiryCreateRequest request) {
@@ -124,8 +124,8 @@ public class InquiryService {
     public int reindex() {
         List<CorpusDoc> docs = new ArrayList<>();
 
-        noticeService
-                .getAllNoticeSummaries()
+        noticeQueryApi
+                .getLatestInfos(MAX_CORPUS_FETCH)
                 .forEach(notice ->
                         docs.add(new CorpusDoc("NOTICE", notice.noticeId(), notice.title() + "\n" + notice.content())));
 

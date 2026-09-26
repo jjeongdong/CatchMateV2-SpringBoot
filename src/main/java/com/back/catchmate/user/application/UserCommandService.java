@@ -75,7 +75,7 @@ public class UserCommandService {
         userRepository.getById(userId).clearFcmToken();
     }
 
-    /** 미전환 admin 신고 처리 전용 동기 호출. admin/report 전환 시 이벤트로 대체한다. */
+    /** 신고 처리 이벤트(UserReportProcessedListener) 전용. */
     @Transactional
     public void markUserAsReported(Long userId) {
         userRepository.getById(userId).markAsReported();

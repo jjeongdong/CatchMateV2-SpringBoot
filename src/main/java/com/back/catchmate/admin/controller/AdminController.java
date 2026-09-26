@@ -1,8 +1,6 @@
 package com.back.catchmate.admin.controller;
 
 import com.back.catchmate.admin.dto.request.InquiryAnswerRequest;
-import com.back.catchmate.admin.dto.request.NoticeCreateRequest;
-import com.back.catchmate.admin.dto.request.NoticeUpdateRequest;
 import com.back.catchmate.admin.dto.response.AdminAnswerDraftResponse;
 import com.back.catchmate.admin.dto.response.AdminBoardDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminBoardResponse;
@@ -11,19 +9,10 @@ import com.back.catchmate.admin.dto.response.AdminDashboardResponse;
 import com.back.catchmate.admin.dto.response.AdminInquiryAnswerResponse;
 import com.back.catchmate.admin.dto.response.AdminInquiryDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminInquiryResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeActionResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeCreateResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeDetailResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeResponse;
-import com.back.catchmate.admin.dto.response.AdminNoticeUpdateResponse;
-import com.back.catchmate.admin.dto.response.AdminReportActionResponse;
-import com.back.catchmate.admin.dto.response.AdminReportDetailResponse;
-import com.back.catchmate.admin.dto.response.AdminReportResponse;
 import com.back.catchmate.admin.dto.response.AdminUserDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminUserResponse;
 import com.back.catchmate.admin.service.AdminService;
 import com.back.catchmate.common.response.PagedResponse;
-import com.back.catchmate.global.authorization.annotation.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,13 +29,6 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
     private final AdminService adminService;
-
-    @PostMapping("/notices")
-    @Operation(summary = "공지사항 등록", description = "공지사항을 등록할 수 있습니다. (관리자 전용)")
-    public ResponseEntity<AdminNoticeCreateResponse> createNotice(
-            @AuthUser Long userId, @RequestBody @Valid NoticeCreateRequest request) {
-        return ResponseEntity.ok(adminService.createNotice(userId, request));
-    }
 
     @PostMapping("/inquiries/{inquiryId}/answer")
     @Operation(summary = "문의 답변 등록", description = "유저의 문의에 답변을 등록하고 상태를 '완료'로 변경합니다.")
@@ -110,19 +92,6 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getBoardList(page, size));
     }
 
-    @GetMapping("/reports/{reportId}")
-    @Operation(summary = "관리자 신고 상세 조회", description = "특정 신고 내역의 상세 정보를 조회합니다.")
-    public ResponseEntity<AdminReportDetailResponse> getReport(@PathVariable Long reportId) {
-        return ResponseEntity.ok(adminService.getReport(reportId));
-    }
-
-    @GetMapping("/reports")
-    @Operation(summary = "관리자 신고 목록 조회", description = "전체 신고 내역을 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<AdminReportResponse>> getReportList(
-            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(adminService.getReportList(page, size));
-    }
-
     @GetMapping("/inquiries/{inquiryId}")
     @Operation(summary = "관리자 문의 상세 조회", description = "특정 문의 내역의 상세 정보를 조회합니다.")
     public ResponseEntity<AdminInquiryDetailResponse> getInquiry(@PathVariable Long inquiryId) {
@@ -134,37 +103,5 @@ public class AdminController {
     public ResponseEntity<PagedResponse<AdminInquiryResponse>> getInquiryList(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(adminService.getInquiryList(page, size));
-    }
-
-    @GetMapping("/notices/{noticeId}")
-    @Operation(summary = "공지사항 상세 조회", description = "특정 공지사항의 상세 내용을 조회합니다.")
-    public ResponseEntity<AdminNoticeDetailResponse> getNotice(@PathVariable Long noticeId) {
-        return ResponseEntity.ok(adminService.getNotice(noticeId));
-    }
-
-    @GetMapping("/notices")
-    @Operation(summary = "공지사항 목록 조회", description = "공지사항 목록을 페이징하여 조회합니다. (page는 0부터 시작)")
-    public ResponseEntity<PagedResponse<AdminNoticeResponse>> getNoticeList(
-            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(adminService.getNoticeList(page, size));
-    }
-
-    @PostMapping("/reports/{reportId}/process")
-    @Operation(summary = "신고 처리", description = "별도의 입력 정보 없이, 해당 신고 건을 처리하고 신고 당한 유저를 '신고됨(true)' 상태로 변경합니다.")
-    public ResponseEntity<AdminReportActionResponse> updateReportProcess(@PathVariable Long reportId) {
-        return ResponseEntity.ok(adminService.updateReportProcess(reportId));
-    }
-
-    @PutMapping("/notices/{noticeId}")
-    @Operation(summary = "공지사항 수정", description = "특정 공지사항을 수정합니다. (관리자 전용)")
-    public ResponseEntity<AdminNoticeUpdateResponse> updateNotice(
-            @AuthUser Long userId, @PathVariable Long noticeId, @RequestBody @Valid NoticeUpdateRequest request) {
-        return ResponseEntity.ok(adminService.updateNotice(noticeId, request));
-    }
-
-    @DeleteMapping("/notices/{noticeId}")
-    @Operation(summary = "공지사항 삭제", description = "특정 공지사항을 삭제합니다. (관리자 전용)")
-    public ResponseEntity<AdminNoticeActionResponse> deleteNotice(@AuthUser Long userId, @PathVariable Long noticeId) {
-        return ResponseEntity.ok(adminService.deleteNotice(noticeId));
     }
 }
