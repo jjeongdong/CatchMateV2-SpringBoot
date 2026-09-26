@@ -1,6 +1,6 @@
 package com.back.catchmate.chat.event;
 
-import com.back.catchmate.board.event.BoardCompletedEvent;
+import com.back.catchmate.board.domain.event.BoardCompletedEvent;
 import com.back.catchmate.chat.service.ChatCommandService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;

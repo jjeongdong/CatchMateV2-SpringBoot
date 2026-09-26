@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.back.catchmate.CatchmateApplication;
 import com.back.catchmate.auth.infrastructure.JwtTokenProvider;
-import com.back.catchmate.board.entity.Board;
-import com.back.catchmate.board.repository.BoardRepository;
+import com.back.catchmate.board.domain.Board;
+import com.back.catchmate.board.infrastructure.BoardJpaRepository;
 import com.back.catchmate.chat.entity.ChatRoom;
 import com.back.catchmate.chat.entity.ChatRoomMember;
 import com.back.catchmate.chat.entity.MessageType;
@@ -64,7 +64,7 @@ class ChatMessageE2eStompTest {
     private ChatRoomMemberRepository chatRoomMemberRepository;
 
     @Autowired
-    private BoardRepository boardRepository;
+    private BoardJpaRepository boardRepository;
 
     private User savedUser;
     private Board savedBoard;
@@ -96,15 +96,18 @@ class ChatMessageE2eStompTest {
                 null));
 
         // chat_rooms.board_id 에 실제 FK(boards.board_id)가 걸려 있어 더미 게시글이 필요하다
-        savedBoard = boardRepository.save(Board.builder()
-                .title("e2e-" + unique)
-                .content("e2e test board")
-                .maxPerson(4)
-                .currentPerson(1)
-                .userId(savedUser.getId())
-                .completed(false)
-                .liftUpDate(LocalDateTime.now())
-                .build());
+        savedBoard = boardRepository.save(Board.create(
+                savedUser.getId(),
+                "e2e-" + unique,
+                "e2e test board",
+                4,
+                null,
+                null,
+                false,
+                null,
+                null,
+                false,
+                LocalDateTime.now()));
 
         savedRoom = chatRoomRepository.save(ChatRoom.builder()
                 .boardId(savedBoard.getId())

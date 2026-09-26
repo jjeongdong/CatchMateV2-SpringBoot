@@ -49,7 +49,7 @@ global/            config, error, response, persistence, security, infrastructur
 - 타 BC 에서 쓸 수 있는 것: `{bc}.application.{Bc}QueryApi`, `{bc}.application.dto.api..`, `{bc}.domain.event..` 뿐.
 - 타 BC 엔티티는 ID 로만 참조. BC 간 `@ManyToOne`/`@OneToOne` 금지.
 - 타 BC 호출은 조회만 (`QueryApi`). 타 BC 상태 변경은 도메인 이벤트로 — 발행 측은 수신 측을 모른다.
-- 양방향 동기 호출 금지. 한쪽은 이벤트로.
+- 양방향 **명령** 호출 금지 — 상태 변경은 한쪽을 이벤트로. 조회는 `QueryApi` 로 양방향 허용하되, `QueryApi` 는 타 BC 를 의존하지 않는다 (`application.dto.api` 제외, ArchUnit 이 검사).
 - 타 BC 테이블 SQL JOIN 금지. 예외는 성능 문제가 측정으로 확인된 경우만: 클래스에 사유·측정 근거 주석 + `MigratedContexts.CROSS_CONTEXT_ALLOWLIST` 에 FQCN 등록.
 
 ### `{Bc}QueryApi`
@@ -57,6 +57,7 @@ global/            config, error, response, persistence, security, infrastructur
 - 기본 제공: `getInfo(Long id)`, `getInfos(Collection<Long> ids) → Map<Long, {Domain}Info>`.
 - public 메서드는 Javadoc 필수 — 타 BC 와의 계약이다.
 - 자기 Controller 용 `CommandService`/`QueryService` 는 타 BC 에서 호출하지 않는다.
+- 자기 BC 의 Repository·도메인과 `global`, 타 BC 의 `dto/api` 만 쓴다. 타 BC `QueryApi` 를 주입하는 것은 `QueryService`·`CommandService` 뿐이라 빈 순환이 생기지 않는다.
 
 ## global
 - 비즈니스 로직(특정 BC 개념) 금지. `global` → BC import 금지.

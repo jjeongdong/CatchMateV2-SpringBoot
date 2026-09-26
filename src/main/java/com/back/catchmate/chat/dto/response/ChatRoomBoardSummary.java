@@ -1,6 +1,6 @@
 package com.back.catchmate.chat.dto.response;
 
-import com.back.catchmate.board.dto.response.BoardSummary;
+import com.back.catchmate.board.application.dto.api.BoardInfo;
 import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.user.application.dto.api.UserInfo;
@@ -17,7 +17,7 @@ public record ChatRoomBoardSummary(
         ChatGameSummary game,
         ChatUserSummary user) {
     public static ChatRoomBoardSummary from(
-            BoardSummary board,
+            BoardInfo board,
             boolean bookMarked,
             UserInfo user,
             ClubInfo userClub,
@@ -30,8 +30,7 @@ public record ChatRoomBoardSummary(
                 board.title(),
                 board.content(),
                 board.currentPerson(),
-                // maxPerson 은 board 쪽이 Integer 라 널이 올 수 있다. 언박싱 NPE 를 막는 기본값 0.
-                board.maxPerson() != null ? board.maxPerson() : 0,
+                board.maxPerson(),
                 bookMarked,
                 cheerClub,
                 game != null

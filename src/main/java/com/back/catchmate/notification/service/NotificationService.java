@@ -1,13 +1,13 @@
 package com.back.catchmate.notification.service;
 
-import com.back.catchmate.board.dto.response.BoardSummary;
-import com.back.catchmate.board.service.BoardService;
+import com.back.catchmate.board.application.BoardQueryApi;
+import com.back.catchmate.board.application.dto.api.BoardInfo;
 import com.back.catchmate.club.application.ClubQueryApi;
 import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.response.PagedResponse;
-import com.back.catchmate.enroll.service.EnrollQueryService;
+import com.back.catchmate.enroll.application.EnrollQueryApi;
 import com.back.catchmate.game.application.GameQueryApi;
 import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.notification.dto.response.NotificationResponse;
@@ -42,8 +42,8 @@ public class NotificationService {
     private final ClubQueryApi clubQueryApi;
     private final GameQueryApi gameQueryApi;
     private final UserQueryApi userQueryApi;
-    private final BoardService boardService;
-    private final EnrollQueryService enrollQueryService;
+    private final BoardQueryApi boardQueryApi;
+    private final EnrollQueryApi enrollQueryApi;
 
     public NotificationResponse getNotification(Long userId, Long notificationId) {
         Notification notification = getNotificationOrThrow(notificationId);
@@ -51,9 +51,8 @@ public class NotificationService {
 
         String acceptStatus = null;
         if (notification.getType() == AlarmType.ENROLL && notification.getTargetId() != null) {
-            acceptStatus = enrollQueryService
-                    .findAcceptStatusById(notification.getTargetId())
-                    .orElse(null);
+            acceptStatus =
+                    enrollQueryApi.findAcceptStatus(notification.getTargetId()).orElse(null);
         }
 
         UserInfo sender = notification.getSenderId() != null ? userQueryApi.getInfo(notification.getSenderId()) : null;
@@ -71,7 +70,7 @@ public class NotificationService {
                 .map(Notification::getTargetId)
                 .toList();
 
-        Map<Long, String> enrollStatusMap = enrollQueryService.getAcceptStatusMapByIds(enrollIds);
+        Map<Long, String> enrollStatusMap = enrollQueryApi.getAcceptStatuses(enrollIds);
 
         Map<Long, String> gameInfoByBoardId = resolveGameInfos(notificationPage.getContent());
 
@@ -159,7 +158,7 @@ public class NotificationService {
         if (boardId == null) {
             return null;
         }
-        BoardSummary board = boardService.getBoardSummary(boardId);
+        BoardInfo board = boardQueryApi.getInfo(boardId);
         if (board == null || board.gameId() == null) {
             return null;
         }
@@ -179,12 +178,10 @@ public class NotificationService {
         if (boardIds.isEmpty()) {
             return Map.of();
         }
-        Map<Long, BoardSummary> boardById = boardService.getBoardSummaries(boardIds).stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(BoardSummary::boardId, Function.identity()));
+        Map<Long, BoardInfo> boardById = boardQueryApi.getInfos(boardIds);
 
         List<Long> gameIds = boardById.values().stream()
-                .map(BoardSummary::gameId)
+                .map(BoardInfo::gameId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
@@ -201,7 +198,7 @@ public class NotificationService {
         Map<Long, ClubInfo> clubById = clubIds.isEmpty() ? Map.of() : clubQueryApi.getInfos(clubIds);
 
         return boardIds.stream().collect(Collectors.toMap(Function.identity(), bid -> {
-            BoardSummary b = boardById.get(bid);
+            BoardInfo b = boardById.get(bid);
             if (b == null || b.gameId() == null) return "";
             GameInfo game = gameById.get(b.gameId());
             if (game == null) return "";

@@ -1,7 +1,5 @@
 package com.back.catchmate.admin.controller;
 
-import com.back.catchmate.admin.dto.response.AdminBoardDetailResponse;
-import com.back.catchmate.admin.dto.response.AdminBoardResponse;
 import com.back.catchmate.admin.dto.response.AdminDashboardResponse;
 import com.back.catchmate.admin.dto.response.AdminUserDetailResponse;
 import com.back.catchmate.admin.dto.response.AdminUserResponse;
@@ -42,27 +40,5 @@ public class AdminController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(adminService.getUserList(clubName, page, size));
-    }
-
-    @GetMapping("/boards/{boardId}")
-    @Operation(summary = "관리자 게시글 상세 조회", description = "게시글 상세 정보와 해당 게시글에 대한 신청자 목록을 조회합니다.")
-    public ResponseEntity<AdminBoardDetailResponse> getBoardWithEnrollList(@PathVariable Long boardId) {
-        return ResponseEntity.ok(adminService.getBoardWithEnrollList(boardId));
-    }
-
-    @GetMapping("/users/{userId}/boards")
-    @Operation(summary = "유저 작성 게시글 조회", description = "특정 유저가 작성한 게시글 목록을 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<AdminBoardResponse>> getBoardListByUserId(
-            @PathVariable Long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(adminService.getBoardListByUserId(userId, page, size));
-    }
-
-    @GetMapping("/boards")
-    @Operation(summary = "관리자 게시글 전체 조회", description = "전체 게시글을 페이징하여 조회합니다.")
-    public ResponseEntity<PagedResponse<AdminBoardResponse>> getBoardList(
-            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(adminService.getBoardList(page, size));
     }
 }

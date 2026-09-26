@@ -36,6 +36,7 @@ final class ArchitectureRules {
             String base = root + "." + context;
             rules.addAll(layerRules(root, base));
             rules.add(boundaryRule(root, context, crossContextAllowlist));
+            rules.add(queryApiRule(root, context));
             rules.add(globalRule(root, base));
             rules.addAll(locationRules(base));
             rules.addAll(codingRules(base));
@@ -101,13 +102,44 @@ final class ArchitectureRules {
                 .as(context + " 는 다른 BC 의 QueryApi, application.dto.api, domain.event 만 사용한다");
     }
 
+    // QueryApi 끼리 서로 주입하면 조회가 연쇄되고 빈 순환이 생긴다. 조회 양방향을 허용하는 대신 QueryApi 는 타 BC 를 모르게 한다.
+    private static ArchRule queryApiRule(String root, String context) {
+        DescribedPredicate<JavaClass> otherContextNonApiDto = DescribedPredicate.describe(
+                "다른 BC 의 application.dto.api 가 아닌 클래스",
+                (JavaClass target) -> isOtherContextNonApiDto(root, context, target));
+        return noClasses()
+                .that()
+                .resideInAPackage(root + "." + context + ".application")
+                .and()
+                .haveSimpleNameEndingWith("QueryApi")
+                .should()
+                .dependOnClassesThat(otherContextNonApiDto)
+                .as(context + " 의 QueryApi 는 다른 BC 의 application.dto.api 만 사용한다");
+    }
+
+    private static boolean isOtherContextNonApiDto(String root, String context, JavaClass target) {
+        String targetPackage = target.getPackageName();
+        if (!targetPackage.startsWith(root + ".")) {
+            return false;
+        }
+        String targetContext = contextOf(root, targetPackage);
+        if (targetContext.equals(context) || targetContext.equals("global")) {
+            return false;
+        }
+        return !isInPackage(targetPackage, root + "." + targetContext + ".application.dto.api");
+    }
+
+    private static String contextOf(String root, String targetPackage) {
+        String rest = targetPackage.substring(root.length() + 1);
+        return rest.contains(".") ? rest.substring(0, rest.indexOf('.')) : rest;
+    }
+
     private static boolean isOtherContextInternal(String root, String context, JavaClass target) {
         String targetPackage = target.getPackageName();
         if (!targetPackage.startsWith(root + ".")) {
             return false;
         }
-        String rest = targetPackage.substring(root.length() + 1);
-        String targetContext = rest.contains(".") ? rest.substring(0, rest.indexOf('.')) : rest;
+        String targetContext = contextOf(root, targetPackage);
         if (targetContext.equals(context) || targetContext.equals("global")) {
             return false;
         }

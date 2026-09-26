@@ -1,7 +1,7 @@
 package com.back.catchmate.notification.service;
 
-import com.back.catchmate.board.dto.response.BoardSummary;
-import com.back.catchmate.board.service.BoardService;
+import com.back.catchmate.board.application.BoardQueryApi;
+import com.back.catchmate.board.application.dto.api.BoardInfo;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
 import com.back.catchmate.notification.infra.RedisNotificationPublisher;
 import com.back.catchmate.user.application.UserQueryApi;
@@ -28,7 +28,7 @@ public class EnrollNotificationDispatchService {
     private static final String TYPE_ENROLL_REJECTED = "ENROLL_REJECTED";
     private static final String TYPE_ENROLL_CANCEL = "ENROLL_CANCEL";
 
-    private final BoardService boardService;
+    private final BoardQueryApi boardQueryApi;
     private final UserQueryApi userQueryApi;
     private final OutboxDispatcher outboxDispatcher;
     private final RedisNotificationPublisher redisNotificationPublisher;
@@ -47,7 +47,7 @@ public class EnrollNotificationDispatchService {
         }
 
         UserInfo applicant = userQueryApi.getInfo(applicantId);
-        BoardSummary board = boardService.getBoardSummary(boardId);
+        BoardInfo board = boardQueryApi.getInfo(boardId);
         String title = NotificationTemplate.ENROLL_REQUEST.formatTitle(applicant.nickName());
         String body = NotificationTemplate.ENROLL_REQUEST.formatBody(board.title());
 
@@ -67,7 +67,7 @@ public class EnrollNotificationDispatchService {
             return;
         }
 
-        BoardSummary board = boardService.getBoardSummary(boardId);
+        BoardInfo board = boardQueryApi.getInfo(boardId);
         String title = NotificationTemplate.ENROLL_ACCEPT.getTitle();
         String body = NotificationTemplate.ENROLL_ACCEPT.formatBody(board.title());
 
@@ -87,7 +87,7 @@ public class EnrollNotificationDispatchService {
             return;
         }
 
-        BoardSummary board = boardService.getBoardSummary(boardId);
+        BoardInfo board = boardQueryApi.getInfo(boardId);
         String title = NotificationTemplate.ENROLL_REJECT.getTitle();
         String body = NotificationTemplate.ENROLL_REJECT.formatBody(board.title());
 
@@ -108,7 +108,7 @@ public class EnrollNotificationDispatchService {
         }
 
         UserInfo applicant = userQueryApi.getInfo(applicantId);
-        BoardSummary board = boardService.getBoardSummary(boardId);
+        BoardInfo board = boardQueryApi.getInfo(boardId);
         String title = NotificationTemplate.ENROLL_CANCEL.formatTitle(applicant.nickName());
         String body = NotificationTemplate.ENROLL_CANCEL.formatBody(board.title());
 

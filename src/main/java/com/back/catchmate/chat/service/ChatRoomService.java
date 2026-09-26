@@ -1,7 +1,7 @@
 package com.back.catchmate.chat.service;
 
-import com.back.catchmate.board.dto.response.BoardSummary;
-import com.back.catchmate.board.service.BoardService;
+import com.back.catchmate.board.application.BoardQueryApi;
+import com.back.catchmate.board.application.dto.api.BoardInfo;
 import com.back.catchmate.chat.dto.MembershipSnapshot;
 import com.back.catchmate.chat.entity.ChatMessage;
 import com.back.catchmate.chat.entity.ChatRoom;
@@ -37,7 +37,7 @@ public class ChatRoomService {
     private final ChatHistoryRedisCache chatHistoryRedisCache;
     private final ChatMembershipRedisCache chatMembershipRedisCache;
     private final ChatSequenceRedisStore chatSequenceRedisStore;
-    private final BoardService boardService;
+    private final BoardQueryApi boardQueryApi;
     private final UserQueryApi userQueryApi;
 
     public ChatRoom getChatRoomOrThrow(Long chatRoomId) {
@@ -151,7 +151,7 @@ public class ChatRoomService {
         ChatRoom chatRoom = getChatRoomOrThrow(chatRoomId);
         Long sequence = chatSequenceRedisStore.getCurrentSequence(chatRoomId);
 
-        BoardSummary board = boardService.getBoardSummary(chatRoom.getBoardId());
+        BoardInfo board = boardQueryApi.getInfo(chatRoom.getBoardId());
         if (!board.userId().equals(hostId)) {
             throw new BaseException(ErrorCode.FORBIDDEN_ACCESS);
         }

@@ -51,7 +51,8 @@ class ArchitectureRulesTest {
                 "UsesOtherDomain",
                 "InfraUsesApplication",
                 "PresentationUsesEntity",
-                "GlobalUsesMigrated"
+                "GlobalUsesMigrated",
+                "ChainingQueryApi"
             })
     @DisplayName("위반 픽스처는 모두 보고된다")
     void badFixtureViolationIsReported(String className) {
