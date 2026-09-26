@@ -47,8 +47,8 @@ public class UserCommandService {
     }
 
     /**
-     * 미전환 oauth 가입 흐름 전용 동기 호출. userId 를 곧바로 받아 토큰을 발급해야 해서 이벤트로 바꿀 수 없다.
-     * oauth/auth 전환 때 가입 유스케이스의 소유권과 함께 다시 정한다.
+     * auth 가입 전용 동기 호출. 새 userId 로 곧바로 토큰을 발급해야 해서 이벤트로 바꿀 수 없다.
+     * 아키텍처 테스트의 MigratedContexts.SYNC_COMMAND_ALLOWLIST 로 허용된 예외다.
      */
     @Transactional
     public UserCreateResult createUser(UserCreateCommand command) {
@@ -69,7 +69,7 @@ public class UserCommandService {
         return UserCreateResult.from(user);
     }
 
-    /** 미전환 auth 로그아웃 전용 동기 호출. auth 전환 시 로그아웃 이벤트로 대체한다. */
+    /** 로그아웃 이벤트(UserLoggedOutListener) 전용. */
     @Transactional
     public void clearFcmToken(Long userId) {
         userRepository.getById(userId).clearFcmToken();
