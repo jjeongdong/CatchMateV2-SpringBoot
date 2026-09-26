@@ -1,14 +1,14 @@
 package com.back.catchmate.global.config.data;
 
-import com.back.catchmate.chat.dto.ChatMessageListDto;
-import com.back.catchmate.chat.event.ChatMessageBroadcastEvent;
-import com.back.catchmate.chat.event.ChatRedisSubscriber;
 import com.back.catchmate.notification.event.NotificationRedisSubscriber;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,7 +20,6 @@ import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -53,28 +52,10 @@ public class RedisConfig {
         return template;
     }
 
-    /*
-     * 채팅 Pub/Sub 전용 RedisTemplate.
-     * 공용 템플릿의 GenericJackson2Json 은 @class 타입 메타를 매 메시지에 심어(리플렉션 기반) 무겁다.
-     * 채팅 브로드캐스트는 타입이 ChatMessageBroadcastEvent 로 고정이므로 Jackson2JsonRedisSerializer 로 @class 없이 직렬화한다.
-     */
+    // BC 별 캐시 설정(예: chatHistory 의 값 타입)은 각 BC 가 RedisCacheManagerBuilderCustomizer 빈으로 등록한다.
     @Bean
-    public RedisTemplate<String, ChatMessageBroadcastEvent> chatPubSubRedisTemplate(
-            RedisConnectionFactory connectionFactory) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-        RedisTemplate<String, ChatMessageBroadcastEvent> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(objectMapper, ChatMessageBroadcastEvent.class));
-
-        return template;
-    }
-
-    @Bean
-    public RedisCacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
+    public RedisCacheManager redisCacheManager(
+            RedisConnectionFactory connectionFactory, ObjectProvider<RedisCacheManagerBuilderCustomizer> customizers) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -87,40 +68,23 @@ public class RedisConfig {
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
                         new GenericJackson2JsonRedisSerializer(objectMapper)));
 
-        return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(defaultCacheConfig)
-                .withCacheConfiguration("chatHistory", createCacheConfig(objectMapper, ChatMessageListDto.class))
-                .build();
-    }
-
-    private RedisCacheConfiguration createCacheConfig(ObjectMapper objectMapper, Class<?> clazz) {
-        return RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofHours(1))
-                .disableCachingNullValues()
-                .serializeKeysWith(
-                        RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
-                        new Jackson2JsonRedisSerializer<>(objectMapper, clazz)));
+        RedisCacheManager.RedisCacheManagerBuilder builder =
+                RedisCacheManager.builder(connectionFactory).cacheDefaults(defaultCacheConfig);
+        customizers.orderedStream().forEach(customizer -> customizer.customize(builder));
+        return builder.build();
     }
 
     /**
-     * Redis Pub/Sub 메시지를 비동기로 수신하는 컨테이너
+     * Redis Pub/Sub 메시지를 비동기로 수신하는 컨테이너. 구독은 각 BC 가 RedisTopicSubscription 빈으로 등록한다.
      */
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(
-            RedisConnectionFactory connectionFactory,
-            MessageListenerAdapter chatListenerAdapter,
-            MessageListenerAdapter notificationListenerAdapter,
-            ChannelTopic chatTopic,
-            ChannelTopic notificationTopic) {
+            RedisConnectionFactory connectionFactory, List<RedisTopicSubscription> subscriptions) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.setTaskExecutor(redisListenerTaskExecutor());
-
-        // 1. 채팅 메시지
-        container.addMessageListener(chatListenerAdapter, chatTopic);
-        // 2. 알림 메시지
-        container.addMessageListener(notificationListenerAdapter, notificationTopic);
+        subscriptions.forEach(
+                subscription -> container.addMessageListener(subscription.listener(), subscription.topic()));
         return container;
     }
 
@@ -137,18 +101,6 @@ public class RedisConfig {
     }
 
     /**
-     * 채팅 방 내부에 있을 경우에 사용하는 채팅용 메시지 리스너 어댑터.
-     * 구독 측에서 String 으로 역직렬화하지 않고 Redis 원본 바이트를 그대로 넘기도록 serializer 를 비운다
-     * (ChatRedisSubscriber 가 JSON 재직렬화 없이 raw 바이트를 STOMP 로 그대로 전달하기 위함).
-     */
-    @Bean
-    public MessageListenerAdapter chatListenerAdapter(ChatRedisSubscriber subscriber) {
-        MessageListenerAdapter adapter = new MessageListenerAdapter(subscriber, "onMessage");
-        adapter.setSerializer(null);
-        return adapter;
-    }
-
-    /**
      * 앱 안에 있는데 실시간 반영을 위한 알림용 메시지 리스너 어댑터
      */
     @Bean
@@ -157,18 +109,17 @@ public class RedisConfig {
     }
 
     /**
-     * 채팅용 단일 Topic 생성
-     */
-    @Bean
-    public ChannelTopic chatTopic() {
-        return new ChannelTopic("catchmate-chat-topic");
-    }
-
-    /**
      * 알림용 단일 Topic 생성
      */
     @Bean
     public ChannelTopic notificationTopic() {
         return new ChannelTopic("catchmate-notification-topic");
+    }
+
+    // notification 은 아직 전환 전이라 구독 등록을 여기 둔다 (notification 전환 때 그쪽 설정으로 옮긴다).
+    @Bean
+    public RedisTopicSubscription notificationSubscription(
+            MessageListenerAdapter notificationListenerAdapter, ChannelTopic notificationTopic) {
+        return new RedisTopicSubscription(notificationListenerAdapter, notificationTopic);
     }
 }

@@ -6,13 +6,11 @@ import static org.mockito.BDDMockito.given;
 
 import com.back.catchmate.user.application.dto.api.UserInfo;
 import com.back.catchmate.user.domain.BlockRepository;
-import com.back.catchmate.user.domain.UserPresenceRepository;
 import com.back.catchmate.user.domain.UserRepository;
 import com.back.catchmate.user.domain.exception.UserNotFoundException;
 import com.back.catchmate.user.fixture.UserFixture;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,9 +26,6 @@ class UserQueryApiTest {
 
     @Mock
     private BlockRepository blockRepository;
-
-    @Mock
-    private UserPresenceRepository userPresenceRepository;
 
     @InjectMocks
     private UserQueryApi userQueryApi;
@@ -82,17 +77,5 @@ class UserQueryApiTest {
 
         // when & then
         assertThat(userQueryApi.isBlocked(1L, 2L)).isTrue();
-    }
-
-    @Test
-    @DisplayName("포커스 방 조회는 온라인 상태 저장소에 위임한다")
-    void delegatesFocusRooms() {
-        // given
-        given(userPresenceRepository.findFocusRoom(1L)).willReturn(Optional.of(11L));
-        given(userPresenceRepository.findFocusRooms(List.of(1L, 2L))).willReturn(Map.of(1L, 11L));
-
-        // when & then
-        assertThat(userQueryApi.findFocusRoom(1L)).contains(11L);
-        assertThat(userQueryApi.getFocusRooms(List.of(1L, 2L))).containsOnly(Map.entry(1L, 11L));
     }
 }

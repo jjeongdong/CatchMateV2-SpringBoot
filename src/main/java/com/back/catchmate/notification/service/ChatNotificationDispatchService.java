@@ -1,7 +1,7 @@
 package com.back.catchmate.notification.service;
 
-import com.back.catchmate.chat.dto.response.ChatRecipientSummary;
-import com.back.catchmate.chat.service.ChatQueryService;
+import com.back.catchmate.chat.application.ChatQueryApi;
+import com.back.catchmate.chat.application.dto.api.ChatRecipientInfo;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
 import com.back.catchmate.notification.infra.RedisNotificationPublisher;
 import com.back.catchmate.user.application.UserQueryApi;
@@ -25,7 +25,7 @@ public class ChatNotificationDispatchService {
     private static final String NOTIFICATION_TYPE = "CHAT";
 
     private final UserQueryApi userQueryApi;
-    private final ChatQueryService chatQueryService;
+    private final ChatQueryApi chatQueryApi;
     private final OutboxDispatcher outboxDispatcher;
     private final RedisNotificationPublisher redisNotificationPublisher;
 
@@ -39,8 +39,7 @@ public class ChatNotificationDispatchService {
      * 5. 알림 설정이 켜져있고, 포커스가 없는 경우 Outbox Dispatch 즉시 발송
      */
     public void dispatchOnChatMessageSent(Long chatRoomId, Long messageId, Long senderId, String content) {
-        List<ChatRecipientSummary> recipientsInfo =
-                chatQueryService.getChatRoomRecipientSummaries(chatRoomId, senderId);
+        List<ChatRecipientInfo> recipientsInfo = chatQueryApi.getRecipients(chatRoomId, senderId);
         if (recipientsInfo.isEmpty()) return;
 
         UserInfo sender = userQueryApi.getInfo(senderId);
@@ -49,17 +48,15 @@ public class ChatNotificationDispatchService {
         Map<String, String> payload =
                 createNotificationData(chatRoomId, senderId, sender.nickName(), content, title, body);
 
-        Map<Long, ChatRecipientSummary> infoMap =
-                recipientsInfo.stream().collect(Collectors.toMap(ChatRecipientSummary::userId, Function.identity()));
+        Map<Long, ChatRecipientInfo> infoMap =
+                recipientsInfo.stream().collect(Collectors.toMap(ChatRecipientInfo::userId, Function.identity()));
 
         List<UserInfo> recipients = List.copyOf(userQueryApi
-                .getInfos(recipientsInfo.stream()
-                        .map(ChatRecipientSummary::userId)
-                        .toList())
+                .getInfos(recipientsInfo.stream().map(ChatRecipientInfo::userId).toList())
                 .values());
 
         // 알림 설정과 무관하게 전원의 포커스 여부를 봐야 하므로 수신자 전체를 MGET 한 번으로 모아온다.
-        Map<Long, Long> focusRooms = userQueryApi.getFocusRooms(
+        Map<Long, Long> focusRooms = chatQueryApi.getFocusRooms(
                 recipients.stream().map(UserInfo::userId).toList());
 
         // 현재 보고 있는 방이면 실시간 알림 스킵

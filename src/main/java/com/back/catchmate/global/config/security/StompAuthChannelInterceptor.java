@@ -1,9 +1,9 @@
 package com.back.catchmate.global.config.security;
 
-import com.back.catchmate.chat.service.ChatQueryService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +25,6 @@ import org.springframework.util.StringUtils;
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private static final List<String> TOKEN_HEADERS = List.of("Authorization", "authorization", "token");
 
-    private static final String CHAT_ROOM_DESTINATION_PREFIX = "/sub/chat/room/";
-
     // WebSocketConfig 의 setApplicationDestinationPrefixes("/pub") 와 짝을 이룬다.
     private static final String APPLICATION_DESTINATION_PREFIX = "/pub/";
 
@@ -36,7 +34,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             Set.of("/user/queue/notifications", "/user/queue/errors");
 
     private final AccessTokenVerifier accessTokenVerifier;
-    private final ChatQueryService chatQueryService;
+    private final List<StompSubscriptionAuthorizer> subscriptionAuthorizers;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -90,7 +88,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     // 브로커(DefaultSubscriptionRegistry)는 구독 목적지를 AntPathMatcher 패턴으로 취급한다.
     // 따라서 "이 prefix 로 시작할 때만 검사" 방식은 /sub/** 같은 와일드카드에 그대로 뚫린다
     // (권한 검사를 건너뛴 채 등록되고, 이후 /sub/chat/room/{id} 전송 전부에 매칭된다).
-    // 서버가 실제로 전송하는 목적지는 채팅방과 개인 큐뿐이므로 화이트리스트로 막는다.
+    // 서버가 실제로 전송하는 목적지는 BC 검사기가 맡는 목적지와 개인 큐뿐이므로 나머지는 막는다.
     private void authorizeSubscribe(StompHeaderAccessor accessor) {
         String dest = accessor.getDestination();
         if (dest == null) {
@@ -98,24 +96,18 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             throw new BaseException(ErrorCode.BAD_REQUEST);
         }
 
-        if (dest.startsWith(CHAT_ROOM_DESTINATION_PREFIX)) {
-            authorizeChatRoomSubscribe(accessor, dest);
+        Optional<StompSubscriptionAuthorizer> authorizer = subscriptionAuthorizers.stream()
+                .filter(candidate -> candidate.supports(dest))
+                .findFirst();
+        if (authorizer.isPresent()) {
+            Long userId = requireAuthenticatedUserId(accessor, dest);
+            authorizer.orElseThrow().authorize(userId, dest);
             return;
         }
 
         if (!ALLOWED_USER_DESTINATIONS.contains(dest)) {
             log.warn("Rejected SUBSCRIBE to disallowed destination: {}", dest);
             throw new BaseException(ErrorCode.BAD_REQUEST);
-        }
-    }
-
-    private void authorizeChatRoomSubscribe(StompHeaderAccessor accessor, String dest) {
-        Long chatRoomId = parseChatRoomId(dest);
-        Long userId = requireAuthenticatedUserId(accessor, dest);
-
-        if (!chatQueryService.canAccessChatRoom(userId, chatRoomId)) {
-            log.warn("User {} tried to subscribe to chatRoom {} without participation", userId, chatRoomId);
-            throw new BaseException(ErrorCode.USER_CHATROOM_NOT_FOUND);
         }
     }
 
@@ -126,15 +118,6 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         String dest = accessor.getDestination();
         if (dest == null || !dest.startsWith(APPLICATION_DESTINATION_PREFIX)) {
             log.warn("Rejected SEND to non-application destination: {}", dest);
-            throw new BaseException(ErrorCode.BAD_REQUEST);
-        }
-    }
-
-    private Long parseChatRoomId(String dest) {
-        try {
-            return Long.parseLong(dest.substring(CHAT_ROOM_DESTINATION_PREFIX.length()));
-        } catch (NumberFormatException e) {
-            log.warn("Invalid chatRoomId in destination: {}", dest);
             throw new BaseException(ErrorCode.BAD_REQUEST);
         }
     }

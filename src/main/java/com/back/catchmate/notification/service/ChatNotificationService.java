@@ -1,7 +1,7 @@
 package com.back.catchmate.notification.service;
 
-import com.back.catchmate.chat.dto.response.ChatRecipientSummary;
-import com.back.catchmate.chat.service.ChatQueryService;
+import com.back.catchmate.chat.application.ChatQueryApi;
+import com.back.catchmate.chat.application.dto.api.ChatRecipientInfo;
 import com.back.catchmate.notification.dto.OutboxRecipient;
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
 import com.back.catchmate.user.application.UserQueryApi;
@@ -23,12 +23,11 @@ public class ChatNotificationService {
     private static final String NOTIFICATION_TYPE = "CHAT";
 
     private final UserQueryApi userQueryApi;
-    private final ChatQueryService chatQueryService;
+    private final ChatQueryApi chatQueryApi;
     private final OutboxSaver outboxSaver;
 
     public void saveOnChatMessageSent(Long chatRoomId, Long messageId, Long senderId, String content) {
-        List<ChatRecipientSummary> recipientsInfo =
-                chatQueryService.getChatRoomRecipientSummaries(chatRoomId, senderId);
+        List<ChatRecipientInfo> recipientsInfo = chatQueryApi.getRecipients(chatRoomId, senderId);
         if (recipientsInfo.isEmpty()) return;
 
         UserInfo sender = userQueryApi.getInfo(senderId);
@@ -37,13 +36,11 @@ public class ChatNotificationService {
         Map<String, String> payload =
                 createNotificationData(chatRoomId, senderId, sender.nickName(), content, title, body);
 
-        Map<Long, ChatRecipientSummary> infoMap =
-                recipientsInfo.stream().collect(Collectors.toMap(ChatRecipientSummary::userId, Function.identity()));
+        Map<Long, ChatRecipientInfo> infoMap =
+                recipientsInfo.stream().collect(Collectors.toMap(ChatRecipientInfo::userId, Function.identity()));
 
         List<UserInfo> recipients = List.copyOf(userQueryApi
-                .getInfos(recipientsInfo.stream()
-                        .map(ChatRecipientSummary::userId)
-                        .toList())
+                .getInfos(recipientsInfo.stream().map(ChatRecipientInfo::userId).toList())
                 .values());
 
         // 알림 설정으로 먼저 걸러 Redis 조회 대상 자체를 줄인다.
@@ -55,7 +52,7 @@ public class ChatNotificationService {
                 .toList();
 
         // 수신자별 왕복 대신 MGET 한 번으로 포커스 방을 모아온다.
-        Map<Long, Long> focusRooms = userQueryApi.getFocusRooms(
+        Map<Long, Long> focusRooms = chatQueryApi.getFocusRooms(
                 candidates.stream().map(UserInfo::userId).toList());
 
         // 현재 보고 있는 방이면 아웃박스 저장 안함 (FCM 발송 원천 방지)

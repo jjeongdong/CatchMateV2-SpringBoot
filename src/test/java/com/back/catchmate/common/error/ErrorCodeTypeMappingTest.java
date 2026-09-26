@@ -14,10 +14,10 @@ class ErrorCodeTypeMappingTest {
 
     @ParameterizedTest
     @CsvSource({
-        "CHATROOM_REENTRY_NOT_ALLOWED, INVALID",
+        "BAD_REQUEST, INVALID",
         "INVALID_ACCESS_TOKEN, UNAUTHORIZED",
-        "CHATROOM_READ_ONLY, FORBIDDEN",
-        "CHATROOM_NOT_FOUND, NOT_FOUND",
+        "FORBIDDEN_ACCESS, FORBIDDEN",
+        "NOTIFICATION_NOT_FOUND, NOT_FOUND",
         "NOTIFICATION_OUTBOX_SAVE_FAILED, INTERNAL"
     })
     @DisplayName("기존 HTTP 상태가 같은 의미의 ErrorType 으로 옮겨졌다")
@@ -29,11 +29,11 @@ class ErrorCodeTypeMappingTest {
     @DisplayName("기존 BaseException 도 BusinessException 으로 잡히고 옛 enum 을 그대로 돌려준다")
     void baseExceptionIsBusinessException() {
         // when
-        BaseException exception = new BaseException(ErrorCode.CHATROOM_NOT_FOUND);
+        BaseException exception = new BaseException(ErrorCode.NOTIFICATION_NOT_FOUND);
 
         // then
         assertThat(exception).isInstanceOf(BusinessException.class);
-        assertThat(exception.getErrorCode()).isSameAs(ErrorCode.CHATROOM_NOT_FOUND);
-        assertThat(exception.getMessage()).isEqualTo("존재하지 않는 채팅방입니다.");
+        assertThat(exception.getErrorCode()).isSameAs(ErrorCode.NOTIFICATION_NOT_FOUND);
+        assertThat(exception.getMessage()).isEqualTo("존재하지 않는 알림입니다.");
     }
 }
