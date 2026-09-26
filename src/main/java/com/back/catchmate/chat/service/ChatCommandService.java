@@ -8,7 +8,7 @@ import com.back.catchmate.chat.event.ChatMessageBroadcastEvent;
 import com.back.catchmate.chat.infra.S3ImageUploader;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.common.upload.UploadFile;
+import com.back.catchmate.global.infrastructure.upload.UploadFile;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
 import lombok.RequiredArgsConstructor;

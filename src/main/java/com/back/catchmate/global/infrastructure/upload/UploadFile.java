@@ -1,4 +1,4 @@
-package com.back.catchmate.common.upload;
+package com.back.catchmate.global.infrastructure.upload;
 
 import java.io.InputStream;
 
