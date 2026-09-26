@@ -8,8 +8,8 @@ import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.enroll.service.EnrollQueryService;
-import com.back.catchmate.game.dto.response.GameSummary;
-import com.back.catchmate.game.service.GameService;
+import com.back.catchmate.game.application.GameQueryApi;
+import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.notification.dto.response.NotificationResponse;
 import com.back.catchmate.notification.dto.response.UnreadNotificationResponse;
 import com.back.catchmate.notification.entity.Notification;
@@ -40,7 +40,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final ClubQueryApi clubQueryApi;
-    private final GameService gameService;
+    private final GameQueryApi gameQueryApi;
     private final UserService userService;
     private final BoardService boardService;
     private final EnrollQueryService enrollQueryService;
@@ -167,7 +167,7 @@ public class NotificationService {
         if (board == null || board.gameId() == null) {
             return null;
         }
-        GameSummary game = gameService.getGameSummary(board.gameId());
+        GameInfo game = gameQueryApi.getInfo(board.gameId());
         if (game == null) return null;
         ClubInfo homeClub = game.homeClubId() != null ? clubQueryApi.getInfo(game.homeClubId()) : null;
         ClubInfo awayClub = game.awayClubId() != null ? clubQueryApi.getInfo(game.awayClubId()) : null;
@@ -195,9 +195,7 @@ public class NotificationService {
         if (gameIds.isEmpty()) {
             return Map.of();
         }
-        Map<Long, GameSummary> gameById = gameService.getGameSummaries(gameIds).stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(GameSummary::gameId, Function.identity()));
+        Map<Long, GameInfo> gameById = gameQueryApi.getInfos(gameIds);
 
         List<Long> clubIds = gameById.values().stream()
                 .flatMap(g -> Stream.of(g.homeClubId(), g.awayClubId()))
@@ -209,7 +207,7 @@ public class NotificationService {
         return boardIds.stream().collect(Collectors.toMap(Function.identity(), bid -> {
             BoardSummary b = boardById.get(bid);
             if (b == null || b.gameId() == null) return "";
-            GameSummary game = gameById.get(b.gameId());
+            GameInfo game = gameById.get(b.gameId());
             if (game == null) return "";
             ClubInfo home = game.homeClubId() != null ? clubById.get(game.homeClubId()) : null;
             ClubInfo away = game.awayClubId() != null ? clubById.get(game.awayClubId()) : null;
@@ -217,7 +215,7 @@ public class NotificationService {
         }));
     }
 
-    private static String formatGameInfo(GameSummary game, ClubInfo homeClub, ClubInfo awayClub) {
+    private static String formatGameInfo(GameInfo game, ClubInfo homeClub, ClubInfo awayClub) {
         if (game == null || game.gameStartDate() == null) return null;
         String home = homeClub != null ? homeClub.name() : "?";
         String away = awayClub != null ? awayClub.name() : "?";

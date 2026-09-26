@@ -13,9 +13,6 @@ public enum ErrorCode implements com.back.catchmate.global.error.ErrorCode {
     USER_ALREADY_EXISTS(ErrorType.INVALID, "이미 가입된 사용자입니다."),
     FORBIDDEN_ACCESS(ErrorType.FORBIDDEN, "접근 권한이 없습니다."),
 
-    // 클럽
-    GAME_NOT_FOUND(ErrorType.NOT_FOUND, "존재하지 않는 게임입니다."),
-
     // 신청
     ALREADY_ENROLL_PENDING(ErrorType.INVALID, "이미 신청 대기 중인 게시글입니다."),
     ALREADY_ENROLL_REJECTED(ErrorType.INVALID, "이미 거절된 신청 내역이 있어 재신청할 수 없습니다."),

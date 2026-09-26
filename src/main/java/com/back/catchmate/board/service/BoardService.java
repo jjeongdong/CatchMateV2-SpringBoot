@@ -15,8 +15,8 @@ import com.back.catchmate.board.repository.BoardRepository;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.response.CursorPage;
-import com.back.catchmate.game.dto.response.GameSummary;
-import com.back.catchmate.game.service.GameService;
+import com.back.catchmate.game.application.GameQueryApi;
+import com.back.catchmate.game.application.dto.api.GameInfo;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -41,14 +41,14 @@ public class BoardService {
     private final BoardRepository boardRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    private final GameService gameService;
+    private final GameQueryApi gameQueryApi;
 
     // ── 쓰기 ──────────────────────────────────────────────────────────
     @Transactional
     public BoardCreateResponse createBoard(Long userId, BoardCreateCommand command) {
         findTempBoard(userId).ifPresent(this::deleteTempBoard);
 
-        GameSummary game = resolveGame(command.gameId());
+        GameInfo game = resolveGame(command.gameId());
 
         Board board = Board.createBoard(
                 command.title(),
@@ -76,7 +76,7 @@ public class BoardService {
         Board board = getBoard(boardId);
         verifyBoardOwner(board, userId);
         boolean wasCompleted = board.isCompleted();
-        GameSummary game = resolveGame(command.gameId());
+        GameInfo game = resolveGame(command.gameId());
 
         board.updateBoard(
                 command.title(),
@@ -204,18 +204,18 @@ public class BoardService {
     }
 
     // 게시글 발행에 충분한 경기 정보인지 판정한다 (board 의 규칙 — 전환 전 BoardGameInfo.isComplete()).
-    private boolean isGameComplete(GameSummary game) {
+    private boolean isGameComplete(GameInfo game) {
         return game.homeClubId() != null
                 && game.awayClubId() != null
                 && game.gameStartDate() != null
                 && game.location() != null;
     }
 
-    private GameSummary resolveGame(Long gameId) {
+    private GameInfo resolveGame(Long gameId) {
         if (gameId == null) {
             return null;
         }
-        return gameService.getGameSummary(gameId);
+        return gameQueryApi.getInfo(gameId);
     }
 
     private BoardSummary toSummary(Board board) {

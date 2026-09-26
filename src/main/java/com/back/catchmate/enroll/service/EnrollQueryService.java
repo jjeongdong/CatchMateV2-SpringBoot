@@ -24,8 +24,8 @@ import com.back.catchmate.enroll.dto.response.EnrollWriterView;
 import com.back.catchmate.enroll.entity.AcceptStatus;
 import com.back.catchmate.enroll.entity.Enroll;
 import com.back.catchmate.enroll.repository.EnrollRepository;
-import com.back.catchmate.game.dto.response.GameSummary;
-import com.back.catchmate.game.service.GameService;
+import com.back.catchmate.game.application.GameQueryApi;
+import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
 import java.util.Collection;
@@ -55,7 +55,7 @@ public class EnrollQueryService {
 
     private final BookmarkService bookmarkService;
     private final ClubQueryApi clubQueryApi;
-    private final GameService gameService;
+    private final GameQueryApi gameQueryApi;
     private final UserService userService;
     private final BoardService boardService;
 
@@ -241,15 +241,12 @@ public class EnrollQueryService {
                 ? Map.of()
                 : userService.getUserSummaries(userIds).stream()
                         .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
-        Map<Long, GameSummary> gameMap = gameIds.isEmpty()
-                ? Map.of()
-                : gameService.getGameSummaries(gameIds).stream()
-                        .collect(Collectors.toMap(GameSummary::gameId, Function.identity()));
+        Map<Long, GameInfo> gameMap = gameIds.isEmpty() ? Map.of() : gameQueryApi.getInfos(gameIds);
 
         List<Long> clubIds = Stream.of(
                         boards.stream().map(BoardSummary::cheerClubId),
-                        gameMap.values().stream().map(GameSummary::homeClubId),
-                        gameMap.values().stream().map(GameSummary::awayClubId),
+                        gameMap.values().stream().map(GameInfo::homeClubId),
+                        gameMap.values().stream().map(GameInfo::awayClubId),
                         userMap.values().stream().map(UserSummary::clubId))
                 .flatMap(Function.identity())
                 .filter(Objects::nonNull)
@@ -267,11 +264,11 @@ public class EnrollQueryService {
             boolean bookmarked,
             Map<Long, UserSummary> userMap,
             Map<Long, ClubInfo> clubMap,
-            Map<Long, GameSummary> gameMap) {
+            Map<Long, GameInfo> gameMap) {
         UserSummary user = board.userId() != null ? userMap.get(board.userId()) : null;
         ClubInfo userClub = user != null && user.clubId() != null ? clubMap.get(user.clubId()) : null;
         ClubInfo cheerClub = board.cheerClubId() != null ? clubMap.get(board.cheerClubId()) : null;
-        GameSummary game = board.gameId() != null ? gameMap.get(board.gameId()) : null;
+        GameInfo game = board.gameId() != null ? gameMap.get(board.gameId()) : null;
         ClubInfo homeClub = game != null && game.homeClubId() != null ? clubMap.get(game.homeClubId()) : null;
         ClubInfo awayClub = game != null && game.awayClubId() != null ? clubMap.get(game.awayClubId()) : null;
         return toEnrollBoardSummary(board, bookmarked, user, userClub, cheerClub, game, homeClub, awayClub);
@@ -283,7 +280,7 @@ public class EnrollQueryService {
             UserSummary user,
             ClubInfo userClub,
             ClubInfo cheerClub,
-            GameSummary game,
+            GameInfo game,
             ClubInfo homeClub,
             ClubInfo awayClub) {
         return new EnrollBoardSummary(
@@ -304,7 +301,7 @@ public class EnrollQueryService {
         return new EnrollClubView(club.clubId(), club.name(), club.homeStadium(), club.region());
     }
 
-    private EnrollGameView toGameView(GameSummary game, ClubInfo homeClub, ClubInfo awayClub) {
+    private EnrollGameView toGameView(GameInfo game, ClubInfo homeClub, ClubInfo awayClub) {
         if (game == null) return null;
         return new EnrollGameView(
                 game.gameId(), game.gameStartDate(), game.location(), toClubView(homeClub), toClubView(awayClub));

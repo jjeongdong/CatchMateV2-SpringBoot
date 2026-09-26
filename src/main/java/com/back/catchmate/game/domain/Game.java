@@ -1,4 +1,4 @@
-package com.back.catchmate.game.entity;
+package com.back.catchmate.game.domain;
 
 import com.back.catchmate.global.persistence.BaseTimeEntity;
 import jakarta.persistence.Column;
@@ -9,16 +9,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @Table(name = "games")
 public class Game extends BaseTimeEntity {
     @Id
@@ -38,16 +34,14 @@ public class Game extends BaseTimeEntity {
     @Column
     private String location;
 
-    public static Game createGame(Long homeClubId, Long awayClubId, LocalDateTime date, String location) {
-        return Game.builder()
-                .homeClubId(homeClubId)
-                .awayClubId(awayClubId)
-                .gameStartDate(date)
-                .location(location)
-                .build();
+    private Game(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {
+        this.homeClubId = homeClubId;
+        this.awayClubId = awayClubId;
+        this.gameStartDate = gameStartDate;
+        this.location = location;
     }
 
-    public boolean isComplete() {
-        return homeClubId != null && awayClubId != null && gameStartDate != null && location != null;
+    public static Game create(Long homeClubId, Long awayClubId, LocalDateTime gameStartDate, String location) {
+        return new Game(homeClubId, awayClubId, gameStartDate, location);
     }
 }

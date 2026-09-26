@@ -2,7 +2,7 @@ package com.back.catchmate.chat.dto.response;
 
 import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.club.application.dto.api.ClubInfo;
-import com.back.catchmate.game.dto.response.GameSummary;
+import com.back.catchmate.game.application.dto.api.GameInfo;
 import com.back.catchmate.user.dto.response.UserSummary;
 import java.time.LocalDateTime;
 
@@ -22,7 +22,7 @@ public record ChatRoomBoardSummary(
             UserSummary user,
             ClubInfo userClub,
             ClubInfo cheerClub,
-            GameSummary game,
+            GameInfo game,
             ClubInfo homeClub,
             ClubInfo awayClub) {
         return new ChatRoomBoardSummary(
