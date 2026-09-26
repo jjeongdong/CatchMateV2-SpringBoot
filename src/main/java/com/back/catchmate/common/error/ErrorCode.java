@@ -19,14 +19,6 @@ public enum ErrorCode implements com.back.catchmate.global.error.ErrorCode {
     NOTIFICATION_OUTBOX_SAVE_FAILED(ErrorType.INTERNAL, "알림 아웃박스 저장에 실패했습니다."),
     FCM_SEND_FAILED(ErrorType.INTERNAL, "FCM 알림 전송에 실패했습니다."),
 
-    // 채팅방
-    CHATROOM_NOT_FOUND(ErrorType.NOT_FOUND, "존재하지 않는 채팅방입니다."),
-    CHATROOM_MEMBER_NOT_FOUND(ErrorType.NOT_FOUND, "채팅방 멤버를 찾을 수 없습니다."),
-    USER_CHATROOM_NOT_FOUND(ErrorType.NOT_FOUND, "사용자가 해당 채팅방에 참여하지 않았습니다."),
-    CHAT_MESSAGE_NOT_FOUND(ErrorType.NOT_FOUND, "존재하지 않는 채팅 메시지입니다."),
-    CHATROOM_REENTRY_NOT_ALLOWED(ErrorType.INVALID, "이미 퇴장한 채팅방에는 다시 입장할 수 없습니다."),
-    CHATROOM_READ_ONLY(ErrorType.FORBIDDEN, "차단으로 인해 읽기 전용 상태인 채팅방입니다."),
-
     // 소켓
     SOCKET_CONNECT_FAILED(ErrorType.UNAUTHORIZED, "소켓 연결에 실패했습니다."),
 

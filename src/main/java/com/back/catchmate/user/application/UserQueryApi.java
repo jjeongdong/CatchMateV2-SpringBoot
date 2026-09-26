@@ -2,7 +2,6 @@ package com.back.catchmate.user.application;
 
 import com.back.catchmate.user.application.dto.api.UserInfo;
 import com.back.catchmate.user.domain.BlockRepository;
-import com.back.catchmate.user.domain.UserPresenceRepository;
 import com.back.catchmate.user.domain.UserRepository;
 import java.util.Collection;
 import java.util.List;
@@ -19,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserQueryApi {
     private final UserRepository userRepository;
     private final BlockRepository blockRepository;
-    private final UserPresenceRepository userPresenceRepository;
 
     /**
      * 유저 하나를 조회한다. 없거나 탈퇴했으면 {@code UserNotFoundException}(404 USER_NOT_FOUND)을 던지므로 존재 검증에도 쓸 수 있다.
@@ -130,27 +128,5 @@ public class UserQueryApi {
     @Transactional(readOnly = true)
     public List<Long> getBlockedUserIds(Long blockerId) {
         return blockRepository.findBlockedIdsByBlockerId(blockerId);
-    }
-
-    /**
-     * 유저가 지금 보고 있는 채팅방을 조회한다. Redis 전용이라 트랜잭션을 열지 않는다 (알림 경로에서 자주 호출).
-     * Redis 장애 시 빈 값을 돌려준다.
-     *
-     * @param userId 유저 ID
-     * @return 채팅방 ID, 보고 있는 방이 없으면 빈 값
-     */
-    public Optional<Long> findFocusRoom(Long userId) {
-        return userPresenceRepository.findFocusRoom(userId);
-    }
-
-    /**
-     * 여러 유저가 지금 보고 있는 채팅방을 한 번에 조회한다. Redis 전용이라 트랜잭션을 열지 않는다.
-     * Redis 장애 시 빈 맵을 돌려준다.
-     *
-     * @param userIds 유저 ID 목록
-     * @return 보고 있는 방이 있는 유저만 담긴 유저 ID → 채팅방 ID 맵
-     */
-    public Map<Long, Long> getFocusRooms(List<Long> userIds) {
-        return userPresenceRepository.findFocusRooms(userIds);
     }
 }

@@ -2,19 +2,21 @@ package com.back.catchmate.global.config.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.never;
 
-import com.back.catchmate.chat.service.ChatQueryService;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.Message;
@@ -31,7 +33,6 @@ import org.springframework.util.AntPathMatcher;
 class StompAuthChannelInterceptorTest {
 
     private static final Long USER_ID = 1L;
-    private static final Long ROOM_ID = 5L;
     private static final String CHAT_ROOM_DESTINATION = "/sub/chat/room/5";
     private static final String NOTIFICATION_DESTINATION = "/user/queue/notifications";
 
@@ -39,13 +40,17 @@ class StompAuthChannelInterceptorTest {
     private AccessTokenVerifier accessTokenVerifier;
 
     @Mock
-    private ChatQueryService chatQueryService;
+    private StompSubscriptionAuthorizer chatAuthorizer;
 
     @Mock
     private MessageChannel channel;
 
-    @InjectMocks
     private StompAuthChannelInterceptor sut;
+
+    @BeforeEach
+    void setUp() {
+        sut = new StompAuthChannelInterceptor(accessTokenVerifier, List.of(chatAuthorizer));
+    }
 
     /**
      * 이 테스트가 존재하는 이유를 못 박는다.
@@ -71,7 +76,6 @@ class StompAuthChannelInterceptorTest {
                 "/sub/**",
                 "/sub/chat/**",
                 "/sub/chat/*/5",
-                "/sub/chat/room/*",
                 "/**",
                 "/queue/**",
                 "/queue/notifications-user7f3a",
@@ -80,6 +84,7 @@ class StompAuthChannelInterceptorTest {
     @DisplayName("허용 목적지가 아닌 구독은 BAD_REQUEST 로 차단하고 참가 여부를 조회하지 않는다")
     void 허용되지_않은_목적지_구독은_차단된다(String destination) {
         // given
+        given(chatAuthorizer.supports(destination)).willReturn(false);
         Message<byte[]> message = subscribeMessage(destination, authenticated());
 
         // when & then
@@ -87,7 +92,7 @@ class StompAuthChannelInterceptorTest {
                 .isInstanceOf(BaseException.class)
                 .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.BAD_REQUEST));
 
-        then(chatQueryService).shouldHaveNoInteractions();
+        then(chatAuthorizer).should(never()).authorize(any(), any());
     }
 
     @Test
@@ -106,7 +111,7 @@ class StompAuthChannelInterceptorTest {
     @DisplayName("참여 중인 채팅방 구독은 통과한다")
     void 참여중인_채팅방_구독은_통과한다() {
         // given
-        given(chatQueryService.canAccessChatRoom(USER_ID, ROOM_ID)).willReturn(true);
+        given(chatAuthorizer.supports(CHAT_ROOM_DESTINATION)).willReturn(true);
         Message<byte[]> message = subscribeMessage(CHAT_ROOM_DESTINATION, authenticated());
 
         // when
@@ -114,26 +119,27 @@ class StompAuthChannelInterceptorTest {
 
         // then
         assertThat(result).isSameAs(message);
+        then(chatAuthorizer).should().authorize(USER_ID, CHAT_ROOM_DESTINATION);
     }
 
     @Test
-    @DisplayName("참여하지 않은 채팅방 구독은 USER_CHATROOM_NOT_FOUND 로 차단한다")
-    void 미참여_채팅방_구독은_차단된다() {
+    @DisplayName("채팅방 검사기가 거절하면 그 예외로 차단한다")
+    void 채팅방_검사기가_거절하면_차단된다() {
         // given
-        given(chatQueryService.canAccessChatRoom(USER_ID, ROOM_ID)).willReturn(false);
+        given(chatAuthorizer.supports(CHAT_ROOM_DESTINATION)).willReturn(true);
+        BaseException denied = new BaseException(ErrorCode.BAD_REQUEST);
+        willThrow(denied).given(chatAuthorizer).authorize(USER_ID, CHAT_ROOM_DESTINATION);
         Message<byte[]> message = subscribeMessage(CHAT_ROOM_DESTINATION, authenticated());
 
         // when & then
-        assertThatThrownBy(() -> sut.preSend(message, channel))
-                .isInstanceOf(BaseException.class)
-                .satisfies(e ->
-                        assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.USER_CHATROOM_NOT_FOUND));
+        assertThatThrownBy(() -> sut.preSend(message, channel)).isSameAs(denied);
     }
 
     @Test
     @DisplayName("알림 큐 구독은 참가 검사 없이 통과한다")
     void 알림_큐_구독은_통과한다() {
         // given
+        given(chatAuthorizer.supports(NOTIFICATION_DESTINATION)).willReturn(false);
         Message<byte[]> message = subscribeMessage(NOTIFICATION_DESTINATION, authenticated());
 
         // when
@@ -141,13 +147,14 @@ class StompAuthChannelInterceptorTest {
 
         // then
         assertThat(result).isSameAs(message);
-        then(chatQueryService).shouldHaveNoInteractions();
+        then(chatAuthorizer).should(never()).authorize(any(), any());
     }
 
     @Test
     @DisplayName("인증되지 않은 채팅방 구독은 SOCKET_CONNECT_FAILED 로 차단한다")
     void 인증되지_않은_채팅방_구독은_차단된다() {
         // given
+        given(chatAuthorizer.supports(CHAT_ROOM_DESTINATION)).willReturn(true);
         Message<byte[]> message = subscribeMessage(CHAT_ROOM_DESTINATION, null);
 
         // when & then

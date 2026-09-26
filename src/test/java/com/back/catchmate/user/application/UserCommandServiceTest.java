@@ -18,7 +18,6 @@ import com.back.catchmate.user.application.dto.result.UserResult;
 import com.back.catchmate.user.domain.ProfileImageUploader;
 import com.back.catchmate.user.domain.User;
 import com.back.catchmate.user.domain.UserAlarmType;
-import com.back.catchmate.user.domain.UserPresenceRepository;
 import com.back.catchmate.user.domain.UserRepository;
 import com.back.catchmate.user.domain.exception.UserAlreadyExistsException;
 import com.back.catchmate.user.fixture.UserFixture;
@@ -38,9 +37,6 @@ class UserCommandServiceTest {
 
     @Mock
     private UserRepository userRepository;
-
-    @Mock
-    private UserPresenceRepository userPresenceRepository;
 
     @Mock
     private ProfileImageUploader profileImageUploader;
@@ -155,21 +151,5 @@ class UserCommandServiceTest {
 
         // then
         assertThat(user.isReported()).isTrue();
-    }
-
-    @Test
-    @DisplayName("온라인 상태 쓰기는 저장소에 위임한다")
-    void delegatesPresence() {
-        // when
-        userCommandService.markOnline(1L);
-        userCommandService.focusRoom(1L, 11L);
-        userCommandService.unfocusRoom(1L);
-        userCommandService.markOffline(1L);
-
-        // then
-        then(userPresenceRepository).should().markOnline(1L);
-        then(userPresenceRepository).should().focusRoom(1L, 11L);
-        then(userPresenceRepository).should().unfocusRoom(1L);
-        then(userPresenceRepository).should().markOffline(1L);
     }
 }

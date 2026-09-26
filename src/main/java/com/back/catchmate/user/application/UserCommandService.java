@@ -11,7 +11,6 @@ import com.back.catchmate.user.application.dto.result.UserCreateResult;
 import com.back.catchmate.user.application.dto.result.UserResult;
 import com.back.catchmate.user.domain.ProfileImageUploader;
 import com.back.catchmate.user.domain.User;
-import com.back.catchmate.user.domain.UserPresenceRepository;
 import com.back.catchmate.user.domain.UserRepository;
 import com.back.catchmate.user.domain.exception.UserAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserCommandService {
     private final UserRepository userRepository;
-    private final UserPresenceRepository userPresenceRepository;
     private final ProfileImageUploader profileImageUploader;
     private final ClubQueryApi clubQueryApi;
 
@@ -79,25 +77,5 @@ public class UserCommandService {
     @Transactional
     public void markUserAsReported(Long userId) {
         userRepository.getById(userId).markAsReported();
-    }
-
-    /** 미전환 chat 의 WebSocket 연결 이벤트 전용. Redis 전용이라 트랜잭션을 열지 않는다. chat 전환 시 재검토. */
-    public void markOnline(Long userId) {
-        userPresenceRepository.markOnline(userId);
-    }
-
-    /** 미전환 chat 의 WebSocket 해제 이벤트 전용. Redis 전용이라 트랜잭션을 열지 않는다. chat 전환 시 재검토. */
-    public void markOffline(Long userId) {
-        userPresenceRepository.markOffline(userId);
-    }
-
-    /** 미전환 chat 의 채팅방 구독 이벤트 전용. Redis 전용이라 트랜잭션을 열지 않는다. chat 전환 시 재검토. */
-    public void focusRoom(Long userId, Long roomId) {
-        userPresenceRepository.focusRoom(userId, roomId);
-    }
-
-    /** 미전환 chat 의 채팅방 구독 해제 이벤트 전용. Redis 전용이라 트랜잭션을 열지 않는다. chat 전환 시 재검토. */
-    public void unfocusRoom(Long userId) {
-        userPresenceRepository.unfocusRoom(userId);
     }
 }
