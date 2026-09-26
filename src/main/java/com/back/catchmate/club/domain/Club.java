@@ -1,4 +1,4 @@
-package com.back.catchmate.club.entity;
+package com.back.catchmate.club.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -7,16 +7,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @Table(name = "clubs")
 public class Club {
     @Id
@@ -32,4 +28,14 @@ public class Club {
 
     @Column(nullable = false)
     private String region;
+
+    private Club(String name, String homeStadium, String region) {
+        this.name = name;
+        this.homeStadium = homeStadium;
+        this.region = region;
+    }
+
+    public static Club create(String name, String homeStadium, String region) {
+        return new Club(name, homeStadium, region);
+    }
 }

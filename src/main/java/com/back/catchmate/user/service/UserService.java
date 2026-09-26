@@ -1,7 +1,7 @@
 package com.back.catchmate.user.service;
 
-import com.back.catchmate.club.dto.response.ClubSummary;
-import com.back.catchmate.club.service.ClubService;
+import com.back.catchmate.club.application.ClubQueryApi;
+import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.global.infrastructure.upload.UploadFile;
@@ -35,19 +35,19 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
-    private final ClubService clubService;
+    private final ClubQueryApi clubQueryApi;
     private final S3ImageUploader s3ImageUploader;
 
     // 컨트롤러용
     public UserResponse getUserProfile(Long userId) {
         User user = getUserOrThrow(userId);
-        ClubSummary club = user.getClubId() != null ? clubService.getClubSummary(user.getClubId()) : null;
+        ClubInfo club = user.getClubId() != null ? clubQueryApi.getInfo(user.getClubId()) : null;
         return UserResponse.from(user, club);
     }
 
     public UserResponse getUserProfileById(Long currentUserId, Long targetUserId) {
         User targetUser = getUserOrThrow(targetUserId);
-        ClubSummary club = targetUser.getClubId() != null ? clubService.getClubSummary(targetUser.getClubId()) : null;
+        ClubInfo club = targetUser.getClubId() != null ? clubQueryApi.getInfo(targetUser.getClubId()) : null;
         return UserResponse.from(targetUser, club);
     }
 
@@ -78,7 +78,7 @@ public class UserService {
         user.updateProfile(request.nickName(), request.watchStyle(), request.favoriteClubId(), profileImageUrl);
         userRepository.save(user);
 
-        ClubSummary club = (user.getClubId() != null) ? clubService.getClubSummary(user.getClubId()) : null;
+        ClubInfo club = (user.getClubId() != null) ? clubQueryApi.getInfo(user.getClubId()) : null;
         return UserUpdateResponse.from(user, club);
     }
 

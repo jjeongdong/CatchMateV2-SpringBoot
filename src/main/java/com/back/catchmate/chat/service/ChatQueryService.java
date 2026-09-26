@@ -12,8 +12,8 @@ import com.back.catchmate.chat.entity.ChatMessage;
 import com.back.catchmate.chat.entity.ChatRoom;
 import com.back.catchmate.chat.entity.ChatRoomMember;
 import com.back.catchmate.chat.entity.MessageType;
-import com.back.catchmate.club.dto.response.ClubSummary;
-import com.back.catchmate.club.service.ClubService;
+import com.back.catchmate.club.application.ClubQueryApi;
+import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.common.response.PagedResponse;
 import com.back.catchmate.game.dto.response.GameSummary;
 import com.back.catchmate.game.service.GameService;
@@ -42,7 +42,7 @@ public class ChatQueryService {
     private final ChatMessageService chatMessageService;
     private final ChatRoomMemberService chatRoomMemberService;
     private final BoardService boardService;
-    private final ClubService clubService;
+    private final ClubQueryApi clubQueryApi;
     private final GameService gameService;
     private final UserService userService;
 
@@ -204,10 +204,7 @@ public class ChatQueryService {
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
-        Map<Long, ClubSummary> clubMap = clubIds.isEmpty()
-                ? Map.of()
-                : clubService.getClubSummaries(clubIds).stream()
-                        .collect(Collectors.toMap(ClubSummary::clubId, Function.identity()));
+        Map<Long, ClubInfo> clubMap = clubIds.isEmpty() ? Map.of() : clubQueryApi.getInfos(clubIds);
 
         return boards.stream()
                 .map(board -> toSummary(board, userMap, clubMap, gameMap))
@@ -217,14 +214,14 @@ public class ChatQueryService {
     private ChatRoomBoardSummary toSummary(
             BoardSummary board,
             Map<Long, UserSummary> userMap,
-            Map<Long, ClubSummary> clubMap,
+            Map<Long, ClubInfo> clubMap,
             Map<Long, GameSummary> gameMap) {
         UserSummary user = board.userId() != null ? userMap.get(board.userId()) : null;
-        ClubSummary userClub = user != null && user.clubId() != null ? clubMap.get(user.clubId()) : null;
-        ClubSummary cheerClub = board.cheerClubId() != null ? clubMap.get(board.cheerClubId()) : null;
+        ClubInfo userClub = user != null && user.clubId() != null ? clubMap.get(user.clubId()) : null;
+        ClubInfo cheerClub = board.cheerClubId() != null ? clubMap.get(board.cheerClubId()) : null;
         GameSummary game = board.gameId() != null ? gameMap.get(board.gameId()) : null;
-        ClubSummary homeClub = game != null && game.homeClubId() != null ? clubMap.get(game.homeClubId()) : null;
-        ClubSummary awayClub = game != null && game.awayClubId() != null ? clubMap.get(game.awayClubId()) : null;
+        ClubInfo homeClub = game != null && game.homeClubId() != null ? clubMap.get(game.homeClubId()) : null;
+        ClubInfo awayClub = game != null && game.awayClubId() != null ? clubMap.get(game.awayClubId()) : null;
         return ChatRoomBoardSummary.from(board, false, user, userClub, cheerClub, game, homeClub, awayClub);
     }
 }

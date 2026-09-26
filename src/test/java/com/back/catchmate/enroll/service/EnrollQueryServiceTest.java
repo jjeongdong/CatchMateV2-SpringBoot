@@ -12,8 +12,8 @@ import static org.mockito.BDDMockito.times;
 import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.board.service.BoardService;
 import com.back.catchmate.bookmark.service.BookmarkService;
-import com.back.catchmate.club.dto.response.ClubSummary;
-import com.back.catchmate.club.service.ClubService;
+import com.back.catchmate.club.application.ClubQueryApi;
+import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.common.response.PagedResponse;
@@ -29,6 +29,7 @@ import com.back.catchmate.game.service.GameService;
 import com.back.catchmate.user.dto.response.UserSummary;
 import com.back.catchmate.user.service.UserService;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,7 +55,7 @@ class EnrollQueryServiceTest {
     private BookmarkService bookmarkService;
 
     @Mock
-    private ClubService clubService;
+    private ClubQueryApi clubQueryApi;
 
     @Mock
     private GameService gameService;
@@ -81,7 +82,7 @@ class EnrollQueryServiceTest {
                 .isInstanceOf(BaseException.class)
                 .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN_ACCESS));
         then(userService).shouldHaveNoInteractions();
-        then(clubService).shouldHaveNoInteractions();
+        then(clubQueryApi).shouldHaveNoInteractions();
     }
 
     @Test
@@ -105,7 +106,7 @@ class EnrollQueryServiceTest {
         assertThat(response.applicant().club()).isNull();
         assertThat(response.boardResponse().userResponse().userId()).isEqualTo(writerId);
         assertThat(response.boardResponse().bookMarked()).isFalse();
-        then(clubService).shouldHaveNoInteractions();
+        then(clubQueryApi).shouldHaveNoInteractions();
     }
 
     @Test
@@ -118,7 +119,7 @@ class EnrollQueryServiceTest {
         given(boardService.getBoardSummary(boardId)).willReturn(board(boardId, writerId));
         given(userService.getUserSummary(applicantId)).willReturn(user(applicantId, clubId));
         given(userService.getUserSummaries(List.of(writerId))).willReturn(List.of(user(writerId, null)));
-        given(clubService.getClubSummary(clubId)).willReturn(club(clubId));
+        given(clubQueryApi.getInfo(clubId)).willReturn(club(clubId));
 
         // when
         EnrollDetailResponse response = sut.getEnroll(writerId, enrollId);
@@ -126,7 +127,7 @@ class EnrollQueryServiceTest {
         // then
         assertThat(response.applicant().club().clubId()).isEqualTo(clubId);
         assertThat(response.applicant().club().name()).isEqualTo("LG 트윈스");
-        then(clubService).should().getClubSummary(clubId);
+        then(clubQueryApi).should().getInfo(clubId);
     }
 
     // ── getEnrollRequestList ────────────────────────────────────────
@@ -210,7 +211,7 @@ class EnrollQueryServiceTest {
                         PageRequest.of(0, 10),
                         1));
         given(userService.getUserSummaries(List.of(applicantId))).willReturn(List.of(user(applicantId, clubId)));
-        given(clubService.getClubSummaries(List.of(clubId))).willReturn(List.of(club(clubId)));
+        given(clubQueryApi.getInfos(List.of(clubId))).willReturn(Map.of(clubId, club(clubId)));
 
         // when
         PagedResponse<EnrollApplicantResponse> response = sut.getEnrollReceiveListByBoardId(writerId, boardId, 0, 10);
@@ -323,7 +324,7 @@ class EnrollQueryServiceTest {
                 null);
     }
 
-    private ClubSummary club(Long clubId) {
-        return new ClubSummary(clubId, "LG 트윈스", "잠실", "서울");
+    private ClubInfo club(Long clubId) {
+        return new ClubInfo(clubId, "LG 트윈스", "잠실", "서울");
     }
 }

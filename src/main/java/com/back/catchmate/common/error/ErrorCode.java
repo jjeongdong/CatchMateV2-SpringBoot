@@ -14,7 +14,6 @@ public enum ErrorCode implements com.back.catchmate.global.error.ErrorCode {
     FORBIDDEN_ACCESS(ErrorType.FORBIDDEN, "접근 권한이 없습니다."),
 
     // 클럽
-    CLUB_NOT_FOUND(ErrorType.NOT_FOUND, "존재하지 않는 구단입니다."),
     GAME_NOT_FOUND(ErrorType.NOT_FOUND, "존재하지 않는 게임입니다."),
 
     // 신청
