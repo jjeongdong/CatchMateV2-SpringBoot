@@ -2,7 +2,7 @@ package com.back.catchmate.chat.dto.response;
 
 import com.back.catchmate.chat.entity.ChatMessage;
 import com.back.catchmate.chat.entity.MessageType;
-import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.time.LocalDateTime;
 
 public record ChatMessageResponse(
@@ -14,7 +14,7 @@ public record ChatMessageResponse(
         String content,
         MessageType messageType,
         LocalDateTime createdAt) {
-    public static ChatMessageResponse from(ChatMessage chatMessage, UserSummary sender) {
+    public static ChatMessageResponse from(ChatMessage chatMessage, UserInfo sender) {
         return new ChatMessageResponse(
                 chatMessage.getId(),
                 chatMessage.getChatRoom().getId(),

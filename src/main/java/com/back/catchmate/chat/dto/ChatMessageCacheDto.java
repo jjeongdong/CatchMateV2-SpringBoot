@@ -2,7 +2,7 @@ package com.back.catchmate.chat.dto;
 
 import com.back.catchmate.chat.entity.ChatMessage;
 import com.back.catchmate.chat.entity.MessageType;
-import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,7 +21,7 @@ public class ChatMessageCacheDto {
     private MessageType messageType;
     private LocalDateTime createdAt;
 
-    public static ChatMessageCacheDto from(ChatMessage message, UserSummary sender) {
+    public static ChatMessageCacheDto from(ChatMessage message, UserInfo sender) {
         return new ChatMessageCacheDto(
                 message.getId(),
                 message.getChatRoom().getId(),

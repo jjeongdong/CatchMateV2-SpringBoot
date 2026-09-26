@@ -3,7 +3,7 @@ package com.back.catchmate.chat.dto.response;
 import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.game.application.dto.api.GameInfo;
-import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.time.LocalDateTime;
 
 public record ChatRoomBoardSummary(
@@ -19,7 +19,7 @@ public record ChatRoomBoardSummary(
     public static ChatRoomBoardSummary from(
             BoardSummary board,
             boolean bookMarked,
-            UserSummary user,
+            UserInfo user,
             ClubInfo userClub,
             ClubInfo cheerClub,
             GameInfo game,

@@ -9,8 +9,8 @@ import com.back.catchmate.notice.dto.response.NoticeResponse;
 import com.back.catchmate.notice.dto.response.NoticeSummary;
 import com.back.catchmate.notice.entity.Notice;
 import com.back.catchmate.notice.repository.NoticeRepository;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,11 +30,11 @@ public class NoticeService {
     private static final int MAX_CORPUS_FETCH = 1000;
 
     private final NoticeRepository noticeRepository;
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
 
     public NoticeDetailResponse getNoticeDetail(Long noticeId) {
         Notice notice = getNoticeOrThrow(noticeId);
-        UserSummary writer = userService.getUserSummary(notice.getWriterId());
+        UserInfo writer = userQueryApi.getInfo(notice.getWriterId());
         return toDetailResponse(notice, writer.nickName());
     }
 
@@ -117,7 +117,7 @@ public class NoticeService {
         List<Long> writerIds =
                 notices.stream().map(Notice::getWriterId).distinct().toList();
         if (writerIds.isEmpty()) return Map.of();
-        return userService.getUserSummaries(writerIds).stream()
-                .collect(Collectors.toMap(UserSummary::userId, UserSummary::nickName));
+        return userQueryApi.getInfos(writerIds).values().stream()
+                .collect(Collectors.toMap(UserInfo::userId, UserInfo::nickName));
     }
 }

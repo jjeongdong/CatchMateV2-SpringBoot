@@ -3,7 +3,7 @@ package com.back.catchmate.bookmark.dto.response;
 import com.back.catchmate.board.dto.response.BoardSummary;
 import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.game.application.dto.api.GameInfo;
-import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 
 public record BookmarkedBoardSummary(
         Long boardId,
@@ -18,7 +18,7 @@ public record BookmarkedBoardSummary(
     public static BookmarkedBoardSummary from(
             BoardSummary board,
             boolean bookMarked,
-            UserSummary user,
+            UserInfo user,
             ClubInfo userClub,
             ClubInfo cheerClub,
             GameInfo game,
@@ -53,7 +53,7 @@ public record BookmarkedBoardSummary(
     }
 
     public record BookmarkUserResponse(Long userId, String nickName, String profileImageUrl, String clubName) {
-        public static BookmarkUserResponse from(UserSummary user, ClubInfo userClub) {
+        public static BookmarkUserResponse from(UserInfo user, ClubInfo userClub) {
             return new BookmarkUserResponse(
                     user.userId(), user.nickName(), user.profileImageUrl(), userClub != null ? userClub.name() : null);
         }

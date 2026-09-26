@@ -2,7 +2,7 @@ package com.back.catchmate.chat.event;
 
 import com.back.catchmate.chat.entity.ChatMessage;
 import com.back.catchmate.chat.entity.MessageType;
-import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 import lombok.Builder;
@@ -22,7 +22,7 @@ public record ChatMessageBroadcastEvent(
         MessageType messageType,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
                 LocalDateTime createdAt) {
-    public static ChatMessageBroadcastEvent from(ChatMessage domain, UserSummary sender) {
+    public static ChatMessageBroadcastEvent from(ChatMessage domain, UserInfo sender) {
         return ChatMessageBroadcastEvent.builder()
                 .messageId(domain.getId())
                 .roomId(domain.getChatRoom().getId())

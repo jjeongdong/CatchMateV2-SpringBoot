@@ -15,8 +15,8 @@ import com.back.catchmate.chat.repository.ChatRoomMemberRepository;
 import com.back.catchmate.chat.repository.ChatRoomRepository;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ public class ChatRoomService {
     private final ChatMembershipRedisCache chatMembershipRedisCache;
     private final ChatSequenceRedisStore chatSequenceRedisStore;
     private final BoardService boardService;
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
 
     public ChatRoom getChatRoomOrThrow(Long chatRoomId) {
         return chatRoomRepository
@@ -75,7 +75,7 @@ public class ChatRoomService {
     }
 
     @Transactional
-    public ChatMessage enterChatRoom(Long chatRoomId, UserSummary user) {
+    public ChatMessage enterChatRoom(Long chatRoomId, UserInfo user) {
         Long sequence = chatSequenceRedisStore.getCurrentSequence(chatRoomId);
 
         String enterMessage = user.nickName() + "님이 입장하셨습니다.";
@@ -88,7 +88,7 @@ public class ChatRoomService {
     }
 
     @Transactional
-    public ChatMessage leaveChatRoom(Long chatRoomId, UserSummary user) {
+    public ChatMessage leaveChatRoom(Long chatRoomId, UserInfo user) {
         Long sequence = chatSequenceRedisStore.getCurrentSequence(chatRoomId);
 
         ChatRoomMember chatRoomMember = chatRoomMemberRepository
@@ -170,7 +170,7 @@ public class ChatRoomService {
         // 멤버십 상태 변경 → 인증 캐시 무효화 (강퇴 유저가 TTL 동안 계속 전송하는 것을 막는다)
         chatMembershipRedisCache.evict(chatRoomId, targetMember.getUserId());
 
-        UserSummary targetUser = userService.getUserSummary(targetMember.getUserId());
+        UserInfo targetUser = userQueryApi.getInfo(targetMember.getUserId());
         String kickMessage = targetUser.nickName() + "님이 내보내졌습니다.";
         ChatMessage chatMessage =
                 ChatMessage.createMessage(chatRoomId, targetUser.userId(), kickMessage, MessageType.SYSTEM, sequence);

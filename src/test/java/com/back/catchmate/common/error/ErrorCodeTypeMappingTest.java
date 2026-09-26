@@ -14,7 +14,7 @@ class ErrorCodeTypeMappingTest {
 
     @ParameterizedTest
     @CsvSource({
-        "USER_ALREADY_EXISTS, INVALID",
+        "BLOCKED_USER_BOARD, INVALID",
         "INVALID_ACCESS_TOKEN, UNAUTHORIZED",
         "CHATROOM_READ_ONLY, FORBIDDEN",
         "BOARD_NOT_FOUND, NOT_FOUND",

@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 public enum ErrorCode implements com.back.catchmate.global.error.ErrorCode {
 
     // 유저
-    USER_NOT_FOUND(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."),
-    USER_ALREADY_EXISTS(ErrorType.INVALID, "이미 가입된 사용자입니다."),
     FORBIDDEN_ACCESS(ErrorType.FORBIDDEN, "접근 권한이 없습니다."),
 
     // 신청
@@ -53,9 +51,6 @@ public enum ErrorCode implements com.back.catchmate.global.error.ErrorCode {
     CHATROOM_READ_ONLY(ErrorType.FORBIDDEN, "차단으로 인해 읽기 전용 상태인 채팅방입니다."),
 
     // 유저 차단
-    BLOCK_NOT_FOUND(ErrorType.NOT_FOUND, "존재하지 않는 차단 내역입니다."),
-    ALREADY_BLOCKED(ErrorType.INVALID, "해당 유저를 이미 차단했습니다."),
-    SELF_BLOCK_FAILED(ErrorType.INVALID, "자기 자신을 차단할 수 없습니다."),
     BLOCKED_USER_BOARD(ErrorType.INVALID, "내가 차단한 유저의 게시글입니다."),
 
     // 문의

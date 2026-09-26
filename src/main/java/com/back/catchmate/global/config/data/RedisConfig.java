@@ -4,7 +4,6 @@ import com.back.catchmate.chat.dto.ChatMessageListDto;
 import com.back.catchmate.chat.event.ChatMessageBroadcastEvent;
 import com.back.catchmate.chat.event.ChatRedisSubscriber;
 import com.back.catchmate.notification.event.NotificationRedisSubscriber;
-import com.back.catchmate.user.dto.response.UserSummary;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -90,7 +89,6 @@ public class RedisConfig {
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultCacheConfig)
-                .withCacheConfiguration("userInternal", createCacheConfig(objectMapper, UserSummary.class))
                 .withCacheConfiguration("chatHistory", createCacheConfig(objectMapper, ChatMessageListDto.class))
                 .build();
     }

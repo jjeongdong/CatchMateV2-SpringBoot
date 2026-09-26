@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.back.catchmate.CatchmateApplication;
 import com.back.catchmate.auth.infra.JwtTokenProvider;
-import com.back.catchmate.user.entity.Authority;
-import com.back.catchmate.user.entity.User;
-import com.back.catchmate.user.repository.UserRepository;
+import com.back.catchmate.user.domain.Authority;
+import com.back.catchmate.user.domain.User;
+import com.back.catchmate.user.infrastructure.UserJpaRepository;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -45,7 +45,7 @@ class ChatErrorFrameE2eStompTest {
     private JwtTokenProvider tokenProvider;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserJpaRepository userRepository;
 
     private User savedUser;
     private StompSession session;
@@ -97,22 +97,16 @@ class ChatErrorFrameE2eStompTest {
 
     private BlockingQueue<byte[]> connectAndSubscribeErrors() throws Exception {
         long unique = System.nanoTime();
-        savedUser = userRepository.save(User.builder()
-                .clubId(1L)
-                .email("err-" + unique + "@test.com")
-                .provider("KAKAO")
-                .providerId("err-" + unique)
-                .gender('M')
-                .nickName("err-" + unique)
-                .birthDate(LocalDate.of(2000, 1, 1))
-                .profileImageUrl("https://example.com/profile.png")
-                .allAlarm('Y')
-                .chatAlarm('Y')
-                .enrollAlarm('Y')
-                .eventAlarm('Y')
-                .authority(Authority.ROLE_USER)
-                .reported(false)
-                .build());
+        savedUser = userRepository.save(User.create(
+                "KAKAO",
+                "err-" + unique,
+                "err-" + unique + "@test.com",
+                "err-" + unique,
+                'M',
+                LocalDate.of(2000, 1, 1),
+                1L,
+                "https://example.com/profile.png",
+                null));
 
         StompHeaders connectHeaders = new StompHeaders();
         connectHeaders.add(

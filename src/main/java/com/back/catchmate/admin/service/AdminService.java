@@ -41,19 +41,20 @@ import com.back.catchmate.notice.dto.response.NoticeSummary;
 import com.back.catchmate.notice.service.NoticeService;
 import com.back.catchmate.report.dto.response.ReportSummary;
 import com.back.catchmate.report.service.ReportService;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserCommandService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -65,7 +66,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminService {
     private final ClubQueryApi clubQueryApi;
     private final GameQueryApi gameQueryApi;
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
+    private final UserCommandService userCommandService;
     private final BoardService boardService;
     private final NoticeService noticeService;
     private final EnrollQueryService enrollQueryService;
@@ -75,12 +77,11 @@ public class AdminService {
 
     public AdminDashboardResponse getDashboardStats() {
         return AdminDashboardResponse.of(
-                userService.getTotalUserCount(),
-                AdminDashboardResponse.GenderRatio.of(
-                        userService.getUserCountByGender('M'), userService.getUserCountByGender('F')),
+                userQueryApi.count(),
+                AdminDashboardResponse.GenderRatio.of(userQueryApi.countByGender('M'), userQueryApi.countByGender('F')),
                 boardService.getTotalBoardCount(),
                 resolveUserCountByClubName(),
-                userService.getUserCountByWatchStyle(),
+                userQueryApi.countByWatchStyles(),
                 reportService.getTotalReportCount(),
                 reportService.getPendingReportCount(),
                 inquiryService.getTotalInquiryCount(),
@@ -88,7 +89,7 @@ public class AdminService {
     }
 
     private Map<String, Long> resolveUserCountByClubName() {
-        Map<Long, Long> countByClubId = userService.getUserCountByClubId();
+        Map<Long, Long> countByClubId = userQueryApi.countByClubIds();
         if (countByClubId.isEmpty()) return Map.of();
         Map<Long, ClubInfo> clubById = clubQueryApi.getInfos(List.copyOf(countByClubId.keySet()));
         return countByClubId.entrySet().stream()
@@ -97,7 +98,7 @@ public class AdminService {
     }
 
     public AdminUserDetailResponse getUser(Long userId) {
-        UserSummary user = userService.getUserSummary(userId);
+        UserInfo user = userQueryApi.getInfo(userId);
         ClubInfo club = user.clubId() != null ? clubQueryApi.getInfo(user.clubId()) : null;
         return AdminUserDetailResponse.from(user, club != null ? club.name() : null);
     }
@@ -114,7 +115,8 @@ public class AdminService {
             clubId = club.get().clubId();
         }
 
-        Page<UserSummary> userPage = userService.getUserSummariesByClubId(clubId, pageable);
+        Page<UserInfo> userPage = new PageImpl<>(
+                userQueryApi.getInfosByClubId(clubId, page, size), pageable, userQueryApi.countByClubId(clubId));
 
         Map<Long, ClubInfo> clubById = resolveUserClubs(userPage.getContent());
 
@@ -135,21 +137,18 @@ public class AdminService {
 
         List<Long> enrollUserIds =
                 enrolls.stream().map(EnrollSummary::userId).distinct().toList();
-        Map<Long, UserSummary> enrollUserById = enrollUserIds.isEmpty()
-                ? Map.of()
-                : userService.getUserSummaries(enrollUserIds).stream()
-                        .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+        Map<Long, UserInfo> enrollUserById = enrollUserIds.isEmpty() ? Map.of() : userQueryApi.getInfos(enrollUserIds);
         Map<Long, ClubInfo> enrollUserClubById = resolveUserClubs(enrollUserById.values());
 
         List<AdminEnrollmentDetailResponse> enrollmentInfos = enrolls.stream()
                 .map(enroll -> {
-                    UserSummary u = enrollUserById.get(enroll.userId());
+                    UserInfo u = enrollUserById.get(enroll.userId());
                     ClubInfo c = u != null && u.clubId() != null ? enrollUserClubById.get(u.clubId()) : null;
                     return AdminEnrollmentDetailResponse.from(enroll, u, c != null ? c.name() : null);
                 })
                 .toList();
 
-        UserSummary writer = board.userId() != null ? userService.getUserSummary(board.userId()) : null;
+        UserInfo writer = board.userId() != null ? userQueryApi.getInfo(board.userId()) : null;
         GameInfo game = board.gameId() != null ? gameQueryApi.getInfo(board.gameId()) : null;
 
         return AdminBoardDetailResponse.from(board, writer, game, enrollmentInfos);
@@ -177,8 +176,8 @@ public class AdminService {
 
     public AdminReportDetailResponse getReport(Long reportId) {
         ReportSummary report = reportService.getReportSummary(reportId);
-        UserSummary reporter = userService.getUserSummary(report.reporterId());
-        UserSummary reportedUser = userService.getUserSummary(report.reportedUserId());
+        UserInfo reporter = userQueryApi.getInfo(report.reporterId());
+        UserInfo reportedUser = userQueryApi.getInfo(report.reportedUserId());
         return AdminReportDetailResponse.from(report, reporter, reportedUser);
     }
 
@@ -186,13 +185,10 @@ public class AdminService {
         Pageable pageable = PageRequest.of(page, size);
         Page<ReportSummary> reportPage = reportService.getReportSummaries(pageable);
 
-        Map<Long, UserSummary> reporterById = userService
-                .getUserSummaries(reportPage.getContent().stream()
-                        .map(ReportSummary::reporterId)
-                        .distinct()
-                        .toList())
-                .stream()
-                .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+        Map<Long, UserInfo> reporterById = userQueryApi.getInfos(reportPage.getContent().stream()
+                .map(ReportSummary::reporterId)
+                .distinct()
+                .toList());
 
         List<AdminReportResponse> responses = reportPage.getContent().stream()
                 .map(r -> AdminReportResponse.from(r, reporterById.get(r.reporterId())))
@@ -203,7 +199,7 @@ public class AdminService {
 
     public AdminInquiryDetailResponse getInquiry(Long inquiryId) {
         InquirySummary inquiry = inquiryService.getInquirySummary(inquiryId);
-        UserSummary user = userService.getUserSummary(inquiry.userId());
+        UserInfo user = userQueryApi.getInfo(inquiry.userId());
         return AdminInquiryDetailResponse.from(inquiry, user);
     }
 
@@ -211,13 +207,10 @@ public class AdminService {
         Pageable pageable = PageRequest.of(page, size);
         Page<InquirySummary> inquiryPage = inquiryService.getInquirySummaries(pageable);
 
-        Map<Long, UserSummary> userById = userService
-                .getUserSummaries(inquiryPage.getContent().stream()
-                        .map(InquirySummary::userId)
-                        .distinct()
-                        .toList())
-                .stream()
-                .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+        Map<Long, UserInfo> userById = userQueryApi.getInfos(inquiryPage.getContent().stream()
+                .map(InquirySummary::userId)
+                .distinct()
+                .toList());
 
         List<AdminInquiryResponse> responses = inquiryPage.getContent().stream()
                 .map(i -> AdminInquiryResponse.from(i, userById.get(i.userId())))
@@ -232,7 +225,7 @@ public class AdminService {
 
     public AdminNoticeDetailResponse getNotice(Long noticeId) {
         NoticeSummary notice = noticeService.getNoticeSummary(noticeId);
-        UserSummary writer = userService.getUserSummary(notice.writerId());
+        UserInfo writer = userQueryApi.getInfo(notice.writerId());
         return AdminNoticeDetailResponse.from(notice, writer.nickName());
     }
 
@@ -240,13 +233,14 @@ public class AdminService {
         Pageable pageable = PageRequest.of(page, size);
         Page<NoticeSummary> noticePage = noticeService.getNoticeSummaries(pageable);
 
-        Map<Long, String> writerNicknameById = userService
-                .getUserSummaries(noticePage.getContent().stream()
+        Map<Long, String> writerNicknameById = userQueryApi
+                .getInfos(noticePage.getContent().stream()
                         .map(NoticeSummary::writerId)
                         .distinct()
                         .toList())
+                .values()
                 .stream()
-                .collect(Collectors.toMap(UserSummary::userId, UserSummary::nickName));
+                .collect(Collectors.toMap(UserInfo::userId, UserInfo::nickName));
 
         List<AdminNoticeResponse> responses = noticePage.getContent().stream()
                 .map(n -> AdminNoticeResponse.from(n, writerNicknameById.getOrDefault(n.writerId(), "")))
@@ -255,9 +249,9 @@ public class AdminService {
         return new PagedResponse<>(noticePage, responses);
     }
 
-    private Map<Long, ClubInfo> resolveUserClubs(Collection<UserSummary> users) {
+    private Map<Long, ClubInfo> resolveUserClubs(Collection<UserInfo> users) {
         List<Long> clubIds = users.stream()
-                .map(UserSummary::clubId)
+                .map(UserInfo::clubId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
@@ -296,7 +290,7 @@ public class AdminService {
         ReportSummary report = reportService.getReportSummary(reportId);
         Long reportedUserId = report.reportedUserId();
 
-        userService.markUserAsReported(reportedUserId);
+        userCommandService.markUserAsReported(reportedUserId);
         reportService.processReport(reportId);
 
         return AdminReportActionResponse.of(reportId, reportedUserId);
@@ -307,7 +301,7 @@ public class AdminService {
         noticeService.updateNotice(noticeId, request.title(), request.content());
 
         NoticeSummary updatedNotice = noticeService.getNoticeSummary(noticeId);
-        UserSummary writer = userService.getUserSummary(updatedNotice.writerId());
+        UserInfo writer = userQueryApi.getInfo(updatedNotice.writerId());
         return AdminNoticeUpdateResponse.from(updatedNotice, writer.nickName());
     }
 

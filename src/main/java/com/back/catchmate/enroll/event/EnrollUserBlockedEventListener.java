@@ -1,7 +1,7 @@
 package com.back.catchmate.enroll.event;
 
 import com.back.catchmate.enroll.service.EnrollCommandService;
-import com.back.catchmate.user.event.UserBlockedEvent;
+import com.back.catchmate.user.domain.event.UserBlockedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;

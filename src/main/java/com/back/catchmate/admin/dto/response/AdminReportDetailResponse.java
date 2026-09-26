@@ -1,7 +1,7 @@
 package com.back.catchmate.admin.dto.response;
 
 import com.back.catchmate.report.dto.response.ReportSummary;
-import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.time.LocalDateTime;
 
 public record AdminReportDetailResponse(
@@ -18,7 +18,7 @@ public record AdminReportDetailResponse(
         String description,
         LocalDateTime createdAt,
         boolean completed) {
-    public static AdminReportDetailResponse from(ReportSummary report, UserSummary reporter, UserSummary reportedUser) {
+    public static AdminReportDetailResponse from(ReportSummary report, UserInfo reporter, UserInfo reportedUser) {
         return new AdminReportDetailResponse(
                 report.reportId(),
                 reporter.userId(),

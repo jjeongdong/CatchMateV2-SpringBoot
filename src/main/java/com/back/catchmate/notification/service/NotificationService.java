@@ -15,8 +15,8 @@ import com.back.catchmate.notification.dto.response.UnreadNotificationResponse;
 import com.back.catchmate.notification.entity.Notification;
 import com.back.catchmate.notification.entity.enums.AlarmType;
 import com.back.catchmate.notification.repository.NotificationRepository;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +41,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final ClubQueryApi clubQueryApi;
     private final GameQueryApi gameQueryApi;
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
     private final BoardService boardService;
     private final EnrollQueryService enrollQueryService;
 
@@ -56,8 +56,7 @@ public class NotificationService {
                     .orElse(null);
         }
 
-        UserSummary sender =
-                notification.getSenderId() != null ? userService.getUserSummary(notification.getSenderId()) : null;
+        UserInfo sender = notification.getSenderId() != null ? userQueryApi.getInfo(notification.getSenderId()) : null;
         String gameInfo = resolveGameInfo(notification.getBoardId());
         return NotificationResponse.from(notification, sender, acceptStatus, gameInfo);
     }
@@ -81,10 +80,7 @@ public class NotificationService {
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
-        Map<Long, UserSummary> senderById = senderIds.isEmpty()
-                ? Map.of()
-                : userService.getUserSummaries(senderIds).stream()
-                        .collect(Collectors.toMap(UserSummary::userId, Function.identity()));
+        Map<Long, UserInfo> senderById = senderIds.isEmpty() ? Map.of() : userQueryApi.getInfos(senderIds);
 
         List<NotificationResponse> responses = notificationPage.getContent().stream()
                 .map(notification -> {
@@ -93,7 +89,7 @@ public class NotificationService {
                             : null;
                     String gameInfo =
                             notification.getBoardId() != null ? gameInfoByBoardId.get(notification.getBoardId()) : null;
-                    UserSummary sender =
+                    UserInfo sender =
                             notification.getSenderId() != null ? senderById.get(notification.getSenderId()) : null;
                     return NotificationResponse.from(notification, sender, status, gameInfo);
                 })

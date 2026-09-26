@@ -1,6 +1,6 @@
 package com.back.catchmate.admin.dto.response;
 
-import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -17,7 +17,7 @@ public record AdminUserDetailResponse(
         boolean reported,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {
-    public static AdminUserDetailResponse from(UserSummary user, String clubName) {
+    public static AdminUserDetailResponse from(UserInfo user, String clubName) {
         return new AdminUserDetailResponse(
                 user.userId(),
                 user.email(),

@@ -22,8 +22,8 @@ import com.back.catchmate.enroll.event.EnrollRejectedEvent;
 import com.back.catchmate.enroll.event.EnrollRequestedEvent;
 import com.back.catchmate.enroll.infra.RedisIdempotencyStore;
 import com.back.catchmate.enroll.repository.EnrollRepository;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ class EnrollCommandServiceTest {
     private EnrollRepository enrollRepository;
 
     @Mock
-    private UserService userService; // cross-context: 자기 FetchPort 를 모킹
+    private UserQueryApi userQueryApi; // cross-context: 자기 FetchPort 를 모킹
 
     @Mock
     private BoardService boardService;
@@ -65,7 +65,7 @@ class EnrollCommandServiceTest {
         // given
         Long applicantId = 1L, boardId = 10L, ownerId = 2L;
         EnrollCreateCommand command = new EnrollCreateCommand(applicantId, boardId, "직관 같이가요");
-        given(userService.getUserSummary(applicantId)).willReturn(userInfo(applicantId));
+        given(userQueryApi.getInfo(applicantId)).willReturn(userInfo(applicantId));
         given(boardService.getCompletedBoardSummary(boardId)).willReturn(boardInfo(boardId, ownerId));
         given(enrollRepository.save(any(Enroll.class)))
                 .willReturn(enroll(100L, applicantId, boardId, ownerId, AcceptStatus.PENDING, true));
@@ -86,7 +86,7 @@ class EnrollCommandServiceTest {
         // given
         Long applicantId = 1L, boardId = 10L, ownerId = 2L;
         EnrollCreateCommand command = new EnrollCreateCommand(applicantId, boardId, "직관 같이가요");
-        given(userService.getUserSummary(applicantId)).willReturn(userInfo(applicantId));
+        given(userQueryApi.getInfo(applicantId)).willReturn(userInfo(applicantId));
         given(boardService.getCompletedBoardSummary(boardId)).willReturn(boardInfo(boardId, ownerId));
         // 기존 PENDING 신청이 있으면 Enroll.preventNewEnroll() 이 ALREADY_ENROLL_PENDING 을 던진다
         given(enrollRepository.findByUserIdAndBoardId(applicantId, boardId))
@@ -111,7 +111,7 @@ class EnrollCommandServiceTest {
         Enroll enroll = enroll(enrollId, applicantId, boardId, ownerId, AcceptStatus.PENDING, true);
         given(enrollRepository.findById(enrollId)).willReturn(Optional.of(enroll));
         given(boardService.getBoardSummary(boardId)).willReturn(boardInfo(boardId, ownerId));
-        given(userService.getUserSummary(applicantId)).willReturn(userInfo(applicantId));
+        given(userQueryApi.getInfo(applicantId)).willReturn(userInfo(applicantId));
 
         // when
         var response = sut.updateEnrollReject(ownerId, enrollId);
@@ -241,8 +241,8 @@ class EnrollCommandServiceTest {
                 .build();
     }
 
-    private UserSummary userInfo(Long userId) {
-        return new UserSummary(
+    private UserInfo userInfo(Long userId) {
+        return new UserInfo(
                 userId,
                 "test@catchmate.com",
                 null,
@@ -255,7 +255,6 @@ class EnrollCommandServiceTest {
                 "USER",
                 null,
                 1L,
-                false,
                 false,
                 false,
                 false,

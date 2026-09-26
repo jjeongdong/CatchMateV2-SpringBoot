@@ -3,7 +3,7 @@ package com.back.catchmate.board.dto.response;
 import com.back.catchmate.board.entity.Board;
 import com.back.catchmate.club.application.dto.api.ClubInfo;
 import com.back.catchmate.game.application.dto.api.GameInfo;
-import com.back.catchmate.user.dto.response.UserSummary;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.List;
 
 public record BoardTempDetailResponse(
@@ -18,7 +18,7 @@ public record BoardTempDetailResponse(
         BoardWriterView user) {
     public static BoardTempDetailResponse from(
             Board board,
-            UserSummary user,
+            UserInfo user,
             ClubInfo userClub,
             ClubInfo cheerClub,
             GameInfo game,
@@ -51,7 +51,7 @@ public record BoardTempDetailResponse(
                 game.gameId(), game.gameStartDate(), game.location(), toClubView(homeClub), toClubView(awayClub));
     }
 
-    private static BoardWriterView toWriterView(UserSummary user, ClubInfo userClub) {
+    private static BoardWriterView toWriterView(UserInfo user, ClubInfo userClub) {
         if (user == null) return null;
         return new BoardWriterView(
                 user.userId(),

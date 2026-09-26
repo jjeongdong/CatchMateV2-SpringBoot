@@ -5,7 +5,7 @@ import com.back.catchmate.notification.dto.NotificationSendResult;
 import com.back.catchmate.notification.entity.NotificationOutbox;
 import com.back.catchmate.notification.infra.FcmNotificationSender;
 import com.back.catchmate.notification.infra.PermanentNotificationFailureException;
-import com.back.catchmate.user.service.UserOnlineStatusService;
+import com.back.catchmate.user.application.UserQueryApi;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
@@ -28,7 +28,7 @@ public class OutboxDispatcher {
     private final ObjectMapper objectMapper;
     private final OutboxStateTransitioner outboxStateTransitioner;
     private final FcmNotificationSender fcmNotificationSender;
-    private final UserOnlineStatusService userOnlineStatusService;
+    private final UserQueryApi userQueryApi;
 
     @Value("${notification.outbox.max-retry-count:5}")
     private int maxRetryCount;
@@ -161,7 +161,7 @@ public class OutboxDispatcher {
         if (chatRecipientIds.isEmpty()) {
             return Map.of();
         }
-        return userOnlineStatusService.getUserFocusRooms(chatRecipientIds);
+        return userQueryApi.getFocusRooms(chatRecipientIds);
     }
 
     private boolean isRecipientViewingChatRoom(
@@ -199,7 +199,8 @@ public class OutboxDispatcher {
             if (isChat(payload)) {
                 Long chatRoomId = parseRoomId(payload.get("roomId"));
                 if (chatRoomId != null) {
-                    Long focusRoomId = userOnlineStatusService.getUserFocusRoom(outbox.getRecipientId());
+                    Long focusRoomId =
+                            userQueryApi.findFocusRoom(outbox.getRecipientId()).orElse(null);
                     if (chatRoomId.equals(focusRoomId)) {
                         log.debug(
                                 "[아웃박스] 수신자 {}가 현재 채팅방 {}을 보고 있으므로 FCM 발송을 생략하고 성공 처리합니다.",

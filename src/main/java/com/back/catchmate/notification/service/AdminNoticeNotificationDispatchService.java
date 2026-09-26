@@ -2,8 +2,8 @@ package com.back.catchmate.notification.service;
 
 import com.back.catchmate.notification.entity.enums.NotificationTemplate;
 import com.back.catchmate.notification.infra.RedisNotificationPublisher;
-import com.back.catchmate.user.dto.response.UserSummary;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
+import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 public class AdminNoticeNotificationDispatchService {
     private static final String NOTIFICATION_TYPE = "NOTICE";
 
-    private final UserService userService;
+    private final UserQueryApi userQueryApi;
     private final RedisNotificationPublisher redisNotificationPublisher;
 
     public void dispatchOnNoticeCreated(Long noticeId, String noticeTitle) {
@@ -39,9 +39,9 @@ public class AdminNoticeNotificationDispatchService {
                 "body", body);
 
         // 전원이 같은 내용을 받으므로 수신자별 publish 대신 한 건으로 묶어 보낸다.
-        List<Long> recipientIds = userService.getEventAlarmEnabledUserSummaries().stream()
-                .filter(UserSummary::eventAlarmEnabled)
-                .map(UserSummary::userId)
+        List<Long> recipientIds = userQueryApi.getEventAlarmEnabledInfos().stream()
+                .filter(UserInfo::eventAlarmEnabled)
+                .map(UserInfo::userId)
                 .toList();
         redisNotificationPublisher.dispatchAll(recipientIds, stompPayload);
     }

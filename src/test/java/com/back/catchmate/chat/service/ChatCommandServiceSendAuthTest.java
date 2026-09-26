@@ -8,7 +8,7 @@ import com.back.catchmate.chat.dto.command.ChatMessageCommand;
 import com.back.catchmate.chat.entity.MessageType;
 import com.back.catchmate.common.error.ErrorCode;
 import com.back.catchmate.common.error.exception.BaseException;
-import com.back.catchmate.user.service.UserService;
+import com.back.catchmate.user.application.UserQueryApi;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +37,7 @@ class ChatCommandServiceSendAuthTest {
     private ChatRoomMemberService chatRoomMemberService;
 
     @Mock
-    private UserService userService;
+    private UserQueryApi userQueryApi;
 
     @InjectMocks
     private ChatCommandService sut;
@@ -54,7 +54,7 @@ class ChatCommandServiceSendAuthTest {
                 .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.BAD_REQUEST));
 
         // 타입 게이트는 그 어떤 부수효과보다 먼저 걸려야 한다 (조회·시퀀스·저장·브로드캐스트 전부 없음)
-        then(userService).shouldHaveNoInteractions();
+        then(userQueryApi).shouldHaveNoInteractions();
         then(chatMessageService).shouldHaveNoInteractions();
     }
 }
