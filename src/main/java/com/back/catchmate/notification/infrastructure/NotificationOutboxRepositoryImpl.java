@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -36,8 +38,17 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
              WHERE id = ?
             """;
 
+    // 하드 삭제: 끝난 행은 조회·재시도 대상이 아니라 보관 기간이 지나면 지운다. LIMIT 으로 한 번에 잠그는 행 수를 묶는다.
+    private static final String DELETE_FINISHED_SQL =
+            """
+            DELETE FROM notification_outbox
+             WHERE status IN (:statuses) AND modified_at < :threshold
+             LIMIT :limit
+            """;
+
     private final NotificationOutboxJpaRepository notificationOutboxJpaRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final EntityManager entityManager;
 
     @Override
@@ -128,5 +139,14 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
     public List<NotificationOutbox> findStuckProcessingForUpdate(LocalDateTime threshold, int limit) {
         return notificationOutboxJpaRepository.findAllStuckForRecovery(
                 OutboxStatus.PROCESSING, threshold, Pageable.ofSize(limit));
+    }
+
+    @Override
+    public int deleteFinishedBefore(Collection<OutboxStatus> statuses, LocalDateTime threshold, int limit) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("statuses", statuses.stream().map(OutboxStatus::name).toList())
+                .addValue("threshold", Timestamp.valueOf(threshold))
+                .addValue("limit", limit);
+        return namedParameterJdbcTemplate.update(DELETE_FINISHED_SQL, parameters); // arch-audit:allow-hard-delete
     }
 }

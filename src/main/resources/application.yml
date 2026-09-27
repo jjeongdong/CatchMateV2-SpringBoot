@@ -33,6 +33,12 @@ notification:
     # 한 주기에 선점·발송하는 건수. FCM 배치 발송(sendEach) 1회 상한이 500 이라 그에 맞춘다.
     # 공지 브로드캐스트처럼 한 번에 수만 건이 쌓이는 경우 이 값이 곧 배출 속도가 된다.
     batch-size: 500
+    # 처리가 끝난 행 정리. 실패는 원인 조사용으로 더 오래 둔다.
+    cleanup:
+      cron: "0 0 4 * * *"
+      success-retention-days: 7
+      failure-retention-days: 30
+      chunk-size: 1000
   # 알림 즉시발송 전용 executor. 과부하 시 즉시발송을 버리고(CallerRuns 금지) 스케줄러가 회수 → 웹 스레드 커넥션 데드락 방지.
   dispatch:
     executor:
