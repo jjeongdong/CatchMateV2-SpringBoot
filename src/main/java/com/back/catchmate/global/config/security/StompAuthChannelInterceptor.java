@@ -1,7 +1,7 @@
 package com.back.catchmate.global.config.security;
 
-import com.back.catchmate.common.error.ErrorCode;
-import com.back.catchmate.common.error.exception.BaseException;
+import com.back.catchmate.global.error.InvalidInputException;
+import com.back.catchmate.global.error.UnauthorizedException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -60,7 +60,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         String token = resolveToken(accessor);
         if (!StringUtils.hasText(token)) {
             log.warn("WebSocket CONNECT missing token/header");
-            throw new BaseException(ErrorCode.SOCKET_CONNECT_FAILED);
+            throw new UnauthorizedException();
         }
 
         try {
@@ -71,7 +71,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             log.debug("WebSocket user authenticated: {}", user.userId());
         } catch (Exception e) {
             log.warn("WebSocket token validation failed: {}", e.getMessage());
-            throw new BaseException(ErrorCode.SOCKET_CONNECT_FAILED);
+            throw new UnauthorizedException();
         }
     }
 
@@ -93,7 +93,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         String dest = accessor.getDestination();
         if (dest == null) {
             log.warn("SUBSCRIBE without destination");
-            throw new BaseException(ErrorCode.BAD_REQUEST);
+            throw new InvalidInputException();
         }
 
         Optional<StompSubscriptionAuthorizer> authorizer = subscriptionAuthorizers.stream()
@@ -107,7 +107,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
         if (!ALLOWED_USER_DESTINATIONS.contains(dest)) {
             log.warn("Rejected SUBSCRIBE to disallowed destination: {}", dest);
-            throw new BaseException(ErrorCode.BAD_REQUEST);
+            throw new InvalidInputException();
         }
     }
 
@@ -118,7 +118,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         String dest = accessor.getDestination();
         if (dest == null || !dest.startsWith(APPLICATION_DESTINATION_PREFIX)) {
             log.warn("Rejected SEND to non-application destination: {}", dest);
-            throw new BaseException(ErrorCode.BAD_REQUEST);
+            throw new InvalidInputException();
         }
     }
 
@@ -126,14 +126,14 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         Authentication user = (Authentication) accessor.getUser();
         if (user == null || user.getPrincipal() == null) {
             log.warn("Unauthenticated SUBSCRIBE attempt to {}", dest);
-            throw new BaseException(ErrorCode.SOCKET_CONNECT_FAILED);
+            throw new UnauthorizedException();
         }
 
         try {
             return Long.parseLong(user.getPrincipal().toString());
         } catch (NumberFormatException e) {
             log.warn("Invalid principal format: {}", user.getPrincipal());
-            throw new BaseException(ErrorCode.SOCKET_CONNECT_FAILED);
+            throw new UnauthorizedException();
         }
     }
 }

@@ -10,7 +10,7 @@
 ## 아키텍처 한눈에
 - DDD 4계층, 도메인 우선 패키지: `{bc}/{presentation,application,domain,infrastructure}` + `global`
 - 의존: Presentation → Application → Domain ← Infrastructure
-- 각 최상위 패키지(board, enroll, chat …)는 독립 바운디드 컨텍스트(BC)
+- 각 최상위 패키지(board, enroll, chat …)는 독립 바운디드 컨텍스트(BC). 아키텍처 검사는 `global` 을 뺀 최상위 패키지를 자동으로 BC 로 잡는다
 
 ## 절대 규칙
 1. 타 BC 는 `{Bc}QueryApi`, `application/dto/api`, `domain/event` 만 사용한다. 타 BC 상태 변경은 이벤트로.
@@ -24,18 +24,10 @@
 9. 주석·로그·커밋 메시지는 한국어. 주석은 "왜"만.
 10. `main` 직접 커밋 금지. 브랜치 작업 후 `git merge --no-ff`.
 
-## 마이그레이션 과도기
-기존 코드는 아직 옛 구조(`controller/service/repository/entity/dto`)다. 새 컨벤션 검사는 `src/test/java/com/back/catchmate/architecture/MigratedContexts.java` 의 `NAMES` 에 있는 BC 만 대상이다.
-- 전환된 BC: 새 컨벤션 100%
-- 미전환 BC 버그 수정: 기존 구조 유지, 최소 수정 (부분 전환 금지)
-- 미전환 BC 새 기능: 그 BC 를 먼저 전환
-- 새 BC: 새 컨벤션으로 만들고 `NAMES` 에 추가
-- 전환 중 미전환 BC 조회가 필요하면: 미전환 BC 에 `{Bc}QueryApi` + `application/dto/api` 만 추가 허용
-
 ## 규칙 문서 (`.claude/rules/`)
 | 파일 | 로드 시점 | 내용 |
 |---|---|---|
-| `architecture.md` | 항상 | 계층, 패키지, 접미사, BC 경계, global, 과도기 |
+| `architecture.md` | 항상 | 계층, 패키지, 접미사, BC 경계, global |
 | `git.md` | 항상 | 커밋, 브랜치, 머지 |
 | `presentation.md` | `presentation/` 편집 | Controller, Request, URL, 상태 코드, 페이징, 에러 응답 |
 | `application.md` | `application/` 편집 | Service, QueryApi, 트랜잭션, DTO, 이벤트 리스너 |

@@ -44,13 +44,13 @@ global/            config, error, response, persistence, security, infrastructur
 
 ## 바운디드 컨텍스트(BC) 경계
 
-각 최상위 패키지(`board`, `enroll`, `chat` …)는 독립 BC 다.
+각 최상위 패키지(`board`, `enroll`, `chat` …)는 독립 BC 다. ArchUnit·소스 규칙 검사는 `global` 을 뺀 최상위 패키지를 `BoundedContexts` 가 자동으로 찾아 모두 검사한다 — 새 BC 는 패키지를 만드는 순간 검사 대상이다.
 
 - 타 BC 에서 쓸 수 있는 것: `{bc}.application.{Bc}QueryApi`, `{bc}.application.dto.api..`, `{bc}.domain.event..` 뿐.
 - 타 BC 엔티티는 ID 로만 참조. BC 간 `@ManyToOne`/`@OneToOne` 금지.
 - 타 BC 호출은 조회만 (`QueryApi`). 타 BC 상태 변경은 도메인 이벤트로 — 발행 측은 수신 측을 모른다.
 - 양방향 **명령** 호출 금지 — 상태 변경은 한쪽을 이벤트로. 조회는 `QueryApi` 로 양방향 허용하되, `QueryApi` 는 타 BC 를 의존하지 않는다 (`application.dto.api` 제외, ArchUnit 이 검사).
-- 타 BC 테이블 SQL JOIN 금지. 예외는 성능 문제가 측정으로 확인된 경우만: 클래스에 사유·측정 근거 주석 + `MigratedContexts.CROSS_CONTEXT_ALLOWLIST` 에 FQCN 등록.
+- 타 BC 테이블 SQL JOIN 금지. 예외는 성능 문제가 측정으로 확인된 경우만: 클래스에 사유·측정 근거 주석 + `BoundedContexts.CROSS_CONTEXT_ALLOWLIST` 에 FQCN 등록.
 
 ### `{Bc}QueryApi`
 - 인터페이스 없이 구체 클래스 하나. 반환은 `dto/api/{Domain}Info` record (엔티티 반환 금지).
@@ -63,20 +63,4 @@ global/            config, error, response, persistence, security, infrastructur
 - 비즈니스 로직(특정 BC 개념) 금지. `global` → BC import 금지.
 - 두 개 이상의 BC 가 쓰기 전에는 `global` 로 올리지 않는다.
 - `global` 은 BC 의 어느 계층에서든 사용할 수 있다. 계층 의존 규칙은 BC 패키지에만 적용된다 (예: Application Service 가 `global/infrastructure` 의 업로드 기능 호출 가능).
-- `common` 패키지는 쓰지 않는다 (폐지 예정, 마이그레이션 중 `global` 로 이동).
-
-## 과도기 — 마이그레이션 완료 시 이 절 삭제
-
-- 전환 완료 BC 목록: `src/test/java/com/back/catchmate/architecture/MigratedContexts.java` 의 `NAMES`.
-- ArchUnit·소스 규칙 검사는 `NAMES` 에 있는 BC 만 대상이다. Spotless 는 전체.
-
-| 상황 | 행동 |
-|---|---|
-| 전환된 BC 작업 | 새 컨벤션 100% |
-| 미전환 BC 버그 수정 | 기존 구조 유지, 최소 수정. 부분 전환 금지 |
-| 미전환 BC 에 새 기능 | 그 BC 를 먼저 전환한 뒤 기능 추가 |
-| 새 BC 생성 | 새 컨벤션으로 만들고 `NAMES` 에 바로 추가 |
-| 전환 중인 BC 가 미전환 BC 를 조회해야 함 | 미전환 BC 에 `{Bc}QueryApi` + `application/dto/api` 만 추가하는 것은 허용 (부분 전환 금지의 유일한 예외) |
-
-- `common/error` 의 기존 `ErrorCode` 는 BC 를 전환할 때 해당 BC 코드를 `{bc}/domain/{Bc}ErrorCode` 로 옮기고, `new BaseException(ErrorCode.XXX)` 를 전용 예외 클래스로 바꾼다. 마지막 BC 전환 후 `common` 을 삭제한다.
-- BC 전환을 마치면 `NAMES` 에 추가하고 `./gradlew test --tests 'com.back.catchmate.architecture.*'` 통과를 확인한다.
+- `common` 같은 별도 공용 패키지를 만들지 않는다. BC 공용은 `global` 에 둔다.

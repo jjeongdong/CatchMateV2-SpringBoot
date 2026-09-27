@@ -46,7 +46,7 @@ public class UserCommandService {
 
     /**
      * auth 가입 전용 동기 호출. 새 userId 로 곧바로 토큰을 발급해야 해서 이벤트로 바꿀 수 없다.
-     * 아키텍처 테스트의 MigratedContexts.SYNC_COMMAND_ALLOWLIST 로 허용된 예외다.
+     * 아키텍처 테스트의 BoundedContexts.SYNC_COMMAND_ALLOWLIST 로 허용된 예외다.
      */
     @Transactional
     public UserCreateResult createUser(UserCreateCommand command) {

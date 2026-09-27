@@ -8,8 +8,9 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
-import com.back.catchmate.common.error.ErrorCode;
-import com.back.catchmate.common.error.exception.BaseException;
+import com.back.catchmate.global.error.GlobalErrorCode;
+import com.back.catchmate.global.error.InvalidInputException;
+import com.back.catchmate.global.error.UnauthorizedException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -81,7 +82,7 @@ class StompAuthChannelInterceptorTest {
                 "/queue/notifications-user7f3a",
                 "/sub/chat/15"
             })
-    @DisplayName("허용 목적지가 아닌 구독은 BAD_REQUEST 로 차단하고 참가 여부를 조회하지 않는다")
+    @DisplayName("허용 목적지가 아닌 구독은 INVALID_INPUT 으로 차단하고 참가 여부를 조회하지 않는다")
     void 허용되지_않은_목적지_구독은_차단된다(String destination) {
         // given
         given(chatAuthorizer.supports(destination)).willReturn(false);
@@ -89,22 +90,24 @@ class StompAuthChannelInterceptorTest {
 
         // when & then
         assertThatThrownBy(() -> sut.preSend(message, channel))
-                .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.BAD_REQUEST));
+                .isInstanceOf(InvalidInputException.class)
+                .satisfies(e -> assertThat(((InvalidInputException) e).getErrorCode())
+                        .isEqualTo(GlobalErrorCode.INVALID_INPUT));
 
         then(chatAuthorizer).should(never()).authorize(any(), any());
     }
 
     @Test
-    @DisplayName("목적지가 없는 SUBSCRIBE 는 BAD_REQUEST 로 차단한다")
+    @DisplayName("목적지가 없는 SUBSCRIBE 는 INVALID_INPUT 으로 차단한다")
     void 목적지가_없으면_차단된다() {
         // given
         Message<byte[]> message = subscribeMessage(null, authenticated());
 
         // when & then
         assertThatThrownBy(() -> sut.preSend(message, channel))
-                .isInstanceOf(BaseException.class)
-                .satisfies(e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.BAD_REQUEST));
+                .isInstanceOf(InvalidInputException.class)
+                .satisfies(e -> assertThat(((InvalidInputException) e).getErrorCode())
+                        .isEqualTo(GlobalErrorCode.INVALID_INPUT));
     }
 
     @Test
@@ -127,7 +130,7 @@ class StompAuthChannelInterceptorTest {
     void 채팅방_검사기가_거절하면_차단된다() {
         // given
         given(chatAuthorizer.supports(CHAT_ROOM_DESTINATION)).willReturn(true);
-        BaseException denied = new BaseException(ErrorCode.BAD_REQUEST);
+        InvalidInputException denied = new InvalidInputException();
         willThrow(denied).given(chatAuthorizer).authorize(USER_ID, CHAT_ROOM_DESTINATION);
         Message<byte[]> message = subscribeMessage(CHAT_ROOM_DESTINATION, authenticated());
 
@@ -151,7 +154,7 @@ class StompAuthChannelInterceptorTest {
     }
 
     @Test
-    @DisplayName("인증되지 않은 채팅방 구독은 SOCKET_CONNECT_FAILED 로 차단한다")
+    @DisplayName("인증되지 않은 채팅방 구독은 UNAUTHORIZED 로 차단한다")
     void 인증되지_않은_채팅방_구독은_차단된다() {
         // given
         given(chatAuthorizer.supports(CHAT_ROOM_DESTINATION)).willReturn(true);
@@ -159,9 +162,9 @@ class StompAuthChannelInterceptorTest {
 
         // when & then
         assertThatThrownBy(() -> sut.preSend(message, channel))
-                .isInstanceOf(BaseException.class)
-                .satisfies(
-                        e -> assertThat(((BaseException) e).getErrorCode()).isEqualTo(ErrorCode.SOCKET_CONNECT_FAILED));
+                .isInstanceOf(UnauthorizedException.class)
+                .satisfies(e ->
+                        assertThat(((UnauthorizedException) e).getErrorCode()).isEqualTo(GlobalErrorCode.UNAUTHORIZED));
     }
 
     private Message<byte[]> subscribeMessage(String destination, Authentication user) {

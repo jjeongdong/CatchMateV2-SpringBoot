@@ -14,17 +14,17 @@ class ArchitectureTest {
     private static final String ROOT = "com.back.catchmate";
 
     @Test
-    @DisplayName("전환된 BC 는 아키텍처 규칙을 지킨다")
-    void migratedContextsFollowArchitectureRules() {
+    @DisplayName("BC 는 아키텍처 규칙을 지킨다")
+    void contextsFollowArchitectureRules() {
         // given
         JavaClasses classes = new ClassFileImporter()
                 .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
                 .importPackages(ROOT);
 
         // when & then
-        Set<String> boundaryExceptions = new HashSet<>(MigratedContexts.CROSS_CONTEXT_ALLOWLIST);
-        boundaryExceptions.addAll(MigratedContexts.SYNC_COMMAND_ALLOWLIST);
-        for (ArchRule rule : ArchitectureRules.all(ROOT, MigratedContexts.NAMES, boundaryExceptions)) {
+        Set<String> boundaryExceptions = new HashSet<>(BoundedContexts.CROSS_CONTEXT_ALLOWLIST);
+        boundaryExceptions.addAll(BoundedContexts.SYNC_COMMAND_ALLOWLIST);
+        for (ArchRule rule : ArchitectureRules.all(ROOT, BoundedContexts.NAMES, boundaryExceptions)) {
             rule.check(classes);
         }
     }

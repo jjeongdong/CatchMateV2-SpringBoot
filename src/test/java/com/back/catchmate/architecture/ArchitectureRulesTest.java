@@ -28,7 +28,7 @@ class ArchitectureRulesTest {
     }
 
     @Test
-    @DisplayName("전환된 BC 가 없으면 규칙도 없다")
+    @DisplayName("BC 가 없으면 규칙도 없다")
     void noContextsProduceNoRules() {
         assertThat(ArchitectureRules.all(GOOD_ROOT, Set.of(), Set.of())).isEmpty();
     }

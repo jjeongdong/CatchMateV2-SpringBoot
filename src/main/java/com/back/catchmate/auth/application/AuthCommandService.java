@@ -94,7 +94,7 @@ public class AuthCommandService {
         clubQueryApi.getInfo(command.favoriteClubId());
 
         // 새 userId 로 곧바로 토큰을 발급해야 해서 user 생성만은 이벤트가 아닌 동기 호출이다.
-        // 아키텍처 테스트의 MigratedContexts.SYNC_COMMAND_ALLOWLIST 에 이 클래스가 등록돼 있다.
+        // 아키텍처 테스트의 BoundedContexts.SYNC_COMMAND_ALLOWLIST 에 이 클래스가 등록돼 있다.
         UserCreateResult user = userCommandService.createUser(toUserCreateCommand(command, profile));
         Tokens tokens = issueTokens(user.userId(), user.authority());
         return new SignUpResult(user.userId(), tokens.accessToken(), user.createdAt(), tokens.refreshToken());
