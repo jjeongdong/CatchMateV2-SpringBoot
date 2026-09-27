@@ -41,7 +41,7 @@ final class ArchitectureRules {
             rules.addAll(locationRules(base));
             rules.addAll(codingRules(base));
         }
-        // 전환된 BC 에 특정 종류의 클래스가 아직 없을 수 있으므로 빈 대상은 통과시킨다.
+        // BC 에 특정 종류의 클래스가 없을 수 있으므로 빈 대상은 통과시킨다.
         return rules.stream().map(rule -> rule.allowEmptyShould(true)).toList();
     }
 
