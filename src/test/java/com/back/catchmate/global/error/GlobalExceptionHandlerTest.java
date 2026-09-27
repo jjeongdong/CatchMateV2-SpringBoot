@@ -60,7 +60,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("기존 BaseException 은 기존 코드 이름과 매핑된 상태로 응답한다")
     void legacyBaseExceptionKeepsItsCodeAndMappedStatus() throws Exception {
-        assertError(get("/test/legacy"), 404, "NOTIFICATION_NOT_FOUND", "존재하지 않는 알림입니다.");
+        assertError(get("/test/legacy"), 401, "INVALID_ACCESS_TOKEN", "유효하지 않은 액세스 토큰입니다.");
     }
 
     @Test
@@ -205,7 +205,7 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/test/legacy")
         void legacy() {
-            throw new BaseException(com.back.catchmate.common.error.ErrorCode.NOTIFICATION_NOT_FOUND);
+            throw new BaseException(com.back.catchmate.common.error.ErrorCode.INVALID_ACCESS_TOKEN);
         }
 
         @PostMapping("/test/body")

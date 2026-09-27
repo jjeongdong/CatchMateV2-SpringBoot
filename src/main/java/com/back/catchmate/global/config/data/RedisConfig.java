@@ -1,6 +1,5 @@
 package com.back.catchmate.global.config.data;
 
-import com.back.catchmate.notification.event.NotificationRedisSubscriber;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -16,9 +15,7 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -98,28 +95,5 @@ public class RedisConfig {
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.initialize();
         return executor;
-    }
-
-    /**
-     * 앱 안에 있는데 실시간 반영을 위한 알림용 메시지 리스너 어댑터
-     */
-    @Bean
-    public MessageListenerAdapter notificationListenerAdapter(NotificationRedisSubscriber subscriber) {
-        return new MessageListenerAdapter(subscriber, "onNotification");
-    }
-
-    /**
-     * 알림용 단일 Topic 생성
-     */
-    @Bean
-    public ChannelTopic notificationTopic() {
-        return new ChannelTopic("catchmate-notification-topic");
-    }
-
-    // notification 은 아직 전환 전이라 구독 등록을 여기 둔다 (notification 전환 때 그쪽 설정으로 옮긴다).
-    @Bean
-    public RedisTopicSubscription notificationSubscription(
-            MessageListenerAdapter notificationListenerAdapter, ChannelTopic notificationTopic) {
-        return new RedisTopicSubscription(notificationListenerAdapter, notificationTopic);
     }
 }

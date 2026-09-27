@@ -18,6 +18,7 @@ final class MigratedContexts {
             "game",
             "inquiry",
             "notice",
+            "notification",
             "report",
             "user");
 
