@@ -22,6 +22,7 @@ paths:
 3. 본문은 `// given`, `// when`, `// then` (또는 `// when & then`).
 4. AssertJ 만. 예외는 `assertThatThrownBy(...).isInstanceOf(XxxException.class)`.
 5. 테스트 하나에 동작 하나. 같은 메서드의 여러 경우는 `@Nested` 로 묶는다.
+   - 예외: `@DataJpaTest` 테스트에서는 `@Nested` 를 쓰지 않는다. 중첩 클래스마다 컨텍스트가 따로 떠서, 바깥 클래스 필드의 `TestEntityManager` 가 테스트 트랜잭션을 보지 못한다. 묶음은 `@DisplayName` 앞에 `"조건 조회 - "` 처럼 붙인다.
 6. 픽스처는 `src/test/java/com/back/catchmate/{bc}/fixture/{Entity}Fixture`.
 7. 시각은 고정값 (`LocalDateTime.of(2026, 1, 1, 12, 0)`).
 8. Mockito 는 BDD 스타일: `given(...).willReturn(...)`, `then(mock).should().method(...)`.

@@ -27,12 +27,22 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-// 실제 로컬 Redis(127.0.0.1:6379)로 발행 -> 구독까지 전 구간을 검증한다.
+// 실제 Redis(이 테스트 전용 컨테이너)로 발행 -> 구독까지 전 구간을 검증한다.
+// 로컬 Redis 는 local 프로필 설정(비밀번호 있음)에 맞춰 떠 있을 수 있어, 그것에 기대지 않고 전용 컨테이너를 띄운다.
 // ChatRedisSubscriberTest 는 onMessage 를 직접 호출하는 단위 테스트라 MessageListenerAdapter.setSerializer(null)
 // 설정이 실제 Redis 네트워크 I/O 상에서도 byte[] 를 훼손 없이 onMessage(byte[]) 로 전달하는지는 검증하지 못한다.
 // 이 테스트는 RedisConfig 와 동일한 배선(직렬화 없는 MessageListenerAdapter)을 실제 Redis 로 재현해 그 부분을 확인한다.
+@Testcontainers(disabledWithoutDocker = true)
 class ChatRedisPubSubIntegrationTest {
+
+    private static final int REDIS_PORT = 6379;
+
+    @Container
+    static GenericContainer<?> redis = new GenericContainer<>("redis:7").withExposedPorts(REDIS_PORT);
 
     private static final ChannelTopic TEST_TOPIC = new ChannelTopic("catchmate-chat-topic-test");
 
@@ -44,7 +54,8 @@ class ChatRedisPubSubIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        connectionFactory = new LettuceConnectionFactory(new RedisStandaloneConfiguration("127.0.0.1", 6379));
+        connectionFactory = new LettuceConnectionFactory(
+                new RedisStandaloneConfiguration(redis.getHost(), redis.getMappedPort(REDIS_PORT)));
         connectionFactory.afterPropertiesSet();
 
         messagingTemplate = Mockito.mock(SimpMessagingTemplate.class);
