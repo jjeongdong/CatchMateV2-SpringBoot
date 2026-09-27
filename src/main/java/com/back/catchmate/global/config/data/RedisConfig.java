@@ -3,25 +3,17 @@ package com.back.catchmate.global.config.data;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.cache.RedisCacheConfiguration;
-import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-@EnableCaching
 @Configuration
 public class RedisConfig {
 
@@ -47,28 +39,6 @@ public class RedisConfig {
         template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
 
         return template;
-    }
-
-    // BC 별 캐시 설정(예: chatHistory 의 값 타입)은 각 BC 가 RedisCacheManagerBuilderCustomizer 빈으로 등록한다.
-    @Bean
-    public RedisCacheManager redisCacheManager(
-            RedisConnectionFactory connectionFactory, ObjectProvider<RedisCacheManagerBuilderCustomizer> customizers) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-        RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofHours(1))
-                .disableCachingNullValues()
-                .serializeKeysWith(
-                        RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
-                        new GenericJackson2JsonRedisSerializer(objectMapper)));
-
-        RedisCacheManager.RedisCacheManagerBuilder builder =
-                RedisCacheManager.builder(connectionFactory).cacheDefaults(defaultCacheConfig);
-        customizers.orderedStream().forEach(customizer -> customizer.customize(builder));
-        return builder.build();
     }
 
     /**

@@ -15,7 +15,6 @@ import com.back.catchmate.board.application.BoardQueryApi;
 import com.back.catchmate.board.application.dto.api.BoardInfo;
 import com.back.catchmate.chat.application.dto.command.ChatMessageSendCommand;
 import com.back.catchmate.chat.domain.ChatFocusRoomStore;
-import com.back.catchmate.chat.domain.ChatHistoryCache;
 import com.back.catchmate.chat.domain.ChatMembershipCache;
 import com.back.catchmate.chat.domain.ChatMessage;
 import com.back.catchmate.chat.domain.ChatMessageRepository;
@@ -82,9 +81,6 @@ class ChatCommandServiceTest {
 
     @Mock
     private ChatMembershipCache chatMembershipCache;
-
-    @Mock
-    private ChatHistoryCache chatHistoryCache;
 
     @Mock
     private ChatFocusRoomStore chatFocusRoomStore;
@@ -166,7 +162,6 @@ class ChatCommandServiceTest {
         order.verify(chatMessageWriter).writeText(ROOM_ID, user(USER_ID, "철수"), "안녕", 42L);
         order.verify(chatRoomSequenceBuffer).buffer(ROOM_ID, 42L);
         then(readSequenceBuffer).should().buffer(ROOM_ID, USER_ID, 42L);
-        then(chatHistoryCache).should().evictLatestPage(ROOM_ID);
     }
 
     @Test
@@ -249,7 +244,6 @@ class ChatCommandServiceTest {
         // then
         assertThat(member.isActive()).isFalse();
         then(chatMembershipCache).should().evict(ROOM_ID, USER_ID);
-        then(chatHistoryCache).should().evictLatestPage(ROOM_ID);
         ArgumentCaptor<ChatMessageBroadcastEvent> event = ArgumentCaptor.forClass(ChatMessageBroadcastEvent.class);
         then(eventPublisher).should().publishEvent(event.capture());
         assertThat(event.getValue().content()).isEqualTo("철수님이 퇴장하셨습니다.");

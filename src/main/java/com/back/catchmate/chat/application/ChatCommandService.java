@@ -3,7 +3,6 @@ package com.back.catchmate.chat.application;
 import com.back.catchmate.board.application.BoardQueryApi;
 import com.back.catchmate.chat.application.dto.command.ChatMessageSendCommand;
 import com.back.catchmate.chat.domain.ChatFocusRoomStore;
-import com.back.catchmate.chat.domain.ChatHistoryCache;
 import com.back.catchmate.chat.domain.ChatMembershipCache;
 import com.back.catchmate.chat.domain.ChatMessage;
 import com.back.catchmate.chat.domain.ChatMessageRepository;
@@ -42,7 +41,6 @@ public class ChatCommandService {
     private final ChatRoomSequenceBuffer chatRoomSequenceBuffer;
     private final ReadSequenceBuffer readSequenceBuffer;
     private final ChatMembershipCache chatMembershipCache;
-    private final ChatHistoryCache chatHistoryCache;
     private final ChatFocusRoomStore chatFocusRoomStore;
     private final ChatRoomImageUploader chatRoomImageUploader;
     private final ChatMembershipReader chatMembershipReader;
@@ -182,7 +180,6 @@ public class ChatCommandService {
         try {
             chatRoomSequenceBuffer.buffer(chatRoomId, sequence);
             readSequenceBuffer.buffer(chatRoomId, senderId, sequence);
-            chatHistoryCache.evictLatestPage(chatRoomId);
         } catch (Exception e) {
             log.error("메시지 전송 후처리 실패 chatRoomId={}, senderId={}, sequence={}", chatRoomId, senderId, sequence, e);
         }
@@ -205,7 +202,6 @@ public class ChatCommandService {
 
     private void saveSystemMessage(ChatMessage message, UserInfo user) {
         ChatMessage saved = chatMessageRepository.save(message);
-        chatHistoryCache.evictLatestPage(saved.getChatRoom().getId());
         eventPublisher.publishEvent(ChatMessageBroadcastEvent.of(saved, user.nickName(), user.profileImageUrl()));
     }
 }
