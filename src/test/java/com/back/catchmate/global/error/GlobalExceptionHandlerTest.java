@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
-import com.back.catchmate.common.error.exception.BaseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
@@ -58,9 +57,9 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("기존 BaseException 은 기존 코드 이름과 매핑된 상태로 응답한다")
-    void legacyBaseExceptionKeepsItsCodeAndMappedStatus() throws Exception {
-        assertError(get("/test/legacy"), 401, "INVALID_ACCESS_TOKEN", "유효하지 않은 액세스 토큰입니다.");
+    @DisplayName("global 인증 실패 예외는 401 UNAUTHORIZED 로 응답한다")
+    void unauthorizedExceptionIsUnauthorized() throws Exception {
+        assertError(get("/test/unauthorized"), 401, "UNAUTHORIZED", "인증에 실패했습니다.");
     }
 
     @Test
@@ -203,9 +202,9 @@ class GlobalExceptionHandlerTest {
             throw new TestExternalException();
         }
 
-        @GetMapping("/test/legacy")
-        void legacy() {
-            throw new BaseException(com.back.catchmate.common.error.ErrorCode.INVALID_ACCESS_TOKEN);
+        @GetMapping("/test/unauthorized")
+        void unauthorized() {
+            throw new UnauthorizedException();
         }
 
         @PostMapping("/test/body")

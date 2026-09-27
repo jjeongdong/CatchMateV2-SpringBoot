@@ -1,8 +1,7 @@
 package com.back.catchmate.global.authorization.resolver;
 
-import com.back.catchmate.common.error.ErrorCode;
-import com.back.catchmate.common.error.exception.BaseException;
 import com.back.catchmate.global.authorization.annotation.AuthUser;
+import com.back.catchmate.global.error.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
@@ -37,13 +36,13 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
         if (authentication == null
                 || authentication.getPrincipal() == null
                 || "anonymousUser".equals(authentication.getPrincipal())) {
-            throw new BaseException(ErrorCode.INVALID_ACCESS_TOKEN);
+            throw new UnauthorizedException();
         }
 
         try {
             return Long.parseLong(authentication.getPrincipal().toString());
         } catch (NumberFormatException e) {
-            throw new BaseException(ErrorCode.INVALID_ACCESS_TOKEN);
+            throw new UnauthorizedException();
         }
     }
 }
