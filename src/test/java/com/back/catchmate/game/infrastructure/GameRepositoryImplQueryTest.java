@@ -10,7 +10,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -53,60 +52,55 @@ class GameRepositoryImplQueryTest {
         entityManager.clear();
     }
 
-    @Nested
-    @DisplayName("조건 조회")
-    class FindAllByCondition {
+    @Test
+    @DisplayName("조건 조회 - 날짜 필터는 당일 00:00 은 포함하고 다음날 00:00 은 제외한다")
+    void filtersByDateWithHalfOpenRange() {
+        // given
+        persist(1L, 2L, GAME_DATE.minusDays(1).atTime(23, 59));
+        Game midnight = persist(1L, 2L, GAME_DATE.atStartOfDay());
+        Game lateNight = persist(1L, 2L, GAME_DATE.atTime(23, 59));
+        persist(1L, 2L, GAME_DATE.plusDays(1).atStartOfDay());
+        flushAndClear();
 
-        @Test
-        @DisplayName("날짜 필터는 당일 00:00 은 포함하고 다음날 00:00 은 제외한다")
-        void filtersByDateWithHalfOpenRange() {
-            // given
-            persist(1L, 2L, GAME_DATE.minusDays(1).atTime(23, 59));
-            Game midnight = persist(1L, 2L, GAME_DATE.atStartOfDay());
-            Game lateNight = persist(1L, 2L, GAME_DATE.atTime(23, 59));
-            persist(1L, 2L, GAME_DATE.plusDays(1).atStartOfDay());
-            flushAndClear();
+        // when
+        List<Game> games = gameRepository.findAllByCondition(new GameSearchCondition(GAME_DATE, null));
 
-            // when
-            List<Game> games = gameRepository.findAllByCondition(new GameSearchCondition(GAME_DATE, null));
+        // then
+        assertThat(games).extracting(Game::getId).containsExactly(midnight.getId(), lateNight.getId());
+    }
 
-            // then
-            assertThat(games).extracting(Game::getId).containsExactly(midnight.getId(), lateNight.getId());
-        }
+    @Test
+    @DisplayName("조건 조회 - 구단 필터는 홈·원정 어느 쪽이든 매칭한다")
+    void matchesClubOnEitherSide() {
+        // given
+        Game home = persist(1L, 2L, GAME_DATE.atTime(14, 0));
+        Game away = persist(3L, 1L, GAME_DATE.atTime(15, 0));
+        persist(2L, 3L, GAME_DATE.atTime(16, 0));
+        flushAndClear();
 
-        @Test
-        @DisplayName("구단 필터는 홈·원정 어느 쪽이든 매칭한다")
-        void matchesClubOnEitherSide() {
-            // given
-            Game home = persist(1L, 2L, GAME_DATE.atTime(14, 0));
-            Game away = persist(3L, 1L, GAME_DATE.atTime(15, 0));
-            persist(2L, 3L, GAME_DATE.atTime(16, 0));
-            flushAndClear();
+        // when
+        List<Game> games = gameRepository.findAllByCondition(new GameSearchCondition(null, 1L));
 
-            // when
-            List<Game> games = gameRepository.findAllByCondition(new GameSearchCondition(null, 1L));
+        // then
+        assertThat(games).extracting(Game::getId).containsExactly(home.getId(), away.getId());
+    }
 
-            // then
-            assertThat(games).extracting(Game::getId).containsExactly(home.getId(), away.getId());
-        }
+    @Test
+    @DisplayName("조건 조회 - 조건이 없으면 시작 시각, 같으면 id 오름차순으로 전체를 반환한다")
+    void returnsAllSortedByStartThenId() {
+        // given
+        Game evening = persist(1L, 2L, GAME_DATE.atTime(18, 30));
+        Game firstAfternoon = persist(3L, 4L, GAME_DATE.atTime(14, 0));
+        Game secondAfternoon = persist(5L, 6L, GAME_DATE.atTime(14, 0));
+        flushAndClear();
 
-        @Test
-        @DisplayName("조건이 없으면 시작 시각, 같으면 id 오름차순으로 전체를 반환한다")
-        void returnsAllSortedByStartThenId() {
-            // given
-            Game evening = persist(1L, 2L, GAME_DATE.atTime(18, 30));
-            Game firstAfternoon = persist(3L, 4L, GAME_DATE.atTime(14, 0));
-            Game secondAfternoon = persist(5L, 6L, GAME_DATE.atTime(14, 0));
-            flushAndClear();
+        // when
+        List<Game> games = gameRepository.findAllByCondition(new GameSearchCondition(null, null));
 
-            // when
-            List<Game> games = gameRepository.findAllByCondition(new GameSearchCondition(null, null));
-
-            // then
-            assertThat(games)
-                    .extracting(Game::getId)
-                    .containsExactly(firstAfternoon.getId(), secondAfternoon.getId(), evening.getId());
-        }
+        // then
+        assertThat(games)
+                .extracting(Game::getId)
+                .containsExactly(firstAfternoon.getId(), secondAfternoon.getId(), evening.getId());
     }
 
     @Test

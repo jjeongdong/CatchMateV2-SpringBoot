@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -53,42 +52,37 @@ class UserRepositoryImplQueryTest {
         entityManager.clear();
     }
 
-    @Nested
-    @DisplayName("구단별 페이징 조회")
-    class FindAllByClubId {
+    @Test
+    @DisplayName("구단별 페이징 조회 - 구단으로 거르고 최신 가입순으로 offset/limit 을 적용한다")
+    void filtersSortsAndPages() {
+        // given
+        User first = persist("p1", 1L);
+        User second = persist("p2", 1L);
+        persist("p3", 2L);
+        User fourth = persist("p4", 1L);
+        flushAndClear();
 
-        @Test
-        @DisplayName("구단으로 거르고 최신 가입순으로 offset/limit 을 적용한다")
-        void filtersSortsAndPages() {
-            // given
-            User first = persist("p1", 1L);
-            User second = persist("p2", 1L);
-            persist("p3", 2L);
-            User fourth = persist("p4", 1L);
-            flushAndClear();
+        // when
+        List<User> firstPage = userRepository.findAllByClubId(1L, 0, 2);
+        List<User> secondPage = userRepository.findAllByClubId(1L, 2, 2);
 
-            // when
-            List<User> firstPage = userRepository.findAllByClubId(1L, 0, 2);
-            List<User> secondPage = userRepository.findAllByClubId(1L, 2, 2);
+        // then
+        assertThat(firstPage).extracting(User::getId).containsExactly(fourth.getId(), second.getId());
+        assertThat(secondPage).extracting(User::getId).containsExactly(first.getId());
+        assertThat(userRepository.countByClubId(1L)).isEqualTo(3);
+    }
 
-            // then
-            assertThat(firstPage).extracting(User::getId).containsExactly(fourth.getId(), second.getId());
-            assertThat(secondPage).extracting(User::getId).containsExactly(first.getId());
-            assertThat(userRepository.countByClubId(1L)).isEqualTo(3);
-        }
+    @Test
+    @DisplayName("구단별 페이징 조회 - 구단이 null 이면 전체를 대상으로 한다")
+    void nullClubMeansAll() {
+        // given
+        persist("p1", 1L);
+        persist("p2", 2L);
+        flushAndClear();
 
-        @Test
-        @DisplayName("구단이 null 이면 전체를 대상으로 한다")
-        void nullClubMeansAll() {
-            // given
-            persist("p1", 1L);
-            persist("p2", 2L);
-            flushAndClear();
-
-            // when & then
-            assertThat(userRepository.findAllByClubId(null, 0, 10)).hasSize(2);
-            assertThat(userRepository.countByClubId(null)).isEqualTo(2);
-        }
+        // when & then
+        assertThat(userRepository.findAllByClubId(null, 0, 10)).hasSize(2);
+        assertThat(userRepository.countByClubId(null)).isEqualTo(2);
     }
 
     @Test
