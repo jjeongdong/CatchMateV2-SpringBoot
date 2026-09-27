@@ -105,4 +105,56 @@ class NotificationRepositoryImplQueryTest {
                         .getStatus())
                 .isEqualTo(OutboxStatus.PROCESSING);
     }
+
+    @Test
+    @DisplayName("아웃박스 선점 - 여러 수신자의 대기 행만 수신자·id 순으로 조회한다")
+    void findsPendingByRecipientIds() {
+        // given — 1·2 의 대기 행, 다른 수신자 3 의 대기 행, 1 의 처리 중 행
+        notificationOutboxRepository.save(NotificationOutbox.create(1L, "t1", "제목", "본문", "{}"));
+        notificationOutboxRepository.save(NotificationOutbox.create(2L, "t2", "제목", "본문", "{}"));
+        notificationOutboxRepository.save(NotificationOutbox.create(3L, "t3", "제목", "본문", "{}"));
+        NotificationOutbox processing = NotificationOutbox.create(1L, "t1", "제목", "본문", "{}");
+        processing.startProcessing();
+        notificationOutboxRepository.save(processing);
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        List<NotificationOutbox> found =
+                notificationOutboxRepository.findPendingByRecipientIdsForUpdate(List.of(1L, 2L), 10);
+
+        // then
+        assertThat(found).extracting(NotificationOutbox::getRecipientId).containsExactly(1L, 2L);
+        assertThat(found).extracting(NotificationOutbox::getStatus).containsOnly(OutboxStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("아웃박스 선점 - 수신자가 없으면 빈 목록을 돌려준다")
+    void findsNothingForEmptyRecipients() {
+        // when
+        List<NotificationOutbox> found = notificationOutboxRepository.findPendingByRecipientIdsForUpdate(List.of(), 10);
+
+        // then
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    @DisplayName("아웃박스 선점 - 한도까지만 수신자 순, 그 안에서 오래된 행부터 조회한다")
+    void findsPendingByRecipientIdsUpToLimit() {
+        // given — 밀린 대기 행 3건
+        NotificationOutbox oldest =
+                notificationOutboxRepository.save(NotificationOutbox.create(1L, "t1", "제목", "본문", "{}"));
+        NotificationOutbox middle =
+                notificationOutboxRepository.save(NotificationOutbox.create(1L, "t1", "제목", "본문", "{}"));
+        notificationOutboxRepository.save(NotificationOutbox.create(2L, "t2", "제목", "본문", "{}"));
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        List<NotificationOutbox> found =
+                notificationOutboxRepository.findPendingByRecipientIdsForUpdate(List.of(1L, 2L), 2);
+
+        // then
+        assertThat(found).extracting(NotificationOutbox::getId).containsExactly(oldest.getId(), middle.getId());
+    }
 }

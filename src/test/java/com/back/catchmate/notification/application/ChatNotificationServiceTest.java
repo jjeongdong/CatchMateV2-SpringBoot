@@ -111,9 +111,8 @@ class ChatNotificationServiceTest {
         then(realtimeNotificationPublisher)
                 .should()
                 .publishAll(List.of(2L, 3L), NotificationPayload.chat(ROOM_ID, SENDER_ID, "철수", "안녕", "철수", "안녕"));
-        then(outboxDispatcher).should().sendPendingOutboxImmediately(2L);
-        then(outboxDispatcher).should(never()).sendPendingOutboxImmediately(3L);
-        then(outboxDispatcher).should(never()).sendPendingOutboxImmediately(6L);
+        then(outboxDispatcher).should().sendPendingOutboxesImmediately(List.of(2L));
+        then(outboxDispatcher).should(never()).sendPendingOutboxImmediately(anyLong());
     }
 
     @Test
@@ -125,6 +124,6 @@ class ChatNotificationServiceTest {
         service.dispatchOnChatMessageSent(ROOM_ID, 900L, SENDER_ID, "안녕");
 
         then(userQueryApi).shouldHaveNoInteractions();
-        then(outboxDispatcher).should(never()).sendPendingOutboxImmediately(anyLong());
+        then(outboxDispatcher).shouldHaveNoInteractions();
     }
 }

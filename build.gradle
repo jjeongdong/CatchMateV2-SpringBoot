@@ -97,8 +97,19 @@ dependencies {
 }
 
 test {
-    useJUnitPlatform()
+    // 벤치는 고정 지연·로컬 DB 에 기대 느리고 환경을 타므로 기본 빌드에서 뺀다.
+    useJUnitPlatform {
+        excludeTags 'bench'
+    }
     finalizedBy jacocoTestReport   // 테스트가 실패해도 실행분까지의 리포트는 생성된다
+}
+
+tasks.register('benchTest', Test) {
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'bench'
+    }
 }
 
 // ── 테스트 커버리지 (JaCoCo) ──────────────────────────────────────────
