@@ -49,12 +49,39 @@ public class OutboxDispatcher {
         }
     }
 
+    /**
+     * 여러 수신자의 대기 알림을 한 번에 선점해 배치로 즉시 발송한다(채팅처럼 수신자가 여럿인 알림용).
+     * 수신자마다 단건 경로를 반복하면 FCM 호출과 트랜잭션이 수신자 수만큼 순차로 쌓여 발송 스레드를 오래 잡는다.
+     */
+    public void sendPendingOutboxesImmediately(List<Long> recipientIds) {
+        if (recipientIds.isEmpty()) {
+            return;
+        }
+        List<NotificationOutbox> claimed = outboxStateTransitioner.claimPendingByRecipientIds(recipientIds, batchSize);
+        if (claimed.isEmpty()) {
+            return;
+        }
+        dispatchClaimed(claimed);
+    }
+
     public void processPendingNotifications() {
         List<NotificationOutbox> claimed = outboxStateTransitioner.claimPendingNotifications(maxRetryCount, batchSize);
         if (claimed.isEmpty()) {
             return;
         }
         log.info("아웃박스 배치 발송 시작 count={}", claimed.size());
+        dispatchClaimed(claimed);
+    }
+
+    public void recoverStuckProcessing() {
+        LocalDateTime threshold = LocalDateTime.now().minusSeconds(processingTimeoutSeconds);
+        int recovered = outboxStateTransitioner.recoverStuckProcessing(threshold, maxRetryCount, batchSize);
+        if (recovered > 0) {
+            log.warn("PROCESSING 정체 아웃박스 회수 count={}, timeoutSeconds={}", recovered, processingTimeoutSeconds);
+        }
+    }
+
+    private void dispatchClaimed(List<NotificationOutbox> claimed) {
         try {
             sendBatch(claimed);
         } catch (Exception e) {
@@ -63,14 +90,6 @@ public class OutboxDispatcher {
             // 이미 발송된 건이 섞여 있을 수 있으나, 재발송은 dedupKey 로 수신 측에서 걸러진다(at-least-once).
             log.error("아웃박스 배치 처리 실패, 선점한 행을 재시도 대상으로 되돌림 count={}", claimed.size(), e);
             rollbackClaimToRetryable(claimed, e);
-        }
-    }
-
-    public void recoverStuckProcessing() {
-        LocalDateTime threshold = LocalDateTime.now().minusSeconds(processingTimeoutSeconds);
-        int recovered = outboxStateTransitioner.recoverStuckProcessing(threshold, maxRetryCount, batchSize);
-        if (recovered > 0) {
-            log.warn("PROCESSING 정체 아웃박스 회수 count={}, timeoutSeconds={}", recovered, processingTimeoutSeconds);
         }
     }
 

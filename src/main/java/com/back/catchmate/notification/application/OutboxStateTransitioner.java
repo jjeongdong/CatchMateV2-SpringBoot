@@ -6,6 +6,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,18 @@ public class OutboxStateTransitioner {
             outbox.startProcessing();
             notificationOutboxRepository.save(outbox);
         }
+        return pending;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public List<NotificationOutbox> claimPendingByRecipientIds(Collection<Long> recipientIds, int limit) {
+        List<NotificationOutbox> pending =
+                notificationOutboxRepository.findPendingByRecipientIdsForUpdate(recipientIds, limit);
+        if (pending.isEmpty()) {
+            return pending;
+        }
+        pending.forEach(NotificationOutbox::startProcessing);
+        notificationOutboxRepository.updateAll(pending);
         return pending;
     }
 

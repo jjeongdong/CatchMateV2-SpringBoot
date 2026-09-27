@@ -1,6 +1,7 @@
 package com.back.catchmate.notification.domain;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 public interface NotificationOutboxRepository {
@@ -17,6 +18,9 @@ public interface NotificationOutboxRepository {
     List<NotificationOutbox> findPendingForUpdate(int maxRetryCount, int limit);
 
     List<NotificationOutbox> findPendingByRecipientIdForUpdate(Long recipientId);
+
+    // 대기 알림이 밀려 있어도 한 번에 발송·확정하는 행 수를 limit 로 묶는다. 나머지는 스케줄러가 이어 보낸다.
+    List<NotificationOutbox> findPendingByRecipientIdsForUpdate(Collection<Long> recipientIds, int limit);
 
     List<NotificationOutbox> findStuckProcessingForUpdate(LocalDateTime threshold, int limit);
 }

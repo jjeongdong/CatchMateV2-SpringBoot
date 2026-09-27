@@ -3,6 +3,7 @@ package com.back.catchmate.notification.application;
 import static com.back.catchmate.notification.fixture.NotificationFixture.outbox;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -150,5 +151,70 @@ class OutboxDispatcherTest {
 
         then(transitioner).should().updateStatusFailure(eq(chat), eq(5), anyString());
         then(pushSender).should(never()).send(any());
+    }
+
+    @Test
+    @DisplayName("여러 명 즉시 발송: 선점한 행 전부를 FCM 배치 한 번으로 보내고 결과를 한 번에 확정한다")
+    @SuppressWarnings("unchecked")
+    void batchImmediateSendsAllClaimedInOneCall() {
+        // given — 2 는 채팅(방을 보지 않음), 3 은 대기 중이던 신청 알림
+        NotificationOutbox chat = outbox(1L, 2L, CHAT_IN_ROOM_50);
+        NotificationOutbox enroll = outbox(2L, 3L, ENROLL);
+        given(transitioner.claimPendingByRecipientIds(List.of(2L, 3L), 500)).willReturn(List.of(chat, enroll));
+        given(chatQueryApi.getFocusRooms(List.of(2L))).willReturn(Map.of());
+        given(pushSender.sendAll(any())).willReturn(List.of(PushOutcome.ofSuccess(), PushOutcome.ofSuccess()));
+
+        // when
+        dispatcher.sendPendingOutboxesImmediately(List.of(2L, 3L));
+
+        // then
+        ArgumentCaptor<List<PushMessage>> messages = ArgumentCaptor.forClass(List.class);
+        then(pushSender).should().sendAll(messages.capture());
+        assertThat(messages.getValue()).extracting(PushMessage::userId).containsExactly(2L, 3L);
+        then(pushSender).should(never()).send(any());
+        then(transitioner).should().applyDispatchResults(List.of(chat, enroll), List.of(), List.of(), Map.of(), 5);
+    }
+
+    @Test
+    @DisplayName("여러 명 즉시 발송: 수신자가 없으면 선점하지 않는다")
+    void batchImmediateSkipsEmptyRecipients() {
+        // when
+        dispatcher.sendPendingOutboxesImmediately(List.of());
+
+        // then
+        then(transitioner).shouldHaveNoInteractions();
+        then(pushSender).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("여러 명 즉시 발송: 선점된 행이 없으면 발송하지 않는다")
+    void batchImmediateSkipsWhenNothingClaimed() {
+        // given
+        given(transitioner.claimPendingByRecipientIds(List.of(2L), 500)).willReturn(List.of());
+
+        // when
+        dispatcher.sendPendingOutboxesImmediately(List.of(2L));
+
+        // then
+        then(pushSender).shouldHaveNoInteractions();
+        then(transitioner).should(never()).applyDispatchResults(anyList(), anyList(), anyList(), any(), eq(5));
+    }
+
+    @Test
+    @DisplayName("여러 명 즉시 발송: 배치 도중 예외(포커스 방 조회 장애)가 나면 선점한 행 전체를 재시도 대상으로 되돌린다")
+    void batchImmediateRollsBackWhenBatchFails() {
+        // given
+        NotificationOutbox chat = outbox(1L, 2L, CHAT_IN_ROOM_50);
+        given(transitioner.claimPendingByRecipientIds(List.of(2L), 500)).willReturn(List.of(chat));
+        given(chatQueryApi.getFocusRooms(List.of(2L))).willThrow(new IllegalStateException("Redis 다운"));
+
+        // when
+        dispatcher.sendPendingOutboxesImmediately(List.of(2L));
+
+        // then
+        then(transitioner)
+                .should()
+                .applyDispatchResults(List.of(), List.of(), List.of(chat), Map.of(1L, "배치 처리 실패 - Redis 다운"), 5);
+        then(pushSender).should(never()).sendAll(any());
     }
 }

@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -112,6 +113,15 @@ public class NotificationOutboxRepositoryImpl implements NotificationOutboxRepos
     public List<NotificationOutbox> findPendingByRecipientIdForUpdate(Long recipientId) {
         return notificationOutboxJpaRepository.findAllByRecipientIdAndStatusForProcessing(
                 recipientId, OutboxStatus.PENDING);
+    }
+
+    @Override
+    public List<NotificationOutbox> findPendingByRecipientIdsForUpdate(Collection<Long> recipientIds, int limit) {
+        // 빈 IN 절은 MySQL 문법 오류라 쿼리 전에 거른다.
+        if (recipientIds.isEmpty()) {
+            return List.of();
+        }
+        return notificationOutboxJpaRepository.findAllPendingByRecipientIdsForProcessing(recipientIds, limit);
     }
 
     @Override
