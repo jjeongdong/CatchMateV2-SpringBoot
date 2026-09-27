@@ -23,4 +23,7 @@ public interface NotificationOutboxRepository {
     List<NotificationOutbox> findPendingByRecipientIdsForUpdate(Collection<Long> recipientIds, int limit);
 
     List<NotificationOutbox> findStuckProcessingForUpdate(LocalDateTime threshold, int limit);
+
+    // 처리가 끝난 행 중 threshold 이전에 끝난 것을 limit 건까지 지우고 지운 건수를 돌려준다. 호출마다 따로 커밋된다.
+    int deleteFinishedBefore(Collection<OutboxStatus> statuses, LocalDateTime threshold, int limit);
 }

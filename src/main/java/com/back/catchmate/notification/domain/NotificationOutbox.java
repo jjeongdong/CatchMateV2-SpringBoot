@@ -27,7 +27,9 @@ import lombok.NoArgsConstructor;
         name = "notification_outbox",
         indexes = {
             @Index(name = "idx_outbox_status_retry", columnList = "status, retry_count"),
-            @Index(name = "idx_outbox_recipient_status", columnList = "recipient_id, status")
+            @Index(name = "idx_outbox_recipient_status", columnList = "recipient_id, status"),
+            // 보관 기간이 지난 행 정리(상태 + 끝난 시각)용.
+            @Index(name = "idx_outbox_status_modified", columnList = "status, modified_at")
         })
 public class NotificationOutbox extends BaseTimeEntity {
 

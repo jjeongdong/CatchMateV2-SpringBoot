@@ -1,5 +1,6 @@
 package com.back.catchmate.notification.application;
 
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class NotificationScheduler {
     private final OutboxDispatcher outboxDispatcher;
+    private final OutboxCleaner outboxCleaner;
 
     @Scheduled(fixedDelayString = "${notification.outbox.scheduler-delay-ms:60000}")
     public void processPendingPush() {
@@ -19,5 +21,11 @@ public class NotificationScheduler {
     @Scheduled(fixedDelayString = "${notification.outbox.recovery-delay-ms:300000}")
     public void recoverStuckProcessing() {
         outboxDispatcher.recoverStuckProcessing();
+    }
+
+    // 대량 DELETE 가 서비스 트래픽과 겹치지 않게 새벽에 돈다.
+    @Scheduled(cron = "${notification.outbox.cleanup.cron:0 0 4 * * *}", zone = "Asia/Seoul")
+    public void deleteExpiredOutboxes() {
+        outboxCleaner.deleteExpiredOutboxes(LocalDateTime.now());
     }
 }
