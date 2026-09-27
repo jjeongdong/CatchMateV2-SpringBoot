@@ -1,6 +1,5 @@
 package com.back.catchmate.chat.infrastructure;
 
-import com.back.catchmate.chat.domain.ChatHistoryPage;
 import com.back.catchmate.chat.domain.event.ChatMessageBroadcastEvent;
 import com.back.catchmate.global.config.data.RedisTopicSubscription;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,19 +7,15 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -61,27 +56,6 @@ public class ChatRedisConfig {
     @Bean
     public RedisTopicSubscription chatSubscription(MessageListenerAdapter chatListenerAdapter, ChannelTopic chatTopic) {
         return new RedisTopicSubscription(chatListenerAdapter, chatTopic);
-    }
-
-    // 메시지 기록 캐시는 값 타입이 고정이라 @class 없이 직렬화한다 (옛 RedisConfig 설정 그대로).
-    @Bean
-    public RedisCacheManagerBuilderCustomizer chatHistoryCacheCustomizer() {
-        return builder -> builder.withCacheConfiguration(
-                "chatHistory",
-                RedisCacheConfiguration.defaultCacheConfig()
-                        .entryTtl(Duration.ofHours(1))
-                        .disableCachingNullValues()
-                        .serializeKeysWith(
-                                RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                        .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
-                                new Jackson2JsonRedisSerializer<>(objectMapper(), ChatHistoryPage.class))));
-    }
-
-    private static ObjectMapper objectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        return objectMapper;
     }
 
     // 방송 JSON 의 날짜는 옛 @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") 과 같은 형식이어야 한다 (서버 간 계약).
