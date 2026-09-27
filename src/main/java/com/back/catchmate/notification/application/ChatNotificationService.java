@@ -81,11 +81,14 @@ public class ChatNotificationService {
                 targets.stream().map(UserInfo::userId).toList(),
                 NotificationPayload.chat(chatRoomId, senderId, senderNickname, content, title, body));
 
-        for (UserInfo recipient : targets) {
-            if (recipientInfosByUserId.get(recipient.userId()).isNotificationOn() && recipient.chatAlarmEnabled()) {
-                outboxDispatcher.sendPendingOutboxImmediately(recipient.userId());
-            }
-        }
+        // 수신자별 단건 발송은 FCM 호출·트랜잭션이 방 인원만큼 순차로 쌓여 발송 스레드를 오래 잡는다.
+        List<Long> pushRecipientIds = targets.stream()
+                .filter(recipient ->
+                        recipientInfosByUserId.get(recipient.userId()).isNotificationOn()
+                                && recipient.chatAlarmEnabled())
+                .map(UserInfo::userId)
+                .toList();
+        outboxDispatcher.sendPendingOutboxesImmediately(pushRecipientIds);
     }
 
     private List<UserInfo> recipients(List<ChatRecipientInfo> recipientInfos) {
