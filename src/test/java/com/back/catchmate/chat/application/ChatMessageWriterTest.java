@@ -13,7 +13,7 @@ import com.back.catchmate.chat.domain.ChatRoomRepository;
 import com.back.catchmate.chat.domain.event.ChatMessageBroadcastEvent;
 import com.back.catchmate.chat.domain.event.ChatMessageSentEvent;
 import com.back.catchmate.chat.fixture.ChatFixture;
-import com.back.catchmate.user.application.dto.api.UserInfo;
+import com.back.catchmate.user.application.UserQueryApi;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +35,9 @@ class ChatMessageWriterTest {
     private ChatMessageRepository chatMessageRepository;
 
     @Mock
+    private UserQueryApi userQueryApi;
+
+    @Mock
     private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
@@ -52,10 +55,10 @@ class ChatMessageWriterTest {
                 })
                 .given(chatMessageRepository)
                 .save(any(ChatMessage.class));
-        UserInfo sender = ChatCommandServiceTest.user(1L, "철수");
+        given(userQueryApi.getInfo(1L)).willReturn(ChatCommandServiceTest.user(1L, "철수"));
 
         // when
-        chatMessageWriter.writeText(5L, sender, "안녕", 42L);
+        chatMessageWriter.writeText(5L, 1L, "안녕", 42L);
 
         // then
         ArgumentCaptor<Object> events = ArgumentCaptor.forClass(Object.class);

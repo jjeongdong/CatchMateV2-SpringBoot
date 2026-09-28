@@ -98,7 +98,7 @@ class NotificationChatNotificationPreparedListenerIntegrationTest {
         Long chatRoomId = givenRoomWithUnfocusedRecipient(100L);
 
         // when
-        chatMessageWriter.writeText(chatRoomId, user(SENDER_ID, "철수", null, true, true, true), "안녕", 1L);
+        chatMessageWriter.writeText(chatRoomId, SENDER_ID, "안녕", 1L);
 
         // then
         then(realtimeNotificationPublisher).should().publishAll(eq(List.of(RECIPIENT_ID)), anyMap());
@@ -114,7 +114,7 @@ class NotificationChatNotificationPreparedListenerIntegrationTest {
 
         // when
         outer.executeWithoutResult(status -> {
-            chatMessageWriter.writeText(chatRoomId, user(SENDER_ID, "철수", null, true, true, true), "안녕", 1L);
+            chatMessageWriter.writeText(chatRoomId, SENDER_ID, "안녕", 1L);
             status.setRollbackOnly();
         });
 
