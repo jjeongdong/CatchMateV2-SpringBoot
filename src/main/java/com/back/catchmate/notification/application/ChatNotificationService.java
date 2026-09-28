@@ -6,12 +6,14 @@ import com.back.catchmate.notification.domain.NotificationPayload;
 import com.back.catchmate.notification.domain.NotificationTemplate;
 import com.back.catchmate.notification.domain.OutboxRecipient;
 import com.back.catchmate.notification.domain.RealtimeNotificationPublisher;
+import com.back.catchmate.notification.domain.event.ChatNotificationPreparedEvent;
 import com.back.catchmate.user.application.UserQueryApi;
 import com.back.catchmate.user.application.dto.api.UserInfo;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +26,10 @@ public class ChatNotificationService {
     private final OutboxWriter outboxWriter;
     private final OutboxDispatcher outboxDispatcher;
     private final RealtimeNotificationPublisher realtimeNotificationPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
+    // 발송 대상(포커스·알림 설정)은 여기서 한 번만 정한다. 커밋 후 발송 단계가 수신자·유저·포커스를 다시 조회하면
+    // 메시지마다 같은 DB·Redis 조회가 두 벌 돈다 (1,200명 벤치에서 발송 스레드가 앱 CPU 의 ~30%).
     @Transactional
     public void saveOnChatMessageSent(Long chatRoomId, Long messageId, Long senderId, String content) {
         List<ChatRecipientInfo> recipientInfos = chatQueryApi.getRecipients(chatRoomId, senderId);
@@ -35,60 +40,53 @@ public class ChatNotificationService {
         String title = NotificationTemplate.CHAT_NEW_MESSAGE.formatTitle(senderNickname);
         String body = NotificationTemplate.CHAT_NEW_MESSAGE.formatBody(content);
         Map<Long, ChatRecipientInfo> recipientInfosByUserId = byUserId(recipientInfos);
-
-        // 알림 설정으로 먼저 걸러 Redis 조회 대상 자체를 줄인다.
-        List<UserInfo> candidates = recipients(recipientInfos).stream()
-                .filter(recipient ->
-                        recipientInfosByUserId.get(recipient.userId()).isNotificationOn())
-                .filter(recipient -> recipient.chatAlarmEnabled() && recipient.fcmToken() != null)
-                .toList();
-        // 수신자별 왕복 대신 MGET 한 번으로 포커스 방을 모아온다.
-        Map<Long, Long> focusRoomsByUserId = chatQueryApi.getFocusRooms(
-                candidates.stream().map(UserInfo::userId).toList());
-
-        // 지금 보고 있는 방이면 푸시가 불필요하므로 아웃박스에 쌓지 않는다.
-        List<OutboxRecipient> outboxRecipients = candidates.stream()
-                .filter(recipient -> !chatRoomId.equals(focusRoomsByUserId.get(recipient.userId())))
-                .map(recipient -> new OutboxRecipient(recipient.userId(), recipient.fcmToken()))
-                .toList();
-        outboxWriter.writeAll(
-                outboxRecipients,
-                title,
-                body,
-                NotificationPayload.chat(chatRoomId, senderId, senderNickname, content, title, body));
-    }
-
-    public void dispatchOnChatMessageSent(Long chatRoomId, Long messageId, Long senderId, String content) {
-        List<ChatRecipientInfo> recipientInfos = chatQueryApi.getRecipients(chatRoomId, senderId);
-        if (recipientInfos.isEmpty()) {
-            return;
-        }
-        String senderNickname = userQueryApi.getInfo(senderId).nickName();
-        String title = NotificationTemplate.CHAT_NEW_MESSAGE.formatTitle(senderNickname);
-        String body = NotificationTemplate.CHAT_NEW_MESSAGE.formatBody(content);
-        Map<Long, ChatRecipientInfo> recipientInfosByUserId = byUserId(recipientInfos);
         List<UserInfo> recipients = recipients(recipientInfos);
 
-        // 알림 설정과 무관하게 전원의 포커스 여부를 봐야 하므로 수신자 전체를 MGET 한 번으로 모아온다.
+        // 실시간 알림은 알림 설정과 무관하게 보내므로 수신자 전원의 포커스를 MGET 한 번으로 모아온다.
         Map<Long, Long> focusRoomsByUserId = chatQueryApi.getFocusRooms(
                 recipients.stream().map(UserInfo::userId).toList());
+        // 지금 보고 있는 방이면 푸시도 실시간 알림도 불필요하다.
         List<UserInfo> targets = recipients.stream()
                 .filter(recipient -> !chatRoomId.equals(focusRoomsByUserId.get(recipient.userId())))
                 .toList();
-
-        // 알림 설정과 상관없이 실시간 알림은 보낸다 (채팅방 목록 갱신 등 화면 동기화용).
-        realtimeNotificationPublisher.publishAll(
-                targets.stream().map(UserInfo::userId).toList(),
-                NotificationPayload.chat(chatRoomId, senderId, senderNickname, content, title, body));
-
-        // 수신자별 단건 발송은 FCM 호출·트랜잭션이 방 인원만큼 순차로 쌓여 발송 스레드를 오래 잡는다.
-        List<Long> pushRecipientIds = targets.stream()
+        if (targets.isEmpty()) {
+            return;
+        }
+        List<UserInfo> pushTargets = targets.stream()
                 .filter(recipient ->
                         recipientInfosByUserId.get(recipient.userId()).isNotificationOn()
                                 && recipient.chatAlarmEnabled())
-                .map(UserInfo::userId)
                 .toList();
-        outboxDispatcher.sendPendingOutboxesImmediately(pushRecipientIds);
+
+        outboxWriter.writeAll(
+                pushTargets.stream()
+                        .filter(recipient -> recipient.fcmToken() != null)
+                        .map(recipient -> new OutboxRecipient(recipient.userId(), recipient.fcmToken()))
+                        .toList(),
+                title,
+                body,
+                NotificationPayload.chat(chatRoomId, senderId, senderNickname, content, title, body));
+        eventPublisher.publishEvent(new ChatNotificationPreparedEvent(
+                chatRoomId,
+                senderId,
+                senderNickname,
+                content,
+                targets.stream().map(UserInfo::userId).toList(),
+                pushTargets.stream().map(UserInfo::userId).toList()));
+    }
+
+    public void dispatchOnChatNotificationPrepared(ChatNotificationPreparedEvent event) {
+        String title = NotificationTemplate.CHAT_NEW_MESSAGE.formatTitle(event.senderNickname());
+        String body = NotificationTemplate.CHAT_NEW_MESSAGE.formatBody(event.content());
+
+        // 알림 설정과 상관없이 실시간 알림은 보낸다 (채팅방 목록 갱신 등 화면 동기화용).
+        realtimeNotificationPublisher.publishAll(
+                event.realtimeTargetIds(),
+                NotificationPayload.chat(
+                        event.chatRoomId(), event.senderId(), event.senderNickname(), event.content(), title, body));
+
+        // 수신자별 단건 발송은 FCM 호출·트랜잭션이 방 인원만큼 순차로 쌓여 발송 스레드를 오래 잡는다.
+        outboxDispatcher.sendPendingOutboxesImmediately(event.pushRecipientIds());
     }
 
     private List<UserInfo> recipients(List<ChatRecipientInfo> recipientInfos) {
