@@ -56,11 +56,10 @@ public class ChatCommandService {
     public void sendMessage(Long senderId, ChatMessageSendCommand command) {
         requireSender(senderId);
         command.messageType().verifySendableByUser();
-        UserInfo sender = userQueryApi.getInfo(senderId);
         // 시퀀스보다 먼저 확인해야 비멤버·읽기 전용이 방 시퀀스를 올리지 못한다.
         chatMembershipReader.get(command.chatRoomId(), senderId).verifySendable();
         Long sequence = chatSequenceStore.next(command.chatRoomId());
-        chatMessageWriter.writeText(command.chatRoomId(), sender, command.content(), sequence);
+        chatMessageWriter.writeText(command.chatRoomId(), senderId, command.content(), sequence);
         bufferAfterSend(command.chatRoomId(), senderId, sequence);
     }
 

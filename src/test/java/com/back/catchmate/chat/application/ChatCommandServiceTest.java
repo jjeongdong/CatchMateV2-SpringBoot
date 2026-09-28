@@ -148,7 +148,6 @@ class ChatCommandServiceTest {
     @DisplayName("멤버십 확인이 시퀀스 발급보다 먼저고, 저장 뒤 버퍼링·기록 캐시를 비운다")
     void sendMessageOrder() {
         // given
-        given(userQueryApi.getInfo(USER_ID)).willReturn(user(USER_ID, "철수"));
         given(chatMembershipReader.get(ROOM_ID, USER_ID)).willReturn(new MembershipSnapshot(true, false));
         given(chatSequenceStore.next(ROOM_ID)).willReturn(42L);
 
@@ -159,7 +158,7 @@ class ChatCommandServiceTest {
         InOrder order = inOrder(chatMembershipReader, chatSequenceStore, chatMessageWriter, chatRoomSequenceBuffer);
         order.verify(chatMembershipReader).get(ROOM_ID, USER_ID);
         order.verify(chatSequenceStore).next(ROOM_ID);
-        order.verify(chatMessageWriter).writeText(ROOM_ID, user(USER_ID, "철수"), "안녕", 42L);
+        order.verify(chatMessageWriter).writeText(ROOM_ID, USER_ID, "안녕", 42L);
         order.verify(chatRoomSequenceBuffer).buffer(ROOM_ID, 42L);
         then(readSequenceBuffer).should().buffer(ROOM_ID, USER_ID, 42L);
     }
@@ -168,7 +167,6 @@ class ChatCommandServiceTest {
     @DisplayName("비멤버·읽기 전용이면 시퀀스를 발급하지 않고 거절한다")
     void rejectsNonMemberBeforeSequence() {
         // given
-        given(userQueryApi.getInfo(USER_ID)).willReturn(user(USER_ID, "철수"));
         given(chatMembershipReader.get(ROOM_ID, USER_ID))
                 .willReturn(new MembershipSnapshot(false, false))
                 .willReturn(new MembershipSnapshot(true, true));
@@ -212,7 +210,6 @@ class ChatCommandServiceTest {
     @DisplayName("저장 뒤 버퍼링이 실패해도 예외를 올리지 않는다 (재전송으로 중복 저장되지 않게)")
     void swallowsBufferFailure() {
         // given
-        given(userQueryApi.getInfo(USER_ID)).willReturn(user(USER_ID, "철수"));
         given(chatMembershipReader.get(ROOM_ID, USER_ID)).willReturn(new MembershipSnapshot(true, false));
         given(chatSequenceStore.next(ROOM_ID)).willReturn(42L);
         willThrow(new QueryTimeoutException("redis"))
