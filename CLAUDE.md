@@ -6,6 +6,7 @@
 - 전체 검사: `./gradlew build` (spotlessCheck + test)
 - 포맷: `./gradlew spotlessApply` — 커밋 전 필수
 - 아키텍처 검사: `./gradlew test --tests 'com.back.catchmate.architecture.*'`
+- 훅(`.claude/settings.json`): Java 편집 직후 그 파일만 자동 포맷, 턴 종료 전 아키텍처 검사 — 실패하면 종료가 막히고 위반 내용이 Claude 에게 돌아온다
 
 ## 아키텍처 한눈에
 - DDD 4계층, 도메인 우선 패키지: `{bc}/{presentation,application,domain,infrastructure}` + `global`
